@@ -11,10 +11,14 @@
             "id": "278473b8b390cf25",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Graph view"
+              "type": "markdown",
+              "state": {
+                "file": "Wiki/synthesis/backend-frontend-startup-gaps.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "backend-frontend-startup-gaps"
             }
           }
         ]
@@ -179,10 +183,41 @@
       "bases:Create new base": false
     }
   },
-  "active": "278473b8b390cf25",
+  "active": "2f946eba525bc0ca",
   "lastOpenFiles": [
-    "APP-CONCEPT.md",
-    "PRD.md",
-    "STARTUP.md"
+    "Wiki/concepts/LLM Gateway - OpenRouter.md",
+    "Wiki/concepts/BullMQ Worker Wiring.md",
+    "Wiki/concepts/Domain Events.md",
+    "Wiki/concepts/API Routes.md",
+    "Wiki/concepts/Database Schema.md",
+    "Wiki/index.md",
+    "Wiki/entities/Workspace.md",
+    "Wiki/synthesis/backend-frontend-startup-gaps.md",
+    "Wiki/overview.md",
+    "Wiki/entities/User.md",
+    "Wiki/concepts/ReadinessPolicy.md",
+    "Wiki/concepts/AssetResolver.md",
+    "Wiki/concepts/packages-domain Structure.md",
+    "Wiki/entities/Artifact.md",
+    "Wiki/concepts/Domain Events Catalog.md",
+    "Wiki/concepts/Application Services.md",
+    "Wiki/concepts/Session Machine (XState v5).md",
+    "Wiki/concepts/XState Integration.md",
+    "Wiki/concepts/Usage & Quota.md",
+    "Wiki/concepts/Identity & Access.md",
+    "Wiki/entities/Crawl.md",
+    "Wiki/entities/Quota.md",
+    "Wiki/concepts/Tool as Static Configuration.md",
+    "Wiki/concepts/ScoringEngine.md",
+    "Wiki/concepts/Competitive Intelligence.md",
+    "Wiki/concepts/Progressive Context Enrichment.md",
+    "Wiki/synthesis",
+    "Wiki/sources",
+    "Wiki/concepts",
+    "Wiki/entities",
+    "Wiki",
+    "assets",
+    "doodle",
+    "cartella senza nome"
   ]
 }

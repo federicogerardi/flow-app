@@ -120,7 +120,7 @@ L'applicazione organizza le proprie funzionalità attorno al concetto di **Tool*
 
 ### Area di Lavoro (Tool Workspace)
 
-- **Pannello di Configurazione (Setup Panel)**: Consente l'inserimento dei dati tramite campi di testo, caricamento di file di briefing o selezione degli Asset salvati nel progetto.
+- **Pannello di Configurazione (Setup Panel)**: Consente l'inserimento dei dati tramite campi di testo, caricamento di file di briefing o selezione degli Asset salvati nel workspace.
     
 - **Pannello di Avanzamento (Workflow Panel)**: Mostra il tracciamento visivo dello stato di avanzamento delle varie fasi di elaborazione.
     

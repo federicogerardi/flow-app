@@ -1,0 +1,68 @@
+---
+type: entity
+tags:
+  - wiki/entity
+  - wiki/workspace
+date_updated: 2026-07-30
+source_count: 4
+---
+
+# Asset
+
+> Entity — owned by [[Workspace]] aggregate in [[Workspace & Assets]] context
+
+## Definition
+
+An `Asset` is a persistent, workspace-scoped resource reusable across [[Tool as Static Configuration|Tools]]. It represents brand knowledge that survives individual generation sessions and gets auto-injected into prompts to maintain strategic and stylistic coherence.
+
+## Ubiquitous Language
+
+> "Asset = workspace property, persistent and reusable as input for subsequent tools."
+
+From [[doodle/STARTUP]]: the core distinction from [[Artifact]] — Artifact = what you produced in a session; Asset = what you saved in a workspace.
+
+## Asset Types
+
+| Type | Produced By | Used By |
+|------|------------|---------|
+| `brief` | `brief` tool | All content tools |
+| `brand-voice` | `brand-voice` tool | 7 downstream tools |
+| `persona` | `buyer-persona` tool | Content tools |
+| `angle` | `marketing-angle` tool | `ad-copy`, content tools |
+| `ad-copy` | `ad-copy` tool | Reuse in campaigns |
+
+## Sources
+
+| Source | Meaning |
+|--------|---------|
+| `generated` | Promoted from a `final` [[Artifact]] via [[Asset Promotion]] |
+| `uploaded` | User-uploaded file |
+| `manual` | Created directly in workspace |
+
+## Value Objects
+
+| VO | Description |
+|----|-------------|
+| `AssetId` | Unique identifier |
+| `AssetType` | Enum: `brief` \| `brand-voice` \| `persona` \| `angle` \| `ad-copy` |
+| `AssetSource` | Enum: `generated` \| `uploaded` \| `manual` |
+| `AssetContent` | Immutable content |
+
+## Lifecycle
+
+```
+created → available → updated → available → (deleted with Workspace)
+```
+
+Assets can be updated (content changes) while retaining their `AssetType` and `sourceRef`. There is no "archived" state — deletion is cascade from Workspace deletion.
+
+## Cross-Tool Injection
+
+The [[AssetResolver]] maps `toolKey → assetType` to determine which Assets are injected into a given tool's generation prompt. Injection is automatic (`injectionMode: auto`). If an Asset is marked `always-required` in the tool's `inputPolicy`, the generation is blocked if the Asset is missing.
+
+## Sources
+
+- [[doodle/STARTUP]] — Asset definition, source types
+- [[doodle/PRD]] — FR-A01 to FR-A05
+- [[doodle/USER-STORIES]] — US-AS01 to US-AS08
+- [[doodle/APP-CONCEPT]] — Tool catalog, AssetFieldMapping

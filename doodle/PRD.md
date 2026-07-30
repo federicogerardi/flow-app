@@ -8,7 +8,7 @@
 
 Gen App 2 è una piattaforma AI-powered di content generation che trasforma input contestuali (briefing, documenti, keyword) in output di marketing pronti all'uso attraverso pipeline multi-step deterministiche, trasparenti e tracciabili.
 
-**Value proposition**: ogni step di generazione è visibile, rieseguibile, versionato e associato al workspace di progetto. Nessuna black box — l'utente ha sempre il controllo sulla catena di produzione dei contenuti.
+**Value proposition**: ogni step di generazione è visibile, rieseguibile, versionato e associato al workspace. Nessuna black box — l'utente ha sempre il controllo sulla catena di produzione dei contenuti.
 
 **Obiettivo strategico**: diventare lo strumento principale di content creation per team marketing B2B, coprendo l'intero ciclo: ricerca competitiva → estrazione insight → produzione contenuti → asset riutilizzabili.
 
@@ -53,28 +53,27 @@ Gen App 2 è una piattaforma AI-powered di content generation che trasforma inpu
 
 ### 3.2 Workflow & Generazione
 
-| ID         | Requisito                                                                                                                   | Priorità | Stato                                       |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------- |
-| **FR-W01** | BE-Driven Workflow: esecuzione asincrona multi-step via BullMQ, FE riceve progress via SSE, indipendente dal tab browser    | P0       | ✅ Implementato                              |
-| **FR-W02** | Idempotency: prevenire generazioni duplicate tramite `IdempotencyKey`, supporto replay e conflict detection                 | P0       | ✅ Implementato                              |
-| **FR-W03** | Resume/Regenerate: possibilità di riprendere workflow interrotti e rigenerare step specifici da checkpoint                  | P0       | ✅ Implementato                              |
-| **FR-W04** | Cancellazione: `POST /cancel` per fermare workflow attivi (flag controllato a ogni step boundary)                           | P0       | ✅ Implementato                              |
-| **FR-W05** | Crediti a due livelli: artifact gate (anti-abuso, invisibile) + consumo crediti solo su step finale                         | P0       | ✅ Implementato                              |
-| **FR-W06** | Per-step LLM model override: configurazione statica che assegna modelli deterministici specifici per ogni step di ogni tool | P1       | 🔄 Parziale (3 step blog-article-generator) |
-| **FR-W07** | Global Deterministic Model Matrix: estendere FR-W06 a tutti i 22 step LLM rimanenti (DDD-234)                               | P1       | 📝 Proposta (0/22 implementati)             |
-| **FR-W08** | Output Personalization: multi-variant fan-out, HITL interactive steps, feedback loop RAG-lite                               | P2       | 📝 Proposta (0/23 task)                     |
-| **FR-W09** | Project Brand Persona: iniezione automatica di brand voice a livello progetto in tutti i prompt                             | P2       | 📝 Proposta                                 |
+| ID         | Requisito                                                                                                                   | Priorità | Stato                                       |     |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------- | --- |
+| **FR-W01** | BE-Driven Workflow: esecuzione asincrona multi-step via BullMQ, FE riceve progress via SSE, indipendente dal tab browser    | P0       | ✅ Implementato                              |     |
+| **FR-W02** | Idempotency: prevenire generazioni duplicate tramite `IdempotencyKey`, supporto replay e conflict detection                 | P0       | ✅ Implementato                              |     |
+| **FR-W03** | Resume/Regenerate: possibilità di riprendere workflow interrotti e rigenerare step specifici da checkpoint                  | P0       | ✅ Implementato                              |     |
+| **FR-W04** | Cancellazione: `POST /cancel` per fermare workflow attivi (flag controllato a ogni step boundary)                           | P0       | ✅ Implementato                              |     |
+| **FR-W05** | Crediti a due livelli: artifact gate (anti-abuso, invisibile) + consumo crediti solo su step finale                         | P0       | ✅ Implementato                              |     |
+| **FR-W06** | Per-step LLM model override: configurazione statica che assegna modelli deterministici specifici per ogni step di ogni tool | P1       | 🔄 Parziale (3 step blog-article-generator) |     |
+| **FR-W07** | Global Deterministic Model Matrix: estendere FR-W06 a tutti i 22 step LLM rimanenti (DDD-234)                               | P1       | 📝 Proposta (0/22 implementati)             |     |
+| **FR-W08** | Output Personalization: multi-variant fan-out, HITL interactive steps, feedback loop RAG-lite                               | P2       | 📝 Proposta (0/23 task)                     |     |
+| **FR-W09** | Project Brand Persona: iniezione automatica di brand voice a livello workspace in tutti i prompt                            | P2       | 📝 Proposta                                 |     |
 
 ### 3.3 Workspace & Asset
 
-| ID | Requisito | Priorità | Stato |
-|----|-----------|----------|-------|
-| **FR-A01** | Asset Management: CRUD per `brief`, `brand-voice`, `persona`, `angle`, `ad-copy` a livello progetto | P0 | ✅ Implementato |
-| **FR-A02** | Asset Injection: risoluzione automatica degli Asset nel prompt di generazione via `AssetFieldMapping` | P0 | ✅ Implementato |
-| **FR-A03** | Knowledge Panel: selezione Asset nel ToolPage Setup, con hard-block per asset `always-required` | P0 | ✅ Implementato |
-| **FR-A04** | Promote-to-Asset: promozione output di generazione ad Asset riutilizzabile con mapping deterministico `toolKey→assetType` | P0 | ✅ Implementato |
-| **FR-A05** | Workspace Dashboard: vista centrale con pannelli workspace-centric, card-variant layout | P0 | ✅ Implementato (parziale: `FoundationToolsPanel` mancante) |
-| **FR-A06** | README di Progetto: definizione e visualizzazione di un README per ogni progetto | P1 | 🔄 Parziale |
+| ID         | Requisito                                                                                                                 | Priorità | Stato                                                      |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------- | -------- | ---------------------------------------------------------- |
+| **FR-A01** | Asset Management: CRUD per `brief`, `brand-voice`, `persona`, `angle`, `ad-copy` a livello workspace                      | P0       | ✅ Implementato                                             |
+| **FR-A02** | Asset Injection: risoluzione automatica degli Asset nel prompt di generazione via `AssetFieldMapping`                     | P0       | ✅ Implementato                                             |
+| **FR-A03** | Knowledge Panel: selezione Asset nel ToolPage Setup, con hard-block per asset `always-required`                           | P0       | ✅ Implementato                                             |
+| **FR-A04** | Promote-to-Asset: promozione output di generazione ad Asset riutilizzabile con mapping deterministico `toolKey→assetType` | P0       | ✅ Implementato                                             |
+| **FR-A05** | Workspace Dashboard: vista centrale con pannelli workspace-centric, card-variant layout                                   | P0       | ✅ Implementato (parziale: `FoundationToolsPanel` mancante) |
 
 ### 3.4 Amministrazione
 
@@ -100,19 +99,19 @@ Gen App 2 è una piattaforma AI-powered di content generation che trasforma inpu
 
 ### 3.6 Interfaccia Utente
 
-| ID | Requisito | Priorità | Stato |
+| ID | Requisito                                                                                                                           | Priorità | Stato |
 |----|-----------|----------|-------|
-| **FR-U01** | Registry-Driven Tool Pages: single `ToolPageTemplate` (~150 LOC), nuovo tool = 5 file, ~100 linee, ~30 min | P0 | ✅ Implementato |
+| **FR-U01** | Registry-Driven Tool Pages: single `ToolPageTemplate` (~150 LOC), nuovo tool = 5 file, ~100 linee, ~30 min                          | P0 | ✅ Implementato |
 | **FR-U02** | Readiness Snapshot: valutazione start-eligibility con reason code tipizzati (`missing_project`, `missing_extraction_context`, etc.) | P0 | ✅ Implementato |
-| **FR-U03** | Canonical UI State Derivation: 8 stati deterministici (`draft-empty` → `completed`), CTA policy derivata automaticamente | P0 | ✅ Implementato |
-| **FR-U04** | Explicit Error States: nessun `error: string | null`; errori modellati come compound state XState (ADR-003) | P0 | ✅ Implementato |
-| **FR-U05** | Unified Feedback Panel: singolo `ToolFeedbackPanel` con card-based progress, state-driven (non feature-flagged) | P0 | ✅ Implementato |
-| **FR-U06** | UI Governance: 2 archetype pagina, 3 pattern CTA, design token only, feedback channel deterministici | P0 | ✅ Implementato |
-| **FR-U07** | Accessibility: navigazione tastiera, focus visibile, label screen-reader, messaggi errore actionable | P0 | ✅ Implementato (test a11y attivi) |
-| **FR-U08** | Dark/Light mode: tema MUI con `defaultMode="system"` | P1 | ✅ Implementato |
-| **FR-U09** | Session History: navigazione `SessionSummary` → dettaglio sessione → download artefatti | P0 | ✅ Implementato |
-| **FR-U10** | Artifact History: listing globale artefatti con filtro per progetto e tipo | P1 | ✅ Implementato |
-| **FR-U11** | Download esportazione: session download in formato `.docx` e `.pdf` | P0 | ✅ Implementato |
+| **FR-U03** | Canonical UI State Derivation: 8 stati deterministici (`draft-empty` → `completed`), CTA policy derivata automaticamente            | P0 | ✅ Implementato |
+| **FR-U04** | Explicit Error States: nessun `error: string                                                                                        | null`; errori modellati come compound state XState (ADR-003) | P0 | ✅ Implementato |
+| **FR-U05** | Unified Feedback Panel: singolo `ToolFeedbackPanel` con card-based progress, state-driven (non feature-flagged)                     | P0 | ✅ Implementato |
+| **FR-U06** | UI Governance: 2 archetype pagina, 3 pattern CTA, design token only, feedback channel deterministici                                | P0 | ✅ Implementato |
+| **FR-U07** | Accessibility: navigazione tastiera, focus visibile, label screen-reader, messaggi errore actionable                                | P0 | ✅ Implementato (test a11y attivi) |
+| **FR-U08** | Dark/Light mode: tema MUI con `defaultMode="system"`                                                                                | P1 | ✅ Implementato |
+| **FR-U09** | Session History: navigazione `SessionSummary` → dettaglio sessione → download artefatti                                             | P0 | ✅ Implementato |
+| **FR-U10** | Artifact History: listing globale artefatti con filtro per workspace e tipo                                                         | P1 | ✅ Implementato |
+| **FR-U11** | Download esportazione: session download in formato `.docx` e `.pdf`                                                                 | P0 | ✅ Implementato |
 
 ---
 
@@ -218,13 +217,13 @@ Gen App 2 è una piattaforma AI-powered di content generation che trasforma inpu
 | CTA convergence (MUI vs native) | 🔄 Parziale | Richiede ADR per standardizzare sistema bottoni |
 
 ### Orizzonte 3 — Visione (2025)
-| Epic | Note |
-|------|------|
-| Multi-tenant workspace | Isolamento progetti e team |
-| Collaborative editing | Multi-utente simultaneo su stesso workflow |
-| Modello crediti avanzato | Piani tariffari, credit pooling, overage |
-| API pubblica | Endpoint documentati per integrazioni esterne |
-| Internazionalizzazione | Supporto multi-lingua per output generati |
+| Epic                     | Note                                          |
+| ------------------------ | --------------------------------------------- |
+| Multi-tenant workspace   | Isolamento workspaces e team                  |
+| Collaborative editing    | Multi-utente simultaneo su stesso workflow    |
+| Modello crediti avanzato | Piani tariffari, credit pooling, overage      |
+| API pubblica             | Endpoint documentati per integrazioni esterne |
+| Internazionalizzazione   | Supporto multi-lingua per output generati     |
 
 ---
 

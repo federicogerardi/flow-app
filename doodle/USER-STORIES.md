@@ -27,16 +27,16 @@
 
 ---
 
-## Epic 2 — Workspace & Progetti
+## Epic 2 — Workspace
 
-| ID | Story | Persona | Pri | Stato |
-|----|-------|---------|-----|-------|
-| **US-W01** | Come content marketer, voglio creare un progetto per organizzare i contenuti di una specifica campagna | CM | P0 | ✅ |
-| **US-W02** | Come content marketer, voglio vedere tutti i miei progetti in una dashboard centrale per navigare rapidamente tra le campagne | CM | P0 | ✅ |
-| **US-W03** | Come content marketer, voglio accedere alla cronologia delle generazioni di un progetto per recuperare contenuti passati | CM | P0 | ✅ |
-| **US-W04** | Come content marketer, voglio selezionare un progetto attivo prima di usare un tool per associare gli output al progetto corretto | CM | P0 | ✅ |
-| **US-W05** | Come content marketer, voglio vedere lo stato di readiness del tool in base al progetto e ai file caricati, per capire cosa manca prima di iniziare | CM | P0 | ✅ |
-| **US-W06** | Come content marketer, voglio vedere i crediti rimanenti del mese nel workspace per sapere quante generazioni posso ancora fare | CM | P0 | ✅ |
+| ID         | Story                                                                                                                                                | Persona | Pri | Stato |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | --- | ----- |
+| **US-W01** | Come content marketer, voglio creare un workspace per organizzare i contenuti di una specifica campagna                                              | CM      | P0  | ✅     |
+| **US-W02** | Come content marketer, voglio vedere tutti i miei workspaces in una dashboard centrale per navigare rapidamente tra le campagne                      | CM      | P0  | ✅     |
+| **US-W03** | Come content marketer, voglio accedere alla cronologia delle generazioni di un workspace per recuperare contenuti passati                            | CM      | P0  | ✅     |
+| **US-W04** | Come content marketer, voglio selezionare un workspace attivo prima di usare un tool per associare gli output al workspace corretto                  | CM      | P0  | ✅     |
+| **US-W05** | Come content marketer, voglio vedere lo stato di readiness del tool in base al workspace e ai file caricati, per capire cosa manca prima di iniziare | CM      | P0  | ✅     |
+| **US-W06** | Come content marketer, voglio vedere i crediti rimanenti del mese nel workspace per sapere quante generazioni posso ancora fare                      | CM      | P0  | ✅     |
 
 ---
 
@@ -166,16 +166,16 @@
 
 ## Epic 12 — Qualità & Feedback
 
-| ID | Story | Persona | Pri | Stato |
-|----|-------|---------|-----|-------|
-| **US-QF01** | Come content marketer, voglio vedere un feedback panel unificato nella colonna destra che cambia in base allo stato della generazione | CM | P0 | ✅ |
-| **US-QF02** | Come content marketer, voglio vedere lo stato di readiness pre-flight (progetto selezionato? file caricato? asset disponibili?) prima di poter avviare | CM | P0 | ✅ |
-| **US-QF03** | Come content marketer, voglio ricevere messaggi di errore chiari e azionabili se qualcosa va storto durante la generazione | CM | P0 | ✅ |
-| **US-QF04** | Come content marketer, voglio poter ritentare una generazione fallita con un click, senza dover ricaricare tutto | CM | P0 | ✅ |
-| **US-QF05** | Come content marketer, voglio che l'interfaccia sia accessibile da tastiera e screen reader per poter lavorare senza mouse | CM | P0 | ✅ |
-| **US-QF06** | Come content marketer, voglio che il tema (chiaro/scuro) segua le mie preferenze di sistema | CM | P1 | ✅ |
-| **US-QF07** | Come content marketer, voglio lasciare un feedback (👍/👎) su un output generato per aiutare a migliorare la qualità | CM | P2 | 🔄 (solo UI, no backend) |
-| **US-QF08** | Come content marketer, voglio taggare un output come "funziona" / "non funziona" / "da testare" per tracciare l'efficacia dei contenuti | CM | P2 | 💡 |
+| ID          | Story                                                                                                                                                   | Persona | Pri | Stato                    |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | --- | ------------------------ |
+| **US-QF01** | Come content marketer, voglio vedere un feedback panel unificato nella colonna destra che cambia in base allo stato della generazione                   | CM      | P0  | ✅                        |
+| **US-QF02** | Come content marketer, voglio vedere lo stato di readiness pre-flight (workspace selezionato? file caricato? asset disponibili?) prima di poter avviare | CM      | P0  | ✅                        |
+| **US-QF03** | Come content marketer, voglio ricevere messaggi di errore chiari e azionabili se qualcosa va storto durante la generazione                              | CM      | P0  | ✅                        |
+| **US-QF04** | Come content marketer, voglio poter ritentare una generazione fallita con un click, senza dover ricaricare tutto                                        | CM      | P0  | ✅                        |
+| **US-QF05** | Come content marketer, voglio che l'interfaccia sia accessibile da tastiera e screen reader per poter lavorare senza mouse                              | CM      | P0  | ✅                        |
+| **US-QF06** | Come content marketer, voglio che il tema (chiaro/scuro) segua le mie preferenze di sistema                                                             | CM      | P1  | ✅                        |
+| **US-QF07** | Come content marketer, voglio lasciare un feedback (👍/👎) su un output generato per aiutare a migliorare la qualità                                    | CM      | P2  | 🔄 (solo UI, no backend) |
+| **US-QF08** | Come content marketer, voglio taggare un output come "funziona" / "non funziona" / "da testare" per tracciare l'efficacia dei contenuti                 | CM      | P2  | 💡                       |
 
 ---
 
