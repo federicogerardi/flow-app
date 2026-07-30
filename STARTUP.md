@@ -1,6 +1,12 @@
 ---
+title: "Flow — Appunti e decisioni preliminari"
+description: "Documento di bootstrap per lo sviluppo di Flow, suite AI-powered per la generazione di contenuti multi-step."
 tags:
   - bootstrap
+  - planning
+  - architecture
+project: flow-app
+status: draft
 ---
 Questo documento reccoglie appunti e decisioni preliminari per lo sviluppo dell'app Flow.
 ## Funzione
