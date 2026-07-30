@@ -150,18 +150,16 @@ What's missing is the **infrastructure, API, and UI layer** — everything neede
 
 #### F1: ToolPage Machine (XState v5)
 
-**Status**: ❌ Not documented  
-**Why needed**: The frontend has no state machine. This is the equivalent of `sessionMachine` for the UI.
+**Status**: ✅ Done — see [[ToolPage Machine (XState v5)]]  
+**Why needed**: The frontend needs a state machine to drive the tool UI workflow.
 
-**Required output**:
-- States: `draft-empty` → `configuring` → `ready` → `submitting` → `running` → `completed` → `failed`
-- Context: `{ toolKey, workspaceId, inputs, readiness, sessionId, progress, artifacts }`
-- Events: `CONFIGURE`, `SUBMIT`, `STEP_COMPLETED`, `SESSION_COMPLETED`, `SESSION_FAILED`, `CANCEL`
-- Guards: `canSubmit` (ReadinessPolicy from domain), `isComplete`
-- Actors: `submitSession` (POST to backend), `subscribeToSSE` (EventSource)
-- Actions: `updateProgress`, `showArtifact`, `enableDownload`
-
-**Depends on**: `Tool as Static Configuration.md`, `ReadinessPolicy.md`, `Session Machine (XState v5).md`
+**Output**:
+- 8 states: draftEmpty → configuring → ready → submitting → running → completed → failed → cancelled
+- 2 actors: `submitSession` (POST via fetch), `subscribeToSSE` (EventSource via fromCallback)
+- React integration with `useMachine` hook and state → UI derivation function
+- Component tree: ToolPage → SetupPanel, KnowledgePanel, FeedbackPanel, SessionSummary, ErrorPanel
+- CTA policy: 6 UI states with correct button behavior per state
+- Guards: `canSubmit` (mirrors backend ReadinessPolicy), `isStillDraft`
 
 ---
 

@@ -44,7 +44,7 @@ date_updated: 2026-07-30
 | [[Domain Events]] | Architecture | high | 4 |
 | [[Domain Events Catalog]] | Reference | high | 4 |
 | [[packages-domain Structure]] | Reference | high | 4 |
-| [[Database Schema]] | Infrastructure | high | 0 |
+| [[ToolPage Machine (XState v5)]] | Implementation | high | 4 |
 | [[API Routes]] | Infrastructure | high | 0 |
 | [[BullMQ Worker Wiring]] | Infrastructure | high | 0 |
 | [[LLM Gateway - OpenRouter]] | Infrastructure | high | 0 |

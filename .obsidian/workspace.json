@@ -183,16 +183,17 @@
       "bases:Create new base": false
     }
   },
-  "active": "2f946eba525bc0ca",
+  "active": "278473b8b390cf25",
   "lastOpenFiles": [
-    "Wiki/concepts/LLM Gateway - OpenRouter.md",
+    "Wiki/concepts/ToolPage Machine (XState v5).md",
     "Wiki/concepts/BullMQ Worker Wiring.md",
+    "Wiki/synthesis/backend-frontend-startup-gaps.md",
+    "Wiki/concepts/LLM Gateway - OpenRouter.md",
     "Wiki/concepts/Domain Events.md",
     "Wiki/concepts/API Routes.md",
     "Wiki/concepts/Database Schema.md",
     "Wiki/index.md",
     "Wiki/entities/Workspace.md",
-    "Wiki/synthesis/backend-frontend-startup-gaps.md",
     "Wiki/overview.md",
     "Wiki/entities/User.md",
     "Wiki/concepts/ReadinessPolicy.md",
@@ -210,7 +211,6 @@
     "Wiki/concepts/Tool as Static Configuration.md",
     "Wiki/concepts/ScoringEngine.md",
     "Wiki/concepts/Competitive Intelligence.md",
-    "Wiki/concepts/Progressive Context Enrichment.md",
     "Wiki/synthesis",
     "Wiki/sources",
     "Wiki/concepts",

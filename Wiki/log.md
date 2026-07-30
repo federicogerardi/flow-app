@@ -20,21 +20,21 @@ tags:
 
 ## [2026-07-30] analysis | Startup gaps
 
-## [2026-07-30] ingest | B1 — Database Schema
+## [2026-07-30] ingest | Backend P0: B1 → B2 → B3
 
 - [[Database Schema]]: 15 tables, 7 enums, Kysely types, 6 migrations
-
-## [2026-07-30] ingest | B2 — API Routes
-
 - [[API Routes]]: 45 endpoints, SSE format, error catalog
-
-## [2026-07-30] ingest | B3 — BullMQ Worker Wiring + LLM Gateway
-
-- [[BullMQ Worker Wiring]]: async execution pipeline, crash recovery, event bridge
-- [[LLM Gateway - OpenRouter]]: model tier mapping, fallback chain, prompt loader
+- [[BullMQ Worker Wiring]]: async pipeline, crash recovery, event bridge
+- [[LLM Gateway - OpenRouter]]: model tiers, fallback, prompt loader
 
 ## [2026-07-30] rename | Gen App 2 → Flow App
 
-- Replaced all occurrences across 14 files (10 Wiki, 3 doodle, 1 CLAUDE.md)
-- `Gen App 2` → `Flow App`, `gen-app-2` → `flow-app`
-- Zero remaining references to old name
+- 14 files updated, zero remaining references
+
+## [2026-07-30] ingest | F1 — ToolPage Machine (Frontend)
+
+- [[ToolPage Machine (XState v5)]]: 8 states, 2 actors (fetch + EventSource)
+- React integration: `useMachine` hook, state → UI derivation (6 UI states)
+- Component tree: ToolPage → SetupPanel, KnowledgePanel, FeedbackPanel, SessionSummary, ErrorPanel
+- CTA policy per state, `canSubmit` guard mirroring backend ReadinessPolicy
+- P0 startup gaps all closed. Wiki: 39 pages
