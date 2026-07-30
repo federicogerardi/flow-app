@@ -30,35 +30,54 @@ In sintesi:
 ## Backend
 Governa l'intero ciclo di lavoro di ogni tool di generazione. Valida, popola e trasferisce dati tra gli step per arrivare all'artefatto finale e alla gestione di asset e workflow.
 ### ESEMPIO API BACKEND
+
 #### Health
-Metodo	Path	Descrizione
-GET/HEAD	/health	Health check
-Auth
-Metodo	Path	Descrizione
-POST	/auth/login	Login email/password
-POST	/auth/logout	Logout
-GET	/auth/session	Validazione sessione corrente
-GET	/auth/google/start	Avvio OAuth Google
-GET	/auth/google/callback	Callback OAuth Google
+
+| Metodo   | Path    | Descrizione   |
+|----------|---------|---------------|
+| GET/HEAD | /health | Health check  |
+
+#### Auth
+
+| Metodo | Path                  | Descrizione                |
+|--------|-----------------------|----------------------------|
+| POST   | /auth/login           | Login email/password       |
+| POST   | /auth/logout          | Logout                     |
+| GET    | /auth/session         | Validazione sessione corrente |
+| GET    | /auth/google/start    | Avvio OAuth Google         |
+| GET    | /auth/google/callback | Callback OAuth Google      |
+
 #### Generation
-Metodo	Path	Descrizione
-POST	/generation/stream	Generazione con streaming SSE in tempo reale
-POST	/generation/run	Generazione non-streaming (JSON)
-API Pubbliche
+
+| Metodo | Path                | Descrizione                              |
+|--------|---------------------|------------------------------------------|
+| POST   | /generation/stream  | Generazione con streaming SSE in tempo reale |
+| POST   | /generation/run     | Generazione non-streaming (JSON)         |
+
+### API Pubbliche
+
 #### Workspaces
-Metodo	Path	Descrizione
-GET	/api/workspaces	Lista workspaces dell'utente
-POST	/api/workspaces	Crea workspace
-GET	/api/workspaces/:workspaceId	Dettaglio workspace
-PUT	/api/workspaces/:workspaceId	Aggiorna workspace
+
+| Metodo | Path                        | Descrizione             |
+|--------|-----------------------------|-------------------------|
+| GET    | /api/workspaces             | Lista workspaces dell'utente |
+| POST   | /api/workspaces             | Crea workspace          |
+| GET    | /api/workspaces/:workspaceId | Dettaglio workspace     |
+| PUT    | /api/workspaces/:workspaceId | Aggiorna workspace      |
+
 #### Artifacts
-Metodo	Path	Descrizione
-GET	/api/artifacts	Lista artefatti (filtrabile)
-GET	/api/artifacts/:artifactId	Dettaglio artefatto
-GET	/api/artifacts/:artifactId/download	Download artefatto (md/txt/docx)
+
+| Metodo | Path                              | Descrizione                      |
+|--------|-----------------------------------|----------------------------------|
+| GET    | /api/artifacts                    | Lista artefatti (filtrabile)     |
+| GET    | /api/artifacts/:artifactId        | Dettaglio artefatto              |
+| GET    | /api/artifacts/:artifactId/download | Download artefatto (md/txt/docx) |
+
 #### Admin — Utenti, Modelli, API Services, Sessioni
-Metodo	Path	Descrizione
-CRUD	/admin/users + /:userId	Gestione utenti
-CRUD	/api/admin/models + /:modelId	Catalogo modelli LLM
-CRUD	/api/admin/api-services + /:serviceId + bindings	Gestione API servic
-GET	/api/admin/sessions + /:sessionId + download	Vista admin sessioni
+
+| Metodo | Path                                      | Descrizione              |
+|--------|-------------------------------------------|--------------------------|
+| CRUD   | /admin/users + /:userId                   | Gestione utenti          |
+| CRUD   | /api/admin/models + /:modelId             | Catalogo modelli LLM     |
+| CRUD   | /api/admin/api-services + /:serviceId + bindings | Gestione API service |
+| GET    | /api/admin/sessions + /:sessionId + download | Vista admin sessioni  |
