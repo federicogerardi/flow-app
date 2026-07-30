@@ -1,4 +1,4 @@
-# Gen App 2 — User Stories
+# Flow App — User Stories
 
 > Versione: 1.0 — Stato: **Draft** — Ultimo aggiornamento: 2026-07-30
 

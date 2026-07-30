@@ -1,8 +1,8 @@
-# Gen App 2 — App Concept Document
+# Flow App — App Concept Document
 
 ## Visione
 
-Gen App 2 è una piattaforma AI-powered per la generazione strutturata di contenuti di marketing. Ogni **Tool** è una capability completa: accetta input contestuali (briefing, documenti, brand voice), esegue una catena ordinata di step di elaborazione basati su LLM, e produce artefatti pronti all'uso — landing page, script video, articoli, analisi competitive, asset riutilizzabili.
+Flow App è una piattaforma AI-powered per la generazione strutturata di contenuti di marketing. Ogni **Tool** è una capability completa: accetta input contestuali (briefing, documenti, brand voice), esegue una catena ordinata di step di elaborazione basati su LLM, e produce artefatti pronti all'uso — landing page, script video, articoli, analisi competitive, asset riutilizzabili.
 
 **Nessuna black box**: ogni step di generazione è visibile, rieseguibile e tracciabile. Gli output sono versionati, scaricabili e associati al workspace.
 

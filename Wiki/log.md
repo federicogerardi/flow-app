@@ -30,9 +30,11 @@ tags:
 
 ## [2026-07-30] ingest | B3 — BullMQ Worker Wiring + LLM Gateway
 
-- [[BullMQ Worker Wiring]]: async execution pipeline, crash recovery, event bridge, graceful shutdown
-- [[LLM Gateway - OpenRouter]]: unified gateway for all LLM models
-  - Model tier mapping: premium → Claude, balanced → GPT-4o Mini, light → Gemini Flash, search → Gemini Pro
-  - Fallback chain per tier, cost tracking, prompt template loader
-  - 34 prompt templates organized by tool/step
-- Wiki: 38 pages. Next: F1 — ToolPage XState Machine (Frontend)
+- [[BullMQ Worker Wiring]]: async execution pipeline, crash recovery, event bridge
+- [[LLM Gateway - OpenRouter]]: model tier mapping, fallback chain, prompt loader
+
+## [2026-07-30] rename | Gen App 2 → Flow App
+
+- Replaced all occurrences across 14 files (10 Wiki, 3 doodle, 1 CLAUDE.md)
+- `Gen App 2` → `Flow App`, `gen-app-2` → `flow-app`
+- Zero remaining references to old name

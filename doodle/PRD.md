@@ -1,4 +1,4 @@
-# Gen App 2 — Product Requirement Document
+# Flow App — Product Requirement Document
 
 > Versione: 1.0 — Stato: **Draft** — Ultimo aggiornamento: 2026-07-30
 
@@ -6,7 +6,7 @@
 
 ## 1. Visione Prodotto
 
-Gen App 2 è una piattaforma AI-powered di content generation che trasforma input contestuali (briefing, documenti, keyword) in output di marketing pronti all'uso attraverso pipeline multi-step deterministiche, trasparenti e tracciabili.
+Flow App è una piattaforma AI-powered di content generation che trasforma input contestuali (briefing, documenti, keyword) in output di marketing pronti all'uso attraverso pipeline multi-step deterministiche, trasparenti e tracciabili.
 
 **Value proposition**: ogni step di generazione è visibile, rieseguibile, versionato e associato al workspace. Nessuna black box — l'utente ha sempre il controllo sulla catena di produzione dei contenuti.
 

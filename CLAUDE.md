@@ -4,13 +4,13 @@ tags:
   - wiki/schema
 ---
 
-# CLAUDE.md — Flow App (Gen App 2)
+# CLAUDE.md — Flow App (Flow App)
 
 This file contains instructions for LLM agents working in this Obsidian vault. It defines how to interact with the codebase, documentation, and the LLM wiki.
 
 ## Project Context
 
-Gen App 2 is an AI-powered content generation platform for B2B marketing teams. It transforms contextual inputs into structured marketing artifacts through deterministic, traceable multi-step LLM pipelines.
+Flow App is an AI-powered content generation platform for B2B marketing teams. It transforms contextual inputs into structured marketing artifacts through deterministic, traceable multi-step LLM pipelines.
 
 **Monorepo structure**: `apps/backend`, `apps/frontend`, `packages/contracts`, `packages/domain`, `packages/infra-db`
 
