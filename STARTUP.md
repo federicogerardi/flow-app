@@ -81,3 +81,74 @@ Governa l'intero ciclo di lavoro di ogni tool di generazione. Valida, popola e t
 | CRUD   | /api/admin/models + /:modelId             | Catalogo modelli LLM     |
 | CRUD   | /api/admin/api-services + /:serviceId + bindings | Gestione API service |
 | GET    | /api/admin/sessions + /:sessionId + download | Vista admin sessioni  |
+L'applicazione è una piattaforma e suite di strumenti guidati dall'Intelligenza Artificiale, progettata per automatizzare, strutturare e velocizzare la creazione di contenuti, materiali di marketing e analisi strategiche di mercato.
+
+La sua funzione principale è trasformare materiali grezzi (come appunti, file di briefing, descrizioni o ricerche di mercato) in documenti operativi ad alto valore — definiti **Artefatti** e **Asset di Workspace** — attraverso flussi di lavoro guidati e sequenziali.
+
+## 1. Specifiche Funzionali
+
+L'applicazione organizza le proprie funzionalità attorno al concetto di **Tool** (Strumento), ciascuno dedicato a una specifica capacità operativa:
+
+### Catalogo degli Strumenti
+
+- **Generazione di Copy e Contenuti Creativi**:
+    
+    - **Pagine di Sales & Funnel: Strutturazione e stesura di copy per sequenze di vendita, opt-in, quiz e landing page.
+    - **Script Video Long-Form: Creazione guidata di script completi per YouTube.
+    - **Angoli Strategici e Inserzioni: Identificazione di angoli di marketing e stesura di copy pubblicitari per campagne (es. Meta Ads).
+        
+    - **Articoli di Blog: Creazione guidata di articoli di blog in lingua italiana ottimizzati per la SEO.
+        
+    - **Descrizioni Rapide: Generazione immediata di descrizioni e testi brevi a partire da un input di testo diretto.
+        
+- **Strumenti Primitivi / Creatori di Asset Aziendali**:
+    
+    - **Brief e Tone of Voice: Estrazione da documenti grezzi (`.txt`, `.md`, `.docx`) e formalizzazione di Brief creativi e del Tono di Voce (Brand Voice) aziendale.
+    - **Buyer Persona: Analisi e sintesi del profilo del cliente ideale.
+        
+- **Analisi e Ricerca di Mercato**:
+    
+    - **Analisi Competitiva: Analisi dei risultati dei motori di ricerca (SERP), calcolo del posizionamento dei competitor e generazione di report strategici unificati.
+        
+
+### Modello dei Workspace e degli Asset (Workspace & Asset Domain Model)
+
+- **Organizzazione in Workspace**: Ogni attività è racchiusa all'interno di un Workspace di riferimento.
+    
+- **Promozione e Riutilizzo degli Asset**: Un documento chiave generato da un tool (come un Brief, una Persona o una Brand Voice) può essere promosso ad **Asset di Workspace**. Tale asset diventa una riserva di conoscenza condivisa riutilizzabile da altri strumenti per garantire coerenza strategica ed espressiva tra le varie generazioni.
+    
+
+### Area di Lavoro (Tool Workspace)
+
+- **Pannello di Configurazione (Setup Panel)**: Consente l'inserimento dei dati tramite campi di testo, caricamento di file di briefing o selezione degli Asset salvati nel progetto.
+    
+- **Pannello di Avanzamento (Workflow Panel)**: Mostra il tracciamento visivo dello stato di avanzamento delle varie fasi di elaborazione.
+    
+- **Gestione Risultati e Sessioni (Session Summary)**: Permette la visualizzazione, la consultazione storica, il download e il rilancio (Relaunch) delle generazioni effettuate.
+    
+
+## 2. Specifiche Logiche e Regole di Dominio
+
+Dal punto di vista logico e del flusso dei dati, l'applicazione rispetta le seguenti regole di business:
+
+- **Catena Ordinata di Step (Ordered Step Chain)**:
+    
+    - Ogni Tool esegue una sequenza deterministica di passaggi logici (**WorkflowSteps**).
+        
+    - Gli step appartengono a categorie ben definite: _Extraction_ (estrazione dati da documenti), _Acquisition/Crawling_ (raccolta dati esterni), _Scoring_ (valutazione e punteggio) e _Generation_ (sintesi/stesura del testo).
+        
+- **Arricchimento Progressivo del Contesto (Progressive Context Enrichment)**:
+    
+    - L'output prodotto da uno step viene immesso logicamente come contesto di input per lo step successivo, consentendo un affinamento sequenziale del contenuto.
+        
+- **Politica dei Requisiti di Input (Readiness & Policy)**:
+    
+    - L'avvio di un flusso è regolato da una verifica logica dei requisiti obbligatori (es. presenza del file di briefing primario o asset required).
+        
+    - Il sistema abilita l'azione principale solo quando le condizioni vincolanti sono soddisfatte, gestendo i file o i parametri secondari come opzionali non bloccanti.
+        
+- **Ciclo di Vita dell'Artefatto e della Sessione**:
+    
+    - Ogni fase di generazione produce un **Artefatto**. Gli output intermedi hanno un ruolo logico di supporto ("step"), mentre l'output finale ha il ruolo di deliverable definitivo ("final").
+        
+    - Il lavoro viene raggruppato in **Sessioni**, garantendo la tracciabilità delle esecuzioni, l'idempotenza delle operazioni e la possibilità di riprendere il flusso da uno stato di interruzione precedente.
