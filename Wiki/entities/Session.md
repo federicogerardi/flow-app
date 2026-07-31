@@ -3,7 +3,7 @@ type: entity
 tags:
   - wiki/entity
   - wiki/generation
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 source_count: 4
 ---
 
@@ -39,10 +39,208 @@ draft → ready → running → completed
 
 ## Invariants
 
-- Cannot transition to `running` unless `ready` and all required inputs satisfied
-- Cannot `complete` without a `final` Artifact (one per Session)
+All invariants are enforced by `SessionLifecycle` (domain-owned state machine — see below). The aggregate root has a single entry point `apply(event)` that validates every transition against the lifecycle definition. There are no duplicate guard methods — the lifecycle is the single source of truth.
+
+- Cannot transition to `running` unless `ready` and all required inputs satisfied — `START` event guarded by [[ReadinessPolicy]] (domain predicate, not XState)
+- Cannot `complete` without a `final` Artifact — `SessionLifecycle` enforces `COMPLETE` only from `running` state with `hasArtifacts` guard
+- Cannot `addArtifact()` when not in `running` state — `SessionLifecycle` rejects `ADD_ARTIFACT` from any non-`running` state
+- Cannot `cancel()` when not in `running` state — `SessionLifecycle` rejects `CANCEL` from any non-`running` state
 - `IdempotencyKey` uniqueness: same `(userId, workspaceId, toolKey, inputHash)` → same Session
-- Step execution is strictly sequential — no skipping, no reordering
+- Step execution is strictly sequential — no skipping, no reordering (enforced by `Artifact.stepNumber` being a `StepNumber` VO)
+
+## Session Lifecycle — Domain-Owned State Machine
+
+> **Architecture decision (Pattern B, 2026-07-31)**: The state machine is defined in the **domain** as pure data (`packages/domain/src/generation/session-lifecycle.ts`). XState in the application layer imports and executes it — it defines nothing. This eliminates the double-enforcement redundancy (entity guards + XState guards) and makes the domain the single source of truth for all valid transitions.
+
+### Lifecycle Definition (packages/domain)
+
+```typescript
+// packages/domain/src/generation/session-lifecycle.ts
+// ⬅️ DOMAIN LAYER — single source of truth for Session state transitions
+// Zero dependencies. Plain TypeScript object. Framework-agnostic.
+
+export const SessionLifecycle = {
+  initialState: 'draft' as const,
+  states: {
+    draft: {
+      transitions: {
+        CONFIGURE: { target: 'ready' },
+      },
+    },
+    ready: {
+      transitions: {
+        START:  { target: 'running' },
+        CANCEL: { target: 'cancelled' },
+      },
+    },
+    running: {
+      transitions: {
+        ADD_ARTIFACT: { target: 'running' },
+        COMPLETE:     { target: 'completed' },
+        FAIL:         { target: 'failed' },
+        CANCEL:       { target: 'cancelled' },
+      },
+    },
+    completed: { type: 'final' as const },
+    failed:    { type: 'final' as const },
+    cancelled: { type: 'final' as const },
+  },
+} as const;
+
+// Derived type — exhaustiveness-checked by TypeScript
+export type SessionState = keyof typeof SessionLifecycle.states;
+export type SessionEventType = {
+  [S in SessionState]: keyof (typeof SessionLifecycle.states)[S] extends { transitions: infer T }
+    ? keyof T
+    : never;
+}[SessionState];
+
+export function getValidTransition(
+  from: SessionState,
+  event: SessionEventType,
+): SessionState | null {
+  const state = SessionLifecycle.states[from];
+  if (!('transitions' in state)) return null;
+  return (state.transitions as Record<string, { target: string }>)[event]?.target ?? null;
+}
+```
+
+> **SessionStatus derives from SessionLifecycle**: The `SessionStatus` value object must be derived from `SessionState` (i.e., `keyof typeof SessionLifecycle.states`) to guarantee compile-time consistency. There are NOT two independent enumerations — `SessionStatus` is a type alias or const mapping from `SessionLifecycle.states`. Adding a state to `SessionLifecycle` automatically adds it to `SessionStatus`. No drift possible.
+
+### Aggregate Root — Single Entry Point
+
+```typescript
+// packages/domain/src/generation/entities/Session.ts
+
+class Session {
+  private _artifacts: Artifact[];
+
+  constructor(
+    readonly sessionId: SessionId,
+    readonly toolKey: ToolKey,
+    readonly workspaceId: WorkspaceId,
+    readonly userId: UserId,
+    readonly idempotencyKey: IdempotencyKey,
+    private _status: SessionStatus,
+    private _currentStepIndex: StepNumber,
+    readonly createdAt: DateTime = DateTime.now(),
+    // Timestamps are private — set only by apply(), exposed via getters.
+    // They are NOT readonly in the constructor because apply() mutates them.
+    private _startedAt: DateTime | null = null,
+    private _completedAt: DateTime | null = null,
+  ) {}
+
+  static create(
+    toolKey: ToolKey,
+    workspaceId: WorkspaceId,
+    userId: UserId,
+    idempotencyKey?: IdempotencyKey,
+  ): Session {
+    return new Session(
+      SessionId.generate(),
+      toolKey,
+      workspaceId,
+      userId,
+      idempotencyKey ?? IdempotencyKey.generate(userId, workspaceId, toolKey),
+      SessionStatus.Draft,
+      StepNumber.of(0),
+    );
+  }
+
+  /**
+   * Single entry point for ALL state transitions.
+   * Validates against SessionLifecycle (domain definition).
+   * Returns the domain event to be published by the caller.
+   * XState calls this — it does NOT duplicate the transition logic.
+   *
+   * DDD principles enforced here:
+   * - Aggregate operates only on its own state (no external lookups).
+   * - isLast and stepLabel are passed in the event, not looked up from ToolRegistry.
+   * - Timestamps are set by the aggregate, not by the caller.
+   */
+  apply(event: SessionEvent): DomainEvent | null {
+    const from = this._status as SessionState;
+    const target = getValidTransition(from, event.type);
+    if (!target) {
+      throw new InvalidSessionStateError(
+        `Invalid transition: ${from} → ${event.type}`
+      );
+    }
+
+    switch (event.type) {
+      case 'CONFIGURE':
+        this._status = SessionStatus.Ready;
+        return null; // internal transition — no domain event
+
+      case 'START':
+        this._status = SessionStatus.Running;
+        this._startedAt = DateTime.now(); // ← aggregate manages its own temporal invariants
+        return new SessionStarted(this.sessionId, this.toolKey,
+          this.workspaceId, this.userId);
+
+      case 'ADD_ARTIFACT': {
+        this._artifacts.push(event.artifact);
+        this._currentStepIndex = event.artifact.stepNumber;
+        // isLast and stepLabel are passed by the caller (XState has the ToolDefinition).
+        // The aggregate does NOT call getTool() — it operates only on its own state.
+        return new StepCompleted(
+          this.sessionId,
+          event.artifact.stepNumber,
+          event.stepLabel,          // ← passed in, not looked up
+          event.artifact.artifactId,
+          event.isLast,             // ← passed in, not computed via getTool()
+        );
+      }
+
+      case 'COMPLETE': {
+        // Explicit narrowing — no non-null assertion
+        const final = this.finalArtifact;
+        if (!final) {
+          throw new InvalidSessionStateError('Cannot complete: no artifacts produced');
+        }
+        this._status = SessionStatus.Completed;
+        this._completedAt = DateTime.now(); // ← aggregate manages its own temporal invariants
+        return new SessionCompleted(this.sessionId, this.toolKey,
+          this.workspaceId, this.userId,
+          { artifactId: final.artifactId, content: final.content });
+      }
+
+      case 'FAIL':
+        this._status = SessionStatus.Failed;
+        return new SessionFailed(this.sessionId, this.toolKey,
+          this._currentStepIndex, event.errorCode, event.errorMessage);
+
+      case 'CANCEL':
+        this._status = SessionStatus.Cancelled;
+        return new SessionCancelled(this.sessionId, this._currentStepIndex);
+
+      default:
+        throw new InvalidSessionStateError(`Unknown event: ${(event as any).type}`);
+    }
+  }
+
+  // Getters — expose immutable views of private mutable state
+  get status(): SessionStatus { return this._status; }
+  get currentStepIndex(): StepNumber { return this._currentStepIndex; }
+  get artifacts(): ReadonlyArray<Artifact> { return this._artifacts; }
+  get startedAt(): DateTime | null { return this._startedAt; }
+  get completedAt(): DateTime | null { return this._completedAt; }
+  get finalArtifact(): Artifact | undefined {
+    return this._artifacts[this._artifacts.length - 1];
+  }
+}
+
+// Event union — one type per lifecycle transition.
+// ADD_ARTIFACT carries isLast + stepLabel so the aggregate never calls getTool().
+// This keeps the aggregate self-contained: it operates only on its own state.
+type SessionEvent =
+  | { type: 'CONFIGURE' }
+  | { type: 'START' }
+  | { type: 'ADD_ARTIFACT'; artifact: Artifact; isLast: boolean; stepLabel: string }
+  | { type: 'COMPLETE' }
+  | { type: 'FAIL'; errorCode: string; errorMessage: string }
+  | { type: 'CANCEL' };
+```
 
 ## Internal Entities
 

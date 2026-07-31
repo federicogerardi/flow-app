@@ -5,7 +5,7 @@ tags:
   - wiki/frontend
   - wiki/architecture
 date_updated: 2026-07-31
-source_count: 4
+source_count: 7
 confidence: high
 ---
 

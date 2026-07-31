@@ -134,7 +134,7 @@ confidence: high
 
 | Package | Type | Purpose |
 |---------|------|---------|
-| `typescript` | dev | Compilazione |
+| `typescript` | dev | Compilation |
 
 Zero runtime dependencies. Framework-agnostic pure TypeScript.
 
@@ -144,8 +144,8 @@ Zero runtime dependencies. Framework-agnostic pure TypeScript.
 
 | Package | Type | Purpose |
 |---------|------|---------|
-| `@flow-app/domain` | internal | Importa Entity/VO types per creare DTOs |
-| `typescript` | dev | Compilazione |
+| `@flow-app/domain` | internal | Imports Entity/VO types to build DTOs |
+| `typescript` | dev | Compilation |
 
 ---
 
@@ -156,7 +156,7 @@ Zero runtime dependencies. Framework-agnostic pure TypeScript.
 | `kysely` | runtime | Query builder |
 | `pg` | runtime | PostgreSQL driver |
 | `@flow-app/domain` | internal | Repository interfaces + entity types |
-| `typescript` | dev | Compilazione |
+| `typescript` | dev | Compilation |
 
 ---
 
@@ -165,7 +165,7 @@ Zero runtime dependencies. Framework-agnostic pure TypeScript.
 | Package | Type | Purpose |
 |---------|------|---------|
 | `@flow-app/domain` | internal | AssetType, ToolKey enums |
-| `typescript` | dev | Compilazione |
+| `typescript` | dev | Compilation |
 
 ---
 

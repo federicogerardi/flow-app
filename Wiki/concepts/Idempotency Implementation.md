@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 source_count: 4
 confidence: high
 ---
@@ -69,7 +69,7 @@ class RedisIdempotencyStore {
 
 ## PostgreSQL Fallback
 
-When Redis is unavailable (fail-closed: deny the operation), fall back to PostgreSQL with `INSERT ON CONFLICT`.
+When Redis is unavailable, fall back to PostgreSQL with `INSERT ON CONFLICT`. This path is **fail-open for availability** (request still accepted) while preserving idempotency guarantees.
 
 ```typescript
 // packages/infra-db/src/repositories/pg-idempotency-store.ts
@@ -140,7 +140,7 @@ class StartSessionUseCase {
     const readiness = policy.evaluate(acquisitionData);
     if (!readiness.isReady) throw new ReadinessError(readiness.missing);
 
-    // 5. Create placeholder session ID for claim
+    // 5. Generate the definitive session ID (used for both claim and Session creation)
     const sessionId = SessionId.generate();
 
     // 6. Atomic claim
@@ -152,8 +152,14 @@ class StartSessionUseCase {
       if (existing) return { session: existing, tool, acquisitionData };
     }
 
-    // 7. Create new session
-    const session = Session.create(cmd.toolKey, cmd.workspaceId, cmd.userId);
+    // 7. Create new session with the same claimed sessionId
+    const session = Session.createWithId(
+      sessionId,
+      cmd.toolKey,
+      cmd.workspaceId,
+      cmd.userId,
+      keyHash,
+    );
     await this.sessionRepo.save(session);
 
     return { session, tool, acquisitionData };
@@ -162,6 +168,17 @@ class StartSessionUseCase {
 ```
 
 **Key design**: readiness check happens BEFORE the claim. If the user submits invalid data, no idempotency key is consumed. The claim only happens for valid, ready-to-start sessions.
+
+## Deterministic Contract
+
+To avoid race conditions and drift between stores:
+
+1. Generate `sessionId` once.
+2. Claim `keyHash -> sessionId` atomically.
+3. Persist `Session` with the **same** `sessionId`.
+4. If persistence fails, release the claim (or let short TTL expire) and return error.
+
+This guarantees a single canonical `sessionId` for identical requests across retries.
 
 ---
 

@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/architecture
-date_updated: 2026-07-30
-source_count: 4
+date_updated: 2026-07-31
+source_count: 5
 confidence: high
 ---
 
@@ -20,6 +20,17 @@ confidence: high
 The `toolPageMachine` manages the complete lifecycle of a tool page: from input configuration through readiness validation, submission, real-time progress, to completion. It consumes domain types from `@flow-app/contracts` and communicates with the backend via HTTP + SSE.
 
 **Principle**: one machine for all 11 tools. Differences are purely configuration — which `ToolDefinition` is loaded determines which inputs to show, how many steps to expect, and what CTA states to render.
+
+## Determinism Contract (2026-07-31 remediation)
+
+Readiness must be deterministic across domain, API, and UI:
+
+1. **Domain is canonical**: backend `ReadinessPolicy` determines whether submission is allowed.
+2. **Frontend mirrors the same predicates** for immediate UX feedback.
+3. **Reason codes are canonical** (`missing_text`, `missing_file`, `missing_asset`, `missing_workspace`) and are rendered by `ReadinessSnapshot`.
+4. **Parity tests are mandatory**: FE readiness fixtures must match BE readiness fixtures for all tools.
+
+No optional bypass exists for required assets.
 
 ```
 ┌───────────────────────────────────────────────────────────────┐
@@ -43,6 +54,7 @@ The `toolPageMachine` manages the complete lifecycle of a tool page: from input 
 import { setup, assign, fromPromise, fromCallback } from 'xstate';
 import type { 
   ToolDefinition, 
+  AssetType,
   AcquisitionInput,
   SessionDTO, 
   ArtifactDTO,
@@ -59,6 +71,7 @@ interface ToolPageContext {
     text: Record<string, string>;
     files: Record<string, File>;
     selectedAssetIds: string[];
+    selectedAssetsByType: Partial<Record<AssetType, string>>;
   };
 
   // Server responses
@@ -166,11 +179,11 @@ export const toolPageMachine = setup({
 
       const textOk   = requiredText.every(t => context.inputs.text[t.key]?.trim());
       const filesOk  = requiredFiles.every(f => context.inputs.files[f.key]);
-      const assetsOk = requiredAssets.every(a =>
-        context.inputs.selectedAssetIds.length > 0 && a.required
+      const assetsOk = requiredAssets.every(
+        (a) => !!context.inputs.selectedAssetsByType[a.assetType]
       );
 
-      return textOk && filesOk && true; // assets are optional in v1
+      return textOk && filesOk && assetsOk;
     },
     isStillDraft: ({ context }) => {
       // No inputs configured — back to empty state
@@ -182,18 +195,22 @@ export const toolPageMachine = setup({
     setTool: assign({
       tool: ({ event }) => (event as { tool: ToolDefinition }).tool,
       workspaceId: ({ event }) => (event as { workspaceId: string }).workspaceId,
-      inputs: { text: {}, files: {}, selectedAssetIds: [] },
+      inputs: { text: {}, files: {}, selectedAssetIds: [], selectedAssetsByType: {} },
     }),
     updateInputs: assign({
       inputs: ({ context, event }) => {
         const { inputs } = event as { inputs: Partial<ToolPageContext['inputs']> };
         return {
-          ...context.inputs,
-          ...inputs,
-          text: { ...context.inputs.text, ...(inputs.text ?? {}) },
-          files: { ...context.inputs.files, ...(inputs.files ?? {}) },
-        };
-      },
+            ...context.inputs,
+            ...inputs,
+            text: { ...context.inputs.text, ...(inputs.text ?? {}) },
+            files: { ...context.inputs.files, ...(inputs.files ?? {}) },
+            selectedAssetsByType: {
+              ...context.inputs.selectedAssetsByType,
+              ...(inputs.selectedAssetsByType ?? {}),
+            },
+          };
+        },
     }),
     setSession: assign({
       session: ({ event }) => (event as { session: SessionDTO }).session,
@@ -229,7 +246,7 @@ export const toolPageMachine = setup({
   context: {
     tool: null,
     workspaceId: '',
-    inputs: { text: {}, files: {}, selectedAssetIds: [] },
+    inputs: { text: {}, files: {}, selectedAssetIds: [], selectedAssetsByType: {} },
     session: null,
     artifacts: [],
     progress: null,
@@ -472,7 +489,8 @@ ToolPage
 | **`fromCallback` for SSE** | SSE is a long-lived connection — `fromCallback` provides lifecycle management (open/close/error) |
 | **`useMachine` hook** | Returns `[state, send, actor]` — simplest API for direct state access in React |
 | **State → UI derivation** | 8 machine states map to 6 UI states. `configuring` and `ready` both render `SetupPanel` but differ in CTA enabled state |
-| **canSubmit guard** | Mirrors backend `ReadinessPolicy` — shared logic via `packages/contracts` |
+| **canSubmit guard** | Mirrors backend `ReadinessPolicy` exactly, including required asset checks by `assetType` |
+| **Readiness reason codes** | Canonical backend codes are rendered in FE (`ReadinessSnapshot`) with parity tests |
 | **Retry flow** | `completed`/`failed`/`cancelled` → RETRY → `ready` or `submitting`. Preserves inputs, clears artifacts |
 
 ## Sources

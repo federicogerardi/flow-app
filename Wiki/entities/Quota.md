@@ -3,8 +3,8 @@ type: entity
 tags:
   - wiki/entity
   - wiki/usage
-date_updated: 2026-07-30
-source_count: 4
+date_updated: 2026-07-31
+source_count: 2
 ---
 
 # Quota
@@ -22,6 +22,8 @@ source_count: 4
 
 I due binari operano indipendentemente: superare il gate blocca TUTTE le generazioni (abuse detection). Esaurire i crediti blocca le generazioni ma l'utente vede quanti crediti ha e quando si resettano.
 
+> **Type-design audit (2026-07-31)**: Fixed `plan` from `readonly` to `private _plan` with getter — `upgradePlan()` needs to mutate it. Added `ReadonlyArray<CreditTransaction>` exposure to prevent external mutation of the transaction log. Added positive-value guard to `addCredits()`. Internal counters (`_artifactLimit`, `_artifactCount`, `_creditLimit`, `_creditConsumed`) remain raw `number` — consider upgrading to `CreditAmount` VO for compile-time non-negative guarantee.
+
 ## Structure
 
 ```typescript
@@ -30,7 +32,7 @@ class Quota {
     readonly quotaId: QuotaId,
     readonly userId: UserId,
     readonly period: QuotaPeriod,       // YYYY-MM
-    readonly plan: Plan,                // determina i limiti
+    private _plan: Plan,                // ✅ private with getter (was readonly — fixed 2026-07-31)
 
     // Artifact gate (anti-abuse, invisible)
     private _artifactLimit: number,     // 1000
@@ -131,7 +133,8 @@ class Quota {
   }
 
   // Future: add credits (purchased or admin granted)
-  addCredits(amount: number, reason: TransactionReason): void {
+  addCredits(amount: CreditAmount, reason: TransactionReason): void {
+    if (amount <= 0) throw new ValidationError('Credit amount must be positive');
     this._creditLimit += amount;
     this._transactions.push(
       new CreditTransaction(CreditTransactionId.generate(), amount, reason)
@@ -147,6 +150,8 @@ class Quota {
   }
 
   // Queries
+  get plan(): Plan { return this._plan; }
+  get transactions(): ReadonlyArray<CreditTransaction> { return this._transactions; }
   get remainingCredits(): number {
     return Math.max(0, this._creditLimit - this._creditConsumed);
   }
@@ -163,7 +168,7 @@ class Quota {
 
 ## Monthly Reset
 
-All'inizio di ogni mese, il sistema crea un nuovo `Quota` per il nuovo periodo:
+At the start of each month, the system creates a new `Quota` for the new period:
 
 ```typescript
 // Called on first access of the month (or by cron)

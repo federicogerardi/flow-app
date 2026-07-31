@@ -3,8 +3,8 @@ type: concept
 tags:
   - wiki/concept
   - wiki/architecture
-date_updated: 2026-07-30
-source_count: 4
+date_updated: 2026-07-31
+source_count: 5
 confidence: high
 ---
 
@@ -61,6 +61,8 @@ packages/domain/src/
 │   │   ├── SessionCompleted.ts          # Event (cross-context: → workspace, → usage)
 │   │   ├── SessionFailed.ts             # Event
 │   │   └── SessionCancelled.ts          # Event
+│   │
+│   ├── session-lifecycle.ts             # Domain-owned state machine (states, transitions, getValidTransition)
 │   │
 │   ├── repositories/
 │   │   └── SessionRepository.ts         # Interface (implemented in packages/infra-db)
@@ -155,12 +157,12 @@ packages/domain/src/
 
 | Context | Entities | VOs | Services | Events | Repos | Tools | Total |
 |---------|----------|-----|----------|--------|-------|-------|-------|
-| generation | 2 | 11 | 1 | 5 | 1 | 12 | 32 |
+| generation | 2 | 11 | 1 | 5 | 1 | 12 | 33 |
 | workspace | 2 | 6 | 1 | 2 | 1 | — | 12 |
 | identity | 1 | 3 | — | — | 1 | — | 5 |
 | usage | 2 | 4 | 1 | 2 | 1 | — | 10 |
 | shared | — | — | — | — | — | — | 3 |
-| **Total** | **7** | **24** | **3** | **9** | **4** | **12** | **62** |
+| **Total** | **7** | **24** | **3** | **9** | **4** | **12** | **63** |
 
 ---
 
@@ -238,6 +240,8 @@ export { StepNumber } from './value-objects/StepNumber';
 export { ArtifactId } from './value-objects/ArtifactId';
 export { ArtifactContent } from './value-objects/ArtifactContent';
 export { SessionStatus } from './value-objects/SessionStatus';
+export { SessionLifecycle, getValidTransition } from './session-lifecycle';
+export type { SessionState, SessionEventType } from './session-lifecycle';
 export { CrawlData } from './value-objects/CrawlData';
 
 // Domain Services

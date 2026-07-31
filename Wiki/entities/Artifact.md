@@ -3,7 +3,7 @@ type: entity
 tags:
   - wiki/entity
   - wiki/generation
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 source_count: 4
 ---
 
@@ -57,6 +57,58 @@ pending → generating → completed
 // Domain: no role argument — role is positional
 static create(stepNumber: StepNumber, content: ArtifactContent): Artifact
 ```
+
+## Status Transitions
+
+> **Type-design audit (2026-07-31)**: Added explicit transition methods. The entity now self-guards its lifecycle — any caller (not just the application layer) is prevented from making illegal transitions.
+
+```typescript
+// packages/domain/src/generation/entities/Artifact.ts
+
+class Artifact {
+  private _status: ArtifactStatus;
+
+  /** Call when the LLM generation for this step begins */
+  startGeneration(): void {
+    if (this._status !== ArtifactStatus.Pending) {
+      throw new InvalidSessionStateError(
+        `Cannot start generation: artifact is ${this._status}, expected pending`
+      );
+    }
+    this._status = ArtifactStatus.Generating;
+  }
+
+  /** Call when the LLM generation completes successfully */
+  complete(): void {
+    if (this._status !== ArtifactStatus.Generating) {
+      throw new InvalidSessionStateError(
+        `Cannot complete: artifact is ${this._status}, expected generating`
+      );
+    }
+    this._status = ArtifactStatus.Completed;
+  }
+
+  /** Call when the LLM generation fails */
+  fail(): void {
+    if (this._status !== ArtifactStatus.Generating) {
+      throw new InvalidSessionStateError(
+        `Cannot fail: artifact is ${this._status}, expected generating`
+      );
+    }
+    this._status = ArtifactStatus.Failed;
+  }
+
+  get status(): ArtifactStatus { return this._status; }
+}
+```
+
+The valid transitions are:
+```
+pending → generating → completed
+                   → failed
+```
+
+No other transitions are allowed: `pending` cannot go directly to `completed`, `failed` is terminal.
 
 ## Key Distinction
 

@@ -3,7 +3,7 @@ type: entity
 tags:
   - wiki/entity
   - wiki/workspace
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 source_count: 4
 ---
 
@@ -31,7 +31,7 @@ From [[sources/STARTUP]]: the core distinction from [[Artifact]] — Artifact = 
 | `angle` | `marketing-angle` tool | `ad-copy`, content tools |
 | `ad-copy` | `ad-copy` tool | Reuse in campaigns |
 
-## Sources
+## Origin Modes
 
 | Source | Meaning |
 |--------|---------|
@@ -47,6 +47,26 @@ From [[sources/STARTUP]]: the core distinction from [[Artifact]] — Artifact = 
 | `AssetType` | Enum: `brief` \| `brand-voice` \| `persona` \| `angle` \| `ad-copy` |
 | `AssetSource` | Enum: `generated` \| `uploaded` \| `manual` |
 | `AssetContent` | Immutable content |
+
+## Structure
+
+```typescript
+// packages/domain/src/workspace/entities/Asset.ts
+
+class Asset {
+  constructor(
+    readonly assetId: AssetId,
+    readonly assetType: AssetType,
+    readonly source: AssetSource,
+    readonly content: AssetContent,
+    readonly sourceRef: ArtifactId | null,  // ✅ domain VO, not raw UUID
+    readonly createdAt: DateTime = DateTime.now(),
+    readonly updatedAt: DateTime = DateTime.now(),
+  ) {}
+}
+```
+
+> **Type-design audit (2026-07-31)**: `sourceRef` was documented as a raw UUID without FK constraint. It is now typed as `ArtifactId | null` — a compile-time guarantee that the reference is a valid Artifact identifier. The `Workspace.addAsset()` method enforces `sourceRef` is non-null when `source === AssetSource.Generated`.
 
 ## Lifecycle
 

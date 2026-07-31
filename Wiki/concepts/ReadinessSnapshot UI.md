@@ -3,7 +3,7 @@ type: concept
 tags:
   - wiki/concept
   - wiki/frontend
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 source_count: 4
 confidence: high
 ---
@@ -16,6 +16,8 @@ confidence: high
 ## Principle
 
 The [[ToolPage Machine (XState v5)|toolPageMachine]] evaluates readiness via the `canSubmit` guard. The UI renders the result as a human-readable snapshot — showing what's configured, what's missing, and what's optional. This replaces generic disabled buttons with actionable guidance.
+
+The snapshot must not implement a different rule set than the backend. It is a view over the same readiness contract.
 
 ## Component
 
@@ -98,7 +100,7 @@ function buildReadinessItems(
 
   // Asset inputs
   for (const a of tool.acquisition.assets ?? []) {
-    const hasAsset = inputs.selectedAssetIds.length > 0;
+    const hasAsset = !!inputs.selectedAssetsByType[a.assetType];
     items.push({
       key: `asset:${a.assetType}`,
       label: `${assetTypeLabel(a.assetType)} asset`,
@@ -140,7 +142,10 @@ function assetTypeLabel(type: string): string {
     <KnowledgePanel
       tool={state.context.tool!}
       selectedAssetIds={state.context.inputs.selectedAssetIds}
-      onChange={(ids) => send({ type: 'CONFIGURE', inputs: { selectedAssetIds: ids } })}
+      onChange={({ ids, byType }) => send({
+        type: 'CONFIGURE',
+        inputs: { selectedAssetIds: ids, selectedAssetsByType: byType },
+      })}
     />
     <SetupPanel
       tool={state.context.tool!}
@@ -164,14 +169,20 @@ function assetTypeLabel(type: string): string {
 
 ## Reason Codes
 
-The `ReadinessSnapshot` surfaces the same reason codes that the backend `ReadinessPolicy` uses — consistency across FE/BE:
+The `ReadinessSnapshot` surfaces the same reason codes that the backend `ReadinessPolicy` uses — consistency across FE/BE. Codes are part of the API contract and must not be renamed in frontend-only code:
 
 | Reason | Display |
 |--------|---------|
-| Missing text input | "Required — Enter a value" |
-| Missing file | "Required — Upload a file" |
-| Missing asset | "Required — Select a [AssetType] asset or create one" |
-| No workspace selected | "Select a workspace first" (handled by workspace picker) |
+| `missing_text` | "Required — Enter a value" |
+| `missing_file` | "Required — Upload a file" |
+| `missing_asset` | "Required — Select a [AssetType] asset or create one" |
+| `missing_workspace` | "Select a workspace first" (handled by workspace picker) |
+
+### Determinism checks
+
+- Required assets are evaluated by **asset type** (`selectedAssetsByType[assetType]`) rather than by generic count.
+- `canSubmit === true` implies no required reason code remains.
+- FE and BE readiness fixtures are tested in lockstep for all tools in `toolRegistry`.
 
 ## Sources
 

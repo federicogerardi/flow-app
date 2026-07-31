@@ -18,7 +18,7 @@ source: "doodle/APP-CONCEPT.md (raw)"
 
 Flow App is an AI-powered platform for structured marketing content generation. Each **Tool** is a complete capability that accepts contextual inputs (briefings, documents, brand voice), executes an ordered chain of LLM-based processing steps, and produces ready-to-use artifacts.
 
-**Key claim**: "Nessuna black box" — every generation step is visible, repeatable, and traceable. Outputs are versioned, downloadable, and associated with the workspace.
+**Key claim**: "No black box" — every generation step is visible, repeatable, and traceable. Outputs are versioned, downloadable, and associated with the workspace.
 
 ## Target Users
 

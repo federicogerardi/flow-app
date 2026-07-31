@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/infrastructure
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 source_count: 4
 confidence: high
 ---
@@ -149,13 +149,15 @@ export const api = new ApiClient();
 
 Wraps `EventSource` with typed events from `@flow-app/contracts`.
 
+**Scalability contract**: the client must support multiple concurrent live sessions in the same tab. A singleton `EventSource` is not sufficient.
+
 ```typescript
 // apps/frontend/src/api/sse-client.ts
 
 import type { SSEEvent } from '@flow-app/contracts';
 
 class SSEClient {
-  private source: EventSource | null = null;
+  private sources = new Map<string, EventSource>();
 
   connect(
     sessionId: string,
@@ -165,9 +167,9 @@ class SSEClient {
       onCompleted?:  (data: SSEEvent & { event: 'session_completed' }) => void;
       onFailed?:     (data: SSEEvent & { event: 'session_failed' }) => void;
       onError?:      (error: Event) => void;
-    }
-  ): void {
-    this.disconnect();
+    },
+  ): () => void {
+    this.disconnect(sessionId);
 
     const source = new EventSource(`/api/sessions/${sessionId}/events`, {
       withCredentials: true,
@@ -184,24 +186,37 @@ class SSEClient {
     source.addEventListener('session_completed', (e: MessageEvent) => {
       handlers.onCompleted?.(JSON.parse(e.data));
       source.close();
+      this.sources.delete(sessionId);
     });
 
     source.addEventListener('session_failed', (e: MessageEvent) => {
       handlers.onFailed?.(JSON.parse(e.data));
       source.close();
+      this.sources.delete(sessionId);
     });
 
     source.onerror = (e) => {
       handlers.onError?.(e);
       source.close();
+      this.sources.delete(sessionId);
     };
 
-    this.source = source;
+    this.sources.set(sessionId, source);
+    return () => this.disconnect(sessionId);
   }
 
-  disconnect(): void {
-    this.source?.close();
-    this.source = null;
+  disconnect(sessionId?: string): void {
+    if (sessionId) {
+      const source = this.sources.get(sessionId);
+      source?.close();
+      this.sources.delete(sessionId);
+      return;
+    }
+
+    for (const source of this.sources.values()) {
+      source.close();
+    }
+    this.sources.clear();
   }
 }
 
@@ -214,7 +229,8 @@ export const sseClient = new SSEClient();
 // apps/frontend/src/api/hooks.ts
 
 import { useState, useEffect, useCallback } from 'react';
-import { api, sseClient } from './client';
+import { api } from './client';
+import { sseClient } from './sse-client';
 
 // Hook for a single session with SSE progress
 function useSession(sessionId: string | null) {
@@ -228,13 +244,13 @@ function useSession(sessionId: string | null) {
     api.getSession(sessionId).then(setSession);
 
     // SSE for real-time updates
-    sseClient.connect(sessionId, {
+    const unsubscribe = sseClient.connect(sessionId, {
       onStep: (data) => setProgress(data.data.progress),
       onCompleted: () => api.getSession(sessionId).then(setSession),
       onFailed: () => api.getSession(sessionId).then(setSession),
     });
 
-    return () => sseClient.disconnect();
+    return unsubscribe;
   }, [sessionId]);
 
   return { session, progress };

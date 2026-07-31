@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 source_count: 5
 confidence: high
 ---
@@ -30,7 +30,14 @@ The HTTP handler creates a Session and enqueues a BullMQ job. The worker process
 └────────────────────┘          └──────────────────────┘
 ```
 
-**Key insight**: `apps/backend` runs as a single Railway process containing both Express (HTTP) and BullMQ (worker). They share the same Node.js event loop but handle different concerns. The event bridge uses Redis pub/sub so the worker can notify the HTTP process about step progress.
+## Deployment Modes
+
+Flow App supports two deployment modes:
+
+1. **Single service (default for early stage)**: one Railway service runs both HTTP and worker processes.
+2. **Split services (recommended for scale)**: one `api` service and one `worker` service, both connected to the same PostgreSQL and Redis.
+
+The wiring documented here is compatible with both modes. Redis queue + pub/sub are kept as the canonical transport so the topology can evolve without code changes.
 
 ---
 
@@ -42,7 +49,7 @@ The HTTP handler creates a Session and enqueues a BullMQ job. The worker process
 import { Queue } from 'bullmq';
 
 const sessionQueue = new Queue('session-workflow', {
-  connection: { host: process.env.REDIS_HOST, port: 6379 },
+  connection: { url: process.env.REDIS_URL },
   defaultJobOptions: {
     attempts: 3,
     backoff: { type: 'exponential', delay: 5000 },
@@ -109,7 +116,7 @@ export function createSessionWorker(
       await processSessionJob(job, deps);
     },
     {
-      connection: { host: process.env.REDIS_HOST, port: 6379 },
+      connection: { url: process.env.REDIS_URL },
       concurrency: 5,                         // 5 parallel sessions max
       limiter: {
         max: 3,                               // max 3 jobs per

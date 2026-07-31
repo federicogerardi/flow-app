@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 source_count: 3
 confidence: high
 ---
@@ -24,6 +24,25 @@ confidence: high
 - Errors: `{ error: { code: string, message: string, details?: unknown } }`
 - SSE: `text/event-stream` with `event:` and `data:` fields
 - Pagination: `?limit=20&offset=0` returning `{ data: T[], total: number }`
+
+## API Contract Governance
+
+- **Versioning**: current contract is `v1` (implicit in `/api`). Breaking changes require `/api/v2` endpoints and a deprecation window for `v1`.
+- **Correlation ID**: clients may send `X-Request-Id`; if missing, server generates one and echoes it in response headers.
+- **Idempotency**: `POST /api/tools/:toolKey/sessions` accepts `Idempotency-Key` and returns `201` for new sessions or `200` for replay of an existing session.
+- **Rate limiting**: responses include `RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset`; exceed => `429 RATE_LIMITED`.
+- **Deprecation**: deprecated endpoints return `Deprecation: true` and `Sunset: <RFC-1123 date>` headers before removal.
+
+### Deprecation Timeline Policy (Phase 3)
+
+| Phase | Minimum Window | Required Action |
+|------|----------------|-----------------|
+| Announce | T-90 days | Update changelog + OpenAPI description with migration path |
+| Warn | T-60 days | Return `Deprecation` + `Sunset` + `Link: rel="deprecation"` headers |
+| Enforce | T-30 days | Increase warning severity in logs and dashboard |
+| Remove | T+0 | Remove endpoint only in next major API version (`/api/v2`) |
+
+Compatibility rule: no breaking response-schema change inside the same API major version.
 
 ---
 
@@ -348,7 +367,7 @@ Starts a new generation session. Invokes [[Application Services|StartSessionUseC
 **Errors**:
 - `404` tool not found
 - `422` readiness check failed → `{ error: { code: "READINESS_FAILED", message: "...", details: { missing: [...] } } }`
-- `409` idempotency conflict → returns existing session (same shape as `201`)
+- `200` idempotent replay → existing session returned (same shape as `201`)
 - `429` quota exceeded
 
 ### `GET /api/sessions`
@@ -418,7 +437,7 @@ event: session_started
 data: {"sessionId":"uuid","status":"running","startedAt":"..."}
 
 event: step_completed
-data: {"sessionId":"uuid","stepNumber":1,"stepLabel":"Analisi Briefing","progress":{"current":1,"total":3}}
+data: {"sessionId":"uuid","stepNumber":1,"stepLabel":"Briefing Analysis","progress":{"current":1,"total":3}}
 
 event: step_completed
 data: {"sessionId":"uuid","stepNumber":2,"stepLabel":"Outline","progress":{"current":2,"total":3}}
@@ -601,7 +620,7 @@ All errors follow a consistent shape:
 | 401 | `UNAUTHORIZED` | Missing or expired token |
 | 403 | `FORBIDDEN` | Role insufficient (member accessing admin) |
 | 404 | `NOT_FOUND` | Resource doesn't exist |
-| 409 | `CONFLICT` | Idempotency key collision (returns existing resource) |
+| 409 | `CONFLICT` | Generic write conflict (concurrent update / duplicate uniqueness violation) |
 | 409 | `ASSET_TYPE_EXISTS` | Asset type already in workspace |
 | 422 | `READINESS_FAILED` | Missing required inputs for session start |
 | 422 | `VALIDATION_ERROR` | Invalid field values |

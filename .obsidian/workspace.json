@@ -198,6 +198,14 @@
   },
   "active": "278473b8b390cf25",
   "lastOpenFiles": [
+    "Wiki/concepts/UI Component Map.md",
+    "Wiki/concepts/Design Tokens.md",
+    "Wiki/concepts/UX Wireframes.md",
+    "scripts/README.md",
+    "scripts/architecture-traceability-check.py",
+    "scripts/wiki-lint.py",
+    "scripts",
+    "PROJECT_CONSTITUTION.md",
     "Wiki/sources/APP-CONCEPT.md",
     "Wiki/synthesis/backend-audit-gaps-improvements.md",
     "Wiki/synthesis/lint-report-2026-07-30.md",
@@ -219,20 +227,12 @@
     "Wiki/concepts/Workspace & Assets.md",
     "Wiki/concepts/ToolPage Machine (XState v5).md",
     "Wiki/concepts/Auth Dependencies.md",
-    "Wiki/concepts/Logging Strategy.md",
-    "Wiki/entities/Workspace.md",
-    "Wiki/schema/config.md",
     "Wiki/schema",
-    "wiki/schema/config.md",
     "wiki/schema",
-    "Wiki/concepts/Testing Strategy.md",
     "Wiki/synthesis",
     "Wiki/sources",
     "Wiki/concepts",
     "Wiki/entities",
-    "Wiki",
-    "assets",
-    "doodle",
-    "cartella senza nome"
+    "Wiki"
   ]
 }

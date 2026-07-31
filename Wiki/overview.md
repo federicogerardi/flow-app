@@ -50,7 +50,7 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 |---------|--------|
 | `ai-overview-analysis` | Competitive presence analysis on Google AI Overview |
 
-**Naming convention**: `{output}[-{variant}]`. Zero abbreviazioni, zero verbi, zero nomi fantasy.
+**Naming convention**: `{output}[-{variant}]`. Zero abbreviations, zero verbs, zero fantasy names.
 
 ## The Unified Tool Model
 

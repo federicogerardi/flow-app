@@ -3,7 +3,7 @@ type: concept
 tags:
   - wiki/concept
   - wiki/architecture
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 source_count: 4
 confidence: high
 ---
@@ -45,7 +45,43 @@ class DomainEventBus {
 }
 ```
 
-**Why in-process, not Redis?** All contexts live in the same Railway deploy (single process). No serialization overhead, no network hop, no additional point of failure. The interface stays the same if we ever extract to microservices.
+**Why in-process, not Redis?** All contexts can run in the same deploy at early stage. In-process delivery has low overhead and simpler operations. The interface stays stable if we later extract to separate services.
+
+## Delivery Semantics
+
+- Current mode: **at-most-once in-process dispatch** (fire-and-forget handlers).
+- Handler requirement: all side effects must be idempotent (`SessionCompleted` can be retried safely by consumer logic).
+- Failure handling: handler errors are logged with event type + aggregate id.
+
+For higher reliability (split-service topology), adopt **transactional outbox + relay worker**:
+
+1. Persist domain change and outbox event in the same DB transaction.
+2. Relay publishes to queue/topic.
+3. Consumers apply idempotent processing with dedupe keys.
+
+This migration path is intentionally documented now to prevent coupling to in-memory delivery semantics.
+
+## Phase 3 — Outbox/Inbox Delivery Contract
+
+When reliability mode is enabled (split-service topology), event delivery follows this sequence:
+
+1. Aggregate transition commits in DB.
+2. Same transaction inserts one row in `outbox_events`.
+3. Relay worker publishes unpublished outbox rows to queue/topic.
+4. Consumer writes `inbox_consumers` dedupe record before side effects.
+5. Side effect executes once; duplicate deliveries are no-op due to unique dedupe constraint.
+
+### Publisher Rules
+
+- Each domain event must include `eventType`, `eventVersion`, `aggregateId`, `occurredAt`.
+- `dedupeKey` must be deterministic (`eventType:aggregateId:version`).
+- Outbox relay marks `published_at` only after broker acknowledgement.
+
+### Consumer Rules
+
+- Processing is idempotent by design.
+- Any transient failure is retried with backoff.
+- Poison messages move to DLQ after max attempts and require manual replay.
 
 ## Key Events
 

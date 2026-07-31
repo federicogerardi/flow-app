@@ -3,7 +3,7 @@ type: entity
 tags:
   - wiki/entity
   - wiki/workspace
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 source_count: 4
 ---
 
@@ -30,9 +30,53 @@ The term comes directly from the original domain definition in [[sources/STARTUP
 ## Invariants
 
 - Owned by exactly one [[User]] (via `userId` reference)
-- At most one [[Asset]] per `AssetType` per Workspace
-- An [[Asset]] with `source = 'generated'` must have a valid `sourceRef` (traceability to original [[Artifact]])
-- Deleting a Workspace cascades to all contained Assets
+- At most one [[Asset]] per `AssetType` per Workspace — **enforced by `addAsset()`** which throws `AssetTypeExistsError` if an Asset of the same type already exists (database `UNIQUE` constraint is a redundant safety net)
+- An [[Asset]] with `source = 'generated'` must have a valid `sourceRef` (traceability to original [[Artifact]]) — **enforced by `addAsset()`** via `ArtifactId` VO type on `sourceRef` parameter
+- Deleting a Workspace cascades to all contained Assets (database: `ON DELETE CASCADE`)
+
+## Methods
+
+### `addAsset()`
+
+```typescript
+class Workspace {
+  private _assets: Asset[];
+
+  addAsset(
+    content: AssetContent,
+    assetType: AssetType,
+    source: AssetSource,
+    sourceRef?: ArtifactId,      // required when source === 'generated'
+  ): Asset {
+    // Invariant: at most one Asset per AssetType
+    if (this._assets.some(a => a.assetType === assetType)) {
+      throw new AssetTypeExistsError(assetType);
+    }
+
+    // Invariant: generated assets must reference their source Artifact
+    if (source === AssetSource.Generated && !sourceRef) {
+      throw new ValidationError('Generated assets require a sourceRef (ArtifactId)');
+    }
+
+    const asset = new Asset(
+      AssetId.generate(),
+      assetType,
+      source,
+      content,
+      sourceRef ?? null,
+    );
+    this._assets.push(asset);
+
+    return asset;
+  }
+
+  get assets(): ReadonlyArray<Asset> {
+    return this._assets;
+  }
+}
+```
+
+> **Type-design audit (2026-07-31)**: Previously these invariants were enforced only at the database layer (`uq_assets_workspace_type` UNIQUE constraint, no FK on `source_ref`). The aggregate root must be the primary enforcer — the database constraint is a redundant safety net, not the sole guard.
 
 ## Value Objects
 

@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/generation
-date_updated: 2026-07-30
-source_count: 4
+date_updated: 2026-07-31
+source_count: 5
 confidence: high
 ---
 
@@ -332,7 +332,7 @@ function useLiveSession(sessionId: string | null): { liveSession: LiveSession | 
     api.getSession(sessionId).then(setLiveSession);
 
     // 2. Subscribe to SSE for live updates
-    sseClient.connect(sessionId, {
+    const unsubscribe = sseClient.connect(sessionId, {
       onStep: (data) => {
         setLiveSession(prev => prev ? {
           ...prev,
@@ -356,7 +356,7 @@ function useLiveSession(sessionId: string | null): { liveSession: LiveSession | 
       },
     });
 
-    return () => sseClient.disconnect();
+    return unsubscribe;
   }, [sessionId]);
 
   return { liveSession };
@@ -426,6 +426,8 @@ interface SessionListItemDTO {
 
 ### Queue Position
 
+Queue position shown to users must represent relative order, not global waiting count.
+
 ```typescript
 // apps/backend/src/routes/generation.ts
 
@@ -438,8 +440,21 @@ router.get('/api/sessions', async (req, res) => {
   // Enrich running/queued sessions with live data
   const enriched = await Promise.all(sessions.map(async (s) => {
     if (s.status === 'queued') {
-      const position = await sessionQueue.getJob(s.id);
-      return { ...toDTO(s), queuePosition: position ? await sessionQueue.getWaitingCount() : null };
+      const job = await sessionQueue.getJob(s.id);
+      if (!job) return { ...toDTO(s), queuePosition: null };
+
+      // Deterministic queue position for this job id
+      // Option A: read BullMQ waiting jobs and rank by enqueue timestamp
+      const waiting = await sessionQueue.getJobs(['waiting']);
+      const ordered = waiting
+        .sort((a, b) => (a.timestamp ?? 0) - (b.timestamp ?? 0))
+        .map((j) => j.id);
+      const rank = ordered.findIndex((id) => id === s.id);
+
+      return {
+        ...toDTO(s),
+        queuePosition: rank >= 0 ? rank + 1 : null,
+      };
     }
     return toDTO(s);
   }));
@@ -447,6 +462,8 @@ router.get('/api/sessions', async (req, res) => {
   res.json({ data: enriched, total: sessions.length });
 });
 ```
+
+For high throughput queues, replace the array-sort approach with a Redis sorted-set rank strategy to avoid O(n log n) work per request.
 
 ---
 

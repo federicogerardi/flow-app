@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/generation
   - wiki/architecture
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 source_count: 4
 confidence: high
 ---
@@ -26,7 +26,9 @@ Application Services live in `apps/backend/src/application/`. They orchestrate t
 │  ConsumeCredits...     ResolveAssets...      │
 │                                               │
 │  → Orchestrate flow                          │
-│  → Call domain objects                       │
+│  Session.apply() — single entry point for all state changes. Validates
+│  against SessionLifecycle before mutating state. XState actions
+│  call this; they do NOT duplicate transition logic.
 │  → Manage transactions                       │
 │  → Publish domain events                     │
 └──────────────┬──────────────────────────────┘
@@ -228,10 +230,10 @@ sessionMachine: addStepResult → persistSession
        │
        ├── (if more steps) advanceStep → executingStep (loop)
        │
-       └── (if last step) completeSession
-             ├── Session.complete()            ← domain: validate, emit event
-             ├── sessionRepo.save()
-             └── eventBus.publish(SessionCompleted)
+└── (if last step) completeSession
+              ├── Session.apply({ type: 'COMPLETE' })   ← domain: validates transition against SessionLifecycle, returns event
+              ├── sessionRepo.save()
+              └── eventBus.publish(SessionCompleted)
                    │
                    ├── PromoteToAssetUseCase   ← async handler
                    │     └── Workspace.addAsset()

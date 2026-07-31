@@ -17,33 +17,10 @@ source_count: 0
 
 ### 1. File Storage Strategy
 
-**Status**: ❌ N/A — files are ephemeral  
-**Why**: Files are consumed immediately for LLM processing. The parsed content lives in memory during the session (XState context) and in `session_snapshots` JSONB for crash recovery. No persistent storage needed. Original binary files are discarded after parsing.
+**Status**: ✅ Closed — no persistent binary storage required for current scope.  
+**Why**: Files are consumed immediately for LLM processing. Parsed content lives in session context and `session_snapshots` JSONB for recovery. Original binaries are discarded after parsing.
 
-**Correction**: None. The current design is correct.
-
-```typescript
-// apps/backend/src/infrastructure/file-storage.ts
-
-class FileStorage {
-  constructor(private bucket: S3Client) {}
-
-  async upload(key: string, content: Buffer, contentType: string): Promise<string> {
-    // Upload to Railway bucket
-    // Return URL or key for retrieval
-  }
-
-  async download(key: string): Promise<Buffer> {
-    // Retrieve from bucket
-  }
-
-  async delete(key: string): Promise<void> {
-    // Cleanup after session completion or expiration
-  }
-}
-```
-
-**Files stored**: briefing uploads, CSV data, context documents. Not artifacts (artifacts are TEXT in DB). Not crawl_data (raw API JSON stored as JSONB).
+**Decision**: Keep ephemeral upload handling. Introduce object storage only if future requirements include audit-grade binary retention, legal hold, or user-driven re-download of original uploads.
 
 ---
 
@@ -192,7 +169,7 @@ router.get('/health/deep', authenticate, requireRole('admin'), async (_req, res)
 
 | Data | Retention | Cleanup |
 |------|-----------|---------|
-| Sessions (completed) | 90 days | Soft delete or archive |
+| Sessions (completed) | 90 days | Optional export, then hard delete |
 | Sessions (failed) | 30 days | Delete |
 | Crawl data | Follow session retention | Cascade delete |
 | Session snapshots | Follow session retention | Cascade delete |
@@ -328,7 +305,7 @@ Generate `openapi.json` from Express routes for interactive documentation (Swagg
 
 | # | Item | Priority | Effort |
 |---|------|----------|--------|
-| 1 | File Storage (Railway bucket) | 🔴 Critical | Medium |
+| 1 | File Storage (ephemeral by design) | ✅ Closed | None |
 | 2 | Migration Tooling | 🔴 Critical | Small |
 | 3 | Deep Health Check | 🔴 Critical | Small |
 | 4 | File Upload Security | 🔴 Critical | Small |

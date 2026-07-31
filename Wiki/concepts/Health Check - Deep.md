@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 source_count: 4
 confidence: high
 ---
@@ -146,6 +146,12 @@ healthcheckPath = "/health"       # Light check (every 2s)
 [deploy]
 # Deep check is admin-only — not used for readiness probe
 ```
+
+## Operational Semantics
+
+- `/health` = **liveness/readiness probe** for orchestrator decisions. Must stay dependency-light.
+- `/health/deep` = **diagnostic endpoint** for humans and monitoring systems; never used to auto-restart instances.
+- Deep-check failures trigger alerts and traffic management decisions, not immediate process kill.
 
 ## Sources
 

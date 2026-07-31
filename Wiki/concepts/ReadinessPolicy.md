@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/generation
 date_updated: 2026-07-30
-source_count: 4
+source_count: 3
 confidence: high
 ---
 

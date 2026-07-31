@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 source_count: 8
 confidence: high
 ---
@@ -354,6 +354,54 @@ CREATE TABLE tool_step_bindings (
 
 ---
 
+## Phase 3 — Reliability Schema Extension (Outbox/Inbox)
+
+Current production schema is intentionally lean. For higher reliability in split-service deployments, add the following tables.
+
+### `outbox_events` (publisher side)
+
+```sql
+CREATE TABLE outbox_events (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    aggregate_type  VARCHAR(100) NOT NULL,
+    aggregate_id    UUID         NOT NULL,
+    event_type      VARCHAR(100) NOT NULL,
+    event_version   INTEGER      NOT NULL DEFAULT 1,
+    dedupe_key      VARCHAR(120) NOT NULL UNIQUE,
+    payload         JSONB        NOT NULL,
+    occurred_at     TIMESTAMPTZ  NOT NULL,
+    published_at    TIMESTAMPTZ,
+    created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_outbox_events_unpublished ON outbox_events(created_at) WHERE published_at IS NULL;
+CREATE INDEX idx_outbox_events_type        ON outbox_events(event_type);
+```
+
+### `inbox_consumers` (consumer side dedupe)
+
+```sql
+CREATE TABLE inbox_consumers (
+    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    consumer_name    VARCHAR(100) NOT NULL,
+    event_id         UUID         NOT NULL,
+    dedupe_key       VARCHAR(120) NOT NULL,
+    processed_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    status           VARCHAR(20)  NOT NULL,
+    error_message    TEXT,
+
+    CONSTRAINT uq_inbox_consumer_dedupe UNIQUE (consumer_name, dedupe_key)
+);
+
+CREATE INDEX idx_inbox_consumers_event_id ON inbox_consumers(event_id);
+```
+
+**Dedupe key convention**: `eventType:aggregateId:version`.
+
+**Adoption rule**: use these tables only when enabling relay-based delivery; keep current in-process bus for early-stage topology.
+
+---
+
 ## Entity-Relationship Diagram
 
 ```
@@ -460,7 +508,7 @@ CREATE TABLE tool_step_bindings (...);
 
 | Data | Retention | Cleanup |
 |------|-----------|---------|
-| Sessions (completed) | 90 days | Soft delete or archive |
+| Sessions (completed) | 90 days | Optional export to cold storage, then hard delete |
 | Sessions (failed) | 30 days | Hard delete |
 | Crawl data | Follow session retention | Cascade delete with session |
 | Session snapshots | Follow session retention | Cascade delete with session |
@@ -482,10 +530,54 @@ DELETE FROM artifacts WHERE session_id IN (
 );
 DELETE FROM sessions WHERE status = 'failed' AND created_at < NOW() - INTERVAL '30 days';
 
--- Archive completed sessions older than 90 days (future: move to cold storage)
--- For now: soft delete by marking as archived
-UPDATE sessions SET status = 'archived' WHERE status = 'completed' AND created_at < NOW() - INTERVAL '90 days';
+-- Optional: export completed sessions older than 90 days to cold storage (outside OLTP DB)
+-- Then hard delete from primary tables
+DELETE FROM session_snapshots WHERE session_id IN (
+  SELECT id FROM sessions WHERE status = 'completed' AND created_at < NOW() - INTERVAL '90 days'
+);
+DELETE FROM crawl_data WHERE session_id IN (
+  SELECT id FROM sessions WHERE status = 'completed' AND created_at < NOW() - INTERVAL '90 days'
+);
+DELETE FROM artifacts WHERE session_id IN (
+  SELECT id FROM sessions WHERE status = 'completed' AND created_at < NOW() - INTERVAL '90 days'
+);
+DELETE FROM sessions WHERE status = 'completed' AND created_at < NOW() - INTERVAL '90 days';
 
 -- Clean up expired keys
 DELETE FROM idempotency_keys WHERE expires_at < NOW();
 ```
+
+---
+
+## Backup & Disaster Recovery Runbook (Phase 3)
+
+### Targets
+
+| Objective | Target |
+|-----------|--------|
+| RPO | <= 15 minutes |
+| RTO | <= 60 minutes |
+| Backup verification cadence | weekly restore drill |
+
+### Backup Policy
+
+1. Continuous WAL archiving + daily full snapshot.
+2. Keep 35 days of backups.
+3. Encrypt backups at rest (KMS-managed keys).
+4. Restrict restore permissions to platform-admin role.
+
+### Restore Procedure (staging first, then production)
+
+1. Select restore point timestamp.
+2. Restore PostgreSQL into an isolated staging instance.
+3. Run integrity checks:
+   - row counts for `sessions`, `artifacts`, `quotas`, `credit_transactions`
+   - referential checks for critical FKs
+4. Replay smoke tests against restored instance.
+5. Promote restored instance only after checks pass.
+
+### Drill Checklist
+
+- Last successful drill date recorded in ops log.
+- Measured RPO and RTO captured.
+- Action items created for any SLA breach.

@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 source_count: 4
 confidence: high
 ---
@@ -35,7 +35,7 @@ confidence: high
 
 ```typescript
 const sessionQueue = new Queue('session-workflow', {
-  connection: { host: process.env.REDIS_HOST!, port: 6379 },
+  connection: { url: process.env.REDIS_URL! },
   defaultJobOptions: {
     attempts: 3,
     backoff: { type: 'exponential', delay: 5000 },
@@ -45,7 +45,7 @@ const sessionQueue = new Queue('session-workflow', {
 });
 
 const worker = new Worker('session-workflow', processSessionJob, {
-  connection:  { host: process.env.REDIS_HOST!, port: 6379 },
+  connection:  { url: process.env.REDIS_URL! },
   concurrency: 5,                        // Max 5 sessions in parallel
   limiter: {
     max:      3,                         // Max 3 jobs per second
@@ -203,6 +203,17 @@ type JobFailedLog = {
 
 ## Stability Criteria
 
+### Queue SLOs (Production)
+
+| SLI | Target (30d) |
+|-----|--------------|
+| Job success rate | >= 99.0% |
+| Queue wait time p95 | <= 30s |
+| End-to-end session completion p95 | <= 180s |
+| Stalled job ratio | < 0.5% |
+
+These SLOs define alert thresholds and scaling actions. Capacity changes are driven by SLO breach trends, not by CPU alone.
+
 ### Healthy thresholds
 
 | Metric | Healthy | Warning | Critical |
@@ -222,6 +233,23 @@ type JobFailedLog = {
 | Queue depth > 50 | Alert admin, scale worker (future: auto-scale) |
 | Stalled jobs > 2 | Kill stalled workers, restart, notify admin |
 | Worker memory > 1GB | Graceful restart of worker process |
+
+### Scaling Policy (Worker Service)
+
+For split `api` / `worker` deployment mode:
+
+- Scale out by +1 replica when **both** conditions hold for 5 minutes:
+  - queue depth > 25
+  - queue wait p95 > 20s
+- Scale in by -1 replica when **all** conditions hold for 15 minutes:
+  - queue depth < 5
+  - queue wait p95 < 5s
+  - worker CPU < 40%
+
+Guardrails:
+- min replicas: 1
+- max replicas: 10
+- cooldown after any scaling action: 10 minutes
 
 ---
 

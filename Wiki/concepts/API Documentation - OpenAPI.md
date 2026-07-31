@@ -3,7 +3,7 @@ type: concept
 tags:
   - wiki/concept
   - wiki/infrastructure
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 source_count: 2
 confidence: high
 ---
@@ -124,6 +124,59 @@ router.get('/api/openapi.json', (_req, res) => res.json(spec));
 ## Incremental Adoption
 
 There's no need to register all 45 routes at once. Register routes as they are implemented. The schema grows with the project.
+
+## Governance Requirements
+
+- Every route must define a stable `operationId`.
+- Every authenticated route must include `security` metadata.
+- Every write route (`POST`, `PUT`, `DELETE`) must document error codes and retry semantics.
+- `POST /api/tools/{toolKey}/sessions` must document `Idempotency-Key` header and dual response (`201` created, `200` replay).
+- All responses must include shared error schema `{ error: { code, message, details? } }` for non-2xx outcomes.
+
+### Deprecation Metadata Requirements (Phase 3)
+
+For deprecated operations, OpenAPI entries must include:
+
+- `deprecated: true`
+- `description` with migration endpoint
+- response headers schema for `Deprecation`, `Sunset`, and `Link`
+
+Example:
+
+```yaml
+paths:
+  /api/v1/legacy-endpoint:
+    get:
+      deprecated: true
+      description: "Use /api/v2/new-endpoint"
+      responses:
+        '200':
+          description: OK
+          headers:
+            Deprecation:
+              schema: { type: string, example: "true" }
+            Sunset:
+              schema: { type: string, example: "Wed, 31 Dec 2026 23:59:59 GMT" }
+            Link:
+              schema: { type: string, example: "</api/v2/new-endpoint>; rel=\"successor-version\"" }
+```
+
+## Contract Validation in CI
+
+Generate and validate `openapi.json` on every pull request:
+
+```yaml
+# .github/workflows/contracts.yml
+jobs:
+  api-contract:
+    steps:
+      - run: npm ci
+      - run: npm run openapi:generate --workspace=apps/backend
+      - run: npm run openapi:lint --workspace=apps/backend
+      - run: npm run openapi:diff --workspace=apps/backend
+```
+
+Fail the pipeline on undocumented breaking changes (removed paths, narrowed schemas, removed enum values) unless the version is intentionally bumped to `v2`.
 
 ## Sources
 

@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/architecture
   - wiki/generation
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 source_count: 4
 confidence: high
 ---
@@ -15,20 +15,25 @@ confidence: high
 
 ## Architecture
 
-The `sessionMachine` lives in `apps/backend/src/generation/machines/`. It orchestrates the execution of ANY tool using a single generic machine. The domain (`packages/domain`) is framework-agnostic; XState drives it.
+The `sessionMachine` lives in `apps/backend/src/generation/machines/`. It **imports and executes** the state machine definition from the domain — it does **not** define states, transitions, or which states are final. That knowledge lives in [[Session#Session Lifecycle — Domain-Owned State Machine|SessionLifecycle]] (`packages/domain`). XState is the **runtime engine**: actors, `invoke`, context, persistence, DI via `provide()`.
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│ sessionMachine (XState v5)                                        │
-│                                                                    │
-│  draft ──CONFIGURE──▶ ready ──START──▶ running ──────▶ completed  │
-│                              │         │  ├── executingStep        │
-│                              │         │  ├── persistingStep       │
-│                              │         │  └── stepCompleted ◀──┘  │
-│                              ▼         ▼                           │
-│                          cancelled   failed                        │
-└──────────────────────────────────────────────────────────────────┘
+┌── packages/domain ──────────────────────┐
+│  SessionLifecycle (pure data)            │  ← single source of truth
+│  → states, transitions, final states    │
+└────────────────┬────────────────────────┘
+                 │ imports
+                 ▼
+┌── apps/backend ─────────────────────────┐
+│  sessionMachine (XState v5)              │  ← runtime engine
+│  → actors (invoke LLM, persist)         │
+│  → guards (ReadinessPolicy)             │
+│  → actions (publish events)             │
+│  → .provide() DI                        │
+└─────────────────────────────────────────┘
 ```
+
+> **Architecture decision (Pattern B, 2026-07-31)**: Previously XState defined the states/transitions itself, and Session had duplicate guard methods. Now the domain `SessionLifecycle` is the single source. XState imports it and adds only runtime concerns.
 
 ## Type Definitions
 
@@ -36,7 +41,8 @@ The `sessionMachine` lives in `apps/backend/src/generation/machines/`. It orches
 // apps/backend/src/generation/machines/session-machine.ts
 
 import { setup, assign, fromPromise } from 'xstate';
-import type { Session, Artifact, ToolDefinition, AcquisitionData, ReadinessPolicy } from '@flow-app/domain';
+import { SessionLifecycle } from '@flow-app/domain/generation';
+import type { Session, Artifact, ToolDefinition, AcquisitionData } from '@flow-app/domain';
 
 interface SessionContext {
   session: Session;
@@ -63,7 +69,6 @@ const sessionMachine = setup({
     input:   {} as { session: Session; tool: ToolDefinition },
   },
   actors: {
-    // Declared as stubs — implementations injected via .provide() at runtime
     executeStep: fromPromise<Artifact, SessionContext>(
       async () => { throw new Error('provide executeStep'); }
     ),
@@ -72,8 +77,8 @@ const sessionMachine = setup({
     ),
   },
   guards: {
-    // Fix #3: delegates to ReadinessPolicy domain VO — no inline business logic
     canStart: ({ context }) => {
+      // Delegates to domain VO — no inline business logic
       const policy = ReadinessPolicy.from(context.tool);
       return policy.evaluate(context.acquisitionData).isReady;
     },
@@ -81,27 +86,36 @@ const sessionMachine = setup({
       context.currentStepIndex >= context.tool.steps.length - 1,
   },
   actions: {
-    // Fix #8: pure context update only — no domain side effects inside assign
     updateStepResults: assign({
       stepResults: ({ context, event }) =>
         [...context.stepResults, event.output as Artifact],
     }),
-    // Fix #8: separate action for domain side effect
-    callAddArtifact: ({ context, event }) => {
-      context.session.addArtifact(event.output as Artifact);
+    // Calls Session.apply() — the single domain entry point.
+    // isLast and stepLabel are computed here (from ToolDefinition) and passed
+    // IN the event. The aggregate does NOT look up ToolRegistry.
+    callApply: ({ context, event }) => {
+      const output = event.output as Artifact;
+      const stepIndex = context.currentStepIndex;
+      const domainEvent = context.session.apply({
+        type: 'ADD_ARTIFACT',
+        artifact: output,
+        isLast: stepIndex >= context.tool.steps.length - 1,        // ← computed here
+        stepLabel: context.tool.steps[stepIndex]?.label ?? '',     // ← computed here
+      });
+      if (domainEvent) eventBus.publish(domainEvent);
     },
     advanceStep: assign({
       currentStepIndex: ({ context }) => context.currentStepIndex + 1,
     }),
-    // Sync: session.complete() returns domain event, eventBus.publish() is fire-and-forget
     completeSession: ({ context }) => {
-      const event = context.session.complete();
-      eventBus.publish(event);
+      // Session.apply() validates and returns the domain event
+      const domainEvent = context.session.apply({ type: 'COMPLETE' });
+      eventBus.publish(domainEvent);
     },
   },
 }).createMachine({
   id: 'session',
-  initial: 'draft',
+  initial: SessionLifecycle.initialState,     // ← from domain, not hardcoded
   context: ({ input }) => ({
     session: input.session,
     tool: input.tool,
@@ -115,6 +129,8 @@ const sessionMachine = setup({
     },
   }),
   states: {
+    // States are defined here (XState needs the runtime structure),
+    // but transitions mirror SessionLifecycle.states — validated at startup.
     draft: {
       on: {
         CONFIGURE: {
@@ -138,13 +154,11 @@ const sessionMachine = setup({
             input: ({ context }) => context,
             onDone: {
               target: 'persistingStep',
-              // Fix #8: pure context update first, domain side effect second
-              actions: ['updateStepResults', 'callAddArtifact'],
+              actions: ['updateStepResults', 'callApply'],  // Session.apply() guards the transition
             },
             onError: { target: '#session.failed' },
           },
         },
-        // Fix #7: persistence is now an invoked async actor, not an async action
         persistingStep: {
           invoke: {
             src: 'persistSession',
@@ -173,6 +187,40 @@ const sessionMachine = setup({
     cancelled: { type: 'final' },
   },
 });
+```
+
+### Startup Validation
+
+At application startup, verify that XState's states match `SessionLifecycle`:
+
+```typescript
+// apps/backend/src/generation/machines/validate-lifecycle.ts
+
+import { SessionLifecycle } from '@flow-app/domain/generation';
+
+function validateXStateMatchesDomain(): void {
+  // Ensure every domain state has a matching XState state
+  for (const state of Object.keys(SessionLifecycle.states)) {
+    if (!(state in sessionMachine.config.states!)) {
+      throw new Error(
+        `FATAL: XState machine missing state "${state}" defined in SessionLifecycle`
+      );
+    }
+  }
+  // Ensure every domain transition has a matching XState transition
+  for (const [stateName, stateDef] of Object.entries(SessionLifecycle.states)) {
+    if ('transitions' in stateDef) {
+      const xstateState = (sessionMachine.config.states! as any)[stateName];
+      for (const eventName of Object.keys(stateDef.transitions)) {
+        if (!(eventName in (xstateState.on ?? {}))) {
+          throw new Error(
+            `FATAL: XState machine missing transition "${stateName} → ${eventName}" defined in SessionLifecycle`
+          );
+        }
+      }
+    }
+  }
+}
 ```
 
 ## Dependency Injection via `provide()`
@@ -229,14 +277,17 @@ class SessionOrchestrator {
 }
 ```
 
-## Key Design Decisions (all 4 fixes applied)
+## Key Design Decisions (Pattern B applied)
 
-| Fix | Problem | Solution |
-|-----|---------|---------|
-| **#3** | `canStart` contained inline readiness logic | Delegates to `ReadinessPolicy.from(tool).evaluate(data)` |
-| **#7** | `persistSession` was an async action | Now an `invoke` state (`persistingStep`) with `fromPromise` |
-| **#8** | `assign` mixed domain side effects with context update | Split into `callAddArtifact` (side effect) + `updateStepResults` (pure assign) |
-| **#9** | `processStepUseCase` captured as closure | Injected via `machine.provide()` in `SessionOrchestrator` |
+| Decision | Description |
+|----------|-------------|
+| **Domain-owned lifecycle** | `SessionLifecycle` in `packages/domain` is the single source of truth for states and transitions. XState imports it — never defines it. |
+| **Single entry point** | `Session.apply(event)` is the only way to change state. No duplicate guard methods. Domain validates the transition; XState orchestrates the flow. |
+| **Guard delegation** | `canStart` delegates to `ReadinessPolicy` (domain VO). No business logic in XState guards. |
+| **Actor injection** | `executeStep` and `persistSession` are injected via `machine.provide()` in `SessionOrchestrator` — no closure captures. |
+| **Startup validation** | `validateXStateMatchesDomain()` runs on boot — fails fast if XState states/transitions drift from `SessionLifecycle`. |
+| **Async persistence** | Persistence is an `invoke` state (`persistingStep`), not an async action. Crash-safe: snapshot can resume from any state. |
+| **Pure context updates** | `assign()` only updates context. Domain side effects (event publishing) happen in separate actions (`callApply`, `completeSession`) via `Session.apply()`.
 
 ## State Flow
 
@@ -246,19 +297,21 @@ draft
   START + canStart (ReadinessPolicy) → running
     executingStep:
       invoke executeStep (provided by SessionOrchestrator)
-        onDone → persistingStep (updateStepResults + callAddArtifact)
+        onDone → persistingStep (updateStepResults + callApply → Session.apply(ADD_ARTIFACT))
         onError → failed
     persistingStep:
       invoke persistSession (provided by SessionOrchestrator)
         onDone → stepCompleted
         onError → failed
     stepCompleted:
-      isLastStep → completed (completeSession: session.complete() + eventBus)
+      isLastStep → completed (completeSession → Session.apply(COMPLETE) + eventBus)
       else → executingStep (advanceStep)
 completed [final]
 failed    [final]
 cancelled [final]
 ```
+
+> **Session.apply() flow**: XState action calls `session.apply({ type: 'ADD_ARTIFACT', artifact, isLast, stepLabel })` → Session validates transition against `SessionLifecycle` → mutates state → returns `DomainEvent | null` → XState publishes event via `eventBus.publish()`. The aggregate never calls `getTool()` — `isLast` and `stepLabel` are computed by XState (which owns the `ToolDefinition`) and passed in the event.
 
 ## Sources
 

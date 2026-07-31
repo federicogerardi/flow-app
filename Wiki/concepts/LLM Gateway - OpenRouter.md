@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 source_count: 4
 confidence: high
 ---
@@ -312,6 +312,29 @@ OpenRouter returns per-request pricing in the response. This can feed the [[Usag
 const cost = result.usage.totalTokens * PRICING[result.model];
 await usageTracker.trackCost(cmd.session.userId, cost);
 ```
+
+## Reliability Policy
+
+### Timeout and Retry Budget
+
+| Dependency | Timeout | Retry Policy | Max Attempts |
+|------------|---------|--------------|--------------|
+| OpenRouter primary model | step `timeoutMs` (default 60s) | retry only on network/429/5xx with exponential backoff + jitter | 2 |
+| OpenRouter fallback model | same timeout budget (remaining time only) | no extra retries after fallback call | 1 |
+
+Rules:
+
+1. Retry only for transient failures (`429`, `500`, `503`, transport errors).
+2. Do not retry on validation/content-policy errors.
+3. Preserve a total step budget: fallback cannot exceed remaining timeout.
+
+### Deterministic Prompt Execution
+
+- Prompt template path is treated as a versioned contract (`tool/step-template@version`).
+- Prompt rendering must log `templateId`, `templateVersion`, and selected model.
+- Response parsing must validate expected output shape before persisting artifacts.
+
+This does not make model output mathematically deterministic, but it makes execution **operationally deterministic** for development, replay, and incident analysis.
 
 ## Sources
 
