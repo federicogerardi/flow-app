@@ -55,11 +55,11 @@ class ContextEnricher {
 
 ## Source
 
-From [[doodle/STARTUP]]:
+From [[sources/STARTUP]]:
 
-> "L'output prodotto da uno step viene immesso logicamente come contesto di input per lo step successivo, consentendo un affinamento sequenziale del contenuto."
+> "The output produced by one step is logically fed as input context for the next step, enabling sequential refinement of content."
 
 ## Sources
 
-- [[doodle/STARTUP]] — Progressive Context Enrichment definition
-- [[doodle/APP-CONCEPT]] — Tool pipelines, step chain execution
+- [[sources/STARTUP]] — Progressive Context Enrichment definition
+- [[sources/APP-CONCEPT]] — Tool pipelines, step chain execution

@@ -32,63 +32,63 @@ ACQUISIZIONE                  ELABORAZIONE (1..N step)            OUTPUT
 │assets    │──┘               └──────┘   └──────┘   └──────────┘   └──────────┘
 └──────────┘                                                           │
                                                                        ▼
-                                                                 ┌──────────┐
-                                                                 │  Asset   │
-                                                                 │(promotion)│
-                                                                 └──────────┘
+                                                                  ┌──────────┐
+                                                                  │  Asset   │
+                                                                  │(promotion)│
+                                                                  └──────────┘
 ```
 
-### Fase 1: Acquisizione
+### Phase 1: Acquisition
 
-I dati entrano **prima** che la pipeline parta. Fonti:
+Data enters **before** the pipeline starts. Sources:
 
-| Fonte | Esempio | Tool che la usano |
+| Source | Example | Tools that use it |
 |-------|---------|-------------------|
-| `userText` | Keyword, titolo, topic | `video-description`, `ai-overview-analysis` |
+| `userText` | Keyword, title, topic | `video-description`, `ai-overview-analysis` |
 | `files` | Briefing `.txt`, `.docx`, `.md` | `landing-funnel`, `blog-post` |
 | `apiCalls` | SerpAPI, People Also Ask | `ai-overview-analysis` |
-| `assets` | `brand-voice`, `persona` | Tutti i content tool |
+| `assets` | `brand-voice`, `persona` | All content tools |
 
-### Fase 2-3: Elaborazione
+### Phase 2-3: Processing
 
-Ogni step è un **prompt LLM**. La differenza tra step è **quali dati riceve in input**:
+Each step is an **LLM prompt**. The difference between steps is **which data it receives as input**:
 
-| Modalità | Riceve | Esempio |
+| Mode | Receives | Example |
 |----------|--------|---------|
-| `serial` | Solo output dello step precedente | step 2 riceve output step 1 |
-| `hybrid` | Output step precedente + dati API acquisiti | step Geometric che analizza crawl + contesto |
+| `serial` | Only output from the previous step | step 2 receives output from step 1 |
+| `hybrid` | Previous step output + acquired API data | Geometric step analyzing crawl + context |
 
-L'ultimo step dell'array è automaticamente il **final step**: riceve tutto il contesto accumulato e produce l'[[Artifact]] promovibile ad [[Asset]].
+The last step in the array is automatically the **final step**: it receives all accumulated context and produces the [[Artifact]] that can be promoted to [[Asset]].
 
-Niente `StepType` enum. Niente `ArtifactRole` esplicito. Niente step speciali per crawling o scoring.
+No `StepType` enum. No explicit `ArtifactRole`. No special steps for crawling or scoring.
 
 ## Aggregate Root
 
-**[[Session]]** — una singola esecuzione di pipeline. Contiene [[Artifact]] ordinati (uno per step).
+**[[Session]]** — a single pipeline execution. Contains ordered [[Artifact]]s (one per step).
 
 ## Entities
 
 | Entity | Role |
 |--------|------|
 | [[Session]] | Aggregate Root |
-| [[Artifact]] | Output di uno step. L'ultimo è promovibile |
+| [[Artifact]] | Output of a step. The last one is promotable |
 
 ## Value Objects
 
-| VO | Descrizione |
+| VO | Description |
 |----|-------------|
-| `SessionId` | Identificativo unico |
-| `ToolKey` | Riferimento al [[Tool as Static Configuration|ToolDefinition]] |
+| `SessionId` | Unique identifier |
+| `ToolKey` | Reference to the [[Tool as Static Configuration|ToolDefinition]] |
 | `IdempotencyKey` | `(userId, workspaceId, toolKey, inputHash)` |
-| `ArtifactContent` | Contenuto immutabile generato |
+| `ArtifactContent` | Immutable generated content |
 | `SessionStatus` | `draft` → `ready` → `running` → `completed` \| `failed` \| `cancelled` |
-| `CrawlData` | Raw API response immutabile — persistito per replay, audit, cache |
+| `CrawlData` | Immutable raw API response — persisted for replay, audit, cache |
 
 ## Domain Services
 
-- **ContextEnricher**: Assembla il contesto per ogni step:
-  - Modalità `serial`: unisce output step precedenti + asset iniettati
-  - Modalità `hybrid`: come serial + dati API acquisiti (`CrawlData`)
+- **ContextEnricher**: Assembles the context for each step:
+  - `serial` mode: merges previous step outputs + injected assets
+  - `hybrid` mode: like serial + acquired API data (`CrawlData`)
 
 ## Repository
 
@@ -111,7 +111,7 @@ interface SessionRepository {
 
 ## Sources
 
-- [[doodle/APP-CONCEPT]] — Tool catalog, architecture
-- [[doodle/PRD]] — FR-W01 to FR-W09
-- [[doodle/STARTUP]] — Domain rules
-- [[doodle/USER-STORIES]] — All tool epics
+- [[sources/APP-CONCEPT]] — Tool catalog, architecture
+- [[sources/PRD]] — FR-W01 to FR-W09
+- [[sources/STARTUP]] — Domain rules
+- [[sources/USER-STORIES]] — All tool epics

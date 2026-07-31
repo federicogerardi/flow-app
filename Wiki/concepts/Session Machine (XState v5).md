@@ -262,7 +262,7 @@ cancelled [final]
 
 ## Sources
 
-- [[doodle/APP-CONCEPT]] — BE-Driven workflow
-- [[doodle/PRD]] — FR-W01, FR-W03 (resume), FR-W04 (cancel)
-- [[doodle/STARTUP]] — Ordered Step Chain
-- [[doodle/USER-STORIES]] — US-GF01 to US-GF04
+- [[sources/APP-CONCEPT]] — BE-Driven workflow
+- [[sources/PRD]] — FR-W01, FR-W03 (resume), FR-W04 (cancel)
+- [[sources/STARTUP]] — Ordered Step Chain
+- [[sources/USER-STORIES]] — US-GF01 to US-GF04

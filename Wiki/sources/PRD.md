@@ -5,12 +5,12 @@ tags:
   - wiki/generation
   - wiki/requirements
 date_updated: 2026-07-30
-source: "[[doodle/PRD]]"
+source: "doodle/PRD.md (raw)"
 ---
 
 # PRD — Product Requirement Document
 
-> Source: [[doodle/PRD]] (257 lines, Italian)
+> Source: `doodle/PRD.md` (removed — content now lives in this wiki)
 
 ## Summary
 

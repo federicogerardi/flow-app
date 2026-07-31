@@ -50,7 +50,7 @@ class AssetResolver {
 
 ## Integration
 
-Chiamato da `StartSessionUseCase` prima di creare la [[Session]]:
+Called by `StartSessionUseCase` before creating the [[Session]]:
 
 ```typescript
 // In StartSessionUseCase
@@ -59,13 +59,13 @@ const resolvedAssets = await this.assetResolver.resolve(cmd.workspaceId, tool);
 
 ## Invariants
 
-- Se un Asset è marcato `required: true` nel `ToolDefinition.acquisition.assets[]` e non esiste nel Workspace → `MissingRequiredAssetError`
-- Se un Asset è `required: false` e non esiste → saltato silenziosamente
-- Restituisce una `Map<AssetType, AssetContent>`, mai gli oggetti `Asset` completi (il consumer non deve accedere a metadati)
+- If an Asset is marked `required: true` in `ToolDefinition.acquisition.assets[]` and does not exist in the Workspace → `MissingRequiredAssetError`
+- If an Asset is `required: false` and does not exist → silently skipped
+- Returns a `Map<AssetType, AssetContent>`, never full `Asset` objects (the consumer must not access metadata)
 
 ## Sources
 
-- [[doodle/APP-CONCEPT]] — Knowledge Panel, AssetFieldMapping
-- [[doodle/PRD]] — FR-A02 (asset injection)
-- [[doodle/STARTUP]] — Domain definitions
-- [[doodle/USER-STORIES]] — US-AS04, US-AS05, US-AS06
+- [[sources/APP-CONCEPT]] — Knowledge Panel, AssetFieldMapping
+- [[sources/PRD]] — FR-A02 (asset injection)
+- [[sources/STARTUP]] — Domain definitions
+- [[sources/USER-STORIES]] — US-AS04, US-AS05, US-AS06

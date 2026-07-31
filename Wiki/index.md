@@ -2,7 +2,7 @@
 type: index
 tags:
   - wiki/index
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 ---
 
 # Wiki Index — Flow App
@@ -11,10 +11,10 @@ date_updated: 2026-07-30
 
 | File | Summary Page | Date Ingested |
 |------|-------------|---------------|
-| [[doodle/APP-CONCEPT]] | [[Wiki/sources/APP-CONCEPT]] | 2026-07-30 |
-| [[doodle/PRD]] | [[Wiki/sources/PRD]] | 2026-07-30 |
-| [[doodle/STARTUP]] | [[Wiki/sources/STARTUP]] | 2026-07-30 |
-| [[doodle/USER-STORIES]] | [[Wiki/sources/USER-STORIES]] | 2026-07-30 |
+| APP-CONCEPT.md | [[sources/APP-CONCEPT]] | 2026-07-30 |
+| PRD.md | [[sources/PRD]] | 2026-07-30 |
+| STARTUP.md | [[sources/STARTUP]] | 2026-07-30 |
+| USER-STORIES.md | [[sources/USER-STORIES]] | 2026-07-30 |
 
 ## Entities
 
@@ -38,6 +38,8 @@ date_updated: 2026-07-30
 | [[Usage & Quota]] | Bounded Context | high | 2 |
 | [[Tool as Static Configuration]] | Architecture | high | 4 |
 | [[CrawlData]] | Value Object | high | 2 |
+| [[ArtifactContent]] | Value Object | high | 0 |
+| [[IdempotencyKey]] | Value Object | high | 0 |
 | [[XState Integration]] | Architecture | high | 4 |
 | [[Session Machine (XState v5)]] | Implementation | high | 4 |
 | [[Application Services]] | Architecture | high | 4 |
@@ -55,5 +57,7 @@ date_updated: 2026-07-30
 
 | Page | Description | Date Filed |
 |------|-------------|------------|
-| [[Wiki/synthesis/backend-frontend-startup-gaps]] | Backend→Frontend startup gap analysis (15 items) | 2026-07-30 |
-| [[Wiki/overview]] | High-level synthesis (v3) | 2026-07-30 |
+| [[synthesis/backend-audit-gaps-improvements]] | Backend audit — 12 finding, all closed | 2026-07-30 |
+| [[synthesis/backend-frontend-startup-gaps]] | Backend→Frontend startup gap analysis (15 items) | 2026-07-30 |
+| [[synthesis/lint-report-2026-07-30]] | Wiki health-check — 0 orphans, 0 broken links | 2026-07-30 |
+| [[overview]] | High-level synthesis (v3) | 2026-07-30 |

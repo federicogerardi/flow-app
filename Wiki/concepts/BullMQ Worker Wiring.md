@@ -12,7 +12,8 @@ confidence: high
 # BullMQ Worker Wiring
 
 > Async job execution for the [[Session Machine (XState v5)|XState session machine]]  
-> `apps/backend/src/infrastructure/worker.ts`
+> `apps/backend/src/infrastructure/worker.ts`  
+> Monitoring: see [[Job Queue - Monitoring and Stability]]
 
 ## Architecture
 
@@ -442,4 +443,4 @@ export function bootstrapWorker(): Worker {
 - [[Application Services]] — ProcessStepUseCase, StartSessionUseCase
 - [[Database Schema]] — session_snapshots table for crash recovery
 - [[API Routes]] — SSE endpoint consuming events from bridge
-- [[doodle/APP-CONCEPT]] — BE-Driven workflow, JobEventBridge, JobProgressSerializer
+- [[sources/APP-CONCEPT]] — BE-Driven workflow, JobEventBridge, JobProgressSerializer

@@ -34,7 +34,7 @@ CREATE TYPE asset_type         AS ENUM ('brief', 'brand-voice', 'persona', 'angl
 CREATE TYPE asset_source       AS ENUM ('generated', 'uploaded', 'manual');
 CREATE TYPE user_role          AS ENUM ('admin', 'member');
 CREATE TYPE user_status        AS ENUM ('active', 'disabled');
-CREATE TYPE transaction_reason AS ENUM ('generation', 'admin_grant');
+CREATE TYPE transaction_reason AS ENUM ('generation', 'admin_grant', 'purchase', 'plan_upgrade');
 ```
 
 ---
@@ -70,7 +70,7 @@ CREATE INDEX idx_sessions_idempotency_key_hash ON sessions(idempotency_key_hash)
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `tool_key` | `VARCHAR(100)` | References [[Tool as Static Configuration\|ToolDefinition.toolKey]] — no FK (static config, not DB) |
+| `tool_key` | `VARCHAR(100)` | References [[Tool as Static Configuration]] (`ToolDefinition.toolKey`) — no FK (static config, not DB) |
 | `workspace_id` | `UUID FK → workspaces` | Session belongs to a [[Workspace]] |
 | `user_id` | `UUID FK → users` | Owner |
 | `idempotency_key_hash` | `VARCHAR(64)` | SHA-256 of `(userId|workspaceId|toolKey|inputHash)` |
@@ -268,12 +268,17 @@ CREATE TABLE oauth_accounts (
 
 ```sql
 CREATE TABLE quotas (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id         UUID         NOT NULL REFERENCES users(id),
-    period          VARCHAR(7)   NOT NULL,  -- YYYY-MM
-    limit_amount    INTEGER      NOT NULL,
-    consumed_amount INTEGER      NOT NULL DEFAULT 0,
-    created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id             UUID         NOT NULL REFERENCES users(id),
+    period              VARCHAR(7)   NOT NULL,  -- YYYY-MM
+    plan_type           VARCHAR(20)  NOT NULL DEFAULT 'free',
+    -- Artifact gate (anti-abuse, invisible)
+    artifact_limit      INTEGER      NOT NULL DEFAULT 1000,
+    artifact_count      INTEGER      NOT NULL DEFAULT 0,
+    -- Credit quota (user-facing)
+    credit_limit        INTEGER      NOT NULL DEFAULT 250,
+    credit_consumed     INTEGER      NOT NULL DEFAULT 0,
+    created_at          TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
 
     CONSTRAINT uq_quotas_user_period UNIQUE (user_id, period)
 );
@@ -448,3 +453,39 @@ CREATE TABLE tool_step_bindings (...);
 - [[Quota]] — aggregate root
 - [[CrawlData]] — value object
 - [[packages-domain Structure]] — domain directory tree
+
+---
+
+## Data Retention Policy
+
+| Data | Retention | Cleanup |
+|------|-----------|---------|
+| Sessions (completed) | 90 days | Soft delete or archive |
+| Sessions (failed) | 30 days | Hard delete |
+| Crawl data | Follow session retention | Cascade delete with session |
+| Session snapshots | Follow session retention | Cascade delete with session |
+| Idempotency keys | 24h TTL | Auto-expire via `expires_at` |
+| Refresh tokens | 7 days | Auto-expire via `expires_at` |
+
+```sql
+-- Cron job: run hourly
+
+-- Clean up failed sessions older than 30 days
+DELETE FROM session_snapshots WHERE session_id IN (
+  SELECT id FROM sessions WHERE status = 'failed' AND created_at < NOW() - INTERVAL '30 days'
+);
+DELETE FROM crawl_data WHERE session_id IN (
+  SELECT id FROM sessions WHERE status = 'failed' AND created_at < NOW() - INTERVAL '30 days'
+);
+DELETE FROM artifacts WHERE session_id IN (
+  SELECT id FROM sessions WHERE status = 'failed' AND created_at < NOW() - INTERVAL '30 days'
+);
+DELETE FROM sessions WHERE status = 'failed' AND created_at < NOW() - INTERVAL '30 days';
+
+-- Archive completed sessions older than 90 days (future: move to cold storage)
+-- For now: soft delete by marking as archived
+UPDATE sessions SET status = 'archived' WHERE status = 'completed' AND created_at < NOW() - INTERVAL '90 days';
+
+-- Clean up expired keys
+DELETE FROM idempotency_keys WHERE expires_at < NOW();
+```

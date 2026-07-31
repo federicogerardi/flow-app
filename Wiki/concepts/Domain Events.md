@@ -83,7 +83,7 @@ Events are **immutable DTOs** — no behavior, just data. They carry all informa
 
 ## Sources
 
-- [[doodle/APP-CONCEPT]] — BE-Driven workflow, event bridge
-- [[doodle/PRD]] — Idempotency, audit trail
-- [[doodle/STARTUP]] — Domain rules
-- [[doodle/USER-STORIES]] — SSE progress, real-time updates
+- [[sources/APP-CONCEPT]] — BE-Driven workflow, event bridge
+- [[sources/PRD]] — Idempotency, audit trail
+- [[sources/STARTUP]] — Domain rules
+- [[sources/USER-STORIES]] — SSE progress, real-time updates

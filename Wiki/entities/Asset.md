@@ -19,7 +19,7 @@ An `Asset` is a persistent, workspace-scoped resource reusable across [[Tool as 
 
 > "Asset = workspace property, persistent and reusable as input for subsequent tools."
 
-From [[doodle/STARTUP]]: the core distinction from [[Artifact]] — Artifact = what you produced in a session; Asset = what you saved in a workspace.
+From [[sources/STARTUP]]: the core distinction from [[Artifact]] — Artifact = what you produced in a session; Asset = what you saved in a workspace.
 
 ## Asset Types
 
@@ -62,7 +62,7 @@ The [[AssetResolver]] maps `toolKey → assetType` to determine which Assets are
 
 ## Sources
 
-- [[doodle/STARTUP]] — Asset definition, source types
-- [[doodle/PRD]] — FR-A01 to FR-A05
-- [[doodle/USER-STORIES]] — US-AS01 to US-AS08
-- [[doodle/APP-CONCEPT]] — Tool catalog, AssetFieldMapping
+- [[sources/STARTUP]] — Asset definition, source types
+- [[sources/PRD]] — FR-A01 to FR-A05
+- [[sources/USER-STORIES]] — US-AS01 to US-AS08
+- [[sources/APP-CONCEPT]] — Tool catalog, AssetFieldMapping

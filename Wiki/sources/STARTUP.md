@@ -5,12 +5,12 @@ tags:
   - wiki/generation
   - wiki/domain-model
 date_updated: 2026-07-30
-source: "[[doodle/STARTUP]]"
+source: "doodle/STARTUP.md (raw)"
 ---
 
 # STARTUP — Bootstrap Decisions
 
-> Source: [[doodle/STARTUP]] (154 lines, Italian)
+> Source: `doodle/STARTUP.md` (removed — content now lives in this wiki)
 
 ## Summary
 

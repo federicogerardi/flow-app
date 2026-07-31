@@ -40,7 +40,7 @@ In the unified tool model, `CrawlData` lives in [[Content Generation]] as a data
 class CrawlData {
   constructor(
     readonly source: string,                     // 'serpapi', 'people_also_ask', 'ai_overview'
-    readonly rawResponse: Record<string, unknown>, // JSON grezzo dall'API
+    readonly rawResponse: Record<string, unknown>, // raw JSON from the API
     readonly fetchedAt: DateTime,
     readonly expiresAt: DateTime | null,          // cache TTL
   ) {}
@@ -56,11 +56,11 @@ Acquisition Phase                     Elaboration Phase
 ─────────────────                     ─────────────────
 API call → CrawlData ──┐              Step 2 (hybrid)
 (persisted)             │              ├── output Step 1
-                        └──iniettato──▶├── CrawlData (raw API)
-                                       └── LLM prompt analizza entrambi
+                        └──injected───▶├── CrawlData (raw API)
+                                       └── LLM prompt analyzes both
 ```
 
 ## Sources
 
-- [[doodle/APP-CONCEPT]] — Geometric tool, crawling phase
-- [[doodle/USER-STORIES]] — US-GE08, US-GE09
+- [[sources/APP-CONCEPT]] — Geometric tool, crawling phase
+- [[sources/USER-STORIES]] — US-GE08, US-GE09

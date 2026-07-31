@@ -21,7 +21,7 @@ A `Workspace` is a named container owned by a [[User]] that groups [[Asset]]s. I
 
 > "A named workspace owned by a User that groups related Artifacts."
 
-The term comes directly from the original domain definition in [[doodle/STARTUP]].
+The term comes directly from the original domain definition in [[sources/STARTUP]].
 
 ## Internal Entities
 
@@ -55,7 +55,7 @@ The term comes directly from the original domain definition in [[doodle/STARTUP]
 
 ## Sources
 
-- [[doodle/STARTUP]] — Original Workspace definition, Artifact vs Asset
-- [[doodle/PRD]] — FR-A01 to FR-A05 (Workspace & Asset requirements)
-- [[doodle/USER-STORIES]] — US-W01 to US-W06, US-AS01 to US-AS08
-- [[doodle/APP-CONCEPT]] — Knowledge Panel, Asset auto-injection
+- [[sources/STARTUP]] — Original Workspace definition, Artifact vs Asset
+- [[sources/PRD]] — FR-A01 to FR-A05 (Workspace & Asset requirements)
+- [[sources/USER-STORIES]] — US-W01 to US-W06, US-AS01 to US-AS08
+- [[sources/APP-CONCEPT]] — Knowledge Panel, Asset auto-injection

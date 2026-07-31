@@ -32,5 +32,5 @@ Represents an authenticated user of the platform. Generic subdomain — mostly o
 
 ## Sources
 
-- [[doodle/PRD]] — FR-S01 to FR-S06
-- [[doodle/USER-STORIES]] — US-A01 to US-A07
+- [[sources/PRD]] — FR-S01 to FR-S06
+- [[sources/USER-STORIES]] — US-A01 to US-A07

@@ -21,7 +21,7 @@ Aggregate Root                  DomainEventBus                  Handlers
 ──────────────                  ──────────────                  ────────
 Session.complete()              eventBus.publish()              PromoteToAssetUseCase
   └── new SessionCompleted ───▶ SessionCompleted ────────────▶  ConsumeCreditsUseCase
-                                                                UI progress (SSE)
+                                                                 UI progress (SSE)
 ```
 
 ## Event Index
@@ -60,18 +60,18 @@ class SessionStarted implements DomainEvent {
 }
 ```
 
-| Campo | Tipo | Descrizione |
+| Field | Type | Description |
 |-------|------|-------------|
-| `sessionId` | `SessionId` | Identificativo sessione |
-| `toolKey` | `ToolKey` | Riferimento al [[Tool as Static Configuration|ToolDefinition]] |
-| `workspaceId` | `WorkspaceId` | Workspace proprietario |
-| `userId` | `UserId` | Utente che ha avviato la generazione |
+| `sessionId` | `SessionId` | Session identifier |
+| `toolKey` | `ToolKey` | Reference to the [[Tool as Static Configuration|ToolDefinition]] |
+| `workspaceId` | `WorkspaceId` | Owning workspace |
+| `userId` | `UserId` | User who started the generation |
 
-**Trigger**: `Session.start()` — transizione `ready → running`
+**Trigger**: `Session.start()` — transition `ready → running`
 
 **Consumers**:
-- UI: avvia connessione SSE per progresso real-time
-- Monitoring: traccia inizio job
+- UI: starts SSE connection for real-time progress
+- Monitoring: tracks job start
 
 ---
 
@@ -92,18 +92,18 @@ class StepCompleted implements DomainEvent {
 }
 ```
 
-| Campo | Tipo | Descrizione |
+| Field | Type | Description |
 |-------|------|-------------|
-| `sessionId` | `SessionId` | Sessione corrente |
-| `stepNumber` | `StepNumber` | Ordinale dello step completato |
-| `stepLabel` | `string` | Etichetta human-readable |
-| `artifactId` | `ArtifactId` | Artifact prodotto |
-| `isLast` | `boolean` | È l'ultimo step? (prepara UI alla chiusura) |
+| `sessionId` | `SessionId` | Current session |
+| `stepNumber` | `StepNumber` | Ordinal of the completed step |
+| `stepLabel` | `string` | Human-readable label |
+| `artifactId` | `ArtifactId` | Produced artifact |
+| `isLast` | `boolean` | Is it the last step? (prepares UI for closing) |
 
-**Trigger**: `Session.addArtifact(artifact)` — dopo ogni step completato
+**Trigger**: `Session.addArtifact(artifact)` — after each completed step
 
 **Consumers**:
-- UI: aggiorna progress bar, mostra card step completato
+- UI: updates progress bar, shows completed step card
 
 ---
 
@@ -127,25 +127,25 @@ class SessionCompleted implements DomainEvent {
 }
 ```
 
-| Campo | Tipo | Descrizione |
+| Field | Type | Description |
 |-------|------|-------------|
-| `sessionId` | `SessionId` | Sessione completata |
-| `toolKey` | `ToolKey` | Tool usato (per determinare se promovibile) |
-| `workspaceId` | `WorkspaceId` | Workspace di destinazione |
-| `userId` | `UserId` | Utente (per consumo crediti) |
-| `finalArtifact` | `{ artifactId, content }` | Artifact finale (solo id + contenuto, non l'intero oggetto) |
+| `sessionId` | `SessionId` | Completed session |
+| `toolKey` | `ToolKey` | Tool used (to determine if promotable) |
+| `workspaceId` | `WorkspaceId` | Target workspace |
+| `userId` | `UserId` | User (for credit consumption) |
+| `finalArtifact` | `{ artifactId, content }` | Final artifact (id + content only, not the entire object) |
 
-**Trigger**: `Session.complete()` — ultimo step terminato con successo
+**Trigger**: `Session.complete()` — last step completed successfully
 
 **Consumers**:
 
-| Handler | Azione |
+| Handler | Action |
 |---------|--------|
-| `PromoteToAssetUseCase` | Se `toolKey` è un asset tool, chiama `Workspace.addAsset()` |
-| `ConsumeCreditsUseCase` | Chiama `Quota.consume()` per dedurre crediti |
-| UI (SSE) | Notifica completamento, abilita download e pulsante promozione |
+| `PromoteToAssetUseCase` | If `toolKey` is an asset tool, calls `Workspace.addAsset()` |
+| `ConsumeCreditsUseCase` | Calls `Quota.consume()` to deduct credits |
+| UI (SSE) | Notifies completion, enables download and promotion button |
 
-**Cross-context contract**: il payload deve contenere tutto ciò che serve ai consumer. Nessun consumer deve chiamare `SessionRepository.findById()` — l'evento è autosufficiente.
+**Cross-context contract**: the payload must contain everything consumers need. No consumer should call `SessionRepository.findById()` — the event is self-sufficient.
 
 ---
 
@@ -166,19 +166,19 @@ class SessionFailed implements DomainEvent {
 }
 ```
 
-| Campo | Tipo | Descrizione |
+| Field | Type | Description |
 |-------|------|-------------|
-| `sessionId` | `SessionId` | Sessione fallita |
-| `toolKey` | `ToolKey` | Tool in esecuzione |
-| `failedAtStep` | `StepNumber` | Step in cui si è verificato l'errore |
-| `errorCode` | `string` | Codice errore (es. `LLM_TIMEOUT`, `API_RATE_LIMITED`) |
-| `errorMessage` | `string` | Messaggio human-readable per UI |
+| `sessionId` | `SessionId` | Failed session |
+| `toolKey` | `ToolKey` | Tool being executed |
+| `failedAtStep` | `StepNumber` | Step where the error occurred |
+| `errorCode` | `string` | Error code (e.g. `LLM_TIMEOUT`, `API_RATE_LIMITED`) |
+| `errorMessage` | `string` | Human-readable message for UI |
 
-**Trigger**: Errore in qualsiasi step (LLM timeout, API down, parsing fallito)
+**Trigger**: Error in any step (LLM timeout, API down, parsing failed)
 
 **Consumers**:
-- UI: mostra errore con messaggio azionabile e pulsante retry
-- Monitoring: alert se error rate > soglia
+- UI: shows error with actionable message and retry button
+- Monitoring: alert if error rate > threshold
 
 ---
 
@@ -196,9 +196,9 @@ class SessionCancelled implements DomainEvent {
 }
 ```
 
-**Trigger**: Utente chiama cancel durante `running`
+**Trigger**: User calls cancel during `running`
 
-**Consumers**: UI (rimuove progress indicator)
+**Consumers**: UI (removes progress indicator)
 
 ---
 
@@ -218,17 +218,17 @@ class AssetCreated implements DomainEvent {
 }
 ```
 
-| Campo | Tipo | Descrizione |
+| Field | Type | Description |
 |-------|------|-------------|
-| `workspaceId` | `WorkspaceId` | Workspace contenitore |
-| `assetId` | `AssetId` | Nuovo asset |
-| `assetType` | `AssetType` | Tipo (brief, brand-voice, persona, angle) |
+| `workspaceId` | `WorkspaceId` | Container workspace |
+| `assetId` | `AssetId` | New asset |
+| `assetType` | `AssetType` | Type (brief, brand-voice, persona, angle) |
 | `source` | `AssetSource` | `generated` | `uploaded` | `manual` |
 
-**Trigger**: `Workspace.addAsset()` — dopo creazione asset
+**Trigger**: `Workspace.addAsset()` — after asset creation
 
 **Consumers**:
-- UI: aggiorna Knowledge Panel, mostra notifica
+- UI: updates Knowledge Panel, shows notification
 
 ---
 
@@ -247,7 +247,7 @@ class AssetUpdated implements DomainEvent {
 }
 ```
 
-**Trigger**: Contenuto asset modificato
+**Trigger**: Asset content modified
 
 **Consumers**: UI (refresh Knowledge Panel)
 
@@ -269,10 +269,10 @@ class QuotaExceeded implements DomainEvent {
 }
 ```
 
-**Trigger**: `Quota.consume()` quando `consumed >= limit`
+**Trigger**: `Quota.consume()` when `consumed >= limit`
 
 **Consumers**:
-- UI: blocca pulsante "Genera", mostra avviso quota esaurita
+- UI: blocks "Generate" button, shows quota exhausted warning
 - Notification: email/alert admin
 
 ---
@@ -293,47 +293,47 @@ class CreditConsumed implements DomainEvent {
 }
 ```
 
-**Trigger**: `Quota.consume()` dopo deduzione credito
+**Trigger**: `Quota.consume()` after credit deduction
 
 **Consumers**:
-- UI: aggiorna counter crediti in workspace
+- UI: updates credit counter in workspace
 - Audit trail: `quota_history` in PostgreSQL
 
 ---
 
-## Event Flow — Sequenza completa
+## Event Flow — Complete Sequence
 
 ```
 SessionMachine (XState)
 │
 ├── ready → running
 │   └── publish SessionStarted
-│         ├── UI: apri SSE
-│         └── Monitoring: traccia job
+│         ├── UI: open SSE
+│         └── Monitoring: track job
 │
 ├── running: executingStep → stepCompleted (× N-1)
 │   └── publish StepCompleted × (N-1)
-│         └── UI: aggiorna progress bar
+│         └── UI: update progress bar
 │
-├── running: executingStep → stepCompleted (ultimo step)
+├── running: executingStep → stepCompleted (last step)
 │   ├── publish StepCompleted (isLast: true)
-│   │     └── UI: step finale completato
+│   │     └── UI: last step completed
 │   └── publish SessionCompleted
 │         ├── PromoteToAssetUseCase
 │         │     └── Workspace.addAsset()
 │         │           └── publish AssetCreated
-│         │                 └── UI: aggiorna Knowledge Panel
+│         │                 └── UI: update Knowledge Panel
 │         ├── ConsumeCreditsUseCase
 │         │     └── Quota.consume()
 │         │           ├── publish CreditConsumed
-│         │           │     └── UI: aggiorna counter
-│         │           └── (se quota esaurita) publish QuotaExceeded
-│         │                 └── UI: blocca nuove generazioni
-│         └── UI: mostra risultato finale, download
+│         │           │     └── UI: update counter
+│         │           └── (if quota exceeded) publish QuotaExceeded
+│         │                 └── UI: block new generations
+│         └── UI: show final result, download
 │
-└── (errore)
+└── (error)
     └── publish SessionFailed
-          └── UI: mostra errore + retry
+          └── UI: show error + retry
 ```
 
 ---
@@ -395,15 +395,15 @@ export function bootstrapEventHandlers(): void {
 
 ## Rules
 
-1. **Eventi sono DTO immutabili** — nessuna logica, solo dati
-2. **Payload autosufficiente** — il consumer non deve mai chiamare repository per completare l'informazione
-3. **Fire-and-forget** — il publisher non aspetta i consumer. Se un handler fallisce, logga e continua
-4. **Nessun ordinamento garantito** — due handler dello stesso evento possono eseguire in qualsiasi ordine
-5. **Eventi nel dominio, bus nell'application layer** — `packages/domain` definisce le classi, `apps/backend` le consegna
+1. **Events are immutable DTOs** — no logic, only data
+2. **Self-sufficient payload** — the consumer must never call a repository to complete the information
+3. **Fire-and-forget** — the publisher does not wait for consumers. If a handler fails, log and continue
+4. **No guaranteed ordering** — two handlers of the same event can execute in any order
+5. **Events in the domain, bus in the application layer** — `packages/domain` defines the classes, `apps/backend` delivers them
 
 ## Sources
 
-- [[doodle/APP-CONCEPT]] — BE-Driven workflow, event bridge
-- [[doodle/PRD]] — Idempotency, audit trail, observability
-- [[doodle/STARTUP]] — Domain rules
-- [[doodle/USER-STORIES]] — SSE progress, real-time updates
+- [[sources/APP-CONCEPT]] — BE-Driven workflow, event bridge
+- [[sources/PRD]] — Idempotency, audit trail, observability
+- [[sources/STARTUP]] — Domain rules
+- [[sources/USER-STORIES]] — SSE progress, real-time updates

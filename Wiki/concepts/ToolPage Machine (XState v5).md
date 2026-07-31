@@ -12,7 +12,8 @@ confidence: high
 # ToolPage Machine (XState v5)
 
 > Frontend state machine for the unified tool execution UI  
-> `apps/frontend/src/machines/tool-page-machine.ts`
+> `apps/frontend/src/machines/tool-page-machine.ts`  
+> Component architecture: see [[Frontend Architecture]]
 
 ## Architecture
 
@@ -476,7 +477,8 @@ ToolPage
 
 ## Sources
 
-- [[doodle/APP-CONCEPT]] — Registry-Driven Architecture, ToolPage
-- [[doodle/PRD]] — FR-U01 to FR-U04 (UI requirements)
-- [[doodle/USER-STORIES]] — US-GF01 to US-GF04 (workflow UX)
+- [[sources/APP-CONCEPT]] — Registry-Driven Architecture, ToolPage
+- [[sources/PRD]] — FR-U01 to FR-U04 (UI requirements)
+- [[sources/USER-STORIES]] — US-GF01 to US-GF04 (workflow UX)
 - [[Session Machine (XState v5)]] — backend equivalent machine
+- [[Tool UX Architecture]] — 4-phase lifecycle, always-on information pattern

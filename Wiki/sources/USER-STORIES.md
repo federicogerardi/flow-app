@@ -5,12 +5,12 @@ tags:
   - wiki/generation
   - wiki/requirements
 date_updated: 2026-07-30
-source: "[[doodle/USER-STORIES]]"
+source: "doodle/USER-STORIES.md (raw)"
 ---
 
 # USER-STORIES — User Stories
 
-> Source: [[doodle/USER-STORIES]] (226 lines, Italian)
+> Source: `doodle/USER-STORIES.md` (removed — content now lives in this wiki)
 
 ## Summary
 

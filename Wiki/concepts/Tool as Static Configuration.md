@@ -17,7 +17,7 @@ confidence: high
 
 A `Tool` is a **static configuration object** in `packages/domain`. It declares WHAT data to acquire, HOW MANY elaboration steps to run, and WHICH prompt templates to use. The difference between any two tools is purely configuration — same execution engine, same [[XState Integration|XState machine]], same [[Session]] aggregate.
 
-> *"Un tool che vale 100 tool."*
+> *"One tool worth 100 tools."*
 
 ## Naming Convention
 
@@ -25,35 +25,35 @@ A `Tool` is a **static configuration object** in `packages/domain`. It declares 
 {output}[-{variant}]
 ```
 
-Il `toolKey` dichiara **cosa produce il tool**. Niente verbi, niente abbreviazioni, niente nomi propri. Tre famiglie:
+The `toolKey` declares **what the tool produces**. No verbs, no abbreviations, no proper names. Three families:
 
-### Content — `{formato}[-{variante}]`
+### Content — `{format}[-{variant}]`
 
-| toolKey | Output | Variante |
-|---------|--------|----------|
+| toolKey | Output | Variant |
+|---------|--------|---------|
 | `landing-funnel` | Landing page | Funnel (optin → quiz → VSL) |
-| `landing-page` | Landing page | Singola + thank-you |
-| `video-script-long-form` | Script video | Long-form (6 step) |
-| `video-description` | Descrizione video | — |
-| `blog-post` | Articolo blog | — |
-| `ad-copy` | Copy pubblicitario | — |
+| `landing-page` | Landing page | Single + thank-you |
+| `video-script-long-form` | Video script | Long-form (6 steps) |
+| `video-description` | Video description | — |
+| `blog-post` | Blog article | — |
+| `ad-copy` | Ad copy | — |
 
 ### Asset — `{asset-type}`
 
-Il `toolKey` è **identico all'`AssetType`** prodotto. Il mapping `toolKey → assetType` è 1:1.
+The `toolKey` is **identical to the `AssetType`** produced. The `toolKey → assetType` mapping is 1:1.
 
-| toolKey | AssetType prodotto |
+| toolKey | Produced AssetType |
 |---------|-------------------|
 | `brief` | `brief` |
 | `brand-voice` | `brand-voice` |
 | `buyer-persona` | `persona` |
 | `marketing-angle` | `angle` |
 
-### Analisi — `{dominio}-analysis`
+### Analysis — `{domain}-analysis`
 
 | toolKey | Output |
 |---------|--------|
-| `ai-overview-analysis` | Analisi presenza competitiva su Google AI Overview |
+| `ai-overview-analysis` | Competitive presence analysis on Google AI Overview |
 
 ## Structure
 
@@ -65,11 +65,14 @@ type ToolDefinition = {
   name: string;
   description: string;
 
+  // Credit consumption: how many credits this tool costs per generation.
+  // Default: 1. Complex tools (e.g., 4-step with premium models) can cost more.
+  creditCost?: number;
+
   // Asset production: if set, the final Artifact will be promoted to this AssetType.
-  // Undefined for content tools (landing-funnel, blog-post, etc.) and analysis tools.
   produces?: AssetType;
 
-  // FASE 1 — Acquisizione
+  // PHASE 1 — Acquisition
   acquisition: {
     userText?:  TextInput[];
     files?:     FileInput[];
@@ -77,7 +80,7 @@ type ToolDefinition = {
     assets?:    AssetInput[];
   };
 
-  // FASE 2+3 — Elaborazione (1..N step)
+  // PHASE 2+3 — Processing (1..N steps)
   steps: StepDefinition[];
 };
 
@@ -95,9 +98,39 @@ type StepDefinition = {
     maxRetries: number;
   };
 };
+
+type TextInput = {
+  key: string;
+  label: string;
+  required: boolean;
+  type?: 'short' | 'long' | 'select';   // default: 'short'
+  placeholder?: string;
+  options?: string[];                     // only for type: 'select'
+  description?: string;                   // helper text below field
+};
+
+type FileInput = {
+  key: string;
+  label: string;
+  accept: string[];                      // ['.txt', '.md', '.docx', '.csv']
+  required: boolean;
+  description?: string;
+  maxSizeMb?: number;                    // default: 10
+};
+
+type AssetInput = {
+  assetType: AssetType;
+  required: boolean;
+};
+
+type ApiCallInput = {
+  source: string;
+  config: Record<string, unknown>;
+  cache: { enabled: boolean; ttlSeconds: number };
+};
 ```
 
-## Esempi
+## Examples
 
 ### Content: `landing-funnel`
 
@@ -123,11 +156,11 @@ acquisition: {
 },
 steps: [
   { order: 1, label: 'Tone of Voice', enrichment: 'serial', prompt: { template: 'brand-voice/extract', model: 'premium' } },
-  // Single step → automaticamente final
+  // Single step → automatically final
 ]
 ```
 
-### Analisi: `ai-overview-analysis`
+### Analysis: `ai-overview-analysis`
 
 ```typescript
 acquisition: {
@@ -163,7 +196,7 @@ export const toolRegistry: Record<ToolKey, ToolDefinition> = {
   'buyer-persona':               buyerPersonaTool,
   'marketing-angle':             marketingAngleTool,
 
-  // Analisi
+  // Analysis
   'ai-overview-analysis':        aiOverviewAnalysisTool,
 };
 
@@ -174,18 +207,18 @@ export function getTool(key: ToolKey): ToolDefinition | undefined {
 
 ## Key Properties
 
-| Proprietà | Significato |
+| Property | Meaning |
 |-----------|-------------|
-| **Ultimo step = final** | Posizionale. L'ultimo elemento di `steps[]` produce l'Artifact promovibile |
-| **Nessuno `StepType`** | Ogni step è un prompt LLM. Differenza: `enrichment: serial | hybrid` |
-| **Nessuno `ArtifactRole`** | `isLastStep(step, steps)` sostituisce il ruolo esplicito |
-| **Asset tool: 1:1 mapping** | `toolKey === assetType` — nessuna tabella di mapping necessaria |
-| **Varianti esplicite** | `video-script-long-form` vs futuro `video-script-short-form` |
-| **Zero abbreviazioni** | Niente `lf`, `tov`, `geo` nel dominio |
+| **Last step = final** | Positional. The last element of `steps[]` produces the promotable Artifact |
+| **No `StepType`** | Each step is an LLM prompt. Difference: `enrichment: serial | hybrid` |
+| **No `ArtifactRole`** | `isLastStep(step, steps)` replaces the explicit role |
+| **Asset tool: 1:1 mapping** | `toolKey === assetType` — no mapping table needed |
+| **Explicit variants** | `video-script-long-form` vs future `video-script-short-form` |
+| **Zero abbreviations** | No `lf`, `tov`, `geo` in the domain |
 
 ## Sources
 
-- [[doodle/APP-CONCEPT]] — Registry-Driven Architecture, tool catalog
-- [[doodle/PRD]] — FR-T01 to FR-T11, FR-U01
-- [[doodle/STARTUP]] — Tool definitions
-- [[doodle/USER-STORIES]] — Tool epics 4-9
+- [[sources/APP-CONCEPT]] — Registry-Driven Architecture, tool catalog
+- [[sources/PRD]] — FR-T01 to FR-T11, FR-U01
+- [[sources/STARTUP]] — Tool definitions
+- [[sources/USER-STORIES]] — Tool epics 4-9

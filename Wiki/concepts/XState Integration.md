@@ -99,7 +99,7 @@ The same principle applies to the frontend: `ToolPage` uses XState v5 for UI sta
 
 ## Sources
 
-- [[doodle/APP-CONCEPT]] — Original XState as Aggregate Root concept, tool catalog
-- [[doodle/PRD]] — BE-Driven workflow, FR-W01
-- [[doodle/STARTUP]] — Ordered Step Chain, domain rules
-- [[doodle/USER-STORIES]] — US-GF01 to US-GF04 (workflow & performance)
+- [[sources/APP-CONCEPT]] — Original XState as Aggregate Root concept, tool catalog
+- [[sources/PRD]] — BE-Driven workflow, FR-W01
+- [[sources/STARTUP]] — Ordered Step Chain, domain rules
+- [[sources/USER-STORIES]] — US-GF01 to US-GF04 (workflow & performance)

@@ -5,12 +5,12 @@ tags:
   - wiki/generation
   - wiki/architecture
 date_updated: 2026-07-30
-source: "[[doodle/APP-CONCEPT]]"
+source: "doodle/APP-CONCEPT.md (raw)"
 ---
 
 # APP-CONCEPT — App Concept Document
 
-> Source: [[doodle/APP-CONCEPT]] (112 lines, Italian)
+> Source: `doodle/APP-CONCEPT.md` (removed — content now lives in this wiki)
 
 ## Summary
 
@@ -85,7 +85,6 @@ Single `ToolPageTemplate` (~150 LOC) deriving behavior from declarative `ToolFor
 - ADR-003: Explicit Error States in all XState machines
 - DDD-081: Tool Input File Requirement Policy — blocking vs advisory
 - DDD-116: `WorkflowStepType` extended with `crawling` and `scoring`
-- DDD-216: Deprecation of `ToneProfile`/`RequestTone`
 - Registry-driven routing: no tool-specific guards in `GenerationSystem`
 
 ## Entities Mentioned

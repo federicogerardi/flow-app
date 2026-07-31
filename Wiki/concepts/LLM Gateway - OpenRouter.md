@@ -319,3 +319,48 @@ await usageTracker.trackCost(cmd.session.userId, cost);
 - [[Application Services]] — `ProcessStepUseCase` integration point
 - [[BullMQ Worker Wiring]] — worker invokes ProcessStepUseCase
 - [[Usage & Quota]] — credit tracking from token usage
+
+---
+
+## Prompt Template Validation — Startup Check
+
+```typescript
+// apps/backend/src/infrastructure/prompt-loader.ts
+
+import fs from 'node:fs';
+import { toolRegistry } from '@flow-app/domain/generation';
+import { logger } from './logger';
+
+function validateAllTemplates(): void {
+  const missing: string[] = [];
+  const basePath = 'apps/backend/src/prompts/';
+
+  for (const tool of Object.values(toolRegistry)) {
+    for (const step of tool.steps) {
+      const templatePath = step.prompt.template;
+      const systemPath = `${basePath}${templatePath}/system.md`;
+      const userPath   = `${basePath}${templatePath}/user.md`;
+
+      if (!fs.existsSync(systemPath)) missing.push(systemPath);
+      if (!fs.existsSync(userPath))   missing.push(userPath);
+    }
+  }
+
+  if (missing.length > 0) {
+    logger.fatal({ missing }, 'Missing prompt templates');
+    throw new Error(
+      `FATAL: ${missing.length} prompt template(s) missing. ` +
+      'Create the missing files before starting the server.\n' +
+      missing.join('\n')
+    );
+  }
+
+  logger.info({ count: Object.values(toolRegistry).reduce((sum, t) => sum + t.steps.length, 0) },
+    'All prompt templates validated');
+}
+
+// Called at startup, before queue processing begins
+validateAllTemplates();
+```
+
+**Fail-fast**: the server refuses to start if a template is missing. No silently-failed generation due to absent templates.

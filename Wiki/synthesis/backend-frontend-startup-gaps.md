@@ -69,7 +69,7 @@ What's missing is the **infrastructure, API, and UI layer** — everything neede
 
 #### B4: SSE Emitter
 
-**Status**: ❌ Not documented  
+**Status**: ✅ Done — covered by [[BullMQ Worker Wiring]] + [[API Routes]]  
 **Why needed**: Real-time progress from backend to frontend.
 
 **Required output**:
@@ -86,8 +86,10 @@ What's missing is the **infrastructure, API, and UI layer** — everything neede
 
 #### B5: Idempotency Algorithm
 
-**Status**: ❌ Not documented  
-**Why needed**: `IdempotencyKey` is a VO but the atomic claim mechanism is undefined.
+**Status**: ✅ Done — see [[Idempotency Implementation]]  
+**Why needed**: Atomic claim mechanism.
+
+**Output**: Redis `SET NX` + PostgreSQL `INSERT ON CONFLICT DO NOTHING`, TTL cleanup, integrated into StartSessionUseCase
 
 **Required output**:
 - Redis implementation: `SET idempotency:{key} {sessionId} NX EX 3600`
@@ -100,8 +102,10 @@ What's missing is the **infrastructure, API, and UI layer** — everything neede
 
 #### B6: Error → HTTP Mapping
 
-**Status**: ❌ Not documented  
+**Status**: ✅ Done — see [[Error Mapping (Domain to HTTP)]]  
 **Why needed**: Domain errors need HTTP status codes.
+
+**Output**: 14 domain errors mapped to HTTP statuses, ErrorMapper class, Express middleware, DomainError base class
 
 **Required output**:
 - Error catalog: `ReadinessError` → 422, `ToolNotFoundError` → 404, `QuotaExceededError` → 429, `SessionNotFoundError` → 404
@@ -114,8 +118,10 @@ What's missing is the **infrastructure, API, and UI layer** — everything neede
 
 #### B7: Dependency Injection Setup
 
-**Status**: ❌ Not documented  
+**Status**: ✅ Done — see [[Dependency Injection Setup]]  
 **Why needed**: Application services have 3-4 constructor dependencies each.
+
+**Output**: Manual DI with factory functions, complete wiring diagram, singleton vs per-request lifetimes, testability pattern
 
 **Required output**:
 - DI approach: manual factory functions vs container (awilix, tsyringe)
@@ -130,15 +136,19 @@ What's missing is the **infrastructure, API, and UI layer** — everything neede
 
 #### B8: Auth Middleware
 
-**Status**: ❌ Not documented  
+**Status**: ✅ Done — see [[Auth Middleware]]  
 **Why needed**: `Identity & Access` BC exists but middleware is undefined.
+
+**Output**: JWT middleware, role guard (admin/member), CSRF fail-closed, refresh token flow, route protection pattern
 
 **Required output**: JWT validation, role guard (`admin` vs `member`), session validation, CSRF protection
 
 #### B9: Environment Config
 
-**Status**: ❌ Not documented  
+**Status**: ✅ Done — see [[Environment Configuration]]  
 **Why needed**: Backend needs env vars to start.
+
+**Output**: All env vars (DB, Redis, LLM, Auth, Server, Rate Limit, External APIs), .env.example, startup validation, Railway config
 
 **Required output**: `DATABASE_URL`, `REDIS_URL`, `LLM_API_KEY`, `SERPAPI_KEY`, `JWT_SECRET`, `CORS_ORIGIN`, `PORT`, `NODE_ENV`
 
@@ -167,8 +177,10 @@ What's missing is the **infrastructure, API, and UI layer** — everything neede
 
 #### F2: Contracts Package Structure
 
-**Status**: ❌ Not documented  
+**Status**: ✅ Done — see [[Contracts Package]]  
 **Why needed**: FE and BE need shared types.
+
+**Output**: Directory structure, DTOs (Session, Artifact, Workspace, Asset), request/response shapes, SSE event types, compile-time parity guard
 
 **Required output**:
 - `packages/contracts/src/` structure
@@ -181,8 +193,10 @@ What's missing is the **infrastructure, API, and UI layer** — everything neede
 
 #### F3: API + SSE Client
 
-**Status**: ❌ Not documented  
+**Status**: ✅ Done — see [[API Client + SSE Client]]  
 **Why needed**: Frontend needs to call the backend.
+
+**Output**: ApiClient class (fetch wrapper, auto-auth, typed responses), SSEClient (EventSource wrapper), React hooks (useSession, useWorkspaces)
 
 **Required output**:
 - HTTP client: fetch wrapper with auth headers, error handling
@@ -195,19 +209,21 @@ What's missing is the **infrastructure, API, and UI layer** — everything neede
 
 #### F4: ReadinessSnapshot UI
 
-**Status**: ❌ Not documented  
+**Status**: ✅ Done — see [[ReadinessSnapshot UI]]  
 **Why needed**: Users need to see what's missing before they can start.
+
+**Output**: Component with ✓/✗/○ icons, per-input status, reason codes matching backend ReadinessPolicy, integration in ToolPage
 
 #### F5: Component Tree
 
-**Status**: ❌ Not documented  
+**Status**: ✅ Done — covered by [[ToolPage Machine (XState v5)]] Component Tree section  
 **Why needed**: React component architecture.
 
 **Required output**: `ToolPageTemplate`, `SetupPanel`, `KnowledgePanel`, `ToolFeedbackPanel`, `SessionSummary`, `ArtifactDownload`
 
 #### F6: State → UI Derivation
 
-**Status**: ❌ Not documented  
+**Status**: ✅ Done — covered by [[ToolPage Machine (XState v5)]] deriveUIState() section  
 **Why needed**: 8 canonical UI states → which components render.
 
 ---

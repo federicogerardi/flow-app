@@ -23,7 +23,7 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 | [[Content Generation]] | Core | [[Session]] | Unified tool execution: acquisition → elaboration → final artifact |
 | [[Workspace & Assets]] | Supporting | [[Workspace]] | Organization, reusable brand resources |
 | [[Identity & Access]] | Generic | [[User]] | Auth, roles, sessions |
-| [[Usage & Quota]] | Supporting | [[Quota]] | Credit tracking, enforcement |
+| [[Usage & Quota]] | Supporting | [[Quota]] | Two-track limits: artifact gate (anti-abuse) + credit consumption |
 
 ## Tool Catalog (11 tools)
 
@@ -69,4 +69,4 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 
 ## Sources
 
-4 raw sources ingested from `doodle/`. See [[Wiki/index]] for full catalog.
+4 source documents fully ingested. Original raw files (`doodle/`) have been removed — all content now lives in [[index|this wiki]].

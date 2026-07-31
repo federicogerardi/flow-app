@@ -49,7 +49,7 @@ Application Services live in `apps/backend/src/application/`. They orchestrate t
 
 ### `StartSessionUseCase`
 
-Avvia una nuova sessione di generazione. Prepara il contesto di acquisizione e crea l'aggregate `Session`.
+Starts a new generation session. Prepares the acquisition context and creates the `Session` aggregate.
 
 ```typescript
 // apps/backend/src/application/generation/start-session.usecase.ts
@@ -111,7 +111,7 @@ type StartSessionCommand = {
 
 ### `ProcessStepUseCase`
 
-Esegue un singolo step di elaborazione. Chiamato dall'attore `executeStep` nella [[Session Machine (XState v5)|macchina XState]].
+Executes a single processing step. Called by the `executeStep` actor in the [[Session Machine (XState v5)|XState machine]].
 
 ```typescript
 // apps/backend/src/application/generation/process-step.usecase.ts
@@ -161,7 +161,7 @@ type ProcessStepCommand = {
 
 ### `PromoteToAssetUseCase`
 
-Cross-context: consuma l'evento `SessionCompleted` e promuove l'Artifact finale ad Asset.
+Cross-context: consumes the `SessionCompleted` event and promotes the final Artifact to an Asset.
 
 ```typescript
 // apps/backend/src/application/workspace/promote-to-asset.usecase.ts
@@ -242,7 +242,7 @@ sessionMachine: addStepResult → persistSession
 
 ## Sources
 
-- [[doodle/APP-CONCEPT]] — BE-Driven workflow, GenerationSystem
-- [[doodle/PRD]] — FR-W01 to FR-W05
-- [[doodle/STARTUP]] — Domain rules, API design
-- [[doodle/USER-STORIES]] — US-GF01 to US-GF04
+- [[sources/APP-CONCEPT]] — BE-Driven workflow, GenerationSystem
+- [[sources/PRD]] — FR-W01 to FR-W05
+- [[sources/STARTUP]] — Domain rules, API design
+- [[sources/USER-STORIES]] — US-GF01 to US-GF04

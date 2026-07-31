@@ -66,7 +66,7 @@ draft → ready → running → completed
 
 ## Sources
 
-- [[doodle/APP-CONCEPT]] — Tool catalog, architecture, BE-Driven workflow
-- [[doodle/PRD]] — Functional requirements FR-W01 to FR-W09
-- [[doodle/STARTUP]] — Domain definitions, Artifact vs Asset
-- [[doodle/USER-STORIES]] — US-T01 to US-T10, US-GF01 to US-GF09
+- [[sources/APP-CONCEPT]] — Tool catalog, architecture, BE-Driven workflow
+- [[sources/PRD]] — Functional requirements FR-W01 to FR-W09
+- [[sources/STARTUP]] — Domain definitions, Artifact vs Asset
+- [[sources/USER-STORIES]] — US-T01 to US-T10, US-GF01 to US-GF09

@@ -118,6 +118,6 @@ canStart: ({ context }) => {
 
 ## Sources
 
-- [[doodle/PRD]] — FR-W01, FR-U02 (Readiness Snapshot)
-- [[doodle/USER-STORIES]] — US-W05, US-QF02
-- [[doodle/APP-CONCEPT]] — Readiness gate before dispatch
+- [[sources/PRD]] — FR-W01, FR-U02 (Readiness Snapshot)
+- [[sources/USER-STORIES]] — US-W05, US-QF02
+- [[sources/APP-CONCEPT]] — Readiness gate before dispatch

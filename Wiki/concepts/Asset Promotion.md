@@ -36,7 +36,7 @@ Session.complete()
 
 ## ToolKey → AssetType Mapping
 
-Con la [[Tool as Static Configuration|convenzione di naming unificata]], il mapping è **1:1 per gli asset tool**:
+With the [[Tool as Static Configuration|unified naming convention]], the mapping is **1:1 for asset tools**:
 
 | toolKey | → | AssetType |
 |---------|---|-----------|
@@ -45,19 +45,19 @@ Con la [[Tool as Static Configuration|convenzione di naming unificata]], il mapp
 | `buyer-persona` | → | `persona` |
 | `marketing-angle` | → | `angle` |
 
-I content tool (`landing-funnel`, `video-script-long-form`, `blog-post`, etc.) e il tool di analisi (`ai-overview-analysis`) non producono Asset promovibili.
+Content tools (`landing-funnel`, `video-script-long-form`, `blog-post`, etc.) and the analysis tool (`ai-overview-analysis`) do not produce promotable Assets.
 
-**Regola**: se `toolKey` corrisponde a un `AssetType` noto, la promozione è automatica. Altrimenti, il tool non produce Asset.
+**Rule**: if `toolKey` matches a known `AssetType`, promotion is automatic. Otherwise, the tool does not produce an Asset.
 
 ## Invariants
 
-- Solo l'ultimo step produce un Artifact promovibile
-- La promozione crea un **nuovo** Asset — l'Artifact originale resta nella Session
-- Asset con `source = 'generated'` deve tracciare `sourceRef` all'Artifact originale
+- Only the last step produces a promotable Artifact
+- Promotion creates a **new** Asset — the original Artifact remains in the Session
+- An Asset with `source = 'generated'` must track `sourceRef` to the original Artifact
 
 ## Sources
 
-- [[doodle/STARTUP]] — Artifact vs Asset
-- [[doodle/PRD]] — FR-A04
-- [[doodle/USER-STORIES]] — US-AS07
-- [[doodle/APP-CONCEPT]] — AssetFieldMapping
+- [[sources/STARTUP]] — Artifact vs Asset
+- [[sources/PRD]] — FR-A04
+- [[sources/USER-STORIES]] — US-AS07
+- [[sources/APP-CONCEPT]] — AssetFieldMapping

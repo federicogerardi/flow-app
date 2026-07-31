@@ -197,12 +197,13 @@ packages/domain/src/
 ```
 packages/domain
   ├── import: nothing (except typescript)
-  ├── imported by: packages/contracts, packages/infra-db, apps/backend, apps/frontend
+  ├── imported by: packages/contracts, packages/copy, packages/infra-db, apps/backend, apps/frontend
   └── never imports from: any other package in the monorepo
 ```
 
 ```
 packages/domain ← packages/contracts    (reads types)
+                ← packages/copy         (reads AssetType, ToolKey enums)
                 ← packages/infra-db     (implements repository interfaces)
                 ← apps/backend          (uses entities, VOs, services)
                 ← apps/frontend         (uses types via contracts)
@@ -212,7 +213,7 @@ packages/domain ← packages/contracts    (reads types)
 
 ## Barrel Exports
 
-Ogni contesto espone un `index.ts` pulito. Nessun consumer importa da path interni.
+Each context exposes a clean `index.ts`. No consumer imports from internal paths.
 
 ```typescript
 // ✅ Correct
@@ -261,7 +262,7 @@ export type { ToolDefinition, StepDefinition } from './tools/tool-definition';
 
 ## Cross-Context References
 
-I contesti si referenziano tramite **Value Object condivisi** (shared IDs), mai tramite import diretti di entity.
+Contexts reference each other via **shared Value Objects** (shared IDs), never through direct entity imports.
 
 ```typescript
 // ✅ Cross-context reference: WorkspaceId is a shared VO
@@ -284,7 +285,8 @@ class Session {
 
 ## Sources
 
-- [[doodle/APP-CONCEPT]] — Monorepo structure, packages/domain definition
-- [[doodle/PRD]] — NFR-M02 (domain isolation)
-- [[doodle/STARTUP]] — Domain model
-- [[doodle/USER-STORIES]] — All epics
+- [[sources/APP-CONCEPT]] — Monorepo structure, packages/domain definition
+- [[sources/PRD]] — NFR-M02 (domain isolation)
+- [[sources/STARTUP]] — Domain model
+- [[sources/USER-STORIES]] — All epics
+- [[Testing Strategy]] — Vitest patterns, test isolation, factory helpers

@@ -34,6 +34,14 @@ pending → generating → completed
               failed
 ```
 
+## Constraints
+
+| Constraint | Value | Reason |
+|------------|-------|--------|
+| Max content size | 500 KB | LLM output limit — prevents unbounded TEXT storage |
+| Preview length | 500 chars | `SessionListItemDTO.lastArtifactPreview` |
+| Download format | `.md`, `.txt`, `.docx`, `.pdf` | Full content via `GET /api/artifacts/:id/download` |
+
 ## Value Objects
 
 | VO | Type | Description |
@@ -60,7 +68,7 @@ Only the final Artifact (last step) is promotable via [[Asset Promotion]].
 
 ## Sources
 
-- [[doodle/STARTUP]] — Original Artifact vs Asset definitions
-- [[doodle/APP-CONCEPT]] — Tool catalog
-- [[doodle/PRD]] — FR-W01, FR-A04
-- [[doodle/USER-STORIES]] — US-AS07
+- [[sources/STARTUP]] — Original Artifact vs Asset definitions
+- [[sources/APP-CONCEPT]] — Tool catalog
+- [[sources/PRD]] — FR-W01, FR-A04
+- [[sources/USER-STORIES]] — US-AS07

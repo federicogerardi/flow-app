@@ -78,7 +78,7 @@ interface WorkspaceRepository {
 
 ## Sources
 
-- [[doodle/STARTUP]] — Original definitions, Artifact vs Asset
-- [[doodle/PRD]] — FR-A01 to FR-A05
-- [[doodle/USER-STORIES]] — US-W01 to US-W06, US-AS01 to US-AS08
-- [[doodle/APP-CONCEPT]] — Knowledge Panel, AssetFieldMapping
+- [[sources/STARTUP]] — Original definitions, Artifact vs Asset
+- [[sources/PRD]] — FR-A01 to FR-A05
+- [[sources/USER-STORIES]] — US-W01 to US-W06, US-AS01 to US-AS08
+- [[sources/APP-CONCEPT]] — Knowledge Panel, AssetFieldMapping
