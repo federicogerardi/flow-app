@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/domain-value-object
 date_updated: 2026-07-31
-source_count: 0
+source_count: 3
 confidence: high
 ---
 
@@ -18,7 +18,7 @@ confidence: high
 
 ## Constraints
 
-- Max **500KB** (≈125,000 words) — see [[Database Schema#artifact_size_limit|MAX_ARTIFACT_SIZE]]
+- Max **500KB** (≈125,000 words) — enforced at application layer before persistence; see [[Database Schema#artifacts|artifacts table]]
 - Immutable — any modification produces a new `ArtifactContent`
 - The preview (first 500 characters) is derived: `ArtifactContent.preview()`
 

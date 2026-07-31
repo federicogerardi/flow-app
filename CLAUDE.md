@@ -155,6 +155,46 @@ Health-check the wiki:
 5.  **The LLM writes everything in `Wiki/`.** You read it; the LLM writes it. Don't hand-edit wiki pages.
 6.  **The schema evolves.** Update this file as patterns emerge.
 
+### Consistency Enforcement Rules
+
+These rules exist to prevent known classes of cross-session errors. Apply them on every wiki write operation.
+
+#### 1 — Verify, don't claim
+
+Never report an operation as complete without enumerating every file that was supposed to be modified and confirming each one was actually updated. If a multi-file operation (e.g. "translate all Italian prose") is performed, read back each target file after writing and list the result in the log entry. A log entry that claims "N files updated" must be backed by an explicit list. A false completion claim is worse than an incomplete one.
+
+#### 2 — Language check on every wiki write
+
+Before finalising any wiki page write, scan the output for Italian prose. The rule is: **Wiki pages are 100% English.** Violations are surgical — translate the Italian sentence in place and continue. Do not defer or batch. The only exception is `concepts/Centralized Copy Modules`, where Italian strings are the app's UI copy (not prose).
+
+Checklist before writing any wiki page:
+- [ ] No Italian sentence-level prose in body text
+- [ ] No Italian section headings
+- [ ] Italian table cell content is acceptable only when it is a literal UI string being documented
+
+#### 3 — `source_count` must match the `## Sources` section
+
+The `source_count:` frontmatter field must equal the number of entries in the `## Sources` section of the same page. Update it whenever sources are added or removed. Never leave it at `0` if the `## Sources` section is non-empty.
+
+#### 4 — No duplicate log entries
+
+Before appending to `Wiki/log.md`, read the last 10 entries. If an entry with the same date and operation type already exists, extend or amend it rather than creating a second one. Two entries for the same event on the same date are never correct.
+
+#### 5 — Anchor links must be verified
+
+Never write a `[[Page#anchor]]` wikilink without first reading the target page and confirming a heading that produces that anchor exists. If the section does not exist, either use `[[Page]]` (linking to the page root) or create the missing section first.
+
+#### 6 — Cross-version naming: always map old names to new
+
+Source summaries preserve original document vocabulary (raw sources are immutable). When a source summary uses names that differ from current wiki canonical names (e.g. old tool slugs, old bounded context labels), add an explicit mapping note at the top of the source summary under a `> **Name mapping**:` blockquote. This prevents a reader from seeing two sets of names with no connection between them.
+
+Example:
+> **Name mapping**: `funnel-pages` → `landing-funnel`, `nextland` → `landing-page`, `youtube-lf-script` → `video-script-long-form` (v1 → v3 rename).
+
+#### 7 — Schema authority
+
+**This file (`CLAUDE.md`) is the authoritative schema for all wiki pages.** The file `Wiki/schema/config.md` is an unused artifact from the original llm-wiki OSS plugin and does not reflect the conventions in use. Ignore it when writing or validating pages. Do not reconcile pages against `schema/config.md`.
+
 ### Tools
 
 - **Obsidian CLI**: `obsidian read file="..."`, `obsidian search query="..."`, etc. (symlinked to `~/.local/bin/obsidian`)

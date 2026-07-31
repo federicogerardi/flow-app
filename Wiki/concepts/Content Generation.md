@@ -3,7 +3,7 @@ type: concept
 tags:
   - wiki/concept
   - wiki/generation
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 source_count: 4
 confidence: high
 ---
@@ -23,7 +23,7 @@ All 11 tools are variations of the same pattern — different acquisition source
 Every tool follows the same three-phase flow:
 
 ```
-ACQUISIZIONE                  ELABORAZIONE (1..N step)            OUTPUT
+ACQUISITION                   ELABORATION (1..N steps)             OUTPUT
 ────────────                  ─────────────────────────            ──────
 ┌──────────┐                  ┌──────┐   ┌──────┐   ┌──────────┐
 │user text │──┐               │step 1│──▶│step 2│──▶│step N    │   ┌──────────┐

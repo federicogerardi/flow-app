@@ -3,7 +3,7 @@ type: synthesis
 tags:
   - wiki/synthesis
   - wiki/overview
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 ---
 
 # Overview — Flow App
@@ -32,23 +32,23 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 |---------|--------|
 | `landing-funnel` | Landing page funnel (optin → quiz → VSL) |
 | `landing-page` | Landing page + thank-you |
-| `video-script-long-form` | Script video long-form (6 step) |
-| `video-description` | Descrizione video |
-| `blog-post` | Articolo blog SEO |
-| `ad-copy` | Copy pubblicitario |
+| `video-script-long-form` | Long-form video script (6 steps) |
+| `video-description` | Video description |
+| `blog-post` | SEO blog article |
+| `ad-copy` | Ad copy |
 
 ### Asset
-| toolKey | AssetType prodotto |
+| toolKey | Produced AssetType |
 |---------|-------------------|
 | `brief` | `brief` |
 | `brand-voice` | `brand-voice` |
 | `buyer-persona` | `persona` |
 | `marketing-angle` | `angle` |
 
-### Analisi
+### Analysis
 | toolKey | Output |
 |---------|--------|
-| `ai-overview-analysis` | Analisi presenza competitiva su Google AI Overview |
+| `ai-overview-analysis` | Competitive presence analysis on Google AI Overview |
 
 **Naming convention**: `{output}[-{variant}]`. Zero abbreviazioni, zero verbi, zero nomi fantasy.
 

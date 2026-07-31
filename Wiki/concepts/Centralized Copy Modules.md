@@ -5,8 +5,8 @@ tags:
   - wiki/frontend
   - wiki/backend
   - wiki/governance
-date_updated: 2026-07-30
-source_count: 0
+date_updated: 2026-07-31
+source_count: 3
 confidence: high
 ---
 
@@ -17,7 +17,7 @@ confidence: high
 
 ## Principle
 
-Ogni stringa visibile all'utente — label, pulsante, messaggio di errore, notifica, tooltip, placeholder — vive in un modulo di testo centralizzato. Componenti e logica referenziano chiavi, mai stringhe letterali.
+Every user-visible string — label, button, error message, notification, tooltip, placeholder — lives in a centralised text module. Components and logic reference keys, never literal strings.
 
 ```
 ❌ Hardcoded in component:
@@ -214,7 +214,7 @@ export const assets = {
 
 import type { it } from './it';
 
-// Estrae automaticamente il tipo di tutte le chiavi
+// Automatically extracts the type of all keys
 type DeepKeyOf<T> = T extends object ? {
   [K in keyof T]: `${K & string}.${DeepKeyOf<T[K]> & string}`
 }[keyof T] : never;
@@ -235,7 +235,7 @@ class Copy {
     this.locale = it; // default: Italian
   }
 
-  // Accesso type-safe con interpolazione
+  // Type-safe access with interpolation
   t(key: string, params?: Record<string, string>): string {
     const parts = key.split('.');
     let value: unknown = this.locale;
@@ -244,7 +244,7 @@ class Copy {
       value = (value as Record<string, unknown>)?.[part];
       if (value === undefined) {
         console.warn(`[copy] Missing key: ${key}`);
-        return key; // fallback: mostra la chiave
+        return key; // fallback: return key as-is
       }
     }
 
@@ -258,7 +258,7 @@ class Copy {
     return value as string;
   }
 
-  // Accesso diretto all'oggetto (per uso in componenti che preferiscono l'oggetto)
+  // Direct object access (for components that prefer the object)
   get raw() {
     return it;
   }
@@ -316,7 +316,7 @@ toast.info(copy.t('toolPage.feedback.stepCompleted', { label: 'Analisi Briefing'
 
 ## Governance Rules
 
-| Regola | Enforcement |
+| Rule | Enforcement |
 |--------|-------------|
 | **Mai stringhe hardcoded** in componenti React | ESLint rule: `no-literal-string` (warn su JSX text) |
 | **Mai stringhe hardcoded** in errori backend | Code review: ogni `throw new Error('...')` è una violation |
@@ -330,7 +330,7 @@ toast.info(copy.t('toolPage.feedback.stepCompleted', { label: 'Analisi Briefing'
 // packages/copy/src/index.ts (future)
 
 import { it } from './it';
-import { en } from './en'; // futuro
+  import { en } from './en'; // future
 
 const locales = { it, en };
 
@@ -348,7 +348,7 @@ class Copy {
 }
 ```
 
-Struttura pronta per l'internazionalizzazione: aggiungere `packages/copy/src/en/` con gli stessi moduli e chiavi.
+Ready for internationalisation: add `packages/copy/src/en/` with the same modules and keys.
 
 ## Sources
 

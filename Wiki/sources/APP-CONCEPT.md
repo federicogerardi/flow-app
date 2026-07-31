@@ -4,13 +4,15 @@ tags:
   - wiki/source
   - wiki/generation
   - wiki/architecture
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 source: "doodle/APP-CONCEPT.md (raw)"
 ---
 
 # APP-CONCEPT — App Concept Document
 
 > Source: `doodle/APP-CONCEPT.md` (removed — content now lives in this wiki)
+
+> **Name mapping (v1 → v3 rename)**: `funnel-pages` → `landing-funnel`, `nextland` → `landing-page`, `youtube-lf-script` → `video-script-long-form`, `angle-generator` → `marketing-angle`, `youtube-description` → `video-description`, `geometric` → `ai-overview-analysis`, `blog-article-generator` → `blog-post`, `brief-generator` → `brief`, `tov-generator` → `brand-voice`, `personas-generator` → `buyer-persona`, `meta-ads` → `ad-copy`. Bounded contexts reduced from 6 (v1) to 4 (v3): `Generation` + `Frontend/UI` merged into [[Content Generation]]; `Crawling & Extraction` + `Competitor Analysis` folded into [[Content Generation]] as acquisition phases.
 
 ## Summary
 

@@ -3,7 +3,7 @@ type: synthesis
 tags:
   - wiki/synthesis
   - wiki/review
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 source_count: 0
 ---
 
@@ -130,7 +130,7 @@ function validateFile(file: Express.Multer.File): void {
 **Status**: ✅ Applied — see [[Idempotency Implementation]]  
 **Solution**: PostgreSQL fallback for idempotency. Rate limiting disabled. SSE → poll fallback.
 
-**Proposal**: Fail-closed con PostgreSQL fallback dove possibile.
+**Proposal**: Fail-closed with PostgreSQL fallback where possible.
 
 | Feature | Redis Down Behavior |
 |---------|-------------------|

@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/architecture
-date_updated: 2026-07-30
+date_updated: 2026-07-31
 source_count: 4
 confidence: high
 ---
@@ -260,7 +260,7 @@ function WorkspaceDashboard() {
 
 | Property | Meaning |
 |-----------|-------------|
-| **16 components** | The entire app. No tool-specific components |
+| **17 components** | The entire app. No tool-specific components |
 | **Generic SetupPanel** | Reads `ToolDefinition.acquisition` and renders form fields dynamically |
 | **Workspace-centric** | Every route has `workspaceId`. Tools, sessions, assets are scoped to the workspace |
 | **4 standard states** | Loading → Empty → Error → Data. 3 shared components handle them |

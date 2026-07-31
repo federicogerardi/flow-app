@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/domain-value-object
 date_updated: 2026-07-31
-source_count: 0
+source_count: 3
 confidence: high
 ---
 
