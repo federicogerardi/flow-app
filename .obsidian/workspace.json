@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Wiki/synthesis/backend-frontend-startup-gaps.md",
+                "file": "Wiki/concepts/packages-domain Structure.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "backend-frontend-startup-gaps"
+              "title": "packages-domain Structure"
             }
           }
         ]
@@ -164,8 +164,19 @@
               "icon": "lucide-list",
               "title": "Outline of STARTUP"
             }
+          },
+          {
+            "id": "30570f4c67f22130",
+            "type": "leaf",
+            "state": {
+              "type": "llm-wiki-query-view",
+              "state": {},
+              "icon": "message-circle",
+              "title": "Query Wiki - Conversational Query"
+            }
           }
-        ]
+        ],
+        "currentTab": 5
       }
     ],
     "direction": "horizontal",
@@ -180,37 +191,41 @@
       "daily-notes:Open today's daily note": false,
       "templates:Insert template": false,
       "command-palette:Open command palette": false,
-      "bases:Create new base": false
+      "bases:Create new base": false,
+      "karpathywiki:Ingest current file": false,
+      "karpathywiki:Query wiki": false
     }
   },
   "active": "278473b8b390cf25",
   "lastOpenFiles": [
-    "Wiki/concepts/ToolPage Machine (XState v5).md",
-    "Wiki/concepts/BullMQ Worker Wiring.md",
+    "Wiki/sources/APP-CONCEPT.md",
+    "Wiki/synthesis/backend-audit-gaps-improvements.md",
+    "Wiki/synthesis/lint-report-2026-07-30.md",
     "Wiki/synthesis/backend-frontend-startup-gaps.md",
-    "Wiki/concepts/LLM Gateway - OpenRouter.md",
-    "Wiki/concepts/Domain Events.md",
-    "Wiki/concepts/API Routes.md",
-    "Wiki/concepts/Database Schema.md",
     "Wiki/index.md",
-    "Wiki/entities/Workspace.md",
-    "Wiki/overview.md",
-    "Wiki/entities/User.md",
-    "Wiki/concepts/ReadinessPolicy.md",
-    "Wiki/concepts/AssetResolver.md",
-    "Wiki/concepts/packages-domain Structure.md",
-    "Wiki/entities/Artifact.md",
-    "Wiki/concepts/Domain Events Catalog.md",
-    "Wiki/concepts/Application Services.md",
-    "Wiki/concepts/Session Machine (XState v5).md",
+    "Wiki/concepts/IdempotencyKey.md",
+    "Wiki/concepts/ArtifactContent.md",
+    "Wiki/concepts/API Routes.md",
+    "Wiki/concepts/API Documentation - OpenAPI.md",
+    "Wiki/concepts/Seed Data.md",
+    "Wiki/concepts/Docker Compose - Local Dev.md",
+    "Wiki/concepts/File Upload Security.md",
+    "Wiki/concepts/Health Check - Deep.md",
+    "Wiki/concepts/Migration Tooling.md",
+    "Wiki/concepts/Session List - Live Status.md",
     "Wiki/concepts/XState Integration.md",
-    "Wiki/concepts/Usage & Quota.md",
-    "Wiki/concepts/Identity & Access.md",
-    "Wiki/entities/Crawl.md",
-    "Wiki/entities/Quota.md",
-    "Wiki/concepts/Tool as Static Configuration.md",
-    "Wiki/concepts/ScoringEngine.md",
-    "Wiki/concepts/Competitive Intelligence.md",
+    "Wiki/concepts/Tool UX Architecture.md",
+    "Wiki/concepts/Frontend Architecture.md",
+    "Wiki/concepts/Workspace & Assets.md",
+    "Wiki/concepts/ToolPage Machine (XState v5).md",
+    "Wiki/concepts/Auth Dependencies.md",
+    "Wiki/concepts/Logging Strategy.md",
+    "Wiki/entities/Workspace.md",
+    "Wiki/schema/config.md",
+    "Wiki/schema",
+    "wiki/schema/config.md",
+    "wiki/schema",
+    "Wiki/concepts/Testing Strategy.md",
     "Wiki/synthesis",
     "Wiki/sources",
     "Wiki/concepts",
