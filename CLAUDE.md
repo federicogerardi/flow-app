@@ -18,6 +18,41 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 
 ---
 
+## Linguistic Separation Policy
+
+Every document in this project belongs to exactly one language category. Never mix languages within a single document body.
+
+### Level 1 — Project Documentation
+
+Three categories with distinct rules:
+
+| Category | Language | Examples |
+|----------|----------|----------|
+| **Technical documents** | English | Architecture, code comments, API docs, DB schemas, README, infra configs |
+| **Product documents** | Italian | PRD, user stories, product briefs, marketing specs, brand guidelines |
+| **Proposals & implementation plans** | English | RFC, design proposals, milestone planning, gap analysis |
+
+Consistency rules:
+
+- Never mix English and Italian in the body of the same document
+- The document title and all section headings must be in the same language as the body
+- YAML frontmatter keys are always in English (regardless of body language)
+- **Wiki pages are 100% English.** The wiki is technical documentation — never Italian prose. If Italian text is found in any wiki page during any operation, translate it to English immediately. The only exception is `concepts/Centralized Copy Modules` where Italian strings are the app's copy content itself (not prose).
+
+### Level 2 — Prompt Templates (LLM Instructions)
+
+When writing prompt templates that instruct a language model, separate by channel:
+
+| Channel | Language | Content |
+|---------|----------|---------|
+| **System instructions** | English | The prompt text itself — rules, constraints, format, behavior |
+| **Generated output** | Italian | The artifact the LLM produces, visible to the end user |
+| **Awareness labels** | Italian | UI strings the user sees: "Generazione in corso...", "Step 2 di 5", error messages |
+
+**Rationale**: Separating the instruction channel (English) from the output channel (Italian) produces more predictable model behavior. The LLM clearly distinguishes the rules it must follow from the language it must produce.
+
+---
+
 ## LLM Wiki
 
 This vault implements the [llm-wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) — using LLMs to incrementally build and maintain a persistent, interlinked wiki from raw sources.
