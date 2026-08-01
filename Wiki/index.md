@@ -2,11 +2,20 @@
 type: index
 tags:
   - wiki/index
-date_updated: 2026-07-31
+date_updated: 2026-08-01
 ---
 
 # Wiki Index — Flow App
 
+> Maintenance note (2026-08-01): model alignment for PM review — overview updated to 6 bounded contexts (Agent Chat + Gamification), and broken wikilinks fixed (`LlmGateway` and `Prompting Mechanics` references).
+> Maintenance note (2026-08-01): Output Personalization deprecated — concept page removed and source items marked as deprecated in the current model baseline.
+> Maintenance note (2026-08-01): critical-gap remediation for PM review — 4 concept pages added (Global Deterministic Model Matrix, Output Personalization, Project Brand Persona, Invitation Notification Delivery); workspace invitation notification decision closed.
+> Maintenance note (2026-08-01): gamification UI Designer review — 3 pages updated (Design Tokens: rarity + sparkle; Gamification UX: ARIA, toast priority, rarity labels; UX Wireframes: Player Profile template; UI Component Map: 29→37).
+> Maintenance note (2026-08-01): agent chat UX extended — Agent Chat UX concept page added (23→29 components, templates 9–10, sidebar Team nav); UI Component Map and UX Wireframes updated.
+> Maintenance note (2026-08-01): agent chat exploration — 2 new concept pages + 2 new entities + 1 synthesis added (Agent Chat, Agent Personas, Conversation, Message, agent-chat-proposal).
+> Maintenance note (2026-08-01): workspace sharing exploration — 2 new concept pages + 1 new entity + 1 synthesis + Workspace entity updated (Workspace Sharing, Workspace Permissions, WorkspaceMembership, workspace-sharing-proposal).
+> Maintenance note (2026-08-01): prompting mechanics deep-dive — 3 additional concept pages added (Prompt Caching Strategy, Prompt Admin API, IdempotencyKey + Prompt Version).
+> Maintenance note (2026-08-01): prompting mechanics exploration completed — 4 new concept pages + 1 synthesis added (Prompt Versioning, Prompt Components, Context Injection, PromptComposer, prompting-mechanics-proposal).
 > Maintenance note (2026-07-31): post-remediation language normalization completed on source/concept pages.
 > Maintenance note (2026-07-31): backend architecture consistency remediation applied (idempotency contract, retention policy, queue topology, event delivery semantics).
 > Maintenance note (2026-07-31): second remediation applied (API contract governance, CI contract checks, LLM reliability policy, worker scaling policy).
@@ -29,9 +38,14 @@ date_updated: 2026-07-31
 |------|---------|------|-------------|
 | [[Session]] | Content Generation | Aggregate Root | 4 |
 | [[Artifact]] | Content Generation | Entity | 4 |
-| [[Workspace]] | Workspace & Assets | Aggregate Root | 4 |
+| [[Conversation]] | Agent Chat | Aggregate Root | 4 |
+| [[Message]] | Agent Chat | Entity | 3 |
+| [[Workspace]] | Workspace & Assets | Aggregate Root | 7 |
+| [[WorkspaceMembership]] | Workspace & Assets | Internal Entity | 3 |
 | [[Asset]] | Workspace & Assets | Entity | 4 |
 | [[User]] | Identity & Access | Aggregate Root | 2 |
+| [[PlayerProfile]] | Gamification | Aggregate Root | 4 |
+| [[Achievement]] | Gamification | Entity | 3 |
 | [[Quota]] | Usage & Quota | Aggregate Root | 2 |
 
 ## Concepts
@@ -41,7 +55,11 @@ date_updated: 2026-07-31
 | [[API Client + SSE Client]] | high | 4 |
 | [[API Documentation - OpenAPI]] | high | 2 |
 | [[API Routes]] | high | 3 |
+| [[Agent Chat]] | high | 7 |
+| [[Agent Chat UX]] | high | 8 |
+| [[Agent Personas]] | high | 4 |
 | [[Application Services]] | high | 4 |
+| [[Achievements & Badges]] | high | 4 |
 | [[ArtifactContent]] | high | 3 |
 | [[Asset Promotion]] | high | 4 |
 | [[AssetResolver]] | high | 4 |
@@ -51,6 +69,7 @@ date_updated: 2026-07-31
 | [[Centralized Copy Modules]] | high | 3 |
 | [[Content Generation]] | high | 4 |
 | [[Contracts Package]] | high | 4 |
+| [[Context Injection]] | high | 6 |
 | [[CrawlData]] | high | 2 |
 | [[Database Schema]] | high | 8 |
 | [[Design Tokens]] | high | 6 |
@@ -62,16 +81,27 @@ date_updated: 2026-07-31
 | [[Error Mapping (Domain to HTTP)]] | high | 2 |
 | [[File Upload Security]] | high | 3 |
 | [[Frontend Architecture]] | high | 7 |
+| [[Gamification]] | high | 6 |
+| [[Gamification UX]] | high | 6 |
+| [[Global Deterministic Model Matrix]] | high | 5 |
 | [[Health Check - Deep]] | high | 4 |
 | [[Identity & Access]] | high | 2 |
 | [[Idempotency Implementation]] | high | 4 |
 | [[IdempotencyKey]] | high | 3 |
+| [[IdempotencyKey + Prompt Version]] | high | 6 |
+| [[Invitation Notification Delivery]] | high | 4 |
 | [[Job Queue - Monitoring and Stability]] | high | 4 |
 | [[LLM Gateway - OpenRouter]] | high | 4 |
 | [[Logging Strategy]] | high | 4 |
 | [[Migration Tooling]] | high | 2 |
 | [[Progressive Context Enrichment]] | high | 2 |
 | [[Project Dependencies]] | high | 4 |
+| [[Project Brand Persona]] | high | 5 |
+| [[Prompt Admin API]] | high | 5 |
+| [[Prompt Caching Strategy]] | high | 6 |
+| [[Prompt Components]] | high | 6 |
+| [[Prompt Versioning]] | high | 7 |
+| [[PromptComposer]] | high | 5 |
 | [[ReadinessPolicy]] | high | 3 |
 | [[ReadinessSnapshot UI]] | high | 4 |
 | [[Seed Data]] | high | 2 |
@@ -85,6 +115,9 @@ date_updated: 2026-07-31
 | [[Usage & Quota]] | high | 2 |
 | [[UX Wireframes]] | high | 6 |
 | [[Workspace & Assets]] | high | 4 |
+| [[Workspace Gamification]] | high | 6 |
+| [[Workspace Sharing]] | high | 5 |
+| [[Workspace Permissions]] | high | 5 |
 | [[XState Integration]] | high | 4 |
 | [[packages-domain Structure]] | high | 5 |
 
@@ -93,6 +126,10 @@ date_updated: 2026-07-31
 | Page | Description | Date Filed |
 |------|-------------|------------|
 | [[synthesis/backend-audit-gaps-improvements]] | Backend audit — 12 findings, all closed | 2026-07-30 |
-| [[synthesis/backend-frontend-startup-gaps]] | Backend→Frontend startup gap analysis (15 items) | 2026-07-30 |
+| [[synthesis/backend-frontend-startup-gaps]] | Backend→Frontend startup gap analysis (15 items) | 2026-08-01 |
 | [[synthesis/lint-report-2026-07-30]] | Wiki health-check — 0 orphans, 0 broken links | 2026-07-30 |
+| [[synthesis/prompting-mechanics-proposal]] | Prompting mechanics architecture — versioning, components, context injection | 2026-08-01 |
+| [[synthesis/workspace-sharing-proposal]] | Workspace sharing architecture — membership, permissions, invitations | 2026-08-01 |
+| [[synthesis/agent-chat-proposal]] | Agent chat architecture — 7 agents, conversational context, SSE streaming | 2026-08-01 |
+| [[synthesis/gamification-proposal]] | Gamification overlay — XP, badges, leaderboards, seasons, workspace health | 2026-08-01 |
 | [[overview]] | High-level synthesis (v3) | 2026-07-31 |

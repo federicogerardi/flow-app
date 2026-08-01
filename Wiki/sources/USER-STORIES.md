@@ -66,7 +66,7 @@ source: "doodle/USER-STORIES.md (raw)"
 
 **Admin visibility**: Model CRUD, API service config, job monitoring, cost tracking (US-AD01 to US-AD09).
 
-**Proposed/Planned**: Global model assignment per step (US-GF05), multi-variant fan-out (US-GF06), HITL approve-and-continue (US-GF07), preference learning (US-GF08), side-by-side comparison (US-GF09), crawling cost optimization (US-GE09), historical SERP comparison (US-GE10).
+**Proposed/Planned**: Global model assignment per step (US-GF05), ~~multi-variant fan-out (US-GF06), HITL approve-and-continue (US-GF07), preference learning (US-GF08), side-by-side comparison (US-GF09)~~ [deprecated in current model baseline, 2026-08-01], crawling cost optimization (US-GE09), historical SERP comparison (US-GE10).
 
 ## Entities Mentioned
 

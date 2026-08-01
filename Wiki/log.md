@@ -6,6 +6,157 @@ tags:
 
 # Operation Log
 
+## [2026-08-01] deprecation | Output Personalization removed from current model baseline
+
+Files updated:
+
+- `Wiki/concepts/Output Personalization.md` — removed (feature deprecated in current model baseline)
+- `Wiki/sources/PRD.md` — FR-W08 marked as deprecated in current model baseline; roadmap row annotated accordingly
+- `Wiki/sources/USER-STORIES.md` — US-GF06/07/08/09 marked as deprecated in current model baseline
+- `Wiki/index.md` — maintenance note added; Concepts table entry for Output Personalization removed
+- `Wiki/log.md` — this entry
+
+Readback verification completed for all files above after write.
+
+## [2026-08-01] alignment | PM review model alignment (overview scope + wikilinks)
+
+Files updated:
+
+- `Wiki/overview.md` — architecture scope updated from 4 to 6 bounded contexts; added Agent Chat and Gamification to the canonical high-level model; added interaction-model synthesis section
+- `Wiki/concepts/Agent Chat.md` — fixed source link `LlmGateway` → `[[LLM Gateway - OpenRouter]]`
+- `Wiki/entities/Message.md` — fixed source link `LlmGateway` → `[[LLM Gateway - OpenRouter]]`
+- `Wiki/synthesis/agent-chat-proposal.md` — fixed references `LlmGateway` → `[[LLM Gateway - OpenRouter]]` and `Prompting Mechanics` → `[[synthesis/prompting-mechanics-proposal|Prompting Mechanics]]`
+- `Wiki/index.md` — maintenance note added for this alignment batch
+- `Wiki/log.md` — this entry
+
+Readback verification completed for all files above after write.
+
+## [2026-08-01] fix | Gamification — UI Designer review fixes (8 findings resolved)
+
+Files updated:
+
+- `Wiki/concepts/Design Tokens.md` — added `rarity.*` tokens (common/rare/epic/legendary) + dark mode overrides; added `sparkle` keyframe with reduced-motion guard
+- `Wiki/concepts/Gamification UX.md` — added Accessibility section (WCAG 2.1 AA); added Toast Priority System (3 SnackbarProvider); added Rarity Visual Treatment; sidebar zone ARIA labels
+- `Wiki/concepts/UX Wireframes.md` — added Template 11: Player Profile page (desktop + mobile); added `/profile` route
+- `Wiki/concepts/UI Component Map.md` — 29→37 components (8 gamification: GamificationZone, LevelUpBanner, BadgeProgressRing, LuckyBonusSparkle, ActivityPulse, SeasonCountdown, ChallengeVoting, StreakModeToggle); added `'profile'` skeleton variant
+- `Wiki/index.md` — updated
+- `Wiki/log.md` — this entry
+
+## [2026-08-01] design | Gamification UX — psychological triggers, notification cadence, sidebar zone
+
+Files created/updated:
+
+- `Wiki/concepts/Gamification UX.md` — created (9 psychological triggers, sidebar zone, notification cadence, anti-patterns)
+- `Wiki/concepts/UX Wireframes.md` — updated (sidebar gamification zone added in Template 1 + mobile drawer)
+- `Wiki/concepts/Gamification.md` — updated (source ref to Gamification UX)
+- `Wiki/index.md` — updated
+- `Wiki/log.md` — this entry
+
+## [2026-08-01] fix | Gamification — backend review fixes (6 findings resolved)
+
+Files updated:
+
+- `Wiki/concepts/Gamification.md` — added Event Idempotency + Concurrency Control sections; Key Properties updated
+- `Wiki/entities/PlayerProfile.md` — streak switched to UTC DATE; optimistic locking (`version`); removed `xp_seasonal`/`seasonId`/`resetSeason()`; added `xp_transactions` table
+- `Wiki/concepts/Workspace Gamification.md` — added ChallengeCompleted handler for XP distribution; added `challenge_contributions` table
+- `Wiki/synthesis/gamification-proposal.md` — DB schema updated with `xp_transactions`, `gamification_processed_events`, `challenge_contributions`, `version` column
+- `Wiki/log.md` — this entry
+
+Files updated:
+
+- `Wiki/concepts/Gamification.md` — removed false "zero writes" claim; added read models distinction; WorkspaceChallenge as second AR; event-mediated credit rewards
+- `Wiki/concepts/Achievements & Badges.md` — Credit Reward Flow: now event-mediated (`AchievementUnlocked → Quota`), no direct cross-context call
+- `Wiki/concepts/Workspace Gamification.md` — Leaderboard + Health Score → read models; WorkspaceChallenge aggregate added; removed LeaderboardRanker/WorkspaceHealthScorer as domain services
+- `Wiki/synthesis/gamification-proposal.md` — Updated directory tree (+read-models/, +WorkspaceChallenge); fixed event flow diagram; fixed cross-context impact table
+- `Wiki/log.md` — this entry
+
+## [2026-08-01] design | Gamification — XP, badges, leaderboards, seasons, workspace health
+
+Files created:
+
+- `Wiki/concepts/Gamification.md` — created
+- `Wiki/concepts/Achievements & Badges.md` — created
+- `Wiki/concepts/Workspace Gamification.md` — created
+- `Wiki/entities/PlayerProfile.md` — created
+- `Wiki/entities/Achievement.md` — created
+- `Wiki/synthesis/gamification-proposal.md` — created
+- `Wiki/index.md` — updated (3 concepts + 2 entities + 1 synthesis)
+- `Wiki/log.md` — this entry
+
+## [2026-08-01] design | Agent Chat — Conversation privacy rule (user-scoped)
+
+Files updated:
+
+- `Wiki/concepts/Agent Chat.md` — added Conversation Privacy section, updated API auth to `member + owner`
+- `Wiki/concepts/Agent Chat UX.md` — added Conversation Privacy section, Team Hub "Le tue Conversazioni" user-scoped, TeamHub component docs updated
+- `Wiki/entities/Conversation.md` — privacy invariant added, repository changed to `findByUserAndWorkspace()`
+- `Wiki/synthesis/agent-chat-proposal.md` — key decision added, API auth updated
+- `Wiki/log.md` — this entry
+
+## [2026-08-01] design | Agent Chat UX — wireframes, 6 new components, sidebar update
+
+Files created/updated:
+
+- `Wiki/concepts/Agent Chat UX.md` — created (29 components, templates 9–10, interaction patterns)
+- `Wiki/concepts/UI Component Map.md` — updated (23→29, new agent-chat/ layer)
+- `Wiki/concepts/UX Wireframes.md` — updated (Team nav, routes, templates 9–10 reference)
+- `Wiki/index.md` — updated
+- `Wiki/log.md` — this entry
+
+## [2026-08-01] design | Agent Chat — 7 agents, Conversation/Message entities, new bounded context
+
+Files created:
+
+- `Wiki/concepts/Agent Chat.md` — created
+- `Wiki/concepts/Agent Personas.md` — created
+- `Wiki/entities/Conversation.md` — created
+- `Wiki/entities/Message.md` — created
+- `Wiki/synthesis/agent-chat-proposal.md` — created
+- `Wiki/index.md` — updated (2 concepts + 2 entities + 1 synthesis)
+- `Wiki/log.md` — this entry
+
+## [2026-08-01] design | Workspace Sharing — Membership Diretta (Option A)
+
+Files created/updated:
+
+- `Wiki/concepts/Workspace Sharing.md` — created
+- `Wiki/concepts/Workspace Permissions.md` — created
+- `Wiki/entities/WorkspaceMembership.md` — created
+- `Wiki/entities/Workspace.md` — updated (v2: multi-member model)
+- `Wiki/synthesis/workspace-sharing-proposal.md` — created
+- `Wiki/index.md` — updated (2 concepts + 1 entity + 1 synthesis, Workspace source_count bumped)
+- `Wiki/log.md` — this entry
+
+## [2026-08-01] design | Prompting deep-dive — Caching Strategy, Admin API, IdempotencyKey + Prompt Version
+
+Files created:
+
+- `Wiki/concepts/Prompt Versioning.md` — created
+- `Wiki/concepts/Prompt Components.md` — created
+- `Wiki/concepts/Context Injection.md` — created
+- `Wiki/concepts/PromptComposer.md` — created
+- `Wiki/concepts/Prompt Caching Strategy.md` — created
+- `Wiki/concepts/Prompt Admin API.md` — created
+- `Wiki/concepts/IdempotencyKey + Prompt Version.md` — created
+- `Wiki/synthesis/prompting-mechanics-proposal.md` — created
+- `Wiki/index.md` — updated (7 concepts + 1 synthesis added)
+- `Wiki/log.md` — this entry
+
+## [2026-08-01] remediation | Critical model gaps closure for PM review
+
+Files created/updated:
+
+- `Wiki/concepts/Global Deterministic Model Matrix.md` — added deterministic per-step model assignment contract, enforcement rules, and integration points
+- `Wiki/concepts/Output Personalization.md` — added variant/HITL/feedback-RAG personalization model with rollout and invariants
+- `Wiki/concepts/Project Brand Persona.md` — added workspace-level auto-injected brand persona contract and traceability rules
+- `Wiki/concepts/Invitation Notification Delivery.md` — added invitation notification delivery decision (in-process + retry + idempotent guard)
+- `Wiki/synthesis/workspace-sharing-proposal.md` — closed notification open question; normalized option naming to English; linked to notification concept
+- `Wiki/synthesis/backend-frontend-startup-gaps.md` — removed stale 4-context wording; aligned to current 6-context canonical overview
+- `Wiki/index.md` — maintenance note added; Concepts table expanded with 4 new pages; synthesis date updated for backend/frontend startup gaps
+- `Wiki/log.md` — this entry
+
+Readback verification completed for all files above after write.
+
 ## [2026-07-30] scaffold | Wiki initialized
 ## [2026-07-30] ingest | All 4 sources, DDD v3, Gaps, Compliance
 ## [2026-07-30] design | Full stack: Quota, Monitoring, Copy, Deps, Testing, Logging, Auth, FE Arch, Tool UX, Session List

@@ -37,7 +37,7 @@ All 11 tools implemented or reactivated. See [[APP-CONCEPT]] for full catalog.
 - **Two-level credits** (FR-W05): Artifact gate (anti-abuse, invisible) + credit consumption on final step — ✅
 - **Per-step LLM model override** (FR-W06): Static config for specific tool steps — 🔄 Partial
 - **Global Deterministic Model Matrix** (FR-W07): Extend to all 22 LLM steps — 📝 Proposal
-- **Output Personalization** (FR-W08): Multi-variant fan-out, HITL, feedback RAG — 📝 Proposal
+- **Output Personalization** (FR-W08): Multi-variant fan-out, HITL, feedback RAG — 🚫 Deprecated in current model baseline (2026-08-01)
 - **Project Brand Persona** (FR-W09): Auto-inject brand voice at workspace level — 📝 Proposal
 
 ### Workspace & Asset (FR-A01 to FR-A05)
@@ -67,7 +67,7 @@ Registry-driven tool pages, readiness snapshot, canonical UI state derivation (8
 | Horizon | Epics |
 |---------|-------|
 | Q3 2026 | Global Model Matrix, Workspace Dashboard completion, Prompt Layer Quality, BE-Driven stabilization |
-| Q4 2026 | Output Personalization, Geometric Admin Debug, Session Aggregation, CTA convergence |
+| Q4 2026 | ~~Output Personalization~~ (deprecated in current model baseline), Geometric Admin Debug, Session Aggregation, CTA convergence |
 | 2025+ | Multi-tenant, collaborative editing, advanced pricing, public API, i18n |
 
 ## Acceptance Criteria

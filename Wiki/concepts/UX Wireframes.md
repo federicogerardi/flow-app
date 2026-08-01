@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/ux
-date_updated: 2026-07-31
-source_count: 6
+date_updated: 2026-08-01
+source_count: 7
 confidence: high
 ---
 
@@ -13,7 +13,8 @@ confidence: high
 
 > Deterministic layout specs — desktop (1280px) + mobile (390px) — for all primary templates  
 > Benchmark: Forest (gamified satisfaction) · Monday.com (operational clarity)  
-> Anti-pattern: bureaucratic density · ambiguous CTAs · silent failures · cold enterprise feel
+> Anti-pattern: bureaucratic density · ambiguous CTAs · silent failures · cold enterprise feel  
+> **Templates 1–8**: tool pipeline + workspace. **Templates 9–10**: Agent Chat (see [[Agent Chat UX]])
 
 ## Design Direction
 
@@ -48,6 +49,9 @@ The following decisions from [[Frontend Architecture]] are **preserved and exten
 |-------|------|
 | `/workspaces/:id/assets` | Full-page AssetList |
 | `/workspaces/:id/sessions` | Full-page SessionList |
+| `/workspaces/:id/team` | Team Hub (Agent Chat entry) |
+| `/workspaces/:id/conversations/:conversationId` | Conversation View |
+| `/profile` | Player Profile (Template 11) |
 | `/templates` | Placeholder (roadmap slot) |
 | `/audit` | Placeholder (roadmap slot) |
 
@@ -77,6 +81,7 @@ Fixed sidebar 280px · content area flex-grow · header per-page.
 │  ⚡  Tools                       │                                        │
 │  ◐  Sessions                    │                                        │
 │  ◈  Assets                      │                                        │
+│  👥  Team                        │                                        │
 │  ─────────────────────────────  │                                        │
 │  ◫  Templates  [soon]           │                                        │
 │  ≡  Audit Log  [soon]           │                                        │
@@ -90,6 +95,10 @@ Fixed sidebar 280px · content area flex-grow · header per-page.
 │  ─────────────────────────────  │                                        │
 │  Credits ████████░░  245/250    │                                        │
 │  Reset 01/08/2026               │                                        │
+│  ─────────────────────────────  │                                        │
+│  L4 Specialist  ████████░░      │  ← Gamification Zone                   │
+│  🔥 12  ·  🏅 6                 │                                        │
+│  #3 weekly ████████░░░          │                                        │
 │  ─────────────────────────────  │                                        │
 │  [AV]  Anna V.              ▼   │                                        │
 └────────────────────────────────────────────────────────────────────────┘
@@ -139,7 +148,8 @@ No sidebar. Bottom tab bar. FAB for primary action.
 │ ≡  Audit Log  [soon]        │
 │ ─────────────────────────── │
 │ Credits ███████░  245/250   │
-│ Reset 01/08/2026            │
+│ ─────────────────────────── │
+│ L4 · 🔥 12 · 🏅 6 · #3 wk  │
 │ ─────────────────────────── │
 │ [AV]  Anna V.           ▼   │
 └─────────────────────────────┘
@@ -577,6 +587,115 @@ Applied to every data-loading context.
 
 ---
 
+## Template 11 — Player Profile (`/profile`)
+
+Full-page gamification profile. Accessible from sidebar gamification zone click.
+
+```
+DESKTOP ─────────────────────────────────────────────────────────────────
+
+┌─ PageHeader ──────────────────────────────────────────────────────────┐
+│  Profile                                                                 │
+└───────────────────────────────────────────────────────────────────────┘
+
+┌─ Level Card ──────────────────────────────────────────────────────────┐
+│                                                                         │
+│  L4 · Specialist                                                        │
+│  ██████████████████████████████░░░░░░░  2,450 / 5,000 XP  (49%)        │
+│                                                                         │
+│  🔥 Current streak: 12 days    ·    Longest streak: 18 days            │
+│                                                                         │
+└───────────────────────────────────────────────────────────────────────┘
+
+┌─ Badges (6 unlocked) ─────────────────────────────────────────────────┐
+│                                                                         │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐                  │
+│  │ ⭐        │ │ 🏗️        │ │ 🔥        │ │ 🧭        │                  │
+│  │First Light│ │Getting    │ │Weekly     │ │Tool       │                  │
+│  │Common     │ │Started    │ │Warrior    │ │Explorer   │                  │
+│  │12/07/26   │ │Rare       │ │Rare       │ │Rare       │                  │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘                  │
+│  ┌──────────┐ ┌──────────┐                                             │
+│  │ 🤖        │ │ 🎯        │                                             │
+│  │AI Appren. │ │Brand Ready│                                             │
+│  │Rare       │ │Rare       │                                             │
+│  │15/07/26   │ │20/07/26   │                                             │
+│  └──────────┘ └──────────┘                                             │
+│                                                                         │
+└───────────────────────────────────────────────────────────────────────┘
+
+┌─ In Progress ─────────────────────────────────────────────────────────┐
+│                                                                         │
+│  ┌──────────────┐  ┌──────────────┐                                    │
+│  │  ⬤ 8/11       │  │  ⬤ 82/100    │                                    │
+│  │  👑           │  │  ⚡           │                                    │
+│  │ Tool Master  │  │ Power User   │                                    │
+│  │ Epic  +50 cr │  │ Legendary    │                                    │
+│  │              │  │    +100 cr   │                                    │
+│  └──────────────┘  └──────────────┘                                    │
+│                                                                         │
+└───────────────────────────────────────────────────────────────────────┘
+
+┌─ Stagione Attuale — Summer Scale Q3 2026 ─────────────────────────────┐
+│                                                                         │
+│  XP stagionale: 1,240    ·    Rank workspace Q3 Campaign: #2           │
+│                                                                         │
+│  Badge stagionali:                                                      │
+│  ┌──────────┐                                                           │
+│  │ ❄️        │                                                           │
+│  │Frostbite  │                                                           │
+│  │Q1 2026    │                                                           │
+│  └──────────┘                                                           │
+│                                                                         │
+└───────────────────────────────────────────────────────────────────────┘
+
+┌─ Impostazioni ────────────────────────────────────────────────────────┐
+│                                                                         │
+│  Streak mode:  ○ Daily    ● Business days (Mon–Fri)                    │
+│                                                                         │
+└───────────────────────────────────────────────────────────────────────┘
+
+
+MOBILE ──────────────────────────────────────────────────────────────────
+
+┌─────────────────────────────┐
+│ Profile                     │
+├─────────────────────────────┤
+│ L4 · Specialist             │
+│ ████████████████░░  49%     │
+│ 🔥 12 days · Longest 18     │
+├─────────────────────────────┤
+│ BADGES (6)                  │
+│ ┌─────────┐ ┌─────────┐    │
+│ │ ⭐       │ │ 🏗️       │    │
+│ │First    │ │Getting  │    │
+│ │Light    │ │Started  │    │
+│ │Common   │ │Rare     │    │
+│ └─────────┘ └─────────┘    │
+│ ┌─────────┐ ┌─────────┐    │
+│ │ 🔥       │ │ 🧭       │    │
+│ │Weekly   │ │Tool     │    │
+│ │Warrior  │ │Explorer │    │
+│ └─────────┘ └─────────┘    │
+├─────────────────────────────┤
+│ IN PROGRESS                 │
+│ ⬤ 8/11  👑 Tool Master     │
+│ ⬤ 82/100 ⚡ Power User     │
+├─────────────────────────────┤
+│ Q3 Summer Scale             │
+│ 1,240 XP · #2 in workspace  │
+├─────────────────────────────┤
+│ ○ Daily  ● Business days    │
+└─────────────────────────────┘
+```
+
+**Profile page rules:**
+- Badge cards: 2 columns on desktop (4 per row), 2 columns on mobile. `borderRadius: md (8px)`, `boxShadow: xs`.
+- Badge cards use `rarity.*` tokens for border color. Text label below badge name.
+- In-progress badges: greyed-out card with `CircularProgress` ring. `variant="determinate"`, `size={40}`, `thickness={3}`.
+- Streak mode toggle: MUI `Switch` + `FormControlLabel`. Change takes effect next streak day.
+- Page uses 4-state pattern: `LoadingSkeleton variant="profile"` → data.
+
 ## Sources
 
 - [[Frontend Architecture]] — component inventory and routing
@@ -585,3 +704,4 @@ Applied to every data-loading context.
 - [[ReadinessSnapshot UI]] — readiness reason codes and display contract
 - [[Session List - Live Status]] — session card states
 - [[sources/PRD]] — FR-U01 to FR-U11 (UI functional requirements)
+- [[Agent Chat UX]] — Templates 9–10: Team Hub and Conversation View (full wireframe specs)

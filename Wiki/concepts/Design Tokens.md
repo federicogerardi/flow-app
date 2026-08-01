@@ -69,6 +69,14 @@ const palette = {
   error:    { main: '#DC2626', light: '#FEE2E2', dark: '#991B1B', contrastText: '#fff' },
   info:     { main: '#0891B2', light: '#CFFAFE', dark: '#164E63', contrastText: '#fff' },
 
+  // ─── Rarity (Gamification) ──────────────────────────────────────────
+  rarity: {
+    common:    { border: '#9CA3AF', bg: '#F3F4F6', text: '#374151' },
+    rare:      { border: '#3B82F6', bg: '#EFF6FF', text: '#1E40AF' },
+    epic:      { border: '#7C3AED', bg: '#F5F3FF', text: '#5B21B6' },
+    legendary: { border: '#D97706', bg: '#FFFBEB', text: '#92400E' },
+  },
+
   // ─── Neutral ──────────────────────────────────────────────────────────
   grey: {
     50:  '#F9FAFB',   // page background
@@ -327,11 +335,19 @@ const transitions = {
   50%       { opacity: 0.55; }
 }
 
+/* Gamification: lucky bonus sparkle */
+@keyframes sparkle {
+  0%   { opacity: 0; transform: scale(0.8) rotate(-5deg); }
+  50%  { opacity: 1; transform: scale(1.1) rotate(3deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
 /* Reduced motion overrides */
 @media (prefers-reduced-motion: reduce) {
   @keyframes slideInFade    { from { opacity: 0; } to { opacity: 1; } }
   @keyframes celebrationPop { from { opacity: 0; } to { opacity: 1; } }
   @keyframes stepPulse      { 0%, 100% { opacity: 1; } }
+  @keyframes sparkle        { from { opacity: 1; } to { opacity: 1; } }
 }
 ```
 
@@ -367,6 +383,14 @@ const darkOverrides = {
     100: '#263548',
     200: '#334155',
     900: '#F1F5F9',
+  },
+
+  // Rarity adjusts for dark backgrounds
+  rarity: {
+    common:    { border: '#6B7280', bg: '#1F2937', text: '#D1D5DB' },
+    rare:      { border: '#60A5FA', bg: '#1E3A8A', text: '#DBEAFE' },
+    epic:      { border: '#A78BFA', bg: '#312E81', text: '#DDD6FE' },
+    legendary: { border: '#FBBF24', bg: '#78350F', text: '#FEF3C7' },
   },
 } as const;
 ```

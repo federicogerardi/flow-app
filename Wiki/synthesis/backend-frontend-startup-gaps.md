@@ -3,7 +3,7 @@ type: synthesis
 tags:
   - wiki/synthesis
   - wiki/roadmap
-date_updated: 2026-07-30
+date_updated: 2026-08-01
 source_count: 0
 ---
 
@@ -14,7 +14,7 @@ source_count: 0
 
 ## Current Coverage
 
-The wiki covers the **domain model** completely: 4 bounded contexts, 7 entities, 24 value objects, 3 domain services, 9 domain events, 4 repository interfaces, 11 tool configs, 1 XState session machine, 3 application services.
+The wiki covers the **domain model baseline** end-to-end, and now includes the expanded high-level scope with 6 bounded contexts in `[[overview]]`.
 
 What's missing is the **infrastructure, API, and UI layer** — everything needed to turn the domain into a running application.
 

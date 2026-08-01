@@ -3,7 +3,7 @@ type: synthesis
 tags:
   - wiki/synthesis
   - wiki/overview
-date_updated: 2026-07-31
+date_updated: 2026-08-01
 ---
 
 # Overview — Flow App
@@ -16,14 +16,22 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 
 ## Architecture
 
-**4 bounded contexts**:
+**6 bounded contexts**:
 
 | Context | Category | Aggregate Root | Responsibility |
 |---------|----------|---------------|----------------|
 | [[Content Generation]] | Core | [[Session]] | Unified tool execution: acquisition → elaboration → final artifact |
 | [[Workspace & Assets]] | Supporting | [[Workspace]] | Organization, reusable brand resources |
+| [[Agent Chat]] | Supporting | [[Conversation]] | Conversational, multi-turn guidance with workspace-aware context injection |
+| [[Gamification]] | Supporting | [[PlayerProfile]] | Event-driven XP, levels, badges, streaks, workspace challenges |
 | [[Identity & Access]] | Generic | [[User]] | Auth, roles, sessions |
 | [[Usage & Quota]] | Supporting | [[Quota]] | Two-track limits: artifact gate (anti-abuse) + credit consumption |
+
+## Interaction Models
+
+- **Deterministic generation**: [[Content Generation]] orchestrates tool execution through the unified step pipeline.
+- **Conversational guidance**: [[Agent Chat]] provides persistent, user-private conversations with role-specific agents.
+- **Engagement overlay**: [[Gamification]] reacts to cross-context domain events and updates player/workspace progress state.
 
 ## Tool Catalog (11 tools)
 

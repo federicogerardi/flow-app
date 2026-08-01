@@ -4,16 +4,16 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/architecture
-date_updated: 2026-07-31
-source_count: 6
+date_updated: 2026-08-01
+source_count: 7
 confidence: high
 ---
 
 # UI Component Map
 
 > Complete React/MUI component inventory — props, state bindings, MUI internals  
-> Extends [[Frontend Architecture]] from 17 → 23 components (6 UX-v1 additions)  
-> All components are generic (zero tool-specific). New tool = zero new components.
+> Extends [[Frontend Architecture]] from 17 → 23 → 29 → **37** components (6 UX-v1 + 6 Agent Chat + 8 Gamification additions)  
+> All components are generic (zero tool-specific, zero agent-specific). New agent = zero new component files.
 
 ## Inventory Overview
 
@@ -40,6 +40,24 @@ apps/frontend/src/
 │   │   ├── SessionSummary.tsx
 │   │   └── ToolCard.tsx               ← UX-v1 addition
 │   │
+│   ├── agent-chat/                    # 6 components (NEW — Agent Chat)
+│   │   ├── AgentCard.tsx              ← Agent selector card
+│   │   ├── TeamHub.tsx                ← Team hub page (grid + recent)
+│   │   ├── ConversationPage.tsx       ← Full chat page wrapper
+│   │   ├── ChatMessageBubble.tsx      ← Individual message (user/agent)
+│   │   ├── ChatInput.tsx              ← Sticky input composer
+│   │   └── AgentContextDrawer.tsx     ← Assets + sessions info drawer
+│   │
+│   ├── gamification/                  # 8 components (NEW — Gamification UX)
+│   │   ├── GamificationZone.tsx       ← Sidebar zone: level, streak, badges, rank
+│   │   ├── LevelUpBanner.tsx           ← Celebratory level-up banner
+│   │   ├── BadgeProgressRing.tsx       ← Circular progress toward next badge
+│   │   ├── LuckyBonusSparkle.tsx       ← Sparkle overlay for critical hit
+│   │   ├── ActivityPulse.tsx           ← "Marco is generating" live indicator
+│   │   ├── SeasonCountdown.tsx         ← Seasonal countdown chip
+│   │   ├── ChallengeVoting.tsx         ← Weekly challenge voting UI
+│   │   └── StreakModeToggle.tsx        ← Daily vs Business days switch
+│   │
 │   └── shared/                        # 9 components (was 5, +4)
 │       ├── PageHeader.tsx
 │       ├── EmptyState.tsx
@@ -52,14 +70,17 @@ apps/frontend/src/
 │       └── PromoteButton.tsx          ← UX-v1 addition
 │
 └── theme/
-    ├── index.ts                       # buildTheme(mode)
-    ├── tokens.ts                      # palette, typography, spacing
-    ├── workspace-accents.ts           # 10 presets + WorkspaceAccent type
-    └── ThemeProvider.tsx              # Light/Dark/System context
+    ├── index.ts
+    ├── tokens.ts
+    ├── workspace-accents.ts
+    └── ThemeProvider.tsx
 ```
 
-**Total: 23 components + 4 theme files.**  
-**Zero tool-specific components.** New tool = 0 new component files.
+**Total: 37 components + 4 theme files.**  
+**Zero tool-specific, zero agent-specific components.** New tool = 0 new files. New agent = 0 new files.
+
+> See [[Agent Chat UX]] for full specs of the 6 agent-chat components.  
+> See [[Gamification UX]] for full specs of the 8 gamification components.
 
 ---
 
@@ -534,7 +555,7 @@ interface ErrorStateProps {
 Shape-matched skeleton per view variant.
 
 ```typescript
-type SkeletonVariant = 'dashboard' | 'card-grid' | 'list' | 'tool-page' | 'session-detail';
+type SkeletonVariant = 'dashboard' | 'card-grid' | 'list' | 'tool-page' | 'session-detail' | 'team-hub' | 'conversation' | 'profile';
 
 interface LoadingSkeletonProps {
   variant: SkeletonVariant;
@@ -792,3 +813,5 @@ function PromoteButton({ sessionId, artifactId, assetType, workspaceId, onPromot
 - [[ReadinessSnapshot UI]] — readiness display and asset-by-type check
 - [[Session List - Live Status]] — SessionCard live states
 - [[Design Tokens]] — visual tokens consumed by all components
+- [[Agent Chat UX]] — 6 new agent-chat components (wireframes, props, interactions)
+- [[Gamification UX]] — 8 new gamification components (sidebar zone, level-up, badges, toast system)
