@@ -11,7 +11,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest",
-    "test:run": "vitest --run"
+    "test:run": "vitest --run",
+    "migrate": "node --import tsx ./migrate.ts"
   },
   "dependencies": {
     "@flow-app/domain": "*",

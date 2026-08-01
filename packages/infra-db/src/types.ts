@@ -33,7 +33,7 @@ export interface IdempotencyKeysTable {
   key_hash: string;
   session_id: string;
   created_at: ColumnType<Date, never, never>;
-  expires_at: ColumnType<Date, never, never>;
+  expires_at: ColumnType<Date, Date, never>;
 }
 
 export interface SessionSnapshotsTable {

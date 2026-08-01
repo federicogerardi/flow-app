@@ -6,6 +6,71 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 
 ---
+## [2026-08-01] validation | API endpoints verification + infrastructure setup
+
+Full API verification against managed PostgreSQL + Redis. All endpoints green.
+
+### Infrastructure
+
+| Resource | Service | Endpoint | Status |
+|----------|---------|----------|--------|
+| PostgreSQL | Managed | TCP proxy (5432) | ✅ ACTIVE |
+| Redis | Managed | TCP proxy (6379) | ✅ ACTIVE |
+| Backend API | localhost | `http://localhost:3000` | ✅ Running |
+
+### Database
+
+- 6 migrations executed (001-006): enums, users, workspaces, sessions, quotas, platform config
+- 17 tables created (16 domain + `_migrations` tracking)
+- Seed user: admin role, active status
+- Seed workspace: Default Workspace, owner membership
+- Migration runner (`packages/infra-db/migrate.ts`) is idempotent — tracks executed migrations in `_migrations` table
+
+### API Endpoints Verified
+
+| Endpoint | Method | Status | Response |
+|----------|--------|--------|----------|
+| `/health` | GET | ✅ | `{"status":"ok"}` |
+| `/api` | GET | ✅ | `{"message":"Flow App API","version":"0.0.1"}` |
+| `/admin/jobs` | GET | ✅ | Queue stats + stability metrics |
+| `/admin/health` | GET | ✅ | `{"status":"healthy","alerts":[]}` |
+| `/api/tools/:key/sessions` | POST | ✅ | 201 create, `replayed: false` |
+| `/api/tools/:key/sessions` | POST (replay) | ✅ | 200 replay, `replayed: true` |
+| `/api/sessions/:id` | GET | ✅ | Session detail |
+
+### Idempotency Verification
+
+```
+1a. POST /api/tools/blog-post/sessions → 201, id=2f902140, replayed=false
+1b. POST /api/tools/blog-post/sessions → 200, id=2f902140, replayed=true  ✅
+```
+
+Same request returns same session with `replayed: true`. Idempotency key saved with 24h TTL.
+
+### Fix Applied
+
+- `packages/infra-db/src/repositories/session-repository.ts` — `save()` now inserts idempotency key into `idempotency_keys` table (was missing)
+- `packages/infra-db/src/types.ts` — `IdempotencyKeysTable.expires_at` changed from `ColumnType<Date, never, never>` to `ColumnType<Date, Date, never>` to allow inserts
+- `apps/backend/src/middleware/dev-auth.ts` — dev auth middleware created (injects seed user ID when `NODE_ENV !== production`)
+
+### Files
+
+- `packages/infra-db/migrations/001_enums.sql` — created
+- `packages/infra-db/migrations/002_users_auth.sql` — created
+- `packages/infra-db/migrations/003_workspaces.sql` — created
+- `packages/infra-db/migrations/004_sessions.sql` — created
+- `packages/infra-db/migrations/005_quotas.sql` — created
+- `packages/infra-db/migrations/006_platform_config.sql` — created
+- `packages/infra-db/migrate.ts` — created
+- `packages/infra-db/package.json` — added `migrate` script
+- `packages/infra-db/src/types.ts` — `expires_at` type fix
+- `packages/infra-db/src/repositories/session-repository.ts` — idempotency key insert
+- `apps/backend/src/middleware/dev-auth.ts` — created
+- `apps/backend/src/app.ts` — dev auth middleware wired
+- `apps/backend/.env.local` — managed PostgreSQL + Redis URLs
+
+---
+
 ## [2026-08-01] implementation | Phase 2 — Reliability and Ops Hardening
 
 Phase 2 of [[synthesis/implementation-roadmap-2026-08-01]] implemented. Branch: `feature/phase-2-reliability-ops`.

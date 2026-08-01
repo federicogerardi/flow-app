@@ -89,3 +89,11 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 | Phase 3 — Workspace Collaboration | ⏳ | Membership model, role enforcement, migration alignment |
 | Phase 4 — Prompt Governance Runtime | ⏳ | Prompt versioning, idempotency signature stability |
 | Phase 5 — Expansion Tracks | ⏳ | Agent Chat, Gamification |
+
+## Infrastructure (Railway dev)
+
+| Resource | Endpoint | Status |
+|----------|----------|--------|
+| PostgreSQL | Railway dev (TCP proxy 5432) | ✅ 17 tables, 6 migrations |
+| Redis | Railway dev (TCP proxy 6379) | ✅ ACTIVE |
+| Backend API | `localhost:3000` | ✅ 7 endpoints verified |

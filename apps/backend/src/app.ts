@@ -7,6 +7,7 @@ import { httpLogger, logger } from './infrastructure/logger.js';
 import { errorHandler } from './infrastructure/error-handler.js';
 import { createGenerationRoutes } from './api/generation.js';
 import { createAdminRoutes } from './api/admin.js';
+import { devAuthMiddleware } from './middleware/dev-auth.js';
 import type { SessionRepository } from '@flow-app/domain';
 import type { JobEventBridge } from './infrastructure/job-event-bridge.js';
 
@@ -36,6 +37,10 @@ export function createApp(deps: AppDeps) {
     (req as any).log = logger.child({ reqId: req.id });
     next();
   });
+
+  if (process.env.NODE_ENV !== 'production') {
+    app.use(devAuthMiddleware);
+  }
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });

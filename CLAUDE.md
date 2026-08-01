@@ -14,7 +14,7 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 
 **Monorepo structure**: `apps/backend`, `apps/frontend`, `packages/contracts`, `packages/domain`, `packages/infra-db`
 
-**Key technology**: Node.js, React 19, XState v5, Kysely, PostgreSQL, Redis, BullMQ, Railway deployment.
+**Key technology**: Node.js, React 19, XState v5, Kysely, PostgreSQL, Redis, BullMQ.
 
 ---
 
@@ -238,6 +238,34 @@ Example:
 #### 7 — Schema authority
 
 **This file (`CLAUDE.md`) is the authoritative schema for all wiki pages.** The file `Wiki/schema/config.md` is an unused artifact from the original llm-wiki OSS plugin and does not reflect the conventions in use. Ignore it when writing or validating pages. Do not reconcile pages against `schema/config.md`.
+
+#### 8 — Zero environment references
+
+**Wiki and repo files must be 100% environment-agnostic.** Never include:
+
+- Hostnames, domains, or proxy URLs (e.g. `*.internal`, `*.proxy.*`)
+- IP addresses, ports, or connection strings with real credentials
+- API keys, tokens, passwords, or secrets
+- Platform-specific identifiers (project IDs, service IDs, environment IDs)
+- User emails, user IDs, or seed data identifiers
+
+**Replace with generic placeholders:**
+
+| ❌ Never | ✅ Always |
+|----------|----------|
+| `real-host.example.com:5432` | `<DB_HOST>:<DB_PORT>` |
+| `postgresql://user:pass@host:5432/db` | `<DATABASE_URL>` |
+| `redis://default:pass@host:6379` | `<REDIS_URL>` |
+| `a0eebc99-...` | `<seed-user-id>` |
+| Platform names | `managed PostgreSQL` or `managed Redis` |
+
+**Checklist before writing any wiki page:**
+- [ ] No real hostnames or connection strings
+- [ ] No platform names — use generic terms
+- [ ] No credentials or identifiers
+- [ ] Infrastructure references use placeholders only
+
+**Enforcement**: if any leak is found during a wiki write, fix it immediately before committing. A single leak in `Wiki/` or repo is a blocking issue.
 
 ### Tools
 
