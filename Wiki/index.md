@@ -7,6 +7,8 @@ date_updated: 2026-08-01
 
 # Wiki Index — Flow App
 
+> Maintenance note (2026-08-01): branch sync policy documented — permanent branches (main/staging/dev), auto-sync workflow, promotion flow updated in Git Governance Policy and CI-CD Promotion Policy.
+> Maintenance note (2026-08-01): Phase 0-1 implemented — monorepo bootstrap + core async generation vertical slice. PR #1 open. Code verified (typecheck 0 errors, 8 tests pass, lint 0 errors).
 > Maintenance note (2026-08-01): implementation roadmap filed — phased development sequence added in synthesis (bootstrap -> core async slice -> hardening -> collaboration -> expansion).
 > Maintenance note (2026-08-01): ultra-strict naming pass completed — canonical guard naming standardized to `canQueue` with legacy alias note for `canStart`.
 > Maintenance note (2026-08-01): lexical hardening pass completed — residual `START` transition references removed from canonical architecture pages; naming unified on `QUEUE`/`WORKER_PICKUP`.
