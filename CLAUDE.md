@@ -18,6 +18,50 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 
 ---
 
+## Git Branch Policy
+
+### Permanent Branches
+
+| Branch | Scopo | Protezione | Push diretto |
+|--------|-------|------------|--------------|
+| `main` | Always releasable, produzione | Status checks + linear history | ❌ Solo PR |
+| `staging` | Validation pre-prod | Status checks | ❌ Solo PR |
+| `dev` | Fast feedback, sviluppo | Nessuna | ✅ Consentito |
+
+### Working Rules
+
+1. **Mai lavorare direttamente su `main` o `staging`**.
+2. Tutte le feature/fix partono da `dev` o da branch dedicati.
+3. Il flusso è: `feature/*` → `dev` → `staging` → `main`.
+4. Dopo ogni merge PR, i branch downstream si sincronizzano automaticamente (`branch-sync.yml`).
+
+### Pre-Session Branch Verification
+
+Prima di iniziare qualsiasi lavoro, verificare:
+
+```bash
+# 1. Verifica branch corrente
+git branch --show-current
+
+# 2. NON deve essere main o staging
+# Se lo è, switcha su dev
+git checkout dev
+
+# 3. Allinea dev con upstream
+git pull origin dev
+
+# 4. Crea branch di lavoro
+git checkout -b feature/<scope>-<short-name>
+```
+
+**Regola**: se il branch corrente è `main` o `staging`, STOPPARE e chiedere conferma prima di procedere.
+
+---
+
+## Linguistic Separation Policy
+
+---
+
 ## Linguistic Separation Policy
 
 Every document in this project belongs to exactly one language category. Never mix languages within a single document body.
