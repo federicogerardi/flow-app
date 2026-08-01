@@ -3,7 +3,7 @@ type: concept
 tags:
   - wiki/concept
   - wiki/architecture
-date_updated: 2026-07-30
+date_updated: 2026-08-01
 source_count: 4
 confidence: high
 ---
@@ -70,7 +70,8 @@ const sessionMachine = createMachine({
   initial: 'draft',
   states: {
     draft:   { on: { CONFIGURE: 'ready' } },
-    ready:   { on: { START: 'running' } },
+    ready:   { on: { QUEUE: 'queued' } },
+    queued:  { on: { WORKER_PICKUP: 'running' } },
     running: {
       initial: 'executingStep',
       states: {

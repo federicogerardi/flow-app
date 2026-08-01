@@ -3,7 +3,7 @@ type: concept
 tags:
   - wiki/concept
   - wiki/architecture
-date_updated: 2026-07-31
+date_updated: 2026-08-01
 source_count: 5
 confidence: high
 ---
@@ -47,7 +47,7 @@ packages/domain/src/
 │   │   ├── ArtifactId.ts                # VO: extends Identifier
 │   │   ├── ArtifactContent.ts           # VO: immutable string
 │   │   ├── ArtifactStatus.ts            # VO: pending | generating | completed | failed
-│   │   ├── SessionStatus.ts             # VO: draft | ready | running | completed | failed | cancelled
+│   │   ├── SessionStatus.ts             # VO: queued | draft | ready | running | completed | failed | cancelled
 │   │   ├── CrawlData.ts                 # VO: raw API response (immutable, for replay/cache)
 │   │   ├── AcquisitionData.ts           # VO: structured pre-flight data (userInputs, parsedFiles, apiResponses, assets)
 │   │   └── ReadinessPolicy.ts           # VO: evaluates whether AcquisitionData satisfies ToolDefinition requirements

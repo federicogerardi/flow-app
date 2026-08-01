@@ -3,7 +3,7 @@ type: entity
 tags:
   - wiki/entity
   - wiki/generation
-date_updated: 2026-07-31
+date_updated: 2026-08-01
 source_count: 4
 ---
 
@@ -23,15 +23,16 @@ A `Session` is a single execution of a [[Tool as Static Configuration|Tool]] pip
 ## Lifecycle
 
 ```
-draft → ready → running → completed
-                    ↓         ↓
-                  failed   cancelled
+draft → ready → queued → running → completed
+                            ↓         ↓
+                          failed   cancelled
 ```
 
 | State | Meaning | Transition |
 |-------|---------|------------|
 | `draft` | Created, not yet configured | → `ready` on configure |
-| `ready` | Inputs validated, ready to start | → `running` on start |
+| `ready` | Inputs validated, ready for queue admission | → `queued` on queue admission |
+| `queued` | Accepted and enqueued, waiting for worker pickup | → `running` on worker pickup |
 | `running` | Steps executing asynchronously | → `completed` on final step done |
 | `completed` | All steps done, final artifact produced | Terminal |
 | `failed` | Error in any step | Terminal |
@@ -41,11 +42,11 @@ draft → ready → running → completed
 
 All invariants are enforced by `SessionLifecycle` (domain-owned state machine — see below). The aggregate root has a single entry point `apply(event)` that validates every transition against the lifecycle definition. There are no duplicate guard methods — the lifecycle is the single source of truth.
 
-- Cannot transition to `running` unless `ready` and all required inputs satisfied — `START` event guarded by [[ReadinessPolicy]] (domain predicate, not XState)
+- Cannot transition to `queued` unless `ready` and all required inputs satisfied — `QUEUE` event guarded by [[ReadinessPolicy]] (domain predicate, not XState)
 - Cannot `complete` without a `final` Artifact — `SessionLifecycle` enforces `COMPLETE` only from `running` state with `hasArtifacts` guard
 - Cannot `addArtifact()` when not in `running` state — `SessionLifecycle` rejects `ADD_ARTIFACT` from any non-`running` state
 - Cannot `cancel()` when not in `running` state — `SessionLifecycle` rejects `CANCEL` from any non-`running` state
-- `IdempotencyKey` uniqueness: same `(userId, workspaceId, toolKey, inputHash)` → same Session
+- `IdempotencyKey` uniqueness: same `(userId, workspaceId, toolKey, inputHash, promptSignature)` → same Session
 - Step execution is strictly sequential — no skipping, no reordering (enforced by `Artifact.stepNumber` being a `StepNumber` VO)
 
 ## Session Lifecycle — Domain-Owned State Machine
@@ -69,8 +70,14 @@ export const SessionLifecycle = {
     },
     ready: {
       transitions: {
-        START:  { target: 'running' },
+        QUEUE:  { target: 'queued' },
         CANCEL: { target: 'cancelled' },
+      },
+    },
+    queued: {
+      transitions: {
+        WORKER_PICKUP: { target: 'running' },
+        CANCEL:        { target: 'cancelled' },
       },
     },
     running: {
@@ -172,7 +179,11 @@ class Session {
         this._status = SessionStatus.Ready;
         return null; // internal transition — no domain event
 
-      case 'START':
+      case 'QUEUE':
+        this._status = SessionStatus.Queued;
+        return null;
+
+      case 'WORKER_PICKUP':
         this._status = SessionStatus.Running;
         this._startedAt = DateTime.now(); // ← aggregate manages its own temporal invariants
         return new SessionStarted(this.sessionId, this.toolKey,
@@ -235,7 +246,8 @@ class Session {
 // This keeps the aggregate self-contained: it operates only on its own state.
 type SessionEvent =
   | { type: 'CONFIGURE' }
-  | { type: 'START' }
+  | { type: 'QUEUE' }
+  | { type: 'WORKER_PICKUP' }
   | { type: 'ADD_ARTIFACT'; artifact: Artifact; isLast: boolean; stepLabel: string }
   | { type: 'COMPLETE' }
   | { type: 'FAIL'; errorCode: string; errorMessage: string }

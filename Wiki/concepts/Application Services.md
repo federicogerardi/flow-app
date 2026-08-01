@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/generation
   - wiki/architecture
-date_updated: 2026-07-31
+date_updated: 2026-08-01
 source_count: 4
 confidence: high
 ---
@@ -216,7 +216,7 @@ SessionOrchestrator.start()
   └── createActor(sessionMachine, { input: { session, tool } })
        │
        ▼
-sessionMachine: draft → CONFIGURE → ready → START → running
+sessionMachine: draft → CONFIGURE → ready → QUEUE → queued → WORKER_PICKUP → running
        │
        ▼ (loop per ogni step)
 executeStep actor

@@ -3,7 +3,7 @@ type: concept
 tags:
   - wiki/concept
   - wiki/architecture
-date_updated: 2026-07-30
+date_updated: 2026-08-01
 source_count: 4
 confidence: high
 ---
@@ -67,7 +67,7 @@ class SessionStarted implements DomainEvent {
 | `workspaceId` | `WorkspaceId` | Owning workspace |
 | `userId` | `UserId` | User who started the generation |
 
-**Trigger**: `Session.start()` — transition `ready → running`
+**Trigger**: `Session.apply({ type: 'WORKER_PICKUP' })` — transition `queued → running`
 
 **Consumers**:
 - UI: starts SSE connection for real-time progress
@@ -306,7 +306,10 @@ class CreditConsumed implements DomainEvent {
 ```
 SessionMachine (XState)
 │
-├── ready → running
+├── ready → queued
+│   └── queue admission accepted
+│
+├── queued → running
 │   └── publish SessionStarted
 │         ├── UI: open SSE
 │         └── Monitoring: track job

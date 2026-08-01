@@ -7,7 +7,18 @@ date_updated: 2026-08-01
 
 # Wiki Index — Flow App
 
+> Maintenance note (2026-08-01): implementation roadmap filed — phased development sequence added in synthesis (bootstrap -> core async slice -> hardening -> collaboration -> expansion).
+> Maintenance note (2026-08-01): ultra-strict naming pass completed — canonical guard naming standardized to `canQueue` with legacy alias note for `canStart`.
+> Maintenance note (2026-08-01): lexical hardening pass completed — residual `START` transition references removed from canonical architecture pages; naming unified on `QUEUE`/`WORKER_PICKUP`.
+> Maintenance note (2026-08-01): mini-remediation cleanup completed — `draft` vs `queued` lifecycle semantics aligned across session/domain/application/frontend docs.
+> Maintenance note (2026-08-01): queued-state drift closed — `queued` is now canonical across baseline, OpenAPI, contracts, schema, and route governance.
+> Maintenance note (2026-08-01): coherence lint executed — structural wiki lint passed after 2 source_count fixes; queued-state drift subsequently closed.
+> Maintenance note (2026-08-01): final-gate remediation applied — contract freeze and enforcement artifacts added (API Contract Baseline v1, Quality Gate Matrix) and related concept pages aligned.
+> Maintenance note (2026-08-01): execution follow-up completed — 3 governance concept pages added (Definition of Done, Frontend Error Observability, Concurrency & Conflict Policy).
 > Maintenance note (2026-08-01): model alignment for PM review — overview updated to 6 bounded contexts (Agent Chat + Gamification), and broken wikilinks fixed (`LlmGateway` and `Prompting Mechanics` references).
+> Maintenance note (2026-08-01): governance audit persisted — multi-dimension project model audit filed in synthesis with maturity scoring and prioritized gap list.
+> Maintenance note (2026-08-01): fast-close governance gaps — 3 concept pages added (Git Governance Policy, Secure SDLC Controls, API SLO Catalog).
+> Maintenance note (2026-08-01): CI/CD governance completed — CI-CD Promotion Policy added (Dev -> Staging -> Prod gates, artifact integrity, rollback policy).
 > Maintenance note (2026-08-01): Output Personalization deprecated — concept page removed and source items marked as deprecated in the current model baseline.
 > Maintenance note (2026-08-01): critical-gap remediation for PM review — 4 concept pages added (Global Deterministic Model Matrix, Output Personalization, Project Brand Persona, Invitation Notification Delivery); workspace invitation notification decision closed.
 > Maintenance note (2026-08-01): gamification UI Designer review — 3 pages updated (Design Tokens: rarity + sparkle; Gamification UX: ARIA, toast priority, rarity labels; UX Wireframes: Player Profile template; UI Component Map: 29→37).
@@ -53,8 +64,10 @@ date_updated: 2026-08-01
 | Page | Confidence | Source Count |
 |------|------------|--------------|
 | [[API Client + SSE Client]] | high | 4 |
-| [[API Documentation - OpenAPI]] | high | 2 |
-| [[API Routes]] | high | 3 |
+| [[API Contract Baseline v1]] | high | 7 |
+| [[API Documentation - OpenAPI]] | high | 3 |
+| [[API Routes]] | high | 4 |
+| [[API SLO Catalog]] | high | 5 |
 | [[Agent Chat]] | high | 7 |
 | [[Agent Chat UX]] | high | 8 |
 | [[Agent Personas]] | high | 4 |
@@ -66,27 +79,32 @@ date_updated: 2026-08-01
 | [[Auth Dependencies]] | high | 5 |
 | [[Auth Middleware]] | high | 4 |
 | [[BullMQ Worker Wiring]] | high | 5 |
+| [[CI-CD Promotion Policy]] | high | 7 |
 | [[Centralized Copy Modules]] | high | 3 |
+| [[Concurrency & Conflict Policy]] | high | 8 |
 | [[Content Generation]] | high | 4 |
-| [[Contracts Package]] | high | 4 |
+| [[Contracts Package]] | high | 5 |
 | [[Context Injection]] | high | 6 |
 | [[CrawlData]] | high | 2 |
-| [[Database Schema]] | high | 8 |
+| [[Database Schema]] | high | 9 |
+| [[Definition of Done]] | high | 7 |
 | [[Design Tokens]] | high | 6 |
 | [[Dependency Injection Setup]] | high | 4 |
 | [[Docker Compose - Local Dev]] | high | 2 |
 | [[Domain Events]] | high | 4 |
 | [[Domain Events Catalog]] | high | 4 |
 | [[Environment Configuration]] | high | 6 |
-| [[Error Mapping (Domain to HTTP)]] | high | 2 |
+| [[Error Mapping (Domain to HTTP)]] | high | 3 |
 | [[File Upload Security]] | high | 3 |
 | [[Frontend Architecture]] | high | 7 |
+| [[Frontend Error Observability]] | high | 7 |
 | [[Gamification]] | high | 6 |
 | [[Gamification UX]] | high | 6 |
+| [[Git Governance Policy]] | high | 4 |
 | [[Global Deterministic Model Matrix]] | high | 5 |
 | [[Health Check - Deep]] | high | 4 |
 | [[Identity & Access]] | high | 2 |
-| [[Idempotency Implementation]] | high | 4 |
+| [[Idempotency Implementation]] | high | 5 |
 | [[IdempotencyKey]] | high | 3 |
 | [[IdempotencyKey + Prompt Version]] | high | 6 |
 | [[Invitation Notification Delivery]] | high | 4 |
@@ -102,11 +120,13 @@ date_updated: 2026-08-01
 | [[Prompt Components]] | high | 6 |
 | [[Prompt Versioning]] | high | 7 |
 | [[PromptComposer]] | high | 5 |
+| [[Quality Gate Matrix]] | high | 7 |
 | [[ReadinessPolicy]] | high | 3 |
 | [[ReadinessSnapshot UI]] | high | 4 |
 | [[Seed Data]] | high | 2 |
 | [[Session List - Live Status]] | high | 5 |
 | [[Session Machine (XState v5)]] | high | 4 |
+| [[Secure SDLC Controls]] | high | 7 |
 | [[Testing Strategy]] | high | 3 |
 | [[Tool as Static Configuration]] | high | 4 |
 | [[Tool UX Architecture]] | high | 7 |
@@ -114,7 +134,7 @@ date_updated: 2026-08-01
 | [[UI Component Map]] | high | 6 |
 | [[Usage & Quota]] | high | 2 |
 | [[UX Wireframes]] | high | 6 |
-| [[Workspace & Assets]] | high | 4 |
+| [[Workspace & Assets]] | high | 5 |
 | [[Workspace Gamification]] | high | 6 |
 | [[Workspace Sharing]] | high | 5 |
 | [[Workspace Permissions]] | high | 5 |
@@ -132,4 +152,7 @@ date_updated: 2026-08-01
 | [[synthesis/workspace-sharing-proposal]] | Workspace sharing architecture — membership, permissions, invitations | 2026-08-01 |
 | [[synthesis/agent-chat-proposal]] | Agent chat architecture — 7 agents, conversational context, SSE streaming | 2026-08-01 |
 | [[synthesis/gamification-proposal]] | Gamification overlay — XP, badges, leaderboards, seasons, workspace health | 2026-08-01 |
+| [[synthesis/project-model-multi-dimension-audit-2026-08-01]] | Project model governance audit — 4 areas, coverage assessment, maturity score, priority gaps | 2026-08-01 |
+| [[synthesis/lint-report-2026-08-01-coherence]] | Coherence lint — structural pass, queued-state drift closed | 2026-08-01 |
+| [[synthesis/implementation-roadmap-2026-08-01]] | Rational development roadmap — phase plan from bootstrap to expansion tracks | 2026-08-01 |
 | [[overview]] | High-level synthesis (v3) | 2026-07-31 |

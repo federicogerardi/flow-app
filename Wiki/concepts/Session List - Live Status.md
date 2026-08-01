@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/generation
-date_updated: 2026-07-31
+date_updated: 2026-08-01
 source_count: 5
 confidence: high
 ---
@@ -44,11 +44,10 @@ const { data: completed } = api.listSessions({ workspaceId, status: 'completed',
 const { data: failed }    = api.listSessions({ workspaceId, status: 'failed', limit: 20 });
 ```
 
-### Backend: add `queued` status
+### Backend: canonical `queued` status
 
 ```sql
--- Migration: extend session_status enum
-ALTER TYPE session_status ADD VALUE 'queued';
+CREATE TYPE session_status AS ENUM ('queued', 'draft', 'ready', 'running', 'completed', 'failed', 'cancelled');
 ```
 
 A `Session` is `queued` when:
@@ -393,10 +392,10 @@ This ensures that even without SSE, the user sees the updated state within 30 se
 ```typescript
 // packages/domain/src/generation/value-objects/SessionStatus.ts
 
-type SessionStatus = 'queued' | 'ready' | 'running' | 'completed' | 'failed' | 'cancelled';
+type SessionStatus = 'queued' | 'draft' | 'ready' | 'running' | 'completed' | 'failed' | 'cancelled';
 ```
 
-Updated lifecycle: `queued → running → completed`. The `Session` is `queued` after `StartSessionUseCase` and before the BullMQ worker picks it up.
+Updated lifecycle: `draft → ready → queued → running → completed`. The `Session` is `queued` after queue admission and before the BullMQ worker picks it up.
 
 ### Extend `SessionListItemDTO`
 
@@ -407,7 +406,7 @@ interface SessionListItemDTO {
   id: string;
   toolKey: string;
   workspaceId: string;
-  status: 'queued' | 'ready' | 'running' | 'completed' | 'failed' | 'cancelled';
+  status: 'queued' | 'draft' | 'ready' | 'running' | 'completed' | 'failed' | 'cancelled';
   stepCount: number;
   currentStepIndex?: number;        // only when running
   currentStepLabel?: string;        // only when running

@@ -3,7 +3,7 @@ type: concept
 tags:
   - wiki/concept
   - wiki/generation
-date_updated: 2026-07-31
+date_updated: 2026-08-01
 source_count: 4
 confidence: high
 ---
@@ -79,9 +79,9 @@ No `StepType` enum. No explicit `ArtifactRole`. No special steps for crawling or
 |----|-------------|
 | `SessionId` | Unique identifier |
 | `ToolKey` | Reference to the [[Tool as Static Configuration|ToolDefinition]] |
-| `IdempotencyKey` | `(userId, workspaceId, toolKey, inputHash)` |
+| `IdempotencyKey` | `(userId, workspaceId, toolKey, inputHash, promptSignature)` |
 | `ArtifactContent` | Immutable generated content |
-| `SessionStatus` | `draft` → `ready` → `running` → `completed` \| `failed` \| `cancelled` |
+| `SessionStatus` | `draft` → `ready` → `queued` → `running` → `completed` \| `failed` \| `cancelled` |
 | `CrawlData` | Immutable raw API response — persisted for replay, audit, cache |
 
 ## Domain Services

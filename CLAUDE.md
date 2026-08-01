@@ -200,3 +200,57 @@ Example:
 - **Obsidian CLI**: `obsidian read file="..."`, `obsidian search query="..."`, etc. (symlinked to `~/.local/bin/obsidian`)
 - **qmd**: Hybrid BM25/vector search with LLM re-ranking (`qmd query "..."`)
 - **Dataview**: SQL-like queries over YAML frontmatter (in Obsidian)
+
+#### qmd — Proactive Wiki Exploration
+
+Use `qmd` **proactively** before any wiki operation (ingest, query, lint) to ground yourself in existing wiki knowledge. Never operate on the wiki from scratch — search first, then act.
+
+**Pre-operation workflow:**
+
+1. **Before ingesting** a source → `qmd query "..." --no-rerank` with the source's key topics to find overlapping entities/concepts already in the wiki. This prevents duplicate pages and ensures new content links back to existing knowledge. If the models aren't cached yet, use `qmd search` instead.
+
+2. **Before answering a query** → `qmd query "..." --no-rerank` with the query terms to discover relevant wiki pages beyond what `index.md` listings reveal. qmd's hybrid search surfaces semantically related content that the index tables alone might miss. Use `qmd search` as fallback if models aren't cached.
+
+3. **Before linting** → `qmd search "..."` (BM25 keyword mode) to find orphan candidates and pages not referenced in `index.md`.
+
+**Key commands:**
+
+```
+qmd search "keyword terms"                  # BM25 only (primary — instant, no models needed)
+qmd vsearch "semantic concept"              # vector similarity (uses embedding model, already downloaded)
+qmd query "..." --no-rerank                 # hybrid BM25 + vector, no LLM re-rank (needs expansion model)
+```
+
+**Always prefer `qmd search`** as the primary command. It uses BM25 full-text only — instant, deterministic, and requires no model downloads. Use `qmd vsearch` when you need semantic (meaning-based) search. Avoid `qmd query` unless the models have been pre-downloaded (see below).
+
+**`qmd query` downloads models on first use.** It needs a 1.28GB expansion model on first run, which will timeout an agent session. If you need hybrid search, pre-download models once (outside agent sessions):
+
+```bash
+qmd query "test" 2>/dev/null &  # downloads ~1.28GB expansion model + ~0.6GB reranker
+```
+
+Once models are cached in `~/.cache/qmd/models/`, `qmd query` runs instantly.
+
+**Collection setup (one-time):**
+
+```bash
+qmd collection add /path/to/vault --name flow-app --mask "**/*.md"
+qmd update && qmd embed
+```
+
+**Index maintenance (after wiki changes):**
+
+```
+qmd update && qmd embed                     # re-index after adding/modifying pages
+```
+
+**Effective query patterns for the wiki:**
+
+```
+qmd query "entity X relationships and sources" --no-rerank
+qmd query "concept Y design decisions and tradeoffs" --no-rerank
+qmd query "what does the wiki say about pattern Z" --no-rerank
+qmd search "frontmatter type:entity"        # find all entity pages by frontmatter
+```
+
+**Critical rule:** Always run a qmd query before creating a new wiki page. If qmd returns relevant existing pages, read them and link from the new page instead of duplicating content. The wiki compounds; qmd ensures each new page builds on what's already there.

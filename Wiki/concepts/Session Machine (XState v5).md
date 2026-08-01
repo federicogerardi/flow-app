@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/architecture
   - wiki/generation
-date_updated: 2026-07-31
+date_updated: 2026-08-01
 source_count: 4
 confidence: high
 ---
@@ -54,7 +54,8 @@ interface SessionContext {
 
 type SessionEvent =
   | { type: 'CONFIGURE'; acquisitionData: AcquisitionData }
-  | { type: 'START' }
+  | { type: 'QUEUE' }
+  | { type: 'WORKER_PICKUP' }
   | { type: 'CANCEL' };
 ```
 
@@ -77,7 +78,7 @@ const sessionMachine = setup({
     ),
   },
   guards: {
-    canStart: ({ context }) => {
+    canQueue: ({ context }) => {
       // Delegates to domain VO — no inline business logic
       const policy = ReadinessPolicy.from(context.tool);
       return policy.evaluate(context.acquisitionData).isReady;
@@ -141,8 +142,14 @@ const sessionMachine = setup({
     },
     ready: {
       on: {
-        START:  { target: 'running', guard: 'canStart' },
+        QUEUE:  { target: 'queued', guard: 'canQueue' },
         CANCEL: { target: 'cancelled' },
+      },
+    },
+    queued: {
+      on: {
+        WORKER_PICKUP: { target: 'running' },
+        CANCEL:        { target: 'cancelled' },
       },
     },
     running: {
@@ -265,7 +272,8 @@ class SessionOrchestrator {
 
     actor.start();
     actor.send({ type: 'CONFIGURE', acquisitionData });
-    actor.send({ type: 'START' });
+    actor.send({ type: 'QUEUE' });
+    actor.send({ type: 'WORKER_PICKUP' });
   }
 
   async resume(sessionId: SessionId): Promise<void> {
@@ -283,7 +291,7 @@ class SessionOrchestrator {
 |----------|-------------|
 | **Domain-owned lifecycle** | `SessionLifecycle` in `packages/domain` is the single source of truth for states and transitions. XState imports it — never defines it. |
 | **Single entry point** | `Session.apply(event)` is the only way to change state. No duplicate guard methods. Domain validates the transition; XState orchestrates the flow. |
-| **Guard delegation** | `canStart` delegates to `ReadinessPolicy` (domain VO). No business logic in XState guards. |
+| **Guard delegation** | `canQueue` delegates to `ReadinessPolicy` (domain VO). No business logic in XState guards. |
 | **Actor injection** | `executeStep` and `persistSession` are injected via `machine.provide()` in `SessionOrchestrator` — no closure captures. |
 | **Startup validation** | `validateXStateMatchesDomain()` runs on boot — fails fast if XState states/transitions drift from `SessionLifecycle`. |
 | **Async persistence** | Persistence is an `invoke` state (`persistingStep`), not an async action. Crash-safe: snapshot can resume from any state. |
@@ -294,7 +302,8 @@ class SessionOrchestrator {
 ```
 draft
   CONFIGURE → ready (assign acquisitionData)
-  START + canStart (ReadinessPolicy) → running
+  QUEUE + canQueue (ReadinessPolicy) → queued
+  WORKER_PICKUP → running
     executingStep:
       invoke executeStep (provided by SessionOrchestrator)
         onDone → persistingStep (updateStepResults + callApply → Session.apply(ADD_ARTIFACT))
@@ -312,6 +321,8 @@ cancelled [final]
 ```
 
 > **Session.apply() flow**: XState action calls `session.apply({ type: 'ADD_ARTIFACT', artifact, isLast, stepLabel })` → Session validates transition against `SessionLifecycle` → mutates state → returns `DomainEvent | null` → XState publishes event via `eventBus.publish()`. The aggregate never calls `getTool()` — `isLast` and `stepLabel` are computed by XState (which owns the `ToolDefinition`) and passed in the event.
+
+Legacy note: older snippets may still mention `canStart`; treat it as a backward-compatible alias of `canQueue`. Canonical naming is `canQueue`.
 
 ## Sources
 

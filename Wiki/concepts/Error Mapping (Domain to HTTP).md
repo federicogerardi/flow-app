@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-07-30
-source_count: 2
+date_updated: 2026-08-01
+source_count: 3
 confidence: high
 ---
 
@@ -33,6 +33,7 @@ Domain exceptions carry semantic meaning (`ReadinessError`, `QuotaExceededError`
 | `QuotaExceededError` | `429` | `QUOTA_EXCEEDED` | Yes (next period) |
 | `RateLimitError` | `429` | `RATE_LIMITED` | Yes (wait) |
 | `InvalidSessionStateError` | `409` | `INVALID_STATE` | No |
+| `ConcurrencyError` | `409` | `CONFLICT` | Yes (reload + retry) |
 | `LlmGatewayError` | `502` | `LLM_GATEWAY_ERROR` | Yes (retry) |
 | `UnauthorizedError` | `401` | `UNAUTHORIZED` | Yes (login) |
 | `ForbiddenError` | `403` | `FORBIDDEN` | No |
@@ -66,6 +67,7 @@ class ErrorMapper {
     if (error instanceof QuotaExceededError)          return 429;
     if (error instanceof RateLimitError)              return 429;
     if (error instanceof InvalidSessionStateError)    return 409;
+    if (error instanceof ConcurrencyError)            return 409;
     if (error instanceof LlmGatewayError)             return 502;
     if (error instanceof UnauthorizedError)           return 401;
     if (error instanceof ForbiddenError)              return 403;
@@ -134,7 +136,7 @@ function errorHandler(err: Error, req: Request, res: Response, next: NextFunctio
   // Structured logging with correlation ID
   logger.error({
     err,
-    correlationId: req.headers['x-correlation-id'],
+    correlationId: req.headers['x-request-id'],
     path: req.path,
     method: req.method,
   }, `${err.constructor.name}: ${err.message}`);
@@ -149,3 +151,4 @@ export { errorHandler };
 
 - [[Domain Events Catalog]] — error events (SessionFailed)
 - [[API Routes]] — error response format per endpoint
+- [[API Contract Baseline v1]] — canonical error envelope

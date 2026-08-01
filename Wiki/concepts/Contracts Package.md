@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/frontend
-date_updated: 2026-07-30
-source_count: 4
+date_updated: 2026-08-01
+source_count: 5
 confidence: high
 ---
 
@@ -60,11 +60,20 @@ packages/contracts/src/
 import type { Session, Artifact } from '@flow-app/domain/generation';
 
 // Shape returned by POST /api/tools/:toolKey/sessions
+type SessionStatusDTO =
+  | 'queued'
+  | 'draft'
+  | 'ready'
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'cancelled';
+
 interface SessionDTO {
   id: string;
   toolKey: string;
   workspaceId: string;
-  status: 'draft' | 'ready' | 'running' | 'completed' | 'failed' | 'cancelled';
+  status: SessionStatusDTO;
   stepCount: number;
   createdAt: string;
 }
@@ -82,7 +91,7 @@ interface SessionListItemDTO {
   id: string;
   toolKey: string;
   workspaceId: string;
-  status: string;
+  status: SessionStatusDTO;
   stepCount: number;
   createdAt: string;
 }
@@ -118,6 +127,7 @@ interface StartSessionRequest {
 
 interface StartSessionResponse {
   session: SessionDTO;
+  replayed: boolean;
 }
 ```
 
@@ -254,3 +264,4 @@ const _check: AssertHandler<StartSessionRequest> = null!;
 - [[Domain Events Catalog]] — SSE event types
 - [[Tool as Static Configuration]] — ToolDefinition, ToolKey
 - [[sources/APP-CONCEPT]] — packages/contracts definition
+- [[API Contract Baseline v1]] — canonical v1 wire contract

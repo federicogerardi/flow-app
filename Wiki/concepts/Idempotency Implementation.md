@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-07-31
-source_count: 4
+date_updated: 2026-08-01
+source_count: 5
 confidence: high
 ---
 
@@ -22,11 +22,19 @@ confidence: high
 
 ```
 1. Client sends POST /api/tools/:toolKey/sessions
-2. Server computes IdempotencyKey: SHA-256(userId|workspaceId|toolKey|inputHash)
+2. Server computes IdempotencyKey: SHA-256(userId|workspaceId|toolKey|inputHash|promptSignature)
 3. Server attempts atomic claim via Redis (primary) or PostgreSQL (fallback)
 4. If claim succeeds → create new Session, store key→sessionId mapping
 5. If claim fails (key exists) → return existing Session (HTTP 200, not 201)
 ```
+
+## Canonical Constants
+
+```typescript
+const IDEMPOTENCY_TTL_SECONDS = 86_400; // 24h
+```
+
+TTL is unified across stores to avoid behavior drift.
 
 ## Redis Implementation (Primary)
 
@@ -40,7 +48,7 @@ Redis `SET NX` provides atomic "set if not exists" with automatic TTL-based clea
 class RedisIdempotencyStore {
   constructor(private redis: Redis) {}
 
-  async claim(keyHash: string, sessionId: string, ttlSeconds: number = 3600): Promise<{
+  async claim(keyHash: string, sessionId: string, ttlSeconds: number = IDEMPOTENCY_TTL_SECONDS): Promise<{
     claimed: boolean;
     existingSessionId?: string;
   }> {
@@ -69,7 +77,9 @@ class RedisIdempotencyStore {
 
 ## PostgreSQL Fallback
 
-When Redis is unavailable, fall back to PostgreSQL with `INSERT ON CONFLICT`. This path is **fail-open for availability** (request still accepted) while preserving idempotency guarantees.
+When Redis is unavailable, fall back to PostgreSQL with `INSERT ON CONFLICT`.
+
+Because `idempotency_keys.session_id` references `sessions.id`, PostgreSQL fallback must be executed in one transaction where the Session row exists before key insertion.
 
 ```typescript
 // packages/infra-db/src/repositories/pg-idempotency-store.ts
@@ -77,31 +87,35 @@ When Redis is unavailable, fall back to PostgreSQL with `INSERT ON CONFLICT`. Th
 class PgIdempotencyStore {
   constructor(private db: Kysely<DB>) {}
 
-  async claim(keyHash: string, sessionId: string, ttlHours: number = 24): Promise<{
-    claimed: boolean;
-    existingSessionId?: string;
-  }> {
-    const expiresAt = new Date(Date.now() + ttlHours * 3600 * 1000);
+  async claimOrCreate(
+    keyHash: string,
+    createSession: (tx: Kysely<DB>, sessionId: string) => Promise<void>,
+  ): Promise<{ claimed: boolean; sessionId: string }> {
+    return this.db.transaction().execute(async (tx) => {
+      const existing = await tx
+        .selectFrom('idempotency_keys')
+        .select('session_id')
+        .where('key_hash', '=', keyHash)
+        .executeTakeFirst();
 
-    const result = await this.db
-      .insertInto('idempotency_keys')
-      .values({ key_hash: keyHash, session_id: sessionId, expires_at: expiresAt })
-      .onConflict((oc) => oc.column('key_hash').doNothing())
-      .returning('session_id')
-      .executeTakeFirst();
+      if (existing?.session_id) {
+        return { claimed: false, sessionId: existing.session_id };
+      }
 
-    if (result) {
-      return { claimed: true };
-    }
+      const sessionId = SessionId.generate().value;
+      await createSession(tx, sessionId); // session exists first (FK-safe)
 
-    // Key exists → fetch existing
-    const existing = await this.db
-      .selectFrom('idempotency_keys')
-      .select('session_id')
-      .where('key_hash', '=', keyHash)
-      .executeTakeFirst();
+      await tx
+        .insertInto('idempotency_keys')
+        .values({
+          key_hash: keyHash,
+          session_id: sessionId,
+          expires_at: sql`NOW() + INTERVAL '24 hours'`,
+        })
+        .execute();
 
-    return { claimed: false, existingSessionId: existing?.session_id };
+      return { claimed: true, sessionId };
+    });
   }
 }
 ```
@@ -124,8 +138,9 @@ class StartSessionUseCase {
   async execute(cmd: StartSessionCommand): Promise<StartSessionResult> {
     // 1. Compute key
     const inputHash = this.hashInputs(cmd.inputs);
+    const promptSignature = this.buildPromptSignature(cmd.toolKey);
     const keyHash = IdempotencyKey.computeHash(
-      cmd.userId, cmd.workspaceId, cmd.toolKey, inputHash
+      cmd.userId, cmd.workspaceId, cmd.toolKey, inputHash, promptSignature
     );
 
     // 2. Check tool exists (fail fast before claiming)
@@ -140,29 +155,20 @@ class StartSessionUseCase {
     const readiness = policy.evaluate(acquisitionData);
     if (!readiness.isReady) throw new ReadinessError(readiness.missing);
 
-    // 5. Generate the definitive session ID (used for both claim and Session creation)
-    const sessionId = SessionId.generate();
+    // 5. Atomic claim or create (store-specific implementation behind one contract)
+    const result = await this.idempotency.claimOrCreate(keyHash, async (sessionId) => {
+      const session = Session.createWithId(
+        sessionId,
+        cmd.toolKey,
+        cmd.workspaceId,
+        cmd.userId,
+        keyHash,
+      );
+      await this.sessionRepo.save(session);
+      return session;
+    });
 
-    // 6. Atomic claim
-    const claim = await this.idempotency.claim(keyHash, sessionId);
-
-    if (!claim.claimed && claim.existingSessionId) {
-      // Key already claimed → return existing session
-      const existing = await this.sessionRepo.findById(claim.existingSessionId);
-      if (existing) return { session: existing, tool, acquisitionData };
-    }
-
-    // 7. Create new session with the same claimed sessionId
-    const session = Session.createWithId(
-      sessionId,
-      cmd.toolKey,
-      cmd.workspaceId,
-      cmd.userId,
-      keyHash,
-    );
-    await this.sessionRepo.save(session);
-
-    return { session, tool, acquisitionData };
+    return { session: result.session, tool, acquisitionData };
   }
 }
 ```
@@ -173,10 +179,12 @@ class StartSessionUseCase {
 
 To avoid race conditions and drift between stores:
 
-1. Generate `sessionId` once.
-2. Claim `keyHash -> sessionId` atomically.
-3. Persist `Session` with the **same** `sessionId`.
-4. If persistence fails, release the claim (or let short TTL expire) and return error.
+1. Compute one canonical key hash from user/workspace/tool/input/prompt signature.
+2. Check if key already exists; return existing session when present.
+3. For new requests, bind exactly one `sessionId` to the key.
+4. Persist session and key mapping atomically according to store constraints:
+   - Redis primary: claim first (`SET NX`) then persist session; on persistence failure, release claim.
+   - PostgreSQL fallback: create session and key row in the same transaction (FK-safe).
 
 This guarantees a single canonical `sessionId` for identical requests across retries.
 
@@ -192,7 +200,7 @@ Expired keys are auto-cleaned:
 DELETE FROM idempotency_keys WHERE expires_at < NOW();
 ```
 
-Run as a cron or on a schedule (every hour).
+Run as a cron or on a schedule (every hour). TTL target is 24 hours.
 
 ## Sources
 
@@ -200,3 +208,4 @@ Run as a cron or on a schedule (every hour).
 - [[Database Schema]] — idempotency_keys table
 - [[sources/PRD]] — FR-W02 (idempotency requirement)
 - [[sources/USER-STORIES]] — US-GF04 (no duplicate content/credits)
+- [[API Contract Baseline v1]] — canonical replay semantics

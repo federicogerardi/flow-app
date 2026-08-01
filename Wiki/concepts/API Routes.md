@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-07-31
-source_count: 3
+date_updated: 2026-08-01
+source_count: 4
 confidence: high
 ---
 
@@ -21,9 +21,11 @@ confidence: high
 - Auth required unless marked 🔓
 - Request body: `application/json` unless file upload
 - Response: `application/json`
-- Errors: `{ error: { code: string, message: string, details?: unknown } }`
+- Errors: `{ error: { code: string, message: string, details?: unknown, retryable: boolean } }`
 - SSE: `text/event-stream` with `event:` and `data:` fields
 - Pagination: `?limit=20&offset=0` returning `{ data: T[], total: number }`
+
+Canonical contract freeze for v1 is defined in [[API Contract Baseline v1]].
 
 ## API Contract Governance
 
@@ -32,6 +34,7 @@ confidence: high
 - **Idempotency**: `POST /api/tools/:toolKey/sessions` accepts `Idempotency-Key` and returns `201` for new sessions or `200` for replay of an existing session.
 - **Rate limiting**: responses include `RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset`; exceed => `429 RATE_LIMITED`.
 - **Deprecation**: deprecated endpoints return `Deprecation: true` and `Sunset: <RFC-1123 date>` headers before removal.
+- **Session status enum**: `queued | draft | ready | running | completed | failed | cancelled`.
 
 ### Deprecation Timeline Policy (Phase 3)
 
@@ -645,3 +648,4 @@ All errors follow a consistent shape:
 - [[Application Services]] — use cases mapped to routes
 - [[Domain Events Catalog]] — events emitted during API calls
 - [[Session Machine (XState v5)]] — state machine driving the `/events` SSE stream
+- [[API Contract Baseline v1]] — canonical v1 wire contract

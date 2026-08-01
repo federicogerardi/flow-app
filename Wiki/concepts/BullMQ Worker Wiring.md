@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-07-31
+date_updated: 2026-08-01
 source_count: 5
 confidence: high
 ---
@@ -179,11 +179,12 @@ async function processSessionJob(
   // 7. Start actor
   actor.start();
 
-  // 8. If fresh session: configure + start
+  // 8. If fresh session: configure + queue + worker pickup
   if (!snapshot) {
     const acquisitionData = await loadAcquisitionData(session, tool, deps);
     actor.send({ type: 'CONFIGURE', acquisitionData });
-    actor.send({ type: 'START' });
+    actor.send({ type: 'QUEUE' });
+    actor.send({ type: 'WORKER_PICKUP' });
   }
   // If resuming: actor picks up from persisted snapshot automatically
 
@@ -370,7 +371,7 @@ process.on('SIGINT',  () => shutdown(worker, queue));
 │    → createActor(machine, { snapshot? })                      │
 │    → actor.subscribe(persistSnapshot + eventBridge.publish)   │
 │    → actor.start()                                            │
-│    → actor.send(CONFIGURE + START) or resume from snapshot    │
+│    → actor.send(CONFIGURE + QUEUE + WORKER_PICKUP) or resume  │
 │                                                               │
 │    executingStep:                                             │
 │      invoke ProcessStepUseCase                                │

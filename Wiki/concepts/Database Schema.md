@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-07-31
-source_count: 8
+date_updated: 2026-08-01
+source_count: 9
 confidence: high
 ---
 
@@ -28,7 +28,7 @@ confidence: high
 ## Enums
 
 ```sql
-CREATE TYPE session_status     AS ENUM ('draft', 'ready', 'running', 'completed', 'failed', 'cancelled');
+CREATE TYPE session_status     AS ENUM ('queued', 'draft', 'ready', 'running', 'completed', 'failed', 'cancelled');
 CREATE TYPE artifact_status    AS ENUM ('pending', 'generating', 'completed', 'failed');
 CREATE TYPE asset_type         AS ENUM ('brief', 'brand-voice', 'persona', 'angle', 'ad-copy');
 CREATE TYPE asset_source       AS ENUM ('generated', 'uploaded', 'manual');
@@ -59,7 +59,8 @@ CREATE TABLE sessions (
     error_code           VARCHAR(50),
     error_message        TEXT,
     created_at           TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
-    updated_at           TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+    updated_at           TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    version              INTEGER       NOT NULL DEFAULT 1
 );
 
 CREATE INDEX idx_sessions_workspace_id         ON sessions(workspace_id);
@@ -73,8 +74,8 @@ CREATE INDEX idx_sessions_idempotency_key_hash ON sessions(idempotency_key_hash)
 | `tool_key` | `VARCHAR(100)` | References [[Tool as Static Configuration]] (`ToolDefinition.toolKey`) — no FK (static config, not DB) |
 | `workspace_id` | `UUID FK → workspaces` | Session belongs to a [[Workspace]] |
 | `user_id` | `UUID FK → users` | Owner |
-| `idempotency_key_hash` | `VARCHAR(64)` | SHA-256 of `(userId|workspaceId|toolKey|inputHash)` |
-| `status` | `session_status` | Maps to [[Session]] lifecycle states |
+| `idempotency_key_hash` | `VARCHAR(64)` | SHA-256 of `(userId|workspaceId|toolKey|inputHash|promptSignature)` |
+| `status` | `session_status` | Maps to [[Session]] lifecycle states (`queued` before worker pickup) |
 | `current_step_index` | `INTEGER` | 0-based index in `ToolDefinition.steps[]` |
 | `error_code` | `VARCHAR(50)` | Set on failure (e.g. `LLM_TIMEOUT`, `API_RATE_LIMITED`) |
 
@@ -172,13 +173,39 @@ CREATE INDEX idx_session_snapshots_session_id ON session_snapshots(session_id);
 ```sql
 CREATE TABLE workspaces (
     id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id    UUID         NOT NULL REFERENCES users(id),
+    created_by UUID         NOT NULL REFERENCES users(id),
     name       VARCHAR(255) NOT NULL,
     created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    version    INTEGER      NOT NULL DEFAULT 1
 );
 
-CREATE INDEX idx_workspaces_user_id ON workspaces(user_id);
+CREATE INDEX idx_workspaces_created_by ON workspaces(created_by);
+```
+
+#### `workspace_memberships`
+
+```sql
+CREATE TABLE workspace_memberships (
+    workspace_id UUID         NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    user_id      UUID         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role         VARCHAR(20)  NOT NULL,   -- owner | editor | viewer
+    status       VARCHAR(20)  NOT NULL,   -- invited | active
+    invited_by   UUID REFERENCES users(id),
+    invited_at   TIMESTAMPTZ,
+    joined_at    TIMESTAMPTZ,
+    created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT pk_workspace_memberships PRIMARY KEY (workspace_id, user_id)
+);
+
+CREATE UNIQUE INDEX uq_workspace_owner
+  ON workspace_memberships (workspace_id)
+  WHERE role = 'owner' AND status = 'active';
+
+CREATE INDEX idx_workspace_memberships_user_id ON workspace_memberships(user_id);
+CREATE INDEX idx_workspace_memberships_workspace_id ON workspace_memberships(workspace_id);
 ```
 
 #### `assets`
@@ -193,6 +220,7 @@ CREATE TABLE assets (
     content      TEXT        NOT NULL,
     created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    version      INTEGER      NOT NULL DEFAULT 1,
 
     CONSTRAINT uq_assets_workspace_type UNIQUE (workspace_id, asset_type)
 );
@@ -406,10 +434,12 @@ CREATE INDEX idx_inbox_consumers_event_id ON inbox_consumers(event_id);
 
 ```
 users ───1:N─── workspaces ───1:N─── assets
-  │                                       │
-  │ 1:N                                   │ source_ref → artifacts
-  │                                       │
-  ├──1:N─── sessions ───1:N─── artifacts  │
+  │             │                         │
+  │             └──1:N─── workspace_memberships
+  │                          │
+  │                          └──N:1─── users
+  │
+  ├──1:N─── sessions ───1:N─── artifacts
   │            │                           │
   │            ├──1:N─── crawl_data        │
   │            ├──1:N─── session_snapshots │
@@ -437,6 +467,7 @@ interface Tables {
   crawl_data:          CrawlDataTable;
   session_snapshots:   SessionSnapshotsTable;
   workspaces:          WorkspacesTable;
+  workspace_memberships: WorkspaceMembershipsTable;
   assets:              AssetsTable;
   users:               UsersTable;
   auth_sessions:       AuthSessionsTable;
@@ -470,8 +501,9 @@ CREATE TABLE users (...);
 CREATE TABLE auth_sessions (...);
 CREATE TABLE oauth_accounts (...);
 
--- Migration 003: workspaces + assets
+-- Migration 003: workspaces + memberships + assets
 CREATE TABLE workspaces (...);
+CREATE TABLE workspace_memberships (...);
 CREATE TABLE assets (...);
 
 -- Migration 004: sessions + artifacts + crawl_data + idempotency + snapshots
@@ -501,6 +533,7 @@ CREATE TABLE tool_step_bindings (...);
 - [[Quota]] — aggregate root
 - [[CrawlData]] — value object
 - [[packages-domain Structure]] — domain directory tree
+- [[WorkspaceMembership]] — membership entity
 
 ---
 

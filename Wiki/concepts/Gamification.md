@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/gamification
 date_updated: 2026-08-01
-source_count: 6
+source_count: 7
 confidence: high
 ---
 

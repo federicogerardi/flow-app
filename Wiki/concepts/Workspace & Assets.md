@@ -3,8 +3,8 @@ type: concept
 tags:
   - wiki/concept
   - wiki/workspace
-date_updated: 2026-07-30
-source_count: 4
+date_updated: 2026-08-01
+source_count: 5
 confidence: high
 ---
 
@@ -27,7 +27,7 @@ This context **did not exist** in the original v1 architecture. In v1, workspace
 
 ## Aggregate Root
 
-**[[Workspace]]** — a named container owned by a [[User]] that groups [[Asset]]s and provides the organizational structure for all generation work.
+**[[Workspace]]** — a named container created by a [[User]], shared through membership roles, and used to group [[Asset]]s for all generation work.
 
 ## Entities
 
@@ -56,7 +56,8 @@ This context **did not exist** in the original v1 architecture. In v1, workspace
 ```typescript
 interface WorkspaceRepository {
   findById(id: WorkspaceId): Promise<Workspace | null>;
-  findByUser(userId: UserId): Promise<Workspace[]>;
+  findByMember(userId: UserId): Promise<Workspace[]>;
+  findByCreator(userId: UserId): Promise<Workspace[]>;
   save(workspace: Workspace): Promise<void>;
   delete(id: WorkspaceId): Promise<void>;
 }
@@ -74,6 +75,7 @@ interface WorkspaceRepository {
 
 - One [[Asset]] per `AssetType` per [[Workspace]]
 - `Asset.source = 'generated'` requires valid `sourceRef` to original [[Artifact]]
+- A Workspace has exactly one active owner membership
 - Workspace deletion cascades to all Assets
 
 ## Sources
@@ -82,3 +84,4 @@ interface WorkspaceRepository {
 - [[sources/PRD]] — FR-A01 to FR-A05
 - [[sources/USER-STORIES]] — US-W01 to US-W06, US-AS01 to US-AS08
 - [[sources/APP-CONCEPT]] — Knowledge Panel, AssetFieldMapping
+- [[Workspace Sharing]] — membership-based access model

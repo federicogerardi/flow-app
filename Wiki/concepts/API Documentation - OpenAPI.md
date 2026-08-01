@@ -3,8 +3,8 @@ type: concept
 tags:
   - wiki/concept
   - wiki/infrastructure
-date_updated: 2026-07-31
-source_count: 2
+date_updated: 2026-08-01
+source_count: 3
 confidence: high
 ---
 
@@ -58,9 +58,17 @@ const SessionSchema = registry.register(
     id: z.string().uuid(),
     toolKey: z.string(),
     workspaceId: z.string().uuid(),
-    status: z.enum(['queued', 'ready', 'running', 'completed', 'failed', 'cancelled']),
+    status: z.enum(['queued', 'draft', 'ready', 'running', 'completed', 'failed', 'cancelled']),
     stepCount: z.number().int(),
     createdAt: z.string().datetime(),
+  })
+);
+
+const StartSessionResponseSchema = registry.register(
+  'StartSessionResponse',
+  z.object({
+    session: SessionSchema,
+    replayed: z.boolean(),
   })
 );
 
@@ -90,7 +98,8 @@ registry.registerPath({
     },
   },
   responses: {
-    201: { description: 'Session created', content: { 'application/json': { schema: SessionSchema } } },
+    200: { description: 'Idempotent replay', content: { 'application/json': { schema: StartSessionResponseSchema } } },
+    201: { description: 'Session created', content: { 'application/json': { schema: StartSessionResponseSchema } } },
     422: { description: 'Readiness check failed' },
     429: { description: 'Quota exceeded' },
   },
@@ -131,7 +140,7 @@ There's no need to register all 45 routes at once. Register routes as they are i
 - Every authenticated route must include `security` metadata.
 - Every write route (`POST`, `PUT`, `DELETE`) must document error codes and retry semantics.
 - `POST /api/tools/{toolKey}/sessions` must document `Idempotency-Key` header and dual response (`201` created, `200` replay).
-- All responses must include shared error schema `{ error: { code, message, details? } }` for non-2xx outcomes.
+- All responses must include shared error schema `{ error: { code, message, details?, retryable } }` for non-2xx outcomes.
 
 ### Deprecation Metadata Requirements (Phase 3)
 
@@ -182,3 +191,4 @@ Fail the pipeline on undocumented breaking changes (removed paths, narrowed sche
 
 - [[API Routes]] — endpoint definitions
 - [[Contracts Package]] — DTO schemas
+- [[API Contract Baseline v1]] — canonical wire contract

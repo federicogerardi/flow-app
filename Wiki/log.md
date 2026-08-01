@@ -6,6 +6,106 @@ tags:
 
 # Operation Log
 
+## [2026-08-01] synthesis | Rational implementation roadmap filed
+
+Files created/updated:
+
+- `Wiki/synthesis/implementation-roadmap-2026-08-01.md` — created (phased development roadmap, gating rules, expansion order, risk mitigations)
+- `Wiki/index.md` — updated (maintenance note + synthesis table row)
+- `Wiki/log.md` — this entry
+
+Readback verification completed for all files above after write.
+
+## [2026-08-01] lint | Coherence lint execution (structural pass + queued-state closure)
+
+Files created/updated:
+
+- `Wiki/synthesis/lint-report-2026-08-01-coherence.md` — created (lint scope and initial results; later updated with queued-state closure)
+- `Wiki/concepts/Gamification.md` — updated (`source_count` 6 -> 7)
+- `Wiki/concepts/UI Component Map.md` — updated (`source_count` 7 -> 8)
+- `Wiki/concepts/Error Mapping (Domain to HTTP).md` — updated (`x-correlation-id` -> `x-request-id` in logging snippet)
+- `Wiki/concepts/API Contract Baseline v1.md` — updated (`queued` promoted to canonical status enum)
+- `Wiki/concepts/API Documentation - OpenAPI.md` — updated (`Session.status` enum includes `queued`)
+- `Wiki/concepts/Contracts Package.md` — updated (`SessionDTO` / `SessionListItemDTO` aligned on `queued` union)
+- `Wiki/concepts/Database Schema.md` — updated (`session_status` enum includes `queued`)
+- `Wiki/concepts/API Routes.md` — updated (governance status enum includes `queued`)
+- `Wiki/synthesis/lint-report-2026-08-01-coherence.md` — updated (semantic drift section replaced with closure result)
+- `Wiki/entities/Session.md` — updated (lifecycle includes `queued`; transitions clarified as `QUEUE` then `WORKER_PICKUP`)
+- `Wiki/concepts/Session Machine (XState v5).md` — updated (queued runtime state and transition events aligned)
+- `Wiki/concepts/Application Services.md` — updated (state-flow line aligned with queue pickup semantics)
+- `Wiki/concepts/Content Generation.md` — updated (`SessionStatus` lifecycle + `IdempotencyKey` signature wording aligned)
+- `Wiki/concepts/packages-domain Structure.md` — updated (`SessionStatus` VO comment aligned)
+- `Wiki/concepts/XState Integration.md` — updated (example transitions aligned)
+- `Wiki/concepts/Session List - Live Status.md` — updated (canonical enum/sql snippet and lifecycle wording aligned)
+- `Wiki/concepts/Domain Events Catalog.md` — updated (SessionStarted trigger and event-flow diagram aligned to `queued -> running`)
+- `Wiki/concepts/BullMQ Worker Wiring.md` — updated (`START` transition wording replaced with `QUEUE` + `WORKER_PICKUP`)
+- `Wiki/concepts/ReadinessPolicy.md` — updated (readiness phrasing aligned to queue admission)
+- `Wiki/synthesis/lint-report-2026-08-01-coherence.md` — updated (lexical hardening pass recorded)
+- `Wiki/concepts/Session Machine (XState v5).md` — updated (guard naming standardized to `canQueue`; legacy alias note for `canStart`)
+- `Wiki/concepts/ReadinessPolicy.md` — updated (XState guard examples renamed `canQueue`; legacy alias note added)
+- `Wiki/synthesis/lint-report-2026-08-01-coherence.md` — updated (ultra-strict guard naming pass recorded)
+- `Wiki/index.md` — updated (maintenance note + synthesis table row)
+- `Wiki/log.md` — this entry
+
+Readback verification completed for all files above after write.
+
+## [2026-08-01] finalization | Operational-go remediation (contract freeze, quality gates, consistency alignment)
+
+Files created/updated:
+
+- `Wiki/concepts/API Contract Baseline v1.md` — created (canonical v1 wire contract: statuses, error envelope, idempotency replay, conflict semantics, SSE schema)
+- `Wiki/concepts/Quality Gate Matrix.md` — created (numeric CI thresholds, merge/promotion gates, security exception workflow, release evidence)
+- `Wiki/concepts/Definition of Done.md` — updated (enforcement source of truth linked to Quality Gate Matrix)
+- `Wiki/concepts/Frontend Error Observability.md` — updated (numeric alert/release thresholds)
+- `Wiki/concepts/Concurrency & Conflict Policy.md` — updated (storage-level enforcement requirements)
+- `Wiki/concepts/API Routes.md` — updated (canonical error envelope with `retryable`, status enum, baseline reference)
+- `Wiki/concepts/API Documentation - OpenAPI.md` — updated (`Session.status` enum fix, `StartSessionResponse` schema, 200 replay response)
+- `Wiki/concepts/Idempotency Implementation.md` — updated (canonical hash formula includes prompt signature, unified TTL, FK-safe PostgreSQL fallback)
+- `Wiki/concepts/Database Schema.md` — updated (workspace membership model, version columns, ER and migration alignment)
+- `Wiki/concepts/Workspace & Assets.md` — updated (membership-based workspace model and repository semantics)
+- `Wiki/concepts/Contracts Package.md` — updated (`StartSessionResponse.replayed`, canonical source alignment)
+- `Wiki/concepts/Error Mapping (Domain to HTTP).md` — updated (`ConcurrencyError` mapping, baseline reference)
+- `Wiki/concepts/Secure SDLC Controls.md` — updated (mandatory, time-bound exception record)
+- `Wiki/index.md` — updated (maintenance note + concept table rows/count alignment)
+- `Wiki/log.md` — this entry
+
+Readback verification completed for all files above after write.
+
+## [2026-08-01] implementation | DoD + frontend error observability + concurrency policy
+
+Files created/updated:
+
+- `Wiki/concepts/Definition of Done.md` — created (canonical delivery gates, PR acceptance checklist, release-readiness extension)
+- `Wiki/concepts/Frontend Error Observability.md` — created (browser error telemetry standard, release/source-map requirements, triage policy)
+- `Wiki/concepts/Concurrency & Conflict Policy.md` — created (uniform write-conflict, optimistic locking, idempotency, retry contracts)
+- `Wiki/index.md` — updated (maintenance note + 3 concept rows)
+- `Wiki/log.md` — this entry
+
+Readback verification completed for all files above after write.
+
+## [2026-08-01] policy | Fast-close governance gaps (Git policy, Secure SDLC, API SLO catalog, CI-CD promotion)
+
+Files created/updated:
+
+- `Wiki/concepts/Git Governance Policy.md` — created (branching model, commit convention, PR policy, merge gates)
+- `Wiki/concepts/Secure SDLC Controls.md` — created (CI security gates, SAST/SCA baseline, secrets policy, compliance baseline)
+- `Wiki/concepts/API SLO Catalog.md` — created (endpoint-class SLI/SLO targets, alert thresholds, queue coupling)
+- `Wiki/concepts/CI-CD Promotion Policy.md` — created (Dev->Staging->Prod promotion flow, quality gates, artifact integrity, rollback policy)
+- `Wiki/index.md` — updated (maintenance note + 4 concept rows)
+- `Wiki/log.md` — this entry
+
+Readback verification completed for all files above after write.
+
+## [2026-08-01] audit | Project model multi-dimension governance audit persisted
+
+Files created/updated:
+
+- `Wiki/synthesis/project-model-multi-dimension-audit-2026-08-01.md` — created (4-area audit, detailed sub-dimension findings, maturity snapshot, priority gap list)
+- `Wiki/index.md` — updated (maintenance note + synthesis table row for the new audit page)
+- `Wiki/log.md` — this entry
+
+Readback verification completed for all files above after write.
+
 ## [2026-08-01] deprecation | Output Personalization removed from current model baseline
 
 Files updated:

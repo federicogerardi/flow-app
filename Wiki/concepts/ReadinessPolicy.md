@@ -3,7 +3,7 @@ type: concept
 tags:
   - wiki/concept
   - wiki/generation
-date_updated: 2026-07-30
+date_updated: 2026-08-01
 source_count: 3
 confidence: high
 ---
@@ -15,9 +15,9 @@ confidence: high
 
 ## Definition
 
-`ReadinessPolicy` encapsulates the business rule: *"Can this Session start, given the data acquired in the pre-flight phase?"* It is a **pure domain Value Object** — no infrastructure, no I/O. The Application Service delegates to it; the [[Session Machine (XState v5)|XState guard]] calls it.
+`ReadinessPolicy` encapsulates the business rule: *"Can this Session be admitted to the queue, given the data acquired in the pre-flight phase?"* It is a **pure domain Value Object** — no infrastructure, no I/O. The Application Service delegates to it; the [[Session Machine (XState v5)|XState guard]] calls it.
 
-This concept was previously leaked into two places: `validateReadiness` in `StartSessionUseCase` and the `canStart` guard in the XState machine. Both are now resolved by delegating to this VO.
+This concept was previously leaked into two places: `validateReadiness` in `StartSessionUseCase` and the `canQueue` guard in the XState machine. Both are now resolved by delegating to this VO.
 
 ## Structure
 
@@ -94,21 +94,23 @@ const result = policy.evaluate(acquisitionData);
 if (!result.isReady) throw new ReadinessError(result.missing);
 ```
 
-### In XState Guard (`canStart`)
+### In XState Guard (`canQueue`)
 
 ```typescript
 // Before (wrong — business logic in machine guard):
-canStart: ({ context }) => {
+canQueue: ({ context }) => {
   const requiredFiles = context.tool.acquisition.files?.filter(f => f.required) ?? [];
   // ... inline logic
 }
 
 // After (correct — delegates to domain):
-canStart: ({ context }) => {
+canQueue: ({ context }) => {
   const policy = ReadinessPolicy.from(context.tool);
   return policy.evaluate(context.acquisitionData).isReady;
 }
 ```
+
+Legacy note: if historical snippets still refer to `canStart`, treat it as an alias of `canQueue`. Canonical guard naming is `canQueue`.
 
 ## Invariants
 
