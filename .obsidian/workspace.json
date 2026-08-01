@@ -11,10 +11,14 @@
             "id": "278473b8b390cf25",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Graph view"
+              "type": "markdown",
+              "state": {
+                "file": "Wiki/synthesis/implementation-roadmap-2026-08-01.md",
+                "mode": "preview",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "implementation-roadmap-2026-08-01"
             }
           }
         ]
@@ -196,17 +200,17 @@
   },
   "active": "278473b8b390cf25",
   "lastOpenFiles": [
-    "apps/backend/dist/middleware/dev-auth.d.ts",
-    "apps/backend/dist/middleware/dev-auth.d.ts.map",
-    "apps/backend/dist/middleware/dev-auth.js.map",
-    "apps/backend/dist/middleware/dev-auth.js",
-    "apps/backend/dist/middleware",
-    "apps/backend/src/middleware/dev-auth.ts",
-    "apps/backend/src/middleware",
-    "packages/infra-db/migrate.ts",
-    "packages/infra-db/migrations/006_platform_config.sql",
-    "packages/infra-db/migrations/005_quotas.sql",
-    "packages/infra-db/migrations/004_sessions.sql",
+    "apps/backend/dist/api/agent-chat.d.ts",
+    "apps/backend/dist/api/agent-chat.d.ts.map",
+    "apps/backend/dist/api/agent-chat.js",
+    "apps/backend/dist/api/agent-chat.js.map",
+    "apps/backend/dist/application/agent-chat/send-message.usecase.d.ts",
+    "apps/backend/dist/application/agent-chat/send-message.usecase.d.ts.map",
+    "apps/backend/dist/application/agent-chat/send-message.usecase.js",
+    "apps/backend/dist/application/agent-chat/send-message.usecase.js.map",
+    "apps/backend/dist/application/agent-chat/start-conversation.usecase.d.ts",
+    "apps/backend/dist/application/agent-chat/start-conversation.usecase.d.ts.map",
+    "apps/backend/dist/application/agent-chat/start-conversation.usecase.js.map",
     "Wiki/synthesis/implementation-roadmap-2026-08-01.md",
     "node_modules/bullmq/README.md",
     "node_modules/msgpackr/SECURITY.md",

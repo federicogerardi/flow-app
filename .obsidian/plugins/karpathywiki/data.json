@@ -363,5 +363,7 @@
   "writePdfMarkdownToVault": false,
   "slugCase": "lower",
   "customQueryInstructions": "",
-  "bedrockRegion": "us-east-1"
+  "bedrockRegion": "us-east-1",
+  "_migrated_v1_23_0_startup_notice": true,
+  "_migrated_v1_25_3_secret_storage": true
 }
