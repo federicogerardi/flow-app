@@ -56,6 +56,7 @@ const app = createApp({
   llmGateway,
   promptComposer,
   promptTemplateRepo,
+  db,
 });
 
 app.listen(config.PORT, () => {

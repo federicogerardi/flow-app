@@ -3,6 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import type { Queue } from 'bullmq';
+import type { Kysely } from 'kysely';
+import type { DB } from '@flow-app/infra-db';
 import { httpLogger, logger } from './infrastructure/logger.js';
 import { errorHandler } from './infrastructure/error-handler.js';
 import { createGenerationRoutes } from './api/generation.js';
@@ -24,6 +26,7 @@ export interface AppDeps {
   llmGateway: LlmGateway;
   promptComposer: PromptComposer;
   promptTemplateRepo: PromptTemplateRepository;
+  db: Kysely<DB>;
 }
 
 export function createApp(deps: AppDeps) {
@@ -60,10 +63,12 @@ export function createApp(deps: AppDeps) {
   });
 
   // Generation routes
-  const generationRoutes = createGenerationRoutes(deps.sessionRepo);
+  const generationRoutes = createGenerationRoutes(deps.sessionRepo, deps.db);
+  app.get('/api/sessions', generationRoutes.listSessions);
   app.post('/api/tools/:toolKey/sessions', generationRoutes.startSession);
   app.get('/api/sessions/:id', generationRoutes.getSession);
   app.get('/api/sessions/:id/events', generationRoutes.getEvents);
+  app.get('/api/artifacts/:id', generationRoutes.getArtifact);
 
   // Workspace routes
   const workspaceRoutes = createWorkspaceRoutes(deps.workspaceRepo);

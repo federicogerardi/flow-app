@@ -7,7 +7,7 @@ date_updated: 2026-08-01
 
 # Wiki Index — Flow App
 
-> Maintenance note (2026-08-01): Phase 6 implemented — Real LLM Integration (LlmGateway, ModelRegistry 4 tiers, worker wiring, chat wiring, token tracking, fallback chain). Build ✅, tests ✅ (8/8).
+> Maintenance note (2026-08-01): Phase 7 implemented — Frontend MVP (4 shared + 4 page components, 5 routes, react-router v7, MUI v6 Grid2, SWR). Backend: `GET /api/sessions`, `GET /api/artifacts/:id`, `SessionRepository.findByWorkspace()`. Build ✅, tests ✅ (8/8).
 > Maintenance note (2026-08-01): Phase 5 implemented — Agent Chat bounded context (Conversation, Message, 7 agents, 6 API routes, privacy invariant). Build ✅, tests ✅ (8/8).
 > Maintenance note (2026-08-01): Phase 4 implemented — Prompt Governance Runtime (PromptTemplateId, PromptVersion, PromptComponent, PromptComposer, filesystem repository, 12 default components). Build ✅, tests ✅ (8/8).
 > Maintenance note (2026-08-01): Phase 3 implemented — workspace collaboration (membership entity, aggregate, domain events, repository, middleware, 10 API routes, 3 use cases). Build ✅, tests ✅ (8/8).
@@ -163,4 +163,5 @@ date_updated: 2026-08-01
 | [[synthesis/project-model-multi-dimension-audit-2026-08-01]] | Project model governance audit — 4 areas, coverage assessment, maturity score, priority gaps | 2026-08-01 |
 | [[synthesis/lint-report-2026-08-01-coherence]] | Coherence lint — structural pass, queued-state drift closed | 2026-08-01 |
 | [[synthesis/implementation-roadmap-2026-08-01]] | Rational development roadmap — phase plan from bootstrap to expansion tracks | 2026-08-01 |
+| [[synthesis/frontend-mvp-plan-2026-08-01]] | Frontend MVP plan — 13 components, 5 routes, 7-step execution | 2026-08-01 |
 | [[overview]] | High-level synthesis (v3) | 2026-07-31 |

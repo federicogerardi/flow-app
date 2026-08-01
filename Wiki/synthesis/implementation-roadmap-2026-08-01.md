@@ -231,9 +231,27 @@ Implementation (2026-08-01, branch `dev`):
 - Token tracking is accurate and budgets are enforced
 - Model swap is a config change (per [[LLM Gateway - OpenRouter]] model registry)
 
-### Phase 7 — Frontend MVP (Week 11-13)
+### Phase 7 — Frontend MVP (Week 11-13) ✅ — [Implementation Plan](frontend-mvp-plan-2026-08-01.md)
+
+**Plan**: [[frontend-mvp-plan-2026-08-01]] — detailed scope, component inventory, route map, implementation order.
 
 **Current gap**: the frontend is a single `<h1>` with MUI dependencies installed but zero components. The API client, SSE client, and SWR hooks are wired and functional — the UI just needs to be built on top of them.
+
+Implementation (2026-08-01, branch `dev`):
+
+- **Theme** (`src/theme/tokens.ts`, `src/theme/ThemeProvider.tsx`) — light/dark from [[Design Tokens]], MUI v6 createTheme
+- **AppShell** (`src/layout/AppShell.tsx`) — MUI AppBar + Drawer + Outlet layout
+- **Routing** (`src/App.tsx`) — 5 routes via react-router v7 (BrowserRouter + Routes + nested Route)
+- **4 shared components** — PageHeader, EmptyState, ErrorState, LoadingSkeleton
+- **DashboardPage** — tool grid + recent sessions list (SWR-powered)
+- **ToolPage** — dynamic form from toolKey + submit → POST /api/tools/:toolKey/sessions
+- **SessionPage** — SSE-powered status + progress bar + artifact rendering
+- **ConversationPage** — chat interface with agent reply display
+- **API client** — expanded: listWorkspaces, getConversation, sendMessage, listAgents, getArtifact, etc.
+- **Hook fix** — `useWorkspaces()` bug fixed (was calling `listSessions()`)
+- **Backend endpoints** — `GET /api/sessions` + `GET /api/artifacts/:id` added
+- **SessionRepository** — `findByWorkspace()` method added (interface + Kysely impl)
+- **Context7 verified** — React Router v7 canonical import `"react-router"`, MUI v6 Grid2 + `size` prop, `@mui/icons-material@6.x`
 
 **Goal**: deliver a functional SPA covering the full user workflow: workspace selection → session configuration → live generation progress → results review → agent chat refinement.
 

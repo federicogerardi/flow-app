@@ -28,7 +28,7 @@ export { SessionCancelled } from './domain-events/SessionCancelled';
 export { ContextEnricher } from './domain-services/ContextEnricher';
 
 // Repository Interfaces
-export type { SessionRepository } from './repositories/SessionRepository';
+export type { SessionRepository, SessionFilters } from './repositories/SessionRepository';
 
 // Tools
 export { toolRegistry, getTool } from './tools';

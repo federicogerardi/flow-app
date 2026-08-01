@@ -6,6 +6,133 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 
 ---
+## [2026-08-01] implementation | Phase 7 — Frontend MVP
+
+Phase 7 of [[synthesis/implementation-roadmap-2026-08-01]] implemented. Branch: `dev`.
+
+### Deliverables
+
+1. **Theme** (`apps/frontend/src/theme/`)
+   - `tokens.ts` — light/dark palette, typography, shape
+   - `ThemeProvider.tsx` — wraps app with MUI ThemeProvider + CssBaseline
+
+2. **AppShell layout** (`apps/frontend/src/layout/AppShell.tsx`)
+   - MUI AppBar (fixed) + Drawer (permanent, 240px) + Outlet
+   - Navigation: Dashboard, Agent Chat (contextual)
+
+3. **Routing** (`apps/frontend/src/App.tsx`)
+   - React Router v7 (canonical `"react-router"` import)
+   - 5 routes: Dashboard, Tool, Session, Conversation, catch-all redirect
+
+4. **Shared components** (`apps/frontend/src/components/`)
+   - `PageHeader` — title, subtitle, breadcrumbs, action button
+   - `EmptyState` — message + optional CTA
+   - `ErrorState` — error alert + retry button
+   - `LoadingSkeleton` — MUI Skeleton variants
+
+5. **DashboardPage** (`apps/frontend/src/pages/DashboardPage.tsx`)
+   - Tool grid (11 tools with icons) + recent sessions list
+   - SWR-powered workspace + session data
+
+6. **ToolPage** (`apps/frontend/src/pages/ToolPage.tsx`)
+   - Dynamic form (topic + language inputs)
+   - POST /api/tools/:toolKey/sessions → navigate to session page
+
+7. **SessionPage** (`apps/frontend/src/pages/SessionPage.tsx`)
+   - SSE-powered status + step progress bar
+   - Artifact content rendering on completion
+
+8. **ConversationPage** (`apps/frontend/src/pages/ConversationPage.tsx`)
+   - Chat message list with user/agent styling
+   - Input with Enter-to-send + SWR revalidation
+   - Token usage display per agent message
+
+9. **API client expansion** (`apps/frontend/src/api/client.ts`)
+   - New methods: listWorkspaces, getWorkspace, listWorkspaceMembers, listAgents, listConversations, startConversation, getConversation, sendMessage, archiveConversation, getArtifact
+
+10. **Hook fix** (`apps/frontend/src/api/hooks.ts`)
+    - `useWorkspaces()` — fixed: now calls `api.listWorkspaces()` (was `api.listSessions()`)
+
+11. **Backend endpoints** (`apps/backend/src/api/generation.ts`)
+    - `GET /api/sessions?workspaceId=&status=&limit=` — session listing with filters
+    - `GET /api/artifacts/:id` — fetch artifact content
+
+12. **SessionRepository** — `findByWorkspace()` method added (interface + Kysely impl)
+
+### Files
+
+**New files (10):**
+- `apps/frontend/src/theme/tokens.ts`
+- `apps/frontend/src/theme/ThemeProvider.tsx`
+- `apps/frontend/src/layout/AppShell.tsx`
+- `apps/frontend/src/components/PageHeader.tsx`
+- `apps/frontend/src/components/EmptyState.tsx`
+- `apps/frontend/src/components/ErrorState.tsx`
+- `apps/frontend/src/components/LoadingSkeleton.tsx`
+- `apps/frontend/src/pages/DashboardPage.tsx`
+- `apps/frontend/src/pages/ToolPage.tsx`
+- `apps/frontend/src/pages/SessionPage.tsx`
+- `apps/frontend/src/pages/ConversationPage.tsx`
+
+**Modified files (10):**
+- `apps/frontend/package.json` — react-router-dom, react-markdown, remark-gfm, @mui/icons-material
+- `apps/frontend/src/App.tsx` — routing with BrowserRouter + Routes
+- `apps/frontend/src/main.tsx` — ThemeProvider wrapper
+- `apps/frontend/src/api/client.ts` — expanded API methods
+- `apps/frontend/src/api/hooks.ts` — useWorkspaces bug fix
+- `apps/backend/src/api/generation.ts` — listSessions + getArtifact endpoints
+- `apps/backend/src/app.ts` — db dep added, new routes registered
+- `apps/backend/src/server.ts` — db dep passed to createApp
+- `packages/domain/src/generation/repositories/SessionRepository.ts` — findByWorkspace + SessionFilters
+- `packages/domain/src/generation/index.ts` — SessionFilters export
+
+### Verification
+
+- `npm run build --workspace=apps/backend`: 0 errors
+- `npm run build --workspace=apps/frontend`: 0 errors (521KB bundle)
+- `npm run lint`: 0 errors, 69 warnings
+- `npm test`: 8 tests pass
+
+### Context7 verification
+
+- React Router v7.18.2 — canonical import `"react-router"`, BrowserRouter + Routes + Outlet ✅
+- MUI v6.5.0 — Grid2 from `@mui/material/Grid2`, `size` prop syntax ✅
+- `@mui/icons-material@6.x` — peer dependency resolved ✅
+
+---
+
+## [2026-08-01] plan | Phase 7 — Frontend MVP
+
+Implementation plan for Phase 7 filed in [[synthesis/frontend-mvp-plan-2026-08-01]].
+
+### Key decisions
+
+- **13 core components** from the wiki's 37 (priority: workflow-critical path)
+- **XState deferred** — `useState`/`useReducer` for MVP, XState `toolPageMachine` in v1.1
+- **SWR** for server state (already installed), no additional state library
+- **5 routes**: Dashboard → Workspace → Tool → Session → Conversation
+- **2 backend endpoints needed**: `GET /api/sessions` and `GET /api/artifacts/:id`
+
+### Implementation order (7 steps)
+
+1. Foundation: react-router-dom, MUI theme, AppShell layout, routing
+2. Shared components: PageHeader, EmptyState, ErrorState, LoadingSkeleton
+3. API client expansion + hook fixes (useWorkspaces bug, new methods)
+4. Backend gap: session listing + artifact endpoint
+5. Dashboard + Workspace pages
+6. Tool Page + SetupPanel
+7. Session Summary + Agent Chat
+
+### Wiki updates
+
+- `Wiki/synthesis/frontend-mvp-plan-2026-08-01.md` — created (full plan)
+- `Wiki/synthesis/implementation-roadmap-2026-08-01.md` — Phase 7 linked to plan
+- `Wiki/overview.md` — Phase 7 status updated
+- `Wiki/index.md` — maintenance note + synthesis table entry
+- `Wiki/log.md` — this entry
+
+---
+
 ## [2026-08-01] implementation | Phase 6 — Real LLM Integration
 
 Phase 6 of [[synthesis/implementation-roadmap-2026-08-01]] implemented. Branch: `dev`.

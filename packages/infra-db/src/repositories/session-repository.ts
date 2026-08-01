@@ -1,6 +1,6 @@
 import type { Kysely } from 'kysely';
 import type { DB } from '../types';
-import { Session, ConcurrencyError, type SessionRepository } from '@flow-app/domain';
+import { Session, ConcurrencyError, type SessionRepository, type SessionFilters } from '@flow-app/domain';
 
 export class KyselySessionRepository implements SessionRepository {
   constructor(private readonly db: Kysely<DB>) {}
@@ -54,6 +54,40 @@ export class KyselySessionRepository implements SessionRepository {
       row.error_code,
       row.error_message,
       row.version,
+    );
+  }
+
+  async findByWorkspace(workspaceId: string, filters?: SessionFilters): Promise<Session[]> {
+    let query = this.db
+      .selectFrom('sessions')
+      .where('workspace_id', '=', workspaceId);
+
+    if (filters?.status) {
+      query = query.where('status', '=', filters.status as any);
+    }
+
+    const rows = await query
+      .selectAll()
+      .orderBy('created_at', 'desc')
+      .limit(filters?.limit ?? 50)
+      .offset(filters?.offset ?? 0)
+      .execute();
+
+    return rows.map((row) =>
+      Session.reconstitute(
+        row.id,
+        row.tool_key as any,
+        row.workspace_id,
+        row.user_id,
+        row.idempotency_key_hash,
+        row.status as any,
+        row.current_step_index,
+        row.started_at,
+        row.completed_at,
+        row.error_code,
+        row.error_message,
+        row.version,
+      ),
     );
   }
 

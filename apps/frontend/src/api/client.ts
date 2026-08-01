@@ -44,6 +44,8 @@ class ApiClient {
     return response.json();
   }
 
+  // ── Sessions ─────────────────────────────────────────────────────────────────
+
   async startSession(toolKey: string, body: { workspaceId: string; inputs: Record<string, unknown> }) {
     return this.request<{ session: any; replayed: boolean }>('POST', `/api/tools/${toolKey}/sessions`, body);
   }
@@ -59,6 +61,52 @@ class ApiClient {
 
   async cancelSession(sessionId: string) {
     return this.request<void>('POST', `/api/sessions/${sessionId}/cancel`);
+  }
+
+  // ── Artifacts ────────────────────────────────────────────────────────────────
+
+  async getArtifact(artifactId: string) {
+    return this.request<any>('GET', `/api/artifacts/${artifactId}`);
+  }
+
+  // ── Workspaces ───────────────────────────────────────────────────────────────
+
+  async listWorkspaces() {
+    return this.request<any[]>('GET', '/api/workspaces');
+  }
+
+  async getWorkspace(workspaceId: string) {
+    return this.request<any>('GET', `/api/workspaces/${workspaceId}`);
+  }
+
+  async listWorkspaceMembers(workspaceId: string) {
+    return this.request<any[]>('GET', `/api/workspaces/${workspaceId}/members`);
+  }
+
+  // ── Agent Chat ───────────────────────────────────────────────────────────────
+
+  async listAgents(workspaceId: string) {
+    return this.request<{ agents: any[] }>('GET', `/api/workspaces/${workspaceId}/agents`);
+  }
+
+  async listConversations(workspaceId: string) {
+    return this.request<{ conversations: any[] }>('GET', `/api/workspaces/${workspaceId}/conversations`);
+  }
+
+  async startConversation(workspaceId: string, agentKey: string) {
+    return this.request<any>('POST', `/api/workspaces/${workspaceId}/conversations`, { agentKey });
+  }
+
+  async getConversation(conversationId: string) {
+    return this.request<any>('GET', `/api/conversations/${conversationId}`);
+  }
+
+  async sendMessage(conversationId: string, content: string) {
+    return this.request<any>('POST', `/api/conversations/${conversationId}/messages`, { content });
+  }
+
+  async archiveConversation(conversationId: string) {
+    return this.request<void>('POST', `/api/conversations/${conversationId}/archive`);
   }
 }
 

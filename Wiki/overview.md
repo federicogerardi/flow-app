@@ -97,7 +97,7 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 | Phase | Priority | Scope |
 |-------|----------|-------|
 | Phase 6 — Real LLM Integration | ✅ | LlmGateway, ModelRegistry, 4 tiers, worker + chat wiring |
-| Phase 7 — Frontend MVP | 🔴 Critical | React SPA: dashboard, session wizard, live progress, agent chat UI |
+| Phase 7 — Frontend MVP | ✅ | 4 shared components, 4 pages, 5 routes, MUI + SWR + react-router v7 |
 | Phase 8 — Real Authentication | 🟡 High | JWT auth replacing dev stub: register, login, refresh, protected routes |
 | Phase 9 — Deployment & CI/CD | 🟡 High | Dockerfile, Railway config, GitHub Actions pipeline |
 | Phase 10 — Testing & Quality | 🟢 Medium | Domain tests, API tests, worker tests, CI quality gates |

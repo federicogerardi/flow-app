@@ -36,8 +36,8 @@ export function useWorkspaces() {
 
   useEffect(() => {
     api
-      .listSessions()
-      .then((res) => setWorkspaces(res.data))
+      .listWorkspaces()
+      .then((data) => setWorkspaces(data ?? []))
       .finally(() => setLoading(false));
   }, []);
 
