@@ -7,6 +7,13 @@ node_modules/
 dist/
 build/
 *.tsbuildinfo
+*.d.ts
+*.d.ts.map
+*.js
+*.js.map
+!eslint.config.js
+!vitest.config.base.ts
+!vitest.workspace.ts
 
 # Coverage
 coverage/
