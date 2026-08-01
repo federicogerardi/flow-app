@@ -1,0 +1,62 @@
+name: Branch Sync
+
+on:
+  pull_request_target:
+    types:
+      - closed
+    branches:
+      - main
+      - staging
+
+jobs:
+  sync:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Sync downstream branches
+        run: |
+          SOURCE_BRANCH="${{ github.event.pull_request.base.ref }}"
+          MERGED_SHA="${{ github.event.pull_request.merge_commit_sha }}"
+
+          echo "PR merged to $SOURCE_BRANCH at $MERGED_SHA"
+
+          # Define sync targets based on source
+          if [ "$SOURCE_BRANCH" = "main" ]; then
+            TARGETS="staging dev"
+          elif [ "$SOURCE_BRANCH" = "staging" ]; then
+            TARGETS="dev"
+          else
+            echo "No sync targets for $SOURCE_BRANCH"
+            exit 0
+          fi
+
+          for TARGET in $TARGETS; do
+            echo "Syncing $TARGET <- $SOURCE_BRANCH"
+
+            git checkout "$TARGET" || {
+              echo "Branch $TARGET not found, skipping"
+              continue
+            }
+
+            # Try merge, abort on conflict
+            if git merge "origin/$SOURCE_BRANCH" --no-edit -X theirs; then
+              git push origin "$TARGET"
+              echo "✅ $TARGET synced to $SOURCE_BRANCH"
+            else
+              git merge --abort
+              echo "⚠️ Merge conflict on $TARGET — manual sync required"
+              exit 1
+            fi
+          done
