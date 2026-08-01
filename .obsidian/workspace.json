@@ -11,14 +11,10 @@
             "id": "278473b8b390cf25",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Wiki/synthesis/implementation-roadmap-2026-08-01.md",
-                "mode": "preview",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "implementation-roadmap-2026-08-01"
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Graph view"
             }
           }
         ]
@@ -41,7 +37,9 @@
               "type": "file-explorer",
               "state": {
                 "sortOrder": "alphabetical",
-                "autoReveal": false
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
               },
               "icon": "lucide-folder-closed",
               "title": "Files"
@@ -171,8 +169,8 @@
             "state": {
               "type": "llm-wiki-query-view",
               "state": {},
-              "icon": "message-circle",
-              "title": "Query Wiki - Conversational Query"
+              "icon": "lucide-ghost",
+              "title": "llm-wiki-query-view"
             }
           }
         ],
@@ -198,41 +196,41 @@
   },
   "active": "278473b8b390cf25",
   "lastOpenFiles": [
-    "CLAUDE.md",
+    "apps/backend/dist/middleware/dev-auth.d.ts",
+    "apps/backend/dist/middleware/dev-auth.d.ts.map",
+    "apps/backend/dist/middleware/dev-auth.js.map",
+    "apps/backend/dist/middleware/dev-auth.js",
+    "apps/backend/dist/middleware",
+    "apps/backend/src/middleware/dev-auth.ts",
+    "apps/backend/src/middleware",
+    "packages/infra-db/migrate.ts",
+    "packages/infra-db/migrations/006_platform_config.sql",
+    "packages/infra-db/migrations/005_quotas.sql",
+    "packages/infra-db/migrations/004_sessions.sql",
     "Wiki/synthesis/implementation-roadmap-2026-08-01.md",
+    "node_modules/bullmq/README.md",
+    "node_modules/msgpackr/SECURITY.md",
+    "node_modules/msgpackr/README.md",
+    "node_modules/msgpackr/benchmark.md",
+    "node_modules/luxon/README.md",
+    "node_modules/luxon/LICENSE.md",
+    "node_modules/xstate/README.md",
+    "node_modules/cron-parser/README.md",
+    "node_modules/node-abort-controller/README.md",
+    "node_modules/tslib/SECURITY.md",
+    "node_modules/node-abort-controller/CHANGELOG.md",
+    "node_modules/tslib/README.md",
+    "node_modules/detect-libc/README.md",
+    "node_modules/msgpackr-extract/README.md",
+    "node_modules/node-gyp-build-optional-packages/README.md",
+    "node_modules/@msgpackr-extract/msgpackr-extract-linux-x64/README.md",
+    "CLAUDE.md",
     "Wiki/synthesis/lint-report-2026-08-01-coherence.md",
     "Wiki/concepts/Quality Gate Matrix.md",
     "Wiki/concepts/API Contract Baseline v1.md",
     "Wiki/concepts/Concurrency & Conflict Policy.md",
     "Wiki/concepts/Frontend Error Observability.md",
     "Wiki/concepts/Definition of Done.md",
-    "Wiki/concepts/CI-CD Promotion Policy.md",
-    "Wiki/concepts/API SLO Catalog.md",
-    "Wiki/concepts/Secure SDLC Controls.md",
-    "Wiki/concepts/Git Governance Policy.md",
-    "Wiki/synthesis/project-model-multi-dimension-audit-2026-08-01.md",
-    "Wiki/overview.md",
-    "Wiki/schema/config.md",
-    "Wiki/concepts/Gamification.md",
-    "Wiki/concepts/Invitation Notification Delivery.md",
-    "Wiki/concepts/Project Brand Persona.md",
-    "Wiki/concepts/Global Deterministic Model Matrix.md",
-    "Wiki/sources/PRD.md",
-    "Wiki/concepts/Output Personalization.md",
-    "Wiki/concepts/PromptComposer.md",
-    "Wiki/concepts/Gamification UX.md",
-    "Wiki/synthesis/gamification-proposal.md",
-    "Wiki/entities/Achievement.md",
-    "Wiki/entities/PlayerProfile.md",
-    "scripts/architecture-traceability-check.py",
-    "scripts/wiki-lint.py",
-    "scripts",
-    "Wiki/schema",
-    "wiki/schema",
-    "Wiki/synthesis",
-    "Wiki/sources",
-    "Wiki/concepts",
-    "Wiki/entities",
-    "Wiki"
+    "Wiki/concepts/CI-CD Promotion Policy.md"
   ]
 }
