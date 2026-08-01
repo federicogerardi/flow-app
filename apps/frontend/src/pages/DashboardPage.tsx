@@ -26,21 +26,16 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const { data: workspaces, isLoading, error } = useSWR('workspaces', () => api.listWorkspaces());
 
-  if (isLoading) return <LoadingSkeleton />;
-  if (error) return <ErrorState message={error.message} />;
-  if (!workspaces || workspaces.length === 0) {
-    return <EmptyState title="No workspaces yet" message="Create a workspace to start generating content." />;
-  }
-
-  const defaultWorkspace = workspaces[0];
+  const defaultWorkspace = workspaces?.[0];
 
   return (
     <Box>
       <PageHeader
         title="Dashboard"
-        subtitle={defaultWorkspace ? `Workspace: ${defaultWorkspace.name}` : undefined}
+        subtitle={defaultWorkspace ? `Workspace: ${defaultWorkspace.name}` : 'Select a tool to start generating'}
       />
 
+      {/* Tools grid — always visible */}
       <Typography variant="h3" sx={{ mb: 2 }}>
         Tools
       </Typography>
@@ -49,7 +44,12 @@ export default function DashboardPage() {
           <Grid size={{ xs: 12, sm: 6, md: 4 }} key={tool.key}>
             <Card>
               <CardActionArea
-                onClick={() => navigate(`/workspaces/${defaultWorkspace.id}/tools/${tool.key}`)}
+                onClick={() => {
+                  if (defaultWorkspace) {
+                    navigate(`/workspaces/${defaultWorkspace.id}/tools/${tool.key}`);
+                  }
+                }}
+                disabled={!defaultWorkspace}
                 sx={{ p: 2 }}
               >
                 <CardContent sx={{ '&:last-child': { pb: 2 } }}>
@@ -66,11 +66,20 @@ export default function DashboardPage() {
         ))}
       </Grid>
 
+      {/* Sessions section */}
       <Box sx={{ mt: 4 }}>
         <Typography variant="h3" sx={{ mb: 2 }}>
           Recent Sessions
         </Typography>
-        <RecentSessions workspaceId={defaultWorkspace.id} />
+        {isLoading ? (
+          <LoadingSkeleton />
+        ) : error ? (
+          <ErrorState message={error.message} />
+        ) : defaultWorkspace ? (
+          <RecentSessions workspaceId={defaultWorkspace.id} />
+        ) : (
+          <EmptyState title="No workspace available" message="Create a workspace to start generating content." />
+        )}
       </Box>
     </Box>
   );
