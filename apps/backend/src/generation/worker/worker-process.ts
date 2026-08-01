@@ -14,6 +14,9 @@ import { createDatabase } from '@flow-app/infra-db';
 import { KyselySessionRepository } from '@flow-app/infra-db';
 import { JobEventBridge } from '../../infrastructure/job-event-bridge.js';
 import { createSessionWorker } from './session-worker.js';
+import { LlmGateway } from '../../infrastructure/llm-gateway.js';
+import { FilesystemPromptTemplateRepository } from '../../infrastructure/prompt-template-repository.js';
+import { PromptComponentRegistry, PromptComposer, getDefaultComponents } from '@flow-app/domain';
 
 const config = validateConfig();
 const log = logger.child({ component: 'worker-process' });
@@ -22,7 +25,23 @@ const db = createDatabase(config.DATABASE_URL);
 const sessionRepo = new KyselySessionRepository(db);
 const eventBridge = new JobEventBridge(config.REDIS_URL);
 
-const worker = createSessionWorker({ sessionRepo, eventBridge });
+const llmGateway = new LlmGateway({
+  apiKey: config.OPENROUTER_API_KEY,
+  baseUrl: config.OPENROUTER_BASE_URL,
+  appName: config.OPENROUTER_APP_NAME,
+  defaultTimeoutMs: config.LLM_DEFAULT_TIMEOUT_MS,
+});
+
+const componentRegistry = new PromptComponentRegistry();
+for (const component of getDefaultComponents()) {
+  componentRegistry.register(component);
+}
+const promptComposer = new PromptComposer(componentRegistry);
+
+const promptTemplateBasePath = path.resolve(root, 'src', 'prompts');
+const promptTemplateRepo = new FilesystemPromptTemplateRepository(promptTemplateBasePath);
+
+const worker = createSessionWorker({ sessionRepo, eventBridge, llmGateway, promptComposer, promptTemplateRepo });
 
 log.info('Worker started');
 
@@ -36,10 +55,8 @@ async function gracefulShutdown(signal: string) {
   const shutdownStart = Date.now();
 
   try {
-    // Pause worker — finish active jobs but accept no new ones
     await worker.pause();
 
-    // Wait for active jobs to finish (30s timeout)
     const timeout = 30_000;
     const deadline = Date.now() + timeout;
 
@@ -47,7 +64,6 @@ async function gracefulShutdown(signal: string) {
       await new Promise((r) => setTimeout(r, 500));
     }
 
-    // Close worker connection
     await worker.close();
     await eventBridge.close();
     await db.destroy();

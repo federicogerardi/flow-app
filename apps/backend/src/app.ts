@@ -11,8 +11,9 @@ import { createWorkspaceRoutes } from './api/workspaces.js';
 import { createAgentChatRoutes } from './api/agent-chat.js';
 import { devAuthMiddleware } from './middleware/dev-auth.js';
 import { requireWorkspaceRole } from './middleware/workspace-role.js';
-import type { SessionRepository, WorkspaceRepository, ConversationRepository } from '@flow-app/domain';
+import type { SessionRepository, WorkspaceRepository, ConversationRepository, PromptComposer, PromptTemplateRepository } from '@flow-app/domain';
 import type { JobEventBridge } from './infrastructure/job-event-bridge.js';
+import type { LlmGateway } from './infrastructure/llm-gateway.js';
 
 export interface AppDeps {
   sessionRepo: SessionRepository;
@@ -20,6 +21,9 @@ export interface AppDeps {
   conversationRepo: ConversationRepository;
   eventBridge: JobEventBridge;
   queue: Queue;
+  llmGateway: LlmGateway;
+  promptComposer: PromptComposer;
+  promptTemplateRepo: PromptTemplateRepository;
 }
 
 export function createApp(deps: AppDeps) {
@@ -75,7 +79,7 @@ export function createApp(deps: AppDeps) {
   app.post('/api/invitations/:id/decline', workspaceRoutes.declineInvitation);
 
   // Agent Chat routes
-  const agentChatRoutes = createAgentChatRoutes(deps.conversationRepo);
+  const agentChatRoutes = createAgentChatRoutes(deps.conversationRepo, deps.llmGateway);
   app.get('/api/workspaces/:workspaceId/agents', requireWorkspaceRole(deps.workspaceRepo, 'owner', 'editor', 'viewer'), agentChatRoutes.listAgents);
   app.get('/api/workspaces/:workspaceId/conversations', requireWorkspaceRole(deps.workspaceRepo, 'owner', 'editor', 'viewer'), agentChatRoutes.listConversations);
   app.post('/api/workspaces/:workspaceId/conversations', requireWorkspaceRole(deps.workspaceRepo, 'owner', 'editor'), agentChatRoutes.startConversation);

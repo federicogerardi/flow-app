@@ -6,6 +6,86 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 
 ---
+## [2026-08-01] implementation | Phase 6 — Real LLM Integration
+
+Phase 6 of [[synthesis/implementation-roadmap-2026-08-01]] implemented. Branch: `dev`.
+
+### Deliverables
+
+1. **LlmGateway** (`apps/backend/src/infrastructure/llm-gateway.ts`)
+   - OpenAI SDK wrapper for OpenRouter API
+   - `generate()` with primary model + fallback chain (429/503/500 → retryable)
+   - Structured logging (start, success, primary_failed, fallback, fallback_success)
+   - Token usage tracking (promptTokens, completionTokens, totalTokens)
+   - Latency tracking per call
+
+2. **ModelRegistry** (`apps/backend/src/infrastructure/model-registry.ts`)
+   - 4 ModelTier configs as designed in [[LLM Gateway - OpenRouter]]
+   - premium: Claude Sonnet 4 / GPT-4o (16K tokens)
+   - balanced: GPT-4o Mini / Gemini Flash (8K tokens)
+   - light: Gemini Flash Lite / Llama 4 Maverick (4K tokens)
+   - search: Gemini 2.5 Pro / Perplexity (8K tokens)
+
+3. **LlmErrors** (`apps/backend/src/infrastructure/llm-errors.ts`)
+   - `LlmGatewayError` extends DomainError → 502 (already in ErrorMapper)
+   - `LlmRateLimitError` → 429, `LlmTimeoutError` → 504, `LlmUnavailableError` → 503
+
+4. **Config** (`apps/backend/src/config.ts`)
+   - `OPENROUTER_BASE_URL` (default: openrouter.ai)
+   - `OPENROUTER_APP_NAME` (default: flow-app)
+   - `LLM_DEFAULT_TIMEOUT_MS` (default: 60s)
+
+5. **Session worker wiring** (`apps/backend/src/generation/worker/session-worker.ts`)
+   - `executeStep` actor replaced mock with real LLM call
+   - ContextEnricher.enrich() for user prompt from acquisition data + previous step results
+   - PromptComposer.compose() with tool's StepPromptDefinition
+   - Fallback: if template not found, uses step label as system prompt
+
+6. **Agent chat wiring** (`apps/backend/src/application/agent-chat/send-message.usecase.ts`)
+   - Composes persona system prompt + conversation history (last 20 messages)
+   - Calls LlmGateway.generate() with balanced tier
+   - Creates Message.agent() with token usage and model ID
+   - Graceful fallback message on LLM failure
+
+7. **Server + worker wiring** (`server.ts`, `worker-process.ts`, `app.ts`)
+   - LlmGateway, PromptComposer, PromptTemplateRepository wired through AppDeps and SessionWorkerDeps
+
+8. **Bug fix** — `PromptVersion.from('1')` → `'1.0.0'` in `default-components.ts` (was crashing on startup)
+
+### Files
+
+**New files (3):**
+- `apps/backend/src/infrastructure/llm-gateway.ts`
+- `apps/backend/src/infrastructure/llm-errors.ts`
+- `apps/backend/src/infrastructure/model-registry.ts`
+
+**Modified files (6):**
+- `apps/backend/src/config.ts` — LLM config vars added
+- `apps/backend/src/generation/worker/session-worker.ts` — mock replaced with real LLM
+- `apps/backend/src/generation/worker/worker-process.ts` — LLM deps wired
+- `apps/backend/src/application/agent-chat/send-message.usecase.ts` — agent reply generation
+- `apps/backend/src/api/agent-chat.ts` — llmGateway param added
+- `apps/backend/src/app.ts` — AppDeps extended, llmGateway passed to routes
+- `apps/backend/src/server.ts` — all deps wired
+- `packages/domain/src/generation/prompting/default-components.ts` — version fix
+- `apps/backend/package.json` — openai SDK added
+
+### Verification
+
+- `npm run build --workspace=apps/backend`: 0 errors
+- `npm test`: 8 tests pass
+- `npm run lint`: 0 errors, 52 warnings (all `@typescript-eslint/no-explicit-any`)
+- Server startup: clean (all deps initialized, cleanup job ran)
+
+### Wiki updates
+
+- `Wiki/synthesis/implementation-roadmap-2026-08-01.md` — Phase 6 marked ✅
+- `Wiki/overview.md` — Phase 6 status updated, LLM Gateway infra added
+- `Wiki/index.md` — maintenance note added
+- `Wiki/log.md` — this entry
+
+---
+
 ## [2026-08-01] roadmap | Phase 6-11 expansion
 
 Roadmap [[synthesis/implementation-roadmap-2026-08-01]] expanded after Phase 0-5 completion. PR #5 merged to `dev`. Branch tracking fix applied.

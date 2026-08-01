@@ -7,7 +7,7 @@ date_updated: 2026-08-01
 
 # Wiki Index — Flow App
 
-> Maintenance note (2026-08-01): Roadmap consistency verified — 3 contradictions found and fixed (LLM aligned with [[LLM Gateway - OpenRouter]], auth aligned with [[Auth Dependencies]], Pydantic→Zod). 4 pages checked, 0 leaks, 0 Italian prose.
+> Maintenance note (2026-08-01): Phase 6 implemented — Real LLM Integration (LlmGateway, ModelRegistry 4 tiers, worker wiring, chat wiring, token tracking, fallback chain). Build ✅, tests ✅ (8/8).
 > Maintenance note (2026-08-01): Phase 5 implemented — Agent Chat bounded context (Conversation, Message, 7 agents, 6 API routes, privacy invariant). Build ✅, tests ✅ (8/8).
 > Maintenance note (2026-08-01): Phase 4 implemented — Prompt Governance Runtime (PromptTemplateId, PromptVersion, PromptComponent, PromptComposer, filesystem repository, 12 default components). Build ✅, tests ✅ (8/8).
 > Maintenance note (2026-08-01): Phase 3 implemented — workspace collaboration (membership entity, aggregate, domain events, repository, middleware, 10 API routes, 3 use cases). Build ✅, tests ✅ (8/8).

@@ -10,6 +10,9 @@ const envSchema = z.object({
   OPENROUTER_API_KEY: isDev
     ? z.string().optional().default('sk-or-v1-dev-placeholder')
     : z.string().min(1),
+  OPENROUTER_BASE_URL: z.string().url().default('https://openrouter.ai/api/v1'),
+  OPENROUTER_APP_NAME: z.string().default('flow-app'),
+  LLM_DEFAULT_TIMEOUT_MS: z.coerce.number().default(60_000),
   JWT_SECRET: z.string().min(32),
   CSRF_SECRET: z.string().min(16),
   PORT: z.coerce.number().default(3000),

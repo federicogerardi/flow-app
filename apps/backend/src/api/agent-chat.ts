@@ -3,10 +3,11 @@ import type { ConversationRepository } from '@flow-app/domain';
 import { listAgents, getAgent } from '@flow-app/domain';
 import { StartConversationUseCase } from '../application/agent-chat/start-conversation.usecase.js';
 import { SendMessageUseCase } from '../application/agent-chat/send-message.usecase.js';
+import type { LlmGateway } from '../infrastructure/llm-gateway.js';
 
-export function createAgentChatRoutes(conversationRepo: ConversationRepository) {
+export function createAgentChatRoutes(conversationRepo: ConversationRepository, llmGateway: LlmGateway) {
   const startConversationUC = new StartConversationUseCase(conversationRepo);
-  const sendMessageUC = new SendMessageUseCase(conversationRepo);
+  const sendMessageUC = new SendMessageUseCase(conversationRepo, llmGateway);
 
   return {
     listAgents: async (_req: Request, res: Response) => {

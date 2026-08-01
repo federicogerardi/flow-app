@@ -132,7 +132,7 @@ export function getDefaultComponents(): PromptComponent[] {
       def.key,
       def.type,
       def.content,
-      PromptVersion.from('1'),
+      PromptVersion.from('1.0.0'),
       def.description,
     ),
   );

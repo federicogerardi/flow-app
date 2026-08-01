@@ -146,11 +146,50 @@ Implementation (2026-08-01, branch `feature/phase-3-workspace-collaboration`):
 - **Privacy invariant** — conversations private to creator, enforced at domain + API layers
 - **Lint fix** — `migrate.ts` console.log → process.stdout/write (0 errors)
 
-### Phase 6 — Real LLM Integration (Week 9-10)
+### Phase 6 — Real LLM Integration (Week 9-10) ✅
 
 **Current gap**: the session worker returns `'Mock generated content'` and agent chat's `SendMessageUseCase` never generates AI replies. The entire value proposition is stubbed out.
 
 **Design authority**: the LLM gateway architecture is already specified in [[LLM Gateway - OpenRouter]] — `LlmGateway` class using the OpenAI SDK (OpenRouter-compatible), 4 `ModelTier` values with primary/fallback model pairs, and cost tracking. Phase 6 implements that design, not reinvents it.
+
+**Status**: 🟢 Implemented — all blockers cleared. `OPENROUTER_API_KEY` configured.
+
+**Goal**: wire real LLM calls via OpenRouter to both the generation pipeline and agent chat, using the prompt governance runtime built in Phase 4.
+
+Implementation (2026-08-01, branch `dev`):
+
+- **LlmGateway** (`apps/backend/src/infrastructure/llm-gateway.ts`) — OpenAI SDK wrapper for OpenRouter API
+  - `generate()` with primary model + fallback chain (429/503/500 → retryable)
+  - Structured logging (`llm_generate_start`, `llm_generate_success`, `llm_generate_primary_failed`, `llm_generate_fallback`)
+  - Token usage tracking (`promptTokens`, `completionTokens`, `totalTokens`)
+  - Latency tracking per call
+
+- **ModelRegistry** (`apps/backend/src/infrastructure/model-registry.ts`) — 4 `ModelTier` configs
+  - `premium`: Claude Sonnet 4 / GPT-4o (16K tokens)
+  - `balanced`: GPT-4o Mini / Gemini Flash (8K tokens)
+  - `light`: Gemini Flash Lite / Llama 4 Maverick (4K tokens)
+  - `search`: Gemini 2.5 Pro / Perplexity (8K tokens)
+
+- **LlmErrors** (`apps/backend/src/infrastructure/llm-errors.ts`) — Domain error hierarchy
+  - `LlmGatewayError` → `502` (already mapped in ErrorMapper)
+  - `LlmRateLimitError` → 429, `LlmTimeoutError` → 504, `LlmUnavailableError` → 503
+
+- **Config** — `OPENROUTER_BASE_URL`, `OPENROUTER_APP_NAME`, `LLM_DEFAULT_TIMEOUT_MS` added to env schema
+
+- **Session worker wiring** — `executeStep` actor replaced mock with:
+  - `ContextEnricher.enrich()` for user prompt from acquisition data + previous step results
+  - `PromptComposer.compose()` with tool's `StepPromptDefinition` (templateId + components)
+  - Fallback: if template not found, uses step label as system prompt
+
+- **Agent chat wiring** — `SendMessageUseCase` now generates AI replies:
+  - Composes persona system prompt + conversation history (last 20 messages)
+  - Calls `LlmGateway.generate()` with `balanced` tier
+  - Creates `Message.agent()` with token usage and model ID
+  - Graceful fallback message on LLM failure
+
+- **Server + worker wiring** — `LlmGateway`, `PromptComposer`, `PromptTemplateRepository` wired through `AppDeps` and `SessionWorkerDeps`
+
+- **Bug fix** — `PromptVersion.from('1')` → `'1.0.0'` in `default-components.ts` (was crashing on startup)
 
 **Goal**: wire real LLM calls via OpenRouter to both the generation pipeline and agent chat, using the prompt governance runtime built in Phase 4.
 
