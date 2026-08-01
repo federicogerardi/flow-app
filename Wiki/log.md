@@ -1,11 +1,11 @@
----
-type: log
-tags:
-  - wiki/log
----
+<!-- llm-wiki-log-header-start -->
+# Wiki Operation Log
 
-# Operation Log
+Every ingest, lint run, and maintenance operation is recorded here automatically. For a better experience, use the **Operation History** panel:
+- Cmd+P → "View operation history"
+- Or open from Settings → Auto Maintenance → Operation History
 
+---
 ## [2026-08-01] synthesis | Rational implementation roadmap filed
 
 Files created/updated:

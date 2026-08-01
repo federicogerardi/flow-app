@@ -231,12 +231,25 @@ qmd query "test" 2>/dev/null &  # downloads ~1.28GB expansion model + ~0.6GB rer
 
 Once models are cached in `~/.cache/qmd/models/`, `qmd query` runs instantly.
 
-**Collection setup (one-time):**
+**Collection setup (one-time, per machine):**
+
+This project uses a project-local `.qmd/` config (not tracked in git — absolute paths differ per machine). On each new machine, copy the example template and adapt:
 
 ```bash
+# 1. Copy example template and set your absolute vault path
+cp .qmd/index.yml.example .qmd/index.yml
+# Edit .qmd/index.yml — replace <ABSOLUTE_VAULT_PATH> with your machine's path
+#   Linux:   /home/<user>/Dev/Progetti/flow-app
+#   macOS:   /Users/<user>/Dev/flow-app
+
+# 2. Alternatively, create from scratch with the CLI:
 qmd collection add /path/to/vault --name flow-app --mask "**/*.md"
+
+# 3. Index and embed
 qmd update && qmd embed
 ```
+
+Models are cached globally in `~/.cache/qmd/models/` (shared across collections, not tracked in git).
 
 **Index maintenance (after wiki changes):**
 
