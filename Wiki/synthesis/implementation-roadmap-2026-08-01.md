@@ -121,7 +121,7 @@ Exit criteria:
 
 - Prompt updates are traceable and replay-safe.
 
-### Phase 5 — Expansion Tracks (Week 8+)
+### Phase 5 — Expansion Tracks (Week 8+) ✅
 
 Order:
 
@@ -129,6 +129,19 @@ Order:
 2. [[Gamification]]
 
 Reasoning: chat has stronger direct workflow value and lower cross-context reward complexity than gamification.
+
+Implementation (2026-08-01, branch `feature/phase-3-workspace-collaboration`):
+
+- **Agent Chat bounded context** — Conversation aggregate, Message entity, 7 agent personas
+- **Message entity** — `user()`, `agent()`, `system()` factories, immutable, append-only
+- **Conversation aggregate** — `addMessage()`, `archive()`, auto-title from first message, `recentMessages(n)` for context window
+- **7 agent personas** — strategist, copywriter, seo-specialist, ads-specialist, analyst, creative-director, email-marketer (static config)
+- **ConversationRepository** — interface + `KyselyConversationRepository` with privacy scoping (`findByUserAndWorkspace`)
+- **DB migration** — `007_conversations.sql` (conversations + messages tables)
+- **6 API routes** — agents list, conversations CRUD, messages, archive
+- **2 use cases** — `StartConversationUseCase`, `SendMessageUseCase`
+- **Privacy invariant** — conversations private to creator, enforced at domain + API layers
+- **Lint fix** — `migrate.ts` console.log → process.stdout/write (0 errors)
 
 ## Cross-Phase Non-Negotiables
 

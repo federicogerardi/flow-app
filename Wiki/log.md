@@ -6,6 +6,145 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 
 ---
+## [2026-08-01] implementation | Phase 5 — Agent Chat
+
+Phase 5 (Agent Chat) of [[synthesis/implementation-roadmap-2026-08-01]] implemented. Branch: `feature/phase-3-workspace-collaboration`.
+
+### Deliverables
+
+1. **Message entity** (`packages/domain/src/agent-chat/entities/Message.ts`)
+   - `user()`, `agent()`, `system()` factories
+   - Immutable, append-only, tracks `tokensUsed` and `modelUsed`
+
+2. **Conversation aggregate** (`packages/domain/src/agent-chat/entities/Conversation.ts`)
+   - `addMessage()`, `archive()`, auto-title from first user message
+   - `recentMessages(n)` for context window management
+   - Privacy: scoped to `userId`, no cross-user access
+
+3. **Agent Personas** (`packages/domain/src/agent-chat/agent-personas.ts`)
+   - 7 agents: strategist, copywriter, seo-specialist, ads-specialist, analyst, creative-director, email-marketer
+   - Static config with system prompts and capabilities
+
+4. **ConversationRepository** (`packages/domain/src/agent-chat/repositories/ConversationRepository.ts` + `packages/infra-db/src/repositories/conversation-repository.ts`)
+   - `findById()`, `findByUserAndWorkspace()` (privacy-scoped), `save()`
+
+5. **DB migration** (`packages/infra-db/migrations/007_conversations.sql`)
+   - `conversations` table (workspace_id, user_id, agent_key, title, status)
+   - `messages` table (conversation_id, role, content, tokens_used, model_used)
+
+6. **API routes** (`apps/backend/src/api/agent-chat.ts`)
+   - GET `/api/workspaces/:id/agents` — list 7 agents
+   - POST `/api/workspaces/:id/conversations` — start conversation
+   - GET `/api/workspaces/:id/conversations` — list user's conversations
+   - GET `/api/conversations/:id` — get conversation + messages
+   - POST `/api/conversations/:id/messages` — send message
+   - POST `/api/conversations/:id/archive` — archive conversation
+
+7. **Use cases** (`apps/backend/src/application/agent-chat/`)
+   - `StartConversationUseCase`, `SendMessageUseCase`
+
+8. **Lint fix** — `packages/infra-db/migrate.ts` console.log → process.stdout/write
+
+### Files
+
+**New files (14):**
+- `packages/domain/src/agent-chat/entities/Message.ts`
+- `packages/domain/src/agent-chat/entities/Conversation.ts`
+- `packages/domain/src/agent-chat/value-objects/MessageRole.ts`
+- `packages/domain/src/agent-chat/value-objects/ConversationStatus.ts`
+- `packages/domain/src/agent-chat/value-objects/AgentKey.ts`
+- `packages/domain/src/agent-chat/domain-events/index.ts`
+- `packages/domain/src/agent-chat/repositories/ConversationRepository.ts`
+- `packages/domain/src/agent-chat/agent-personas.ts`
+- `packages/domain/src/agent-chat/index.ts`
+- `packages/infra-db/src/repositories/conversation-repository.ts`
+- `packages/infra-db/migrations/007_conversations.sql`
+- `apps/backend/src/api/agent-chat.ts`
+- `apps/backend/src/application/agent-chat/start-conversation.usecase.ts`
+- `apps/backend/src/application/agent-chat/send-message.usecase.ts`
+
+**Modified files (6):**
+- `packages/domain/src/index.ts` — agent-chat exports
+- `packages/infra-db/src/index.ts` — KyselyConversationRepository export
+- `packages/infra-db/src/types.ts` — ConversationsTable, MessagesTable
+- `packages/infra-db/migrate.ts` — lint fix
+- `apps/backend/src/app.ts` — agent chat routes + conversationRepo
+- `apps/backend/src/server.ts` — conversationRepo dependency
+
+### Verification
+
+- `npm run build --workspace=apps/backend`: 0 errors
+- `npm test`: 8 tests pass
+- `npm run lint`: 0 errors, 41 warnings (all `@typescript-eslint/no-explicit-any`)
+
+### Wiki updates
+
+- `Wiki/synthesis/implementation-roadmap-2026-08-01.md` — Phase 5 marked ✅
+- `Wiki/overview.md` — Phase 4+5 status updated
+- `Wiki/index.md` — maintenance notes added
+- `Wiki/log.md` — this entry
+
+---
+
+## [2026-08-01] implementation | Phase 4 — Prompt Governance Runtime
+
+Phase 4 of [[synthesis/implementation-roadmap-2026-08-01]] implemented. Branch: `feature/phase-3-workspace-collaboration`.
+
+### Deliverables
+
+1. **PromptTemplateId** (`packages/domain/src/generation/prompting/PromptTemplateId.ts`)
+   - `{toolKey}/{stepLabel}` format, validated
+
+2. **PromptVersion** (`packages/domain/src/generation/prompting/PromptVersion.ts`)
+   - Semver or "latest", `isPinned`/`isLatest` getters
+
+3. **PromptComponent** (`packages/domain/src/generation/prompting/PromptComponent.ts`)
+   - Types: system_rule, format_constraint, safety_guard, style_guide, domain_knowledge
+
+4. **PromptComponentRegistry** (`packages/domain/src/generation/prompting/PromptComponentRegistry.ts`)
+   - `register()`, `get()`, `resolveAll()` with missing component error
+
+5. **PromptComposer** (`packages/domain/src/generation/prompting/PromptComposer.ts`)
+   - Layered composition: system_rules → template → format_constraints
+   - Slot resolution: `{{key}}` replaced at compose time
+
+6. **PromptTemplateRepository** (`packages/domain/src/generation/prompting/PromptTemplateRepository.ts` + `apps/backend/src/infrastructure/prompt-template-repository.ts`)
+   - Interface + filesystem implementation
+   - `findById()`, `publishVersion()`, `listVersions()`
+
+7. **Default components** (`packages/domain/src/generation/prompting/default-components.ts`)
+   - 12 components: anti-hallucination, output formats, style guides, safety guards
+   - Italian 'Tu' form in language guidelines
+
+8. **StepDefinition updated** (`packages/domain/src/generation/tools/tool-definition.ts`)
+   - Versioned prompt: `templateId` + `version`, backward compatible with `template`
+
+### Files
+
+**New files (10):**
+- `packages/domain/src/generation/prompting/PromptTemplateId.ts`
+- `packages/domain/src/generation/prompting/PromptVersion.ts`
+- `packages/domain/src/generation/prompting/PromptTemplateContent.ts`
+- `packages/domain/src/generation/prompting/PromptComponent.ts`
+- `packages/domain/src/generation/prompting/PromptComponentRegistry.ts`
+- `packages/domain/src/generation/prompting/PromptComposer.ts`
+- `packages/domain/src/generation/prompting/PromptTemplateRepository.ts`
+- `packages/domain/src/generation/prompting/default-components.ts`
+- `packages/domain/src/generation/prompting/index.ts`
+- `apps/backend/src/infrastructure/prompt-template-repository.ts`
+
+**Modified files (4):**
+- `packages/domain/src/generation/tools/tool-definition.ts` — versioned prompt
+- `packages/domain/src/generation/tools/index.ts` — defaultComponents + versioned prompts
+- `packages/domain/src/generation/index.ts` — prompting exports
+
+### Verification
+
+- `npm run build --workspace=apps/backend`: 0 errors
+- `npm test`: 8 tests pass
+
+---
+
 ## [2026-08-01] implementation | Phase 3 — Workspace Collaboration
 
 Phase 3 of [[synthesis/implementation-roadmap-2026-08-01]] implemented. Branch: `feature/phase-3-workspace-collaboration`.
