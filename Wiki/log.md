@@ -6,6 +6,71 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 
 ---
+## [2026-08-01] implementation | Phase 2 — Reliability and Ops Hardening
+
+Phase 2 of [[synthesis/implementation-roadmap-2026-08-01]] implemented. Branch: `feature/phase-2-reliability-ops`.
+
+### Deliverables
+
+1. **Optimistic locking on Session**
+   - `ConcurrencyError` class (`packages/domain/src/shared/concurrency-error.ts`)
+   - `SessionRepository.saveWithLock()` interface
+   - `KyselySessionRepository.saveWithLock()` — conditional `WHERE version = ?`, throws `ConcurrencyError` on zero-row update
+   - `ErrorMapper` — `ConcurrencyError` → `409` with structured response `{code, message, details, retryable}`
+
+2. **Worker structured logging**
+   - `job_started`/`job_completed`/`job_failed` schema with `sessionId`, `durationMs`, `attempts`, `toolKey`, `stepCount`, `error`, `stack`
+   - Worker stall config: `lockDuration: 120s`, `stalledInterval: 30s`, `maxStalledCount: 2`
+
+3. **Queue health monitor**
+   - `QueueHealthMonitor` class (`apps/backend/src/generation/worker/health-monitor.ts`)
+   - SLO checks: failure rate, queue depth, P95 latency, stalled jobs
+   - Warning/critical thresholds per [[Job Queue - Monitoring and Stability]]
+
+4. **Admin endpoints**
+   - `GET /admin/jobs` — queue stats, worker uptime, stability metrics
+   - `GET /admin/health` — health check with active alerts
+
+5. **Graceful shutdown**
+   - `worker-process.ts` — SIGTERM handler: `pause()` → drain (30s) → `close()`
+   - Server SIGTERM: cleanup job stop → queue close → event bridge close → DB destroy
+
+6. **Cleanup job**
+   - `CleanupJob` (`apps/backend/src/infrastructure/cleanup-job.ts`)
+   - Hourly: expired idempotency keys + snapshots >7 days
+
+### Files modified
+
+- `packages/domain/src/shared/concurrency-error.ts` — created
+- `packages/domain/src/shared/index.ts` — added `ConcurrencyError` export
+- `packages/domain/src/index.ts` — added `ConcurrencyError` export
+- `packages/domain/src/generation/repositories/SessionRepository.ts` — added `saveWithLock()` method
+- `packages/infra-db/src/repositories/session-repository.ts` — implemented `saveWithLock()` with Kysely
+- `apps/backend/src/infrastructure/error-handler.ts` — `ConcurrencyError` → `409` mapping
+- `apps/backend/src/generation/worker/session-worker.ts` — structured logging + stall config
+- `apps/backend/src/generation/worker/health-monitor.ts` — created
+- `apps/backend/src/generation/worker/worker-process.ts` — created
+- `apps/backend/src/api/admin.ts` — created
+- `apps/backend/src/app.ts` — added admin routes, queue dependency
+- `apps/backend/src/server.ts` — added queue, cleanup job, SIGTERM handler
+- `apps/backend/src/infrastructure/cleanup-job.ts` — created
+
+### Verification
+
+- `npm run build --workspace=apps/backend`: 0 errors
+- `npm test`: 8 tests pass
+
+### Wiki updates
+
+- `Wiki/synthesis/implementation-roadmap-2026-08-01.md` — Phase 2 marked ✅ with implementation details
+- `Wiki/overview.md` — implementation status table added (Phases 0-2 ✅)
+- `Wiki/concepts/Concurrency & Conflict Policy.md` — implementation section added
+- `Wiki/concepts/Job Queue - Monitoring and Stability.md` — implementation section added
+- `Wiki/index.md` — maintenance note added
+- `Wiki/log.md` — this entry
+
+---
+
 ## [2026-08-01] policy | Branch sync workflow + permanent branches documented
 
 Files updated:

@@ -1,4 +1,4 @@
-import { DomainError } from '@flow-app/domain';
+import { DomainError, ConcurrencyError } from '@flow-app/domain';
 import type { Request, Response, NextFunction } from 'express';
 import { logger } from './logger.js';
 
@@ -13,6 +13,10 @@ interface ErrorResponse {
 
 export class ErrorMapper {
   toHttpStatus(error: Error): number {
+    if (error instanceof ConcurrencyError) {
+      return 409;
+    }
+
     if (error instanceof DomainError) {
       switch (error.code) {
         case 'READINESS_FAILED':
@@ -45,6 +49,21 @@ export class ErrorMapper {
   }
 
   toResponse(error: Error): ErrorResponse {
+    if (error instanceof ConcurrencyError) {
+      return {
+        error: {
+          code: error.code,
+          message: error.message,
+          details: {
+            resourceId: error.resourceId,
+            expectedVersion: error.expectedVersion,
+            actualVersion: error.actualVersion,
+          },
+          retryable: error.retryable,
+        },
+      };
+    }
+
     if (error instanceof DomainError) {
       return {
         error: {

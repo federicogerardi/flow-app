@@ -107,6 +107,38 @@ Without these constraints, the policy is considered non-compliant.
 - Every mutable repository documents its concurrency strategy.
 - Tests must include at least one concurrent update scenario per critical aggregate.
 
+## Implementation
+
+Implemented in Phase 2 (2026-08-01, branch `feature/phase-2-reliability-ops`):
+
+| Component | File | Description |
+|-----------|------|-------------|
+| `ConcurrencyError` | `packages/domain/src/shared/concurrency-error.ts` | Domain error with `resourceId`, `expectedVersion`, `actualVersion` |
+| `SessionRepository.saveWithLock()` | `packages/domain/src/generation/repositories/SessionRepository.ts` | Interface method for conditional version-based update |
+| `KyselySessionRepository.saveWithLock()` | `packages/infra-db/src/repositories/session-repository.ts` | Kysely implementation: `UPDATE WHERE id = ? AND version = ?`, throws `ConcurrencyError` on `numUpdatedRows === 0n` |
+| `ErrorMapper` | `apps/backend/src/infrastructure/error-handler.ts` | `ConcurrencyError` → `409` with structured response |
+
+### Conflict response shape
+
+```json
+{
+  "error": {
+    "code": "CONFLICT",
+    "message": "Resource <id> modified by another actor (expected v4, actual v5)",
+    "details": {
+      "resourceId": "uuid",
+      "expectedVersion": 4,
+      "actualVersion": 5
+    },
+    "retryable": true
+  }
+}
+```
+
+### Worker optimistic locking
+
+Worker saves session state via `saveWithLock(session, expectedVersion)` to prevent duplicate terminal side effects under retries. If a concurrent update modifies the session between load and save, the worker receives a `409 CONFLICT` and BullMQ retries the job.
+
 ## Sources
 
 - [[Idempotency Implementation]]

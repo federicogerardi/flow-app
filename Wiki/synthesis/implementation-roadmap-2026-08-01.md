@@ -55,7 +55,7 @@ Exit criteria:
 - One tool completes end-to-end in staging with deterministic status transitions.
 - Idempotent replay validated (`201` create, `200` replay).
 
-### Phase 2 — Reliability and Ops Hardening (Week 4)
+### Phase 2 — Reliability and Ops Hardening (Week 4) ✅
 
 Focus:
 
@@ -69,6 +69,20 @@ Exit criteria:
 
 - No duplicate terminal side effects under retries.
 - Queue and error-rate SLOs are observable and alertable.
+
+Implementation (2026-08-01, branch `feature/phase-2-reliability-ops`):
+
+- `ConcurrencyError` class with `resourceId`, `expectedVersion`, `actualVersion` (mapped to `409`)
+- `SessionRepository.saveWithLock()` — conditional `WHERE version = ?`, throws `ConcurrencyError` on zero-row update
+- `KyselySessionRepository.saveWithLock()` — Kysely implementation with `numUpdatedRows === 0n` detection
+- `ErrorMapper` updated — `ConcurrencyError` → `409` with structured response `{code, message, details, retryable}`
+- Worker structured logging — `job_started`/`job_completed`/`job_failed` schema with `sessionId`, `durationMs`, `attempts`, `toolKey`, `stepCount`, `error`, `stack`
+- Worker stall config — `lockDuration: 120s`, `stalledInterval: 30s`, `maxStalledCount: 2`
+- `QueueHealthMonitor` — SLO checks (failure rate, queue depth, P95 latency, stalled jobs) with warning/critical thresholds
+- `GET /admin/jobs` — queue stats + worker uptime + stability metrics
+- `GET /admin/health` — health check endpoint returning status + active alerts
+- `worker-process.ts` — SIGTERM graceful shutdown: `worker.pause()` → drain (30s timeout) → `worker.close()`
+- `CleanupJob` — hourly scheduled cleanup for expired idempotency keys + snapshots >7 days
 
 ### Phase 3 — Workspace Collaboration (Weeks 5–6)
 

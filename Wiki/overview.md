@@ -78,3 +78,14 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 ## Sources
 
 4 source documents fully ingested. Original raw files (`doodle/`) have been removed — all content now lives in [[index|this wiki]].
+
+## Implementation Status
+
+| Phase | Status | Scope |
+|-------|--------|-------|
+| Phase 0 — Foundation Bootstrap | ✅ | Monorepo, tooling, CI, Docker Compose |
+| Phase 1 — Core Async Generation | ✅ | Session aggregate, BullMQ worker, XState machine, SSE events, idempotency |
+| Phase 2 — Reliability & Ops Hardening | ✅ | Optimistic locking, health monitor, graceful shutdown, cleanup job |
+| Phase 3 — Workspace Collaboration | ⏳ | Membership model, role enforcement, migration alignment |
+| Phase 4 — Prompt Governance Runtime | ⏳ | Prompt versioning, idempotency signature stability |
+| Phase 5 — Expansion Tracks | ⏳ | Agent Chat, Gamification |

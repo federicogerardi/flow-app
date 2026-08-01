@@ -1,6 +1,6 @@
 import type { Kysely } from 'kysely';
 import type { DB } from '../types';
-import { Session, type SessionRepository } from '@flow-app/domain';
+import { Session, ConcurrencyError, type SessionRepository } from '@flow-app/domain';
 
 export class KyselySessionRepository implements SessionRepository {
   constructor(private readonly db: Kysely<DB>) {}
@@ -87,6 +87,39 @@ export class KyselySessionRepository implements SessionRepository {
         }),
       )
       .execute();
+  }
+
+  async saveWithLock(session: Session, expectedVersion: number): Promise<void> {
+    const result = await this.db
+      .updateTable('sessions')
+      .set({
+        status: session.status as any,
+        current_step_index: session.currentStepIndex,
+        started_at: session.startedAt,
+        completed_at: session.completedAt,
+        error_code: session.errorCode,
+        error_message: session.errorMessage,
+        version: session.version,
+        updated_at: new Date(),
+      })
+      .where('id', '=', session.sessionId)
+      .where('version', '=', expectedVersion)
+      .executeTakeFirst();
+
+    if (result.numUpdatedRows === 0n) {
+      // Version mismatch — fetch actual version for error details
+      const current = await this.db
+        .selectFrom('sessions')
+        .where('id', '=', session.sessionId)
+        .select('version')
+        .executeTakeFirst();
+
+      throw new ConcurrencyError(
+        session.sessionId,
+        expectedVersion,
+        current?.version ?? -1,
+      );
+    }
   }
 
   async saveSnapshot(sessionId: string, snapshot: string): Promise<void> {

@@ -28,6 +28,9 @@ export function createSessionWorker(deps: SessionWorkerDeps): Worker<SessionJobD
       connection: { url: redisUrl },
       concurrency: 5,
       limiter: { max: 3, duration: 1000 },
+      lockDuration: 120_000,
+      stalledInterval: 30_000,
+      maxStalledCount: 2,
     },
   );
 }
@@ -37,51 +40,74 @@ async function processSessionJob(
   deps: SessionWorkerDeps,
 ): Promise<void> {
   const { sessionId } = job.data;
-  const log = logger.child({ sessionId });
+  const startTime = Date.now();
+  const log = logger.child({ sessionId, jobId: job.id });
 
-  log.info('Job started');
+  log.info({ attempt: job.attemptsMade + 1 }, 'job_started');
 
-  const session = await deps.sessionRepo.findById(sessionId);
-  if (!session) throw new Error(`Session ${sessionId} not found`);
+  try {
+    const session = await deps.sessionRepo.findById(sessionId);
+    if (!session) throw new Error(`Session ${sessionId} not found`);
 
-  const tool = getTool(session.toolKey as ToolKey);
-  if (!tool) throw new Error(`Tool ${session.toolKey} not found`);
+    const tool = getTool(session.toolKey as ToolKey);
+    if (!tool) throw new Error(`Tool ${session.toolKey} not found`);
 
-  const machine = sessionMachine.provide({
-    actors: {
-      executeStep: fromPromise<Artifact, any>(async () => {
-        return ArtifactEntity.create(sessionId, 1, 'Mock generated content');
-      }),
-      persistSession: fromPromise<void, any>(async ({ input }) => {
-        await deps.sessionRepo.save(input.session);
-      }),
-    },
-  });
-
-  const actor = createActor(machine, { input: { session, tool } });
-
-  actor.subscribe((state) => {
-    deps.eventBridge.publish(sessionId, {
-      event: state.value === 'completed' ? 'session_completed' : 'step_completed',
-      data: {
-        sessionId,
-        status: state.value,
-        stepNumber: state.context.currentStepIndex ?? 0,
+    const machine = sessionMachine.provide({
+      actors: {
+        executeStep: fromPromise<Artifact, any>(async () => {
+          return ArtifactEntity.create(sessionId, 1, 'Mock generated content');
+        }),
+        persistSession: fromPromise<void, any>(async ({ input }) => {
+          const expectedVersion = session.version;
+          await deps.sessionRepo.saveWithLock(input.session, expectedVersion);
+        }),
       },
     });
-  });
 
-  actor.start();
+    const actor = createActor(machine, { input: { session, tool } });
 
-  actor.send({ type: 'CONFIGURE', acquisitionData: { userInputs: {}, fileContents: {}, apiResponses: [], resolvedAssets: new Map() } });
-  actor.send({ type: 'QUEUE' });
-  actor.send({ type: 'WORKER_PICKUP' });
-
-  await new Promise<void>((resolve) => {
     actor.subscribe((state) => {
-      if (state.status === 'done') resolve();
+      deps.eventBridge.publish(sessionId, {
+        event: state.value === 'completed' ? 'session_completed' : 'step_completed',
+        data: {
+          sessionId,
+          status: state.value,
+          stepNumber: state.context.currentStepIndex ?? 0,
+        },
+      });
     });
-  });
 
-  log.info('Job completed');
+    actor.start();
+
+    actor.send({ type: 'CONFIGURE', acquisitionData: { userInputs: {}, fileContents: {}, apiResponses: [], resolvedAssets: new Map() } });
+    actor.send({ type: 'QUEUE' });
+    actor.send({ type: 'WORKER_PICKUP' });
+
+    await new Promise<void>((resolve) => {
+      actor.subscribe((state) => {
+        if (state.status === 'done') resolve();
+      });
+    });
+
+    log.info(
+      {
+        durationMs: Date.now() - startTime,
+        attempts: job.attemptsMade + 1,
+        toolKey: session.toolKey,
+        stepCount: tool.steps.length,
+      },
+      'job_completed',
+    );
+  } catch (error) {
+    log.error(
+      {
+        durationMs: Date.now() - startTime,
+        attempts: job.attemptsMade + 1,
+        error: error instanceof Error ? error.message : 'unknown',
+        stack: error instanceof Error ? error.stack : undefined,
+      },
+      'job_failed',
+    );
+    throw error;
+  }
 }
