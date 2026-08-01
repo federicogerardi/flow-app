@@ -19,15 +19,46 @@ Provide one explicit model for branches, pull requests, commit format, and merge
 
 ## Branching Model
 
-- `main`: protected, always releasable.
+### Permanent Branches
+
+| Branch | Scopo | Protezione | Push diretto |
+|--------|-------|------------|--------------|
+| `main` | Always releasable, produzione | Status checks + linear history + no force push + no delete | ❌ Solo PR |
+| `staging` | Validation pre-prod, smoke tests | Status checks + no force push + no delete | ❌ Solo PR |
+| `dev` | Fast feedback, sviluppo | Nessuna | ✅ Consentito |
+
+### Temporary Branches
+
 - `feature/<scope>-<short-name>`: short-lived implementation branches.
 - `fix/<scope>-<short-name>`: short-lived bug-fix branches.
 - `chore/<scope>-<short-name>`: tooling/docs/maintenance branches.
 - `release/<yyyy-mm-dd>-<tag>`: optional stabilization branch only when needed for coordinated releases.
 
-Rules:
+### Promotion Flow
 
-- No direct pushes to `main`.
+```
+feature/* ──PR──▶ dev ──merge──▶ staging ──merge──▶ main ──▶ prod
+```
+
+1. `feature/*` → PR a `dev` (CI checks).
+2. `dev` → merge a `staging` (smoke tests).
+3. `staging` → PR a `main` (CI + manual approval).
+4. `main` → deploy prod.
+
+### Branch Sync Policy
+
+After every PR merge, downstream branches are automatically synchronized:
+
+| Trigger | Sync Target | Strategy | Workflow |
+|---------|-------------|----------|----------|
+| PR merged to `main` | `staging` + `dev` | Auto-merge (`-X theirs`) | `branch-sync.yml` |
+| PR merged to `staging` | `dev` | Auto-merge (`-X theirs`) | `branch-sync.yml` |
+
+Conflict resolution: `-X theirs` means upstream wins (`main` > `staging` > `dev`). If merge fails, manual sync is required.
+
+## Rules
+
+- No direct pushes to `main` or `staging`.
 - Branch lifetime target: <= 5 working days.
 - Rebase or merge `main` at least daily for branches open longer than 2 days.
 

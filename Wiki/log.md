@@ -6,6 +6,85 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 
 ---
+## [2026-08-01] policy | Branch sync workflow + permanent branches documented
+
+Files updated:
+
+- `Wiki/concepts/Git Governance Policy.md` — added permanent branches table (`main`, `staging`, `dev`), promotion flow diagram, branch sync policy section
+- `Wiki/concepts/CI-CD Promotion Policy.md` — updated environments table, promotion flow with branch mapping, branch sync reference
+- `Wiki/index.md` — maintenance note added
+- `Wiki/log.md` — this entry
+
+Implementation: `.github/workflows/branch-sync.yml` (PR #2)
+
+## [2026-08-01] implementation | Phase 0-1 code bootstrap (monorepo + core async generation)
+
+Phase 0 and Phase 1 of [[synthesis/implementation-roadmap-2026-08-01]] implemented.
+
+### Phase 0 — Foundation Bootstrap
+
+Files created:
+
+- Root: `package.json` (npm workspaces), `tsconfig.json` (project references), `vitest.workspace.ts`, `vitest.config.base.ts`, `eslint.config.js`, `docker-compose.yml`, `.gitignore`
+- `apps/backend/`: Express app, fail-closed config (Zod), Pino logger, `.env.example`, `.env.local.example`
+- `apps/frontend/`: Vite + React 19 skeleton, proxy config
+- `packages/domain/`: shared kernel (Identifier, DomainEvent, DateTime, DomainError)
+- `packages/contracts/`: barrel exports, shared types
+- `packages/infra-db/`: skeleton with Kysely
+- `packages/copy/`: skeleton
+- `.github/workflows/ci.yml`: typecheck + lint + test gates
+
+### Phase 1 — Core Async Generation Vertical Slice
+
+Domain layer (`packages/domain/src/generation/`):
+
+- Entities: `Session` (aggregate root with `apply()` method), `Artifact`
+- Value Objects: `SessionId`, `ToolKey`, `StepNumber`, `ArtifactId`, `ArtifactContent`, `SessionStatus`, `ArtifactStatus`, `ReadinessPolicy`
+- Lifecycle: `SessionLifecycle` (domain-owned state machine: draft→ready→queued→running→completed|failed|cancelled)
+- Domain Events: `SessionStarted`, `StepCompleted`, `SessionCompleted`, `SessionFailed`, `SessionCancelled`
+- Domain Services: `ContextEnricher`
+- Repository interface: `SessionRepository`
+- Tools: `tool-definition.ts` types, `blog-post` example, `toolRegistry`
+
+Contracts layer (`packages/contracts/src/`):
+
+- `SessionDTO`, `SessionDetailDTO`, `ArtifactDTO`
+- `StartSessionRequest/Response`
+- `SSEEvent` types (4 events)
+
+Infra-DB layer (`packages/infra-db/src/`):
+
+- Kysely `DB` type with all tables
+- `KyselySessionRepository` implementation
+
+Backend layer (`apps/backend/src/`):
+
+- `infrastructure/error-handler.ts`: DomainError → HTTP status mapping
+- `infrastructure/event-bus.ts`: in-process DomainEventBus
+- `infrastructure/job-event-bridge.ts`: Redis pub/sub for SSE (optional in dev)
+- `application/generation/start-session.usecase.ts`: idempotent session creation
+- `api/generation.ts`: POST `/api/tools/:toolKey/sessions`, GET `/api/sessions/:id`, GET `/api/sessions/:id/events`
+- `generation/machines/session-machine.ts`: XState v5 machine
+- `generation/worker/session-worker.ts`: BullMQ worker
+- `generation/jobs/enqueue-session.job.ts`: queue integration
+
+Frontend layer (`apps/frontend/src/api/`):
+
+- `client.ts`: typed HTTP client
+- `sse-client.ts`: multi-session SSE manager
+- `hooks.ts`: `useSession`, `useWorkspaces`
+
+### Verification
+
+- `npm run typecheck`: 0 errors
+- `npm test -- --run`: 8 tests pass
+- `npm run lint`: 0 errors (18 `any` warnings)
+
+### PR
+
+- [#1](https://github.com/federicogerardi/flow-app/pull/1): `feat(monorepo): Phase 0-1 — Foundation Bootstrap + Core Async Generation`
+- Branch protection active on `main` (status checks: Lint, Typecheck, Test)
+
 ## [2026-08-01] synthesis | Rational implementation roadmap filed
 
 Files created/updated:
