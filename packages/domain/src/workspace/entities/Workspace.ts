@@ -101,7 +101,7 @@ export class Workspace {
     if (!newOwner) throw new NotAnActiveMemberError(to, this.workspaceId);
     const currentOwner = this._memberships.find((m) => m.userId === from);
     if (currentOwner) currentOwner.changeRole('editor');
-    (newOwner as any)._role = 'owner';
+    newOwner._setRoleAsOwner();
     this._version++;
     return {
       eventType: 'OwnershipTransferred',

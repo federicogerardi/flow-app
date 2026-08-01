@@ -18,6 +18,7 @@ export interface SessionRepository {
    * @param expectedVersion - The version expected before update (conditional WHERE version = ?)
    */
   saveWithLock(session: Session, expectedVersion: number): Promise<void>;
+  saveIdempotencyKey(hash: string, sessionId: string): Promise<void>;
   saveSnapshot(sessionId: string, snapshot: string): Promise<void>;
   loadSnapshot(sessionId: string): Promise<string | null>;
 }

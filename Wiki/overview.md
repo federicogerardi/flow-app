@@ -3,7 +3,7 @@ type: synthesis
 tags:
   - wiki/synthesis
   - wiki/overview
-date_updated: 2026-08-01
+date_updated: 2026-08-02
 ---
 
 # Overview — Flow App
@@ -81,7 +81,7 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 
 ## Implementation Status
 
-### Completed (Phase 0–7)
+### Completed (Phase 0–7 + Phase 8 Backend)
 
 | Phase | Status | Scope |
 |-------|--------|-------|
@@ -93,19 +93,19 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 | Phase 5 — Expansion Tracks | ✅ | Agent Chat (Conversation, Message, 7 agents) |
 | Phase 6 — Real LLM Integration | ✅ | LlmGateway, ModelRegistry, 4 tiers, worker + chat wiring |
 | Phase 7 — Frontend MVP | ✅ | 4 shared components, 4 pages, 5 routes, MUI + SWR + react-router v7 |
+| Phase 8 — Real Authentication | 🟡 | Backend complete (JWT, bcrypt, Passport, 7 auth endpoints). Frontend auth flow remaining. [[synthesis/phase-8-real-auth-plan\|Plan →]] |
 
-### Planned (Phase 8–11)
+### Planned (Phase 9–11)
 
 | Phase | Priority | Scope |
 |-------|----------|-------|
-| Phase 8 — Real Authentication | 🟡 High | JWT auth replacing dev stub: register, login, refresh, OAuth, protected routes. [[synthesis/phase-8-real-auth-plan|Detailed plan →]] |
 | Phase 9 — Deployment & CI/CD | 🟡 High | Dockerfile, Railway config, GitHub Actions pipeline |
 | Phase 10 — Testing & Quality | 🟢 Medium | Domain tests, API tests, worker tests, CI quality gates |
 | Phase 11 — Gamification | 🟢 Medium | Points, achievements, leaderboards, event-driven rewards |
 
 ### Critical Gaps (remaining)
 
-1. **Auth is a dev stub** — hardcoded seed user, no login/register, JWT secret defined but never used. Phase 8 planned.
+1. **Frontend auth flow** — backend auth is complete (JWT, bcrypt, Passport, 7 endpoints), but frontend has no login/register pages, no AuthContext, no protected routes. Workstream D of Phase 8.
 2. **Zero deployment** — no Dockerfile, no CI/CD, no Railway config, runs only via `npm run dev`. Phase 9 planned.
 3. **Near-zero tests** — 1 test file (Identifier), vitest/supertest/testing-library installed but unused. Phase 10 planned.
 

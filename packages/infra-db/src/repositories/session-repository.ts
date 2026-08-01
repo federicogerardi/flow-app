@@ -121,17 +121,6 @@ export class KyselySessionRepository implements SessionRepository {
         }),
       )
       .execute();
-
-    // Insert idempotency key with 24h TTL
-    await this.db
-      .insertInto('idempotency_keys')
-      .values({
-        key_hash: session.idempotencyKeyHash,
-        session_id: session.sessionId,
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      })
-      .onConflict((oc) => oc.column('key_hash').doNothing())
-      .execute();
   }
 
   async saveWithLock(session: Session, expectedVersion: number): Promise<void> {
@@ -165,6 +154,18 @@ export class KyselySessionRepository implements SessionRepository {
         current?.version ?? -1,
       );
     }
+  }
+
+  async saveIdempotencyKey(hash: string, sessionId: string): Promise<void> {
+    await this.db
+      .insertInto('idempotency_keys')
+      .values({
+        key_hash: hash,
+        session_id: sessionId,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      })
+      .onConflict((oc) => oc.column('key_hash').doNothing())
+      .execute();
   }
 
   async saveSnapshot(sessionId: string, snapshot: string): Promise<void> {

@@ -1,4 +1,4 @@
-import { Message, type ConversationRepository, getAgent } from '@flow-app/domain';
+import { Message, ConversationNotFoundError, NotConversationParticipantError, type ConversationRepository, getAgent } from '@flow-app/domain';
 import type { LlmGateway } from '../../infrastructure/llm-gateway.js';
 import { logger } from '../../infrastructure/logger.js';
 
@@ -22,10 +22,10 @@ export class SendMessageUseCase {
 
   async execute(cmd: SendMessageCommand): Promise<SendMessageResult> {
     const conversation = await this.conversationRepo.findById(cmd.conversationId);
-    if (!conversation) throw new Error('Conversation not found');
+    if (!conversation) throw new ConversationNotFoundError(cmd.conversationId);
 
     if (conversation.userId !== cmd.userId) {
-      throw new Error('Not authorized to send messages to this conversation');
+      throw new NotConversationParticipantError(cmd.userId, cmd.conversationId);
     }
 
     const userMessage = Message.user(cmd.conversationId, cmd.content);

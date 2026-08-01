@@ -267,6 +267,147 @@ Example:
 
 **Enforcement**: if any leak is found during a wiki write, fix it immediately before committing. A single leak in `Wiki/` or repo is a blocking issue.
 
+---
+
+## Domain Design Rules
+
+These rules enforce DDD tactical patterns discovered from governance audits (Phase 0–8). Violations introduce technical debt that compounds across bounded contexts. Apply on every domain/application code write.
+
+### 1 — No `as any` to access private fields in domain aggregates
+
+**Pattern**: aggregate roots that use `(entity as any)._privateField` to mutate child entities violate the encapsulation contract. Child entities must expose explicit delegation methods — even if package-private visibility isn't available in TypeScript, use a clearly named internal setter.
+
+```typescript
+// ❌ VIOLATION — Workspace.transferOwnership()
+(newOwner as any)._role = 'owner';
+
+// ✅ CORRECT — Add explicit delegation on WorkspaceMembership
+// In WorkspaceMembership:
+_setRoleAsOwner(): void { this._role = 'owner'; }
+// In Workspace.transferOwnership():
+newOwner._setRoleAsOwner();
+```
+
+**Checklist before writing domain mutation code:**
+- [ ] No `as any` cast on `this` or any entity private field
+- [ ] Child entity exposes a named method for every mutation the aggregate root needs
+- [ ] Field remains `private` (not `public` or `protected`)
+
+### 2 — Zero external validation libraries in `packages/domain`
+
+**Pattern**: importing `zod`, `class-validator`, `yup`, or any validation framework into the domain layer couples the domain to infrastructure. Value Objects must validate inline using plain TypeScript.
+
+```typescript
+// ❌ VIOLATION — Email.ts
+import { z } from 'zod';
+const schema = z.string().email();
+static create(raw: string): Email { ... schema.safeParse(raw) ... }
+
+// ✅ CORRECT — Inline validation
+static create(raw: string): Email {
+  const normalized = raw.trim().toLowerCase();
+  if (!normalized.includes('@') || normalized.length > 255) {
+    throw new InvalidEmailError(raw);
+  }
+  return new Email(normalized);
+}
+```
+
+**Checklist before writing domain code:**
+- [ ] No `import` from `zod` anywhere under `packages/domain/src/`
+- [ ] No `import` from any validation library in domain files
+- [ ] Validation logic lives in the value object's `static create()` or `private constructor()`
+- [ ] Complex validation extracted to a pure function in `packages/domain/src/shared/`
+
+### 3 — Every domain and application error must extend `DomainError`
+
+**Pattern**: `throw new Error(...)` in domain aggregates, value objects, or application use cases bypasses the `ErrorMapper → HTTP status` pipeline. All errors that reach the API layer MUST be `DomainError` subclasses with `code` and `retryable`.
+
+```typescript
+// ❌ VIOLATION — use case
+throw new Error('Workspace not found');
+
+// ❌ VIOLATION — aggregate
+export class InvalidSessionStateError extends Error { ... }
+
+// ✅ CORRECT
+export class WorkspaceNotFoundError extends DomainError {
+  readonly code = 'WORKSPACE_NOT_FOUND';
+  readonly retryable = false;
+  constructor(id: string) { super(`Workspace ${id} not found`); }
+}
+```
+
+**Checklist before writing domain/application code:**
+- [ ] No `throw new Error(` anywhere in `packages/domain/src/`
+- [ ] No `throw new Error(` anywhere in `apps/backend/src/application/`
+- [ ] Every custom error class extends `DomainError` (not plain `Error`)
+- [ ] Every error has an explicit `code` matching a case in `ErrorMapper.toHttpStatus()`
+
+### 4 — Value Objects with constrained domains must be classes, not type aliases
+
+**Pattern**: `type SessionStatus = 'a' | 'b' | 'c'` provides zero runtime validation and zero behavior (no `isTerminal()`, no `canTransitionTo()`). If a value has a finite set of valid states or requires validation, it MUST be a class with `private constructor`, `static` factory, and `equals()`.
+
+```typescript
+// ❌ VIOLATION — bare type alias
+export type MembershipRole = 'owner' | 'editor' | 'viewer';
+
+// ✅ CORRECT — class value object
+export class MembershipRole {
+  private constructor(private readonly _value: 'owner' | 'editor' | 'viewer') {}
+  static readonly Owner = new MembershipRole('owner');
+  static readonly Editor = new MembershipRole('editor');
+  static readonly Viewer = new MembershipRole('viewer');
+  static from(value: string): MembershipRole { /* switch with throw */ }
+  equals(other: MembershipRole): boolean { return this._value === other._value; }
+  toString(): string { return this._value; }
+}
+```
+
+**Exceptions**: open-ended strings (e.g., `ToolKey` for tool identifiers that may grow unbounded) or truly unconstrained values may remain as type aliases. Document the reason in a comment.
+
+**Checklist before writing domain code:**
+- [ ] Every value with a finite set of valid states is a class, not a type alias
+- [ ] Class has `private constructor` (no `new` from outside)
+- [ ] Class has `static` factory or `static readonly` instances
+- [ ] Class has `equals(other: T): boolean`
+
+### 5 — Repository `save()` persists ONLY the aggregate root and its owned entities
+
+**Pattern**: `SessionRepository.save()` inserting into `idempotency_keys` is a side-effect hidden behind a generic method name. Cross-table operations that are not part of the aggregate's owned entity graph must be separate, explicitly-named methods.
+
+```typescript
+// ❌ VIOLATION — save() does two unrelated things
+async save(session: Session): Promise<void> {
+  await this.db.insertInto('sessions').values(...).execute();
+  await this.db.insertInto('idempotency_keys').values(...).execute(); // ← side-effect
+}
+
+// ✅ CORRECT — separate methods
+async save(session: Session): Promise<void> { /* sessions table only */ }
+async saveIdempotencyKey(hash: string, sessionId: string): Promise<void> { /* idempotency_keys table */ }
+```
+
+**Checklist before writing repository code:**
+- [ ] `save()` method touches ONLY the aggregate root table + owned entity tables (1:N within the aggregate boundary)
+- [ ] Cross-cutting tables (idempotency, events, audit logs) have their own dedicated methods
+- [ ] Method name clearly communicates what is being persisted
+
+### 6 — Factory methods follow canonical naming
+
+**Pattern**: inconsistent factory naming across aggregates — `Session.create()`, `Conversation.start()`, `Message.user()/agent()/system()`. Use `create()` for all aggregate root instantiation from business input.
+
+| Entity type | Factory method | Purpose |
+|-------------|---------------|---------|
+| Aggregate root | `static create(...)` | New entity from business input (generates ID) |
+| Aggregate root | `static reconstitute(...)` | Hydration from persistence (takes existing ID) |
+| Child entity (role-specific) | `static user(...)`, `static agent(...)` | Specialized factory with role-dependent defaults |
+
+**Checklist before writing domain code:**
+- [ ] Every aggregate root has exactly one `static create()` and one `static reconstitute()`
+- [ ] No custom factory names on aggregate roots (no `start()`, `begin()`, `init()`)
+- [ ] `reconstitute()` accepts all fields verbatim (no validation, no defaults) — the database is the source of truth
+
 ### Tools
 
 - **Obsidian CLI**: `obsidian read file="..."`, `obsidian search query="..."`, etc. (symlinked to `~/.local/bin/obsidian`)

@@ -6,6 +6,255 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 
 ---
+## [2026-08-02] remediation | DDD Governance — audit findings + CLAUDE.md rules
+
+Full DDD governance audit against Phase 0–8 codebase (58 files, 4 bounded contexts). 8 findings identified, 7 remediated.
+
+### Audit findings (ranked by severity)
+
+| # | Severity | Finding | Status |
+|---|----------|---------|--------|
+| 1 | Critical | `Workspace.transferOwnership()` uses `(newOwner as any)._role = 'owner'` | ✅ Remediated |
+| 2 | Critical | `zod` imported in `Email.ts` (domain layer purity) | ✅ Remediated |
+| 3 | Important | `ConcurrencyError extends Error` (not `DomainError`) | ✅ Remediated |
+| 4 | Important | `InvalidSessionStateError`, `ConversationArchivedError`, `ConversationAlreadyArchivedError` extend `Error` | ✅ Remediated |
+| 5 | Important | 5 `throw new Error()` in use cases (workspace + agent-chat) | ✅ Remediated |
+| 6 | Minor | `SessionStatus`, `ToolKey`, `MembershipRole`, etc. are plain type aliases | Documented (Rule 4) |
+| 7 | Minor | `SessionRepository.save()` inserts idempotency key as side-effect | ✅ Remediated |
+| 8 | Minor | `WorkspaceRepository.findByMember()` N+1 queries | Deferred |
+
+### Remediation details
+
+**Fix 1 — Encapsulation**: Added `_setRoleAsOwner()` delegation method on `WorkspaceMembership`. `Workspace.transferOwnership()` now calls `newOwner._setRoleAsOwner()` instead of `(newOwner as any)._role = 'owner'`.
+
+**Fix 2 — Domain purity**: Removed `import { z } from 'zod'` from `Email.ts`. Replaced with inline validation: regex `EMAIL_REGEX` + length ≤ 255.
+
+**Fix 3 — Error hierarchy**: `ConcurrencyError` now `extends DomainError`. Removed redundant `this.name` setter (inherited from `DomainError`).
+
+**Fix 4 — Error hierarchy**: `InvalidSessionStateError` (code `INVALID_STATE`), `ConversationArchivedError` (code `INVALID_STATE`), `ConversationAlreadyArchivedError` (code `INVALID_STATE`) now extend `DomainError`.
+
+**Fix 5 — Application errors**: Created 3 new `DomainError` subclasses:
+- `WorkspaceNotFoundError` (code `WORKSPACE_NOT_FOUND` → 404)
+- `ConversationNotFoundError` (code `CONVERSATION_NOT_FOUND` → 404)
+- `NotConversationParticipantError` (code `FORBIDDEN` → 403)
+
+Updated 4 use cases: `invite-member`, `accept-invitation`, `transfer-ownership`, `send-message`. Added `CONVERSATION_NOT_FOUND` to `ErrorMapper`.
+
+**Fix 7 — Repository side-effect**: Added `saveIdempotencyKey()` to `SessionRepository` interface + `KyselySessionRepository` implementation. Removed idempotency insert from `save()`. `StartSessionUseCase` now calls both methods explicitly.
+
+### CLAUDE.md — Domain Design Rules
+
+6 rules added to prevent future violations:
+
+| Rule | Pattern prevented |
+|------|-------------------|
+| 1 — No `as any` on private fields | Aggregate encapsulation bypass |
+| 2 — Zero validation libs in domain | Framework coupling (zod, yup, class-validator) |
+| 3 — Every error extends `DomainError` | Bare `new Error()` bypassing ErrorMapper |
+| 4 — VOs with constrained domains = classes | Bare type aliases (`type X = 'a' \| 'b'`) |
+| 5 — `save()` persists only aggregate | Repository side-effects |
+| 6 — Canonical factory naming | `start()`/`begin()` vs `create()` inconsistency |
+
+### Files modified
+
+**Domain (7):**
+- `packages/domain/src/workspace/entities/WorkspaceMembership.ts` — `_setRoleAsOwner()`
+- `packages/domain/src/workspace/entities/Workspace.ts` — use `_setRoleAsOwner()`
+- `packages/domain/src/identity/value-objects/Email.ts` — remove zod, inline validation
+- `packages/domain/src/shared/concurrency-error.ts` — `extends DomainError`
+- `packages/domain/src/agent-chat/entities/Conversation.ts` — 3 error classes → `DomainError` + 2 new
+- `packages/domain/src/generation/entities/Session.ts` — `InvalidSessionStateError` → `DomainError`
+- `packages/domain/src/workspace/errors.ts` — `WorkspaceNotFoundError`
+- `packages/domain/src/workspace/index.ts` — export new error
+- `packages/domain/src/agent-chat/index.ts` — export new errors
+- `packages/domain/src/generation/repositories/SessionRepository.ts` — `saveIdempotencyKey()`
+
+**Infrastructure (2):**
+- `packages/infra-db/src/repositories/session-repository.ts` — `saveIdempotencyKey()` implementation, remove from `save()`
+- `apps/backend/src/infrastructure/error-handler.ts` — `CONVERSATION_NOT_FOUND` mapping
+
+**Application (5):**
+- `apps/backend/src/application/workspace/invite-member.usecase.ts` — `WorkspaceNotFoundError`
+- `apps/backend/src/application/workspace/accept-invitation.usecase.ts` — `WorkspaceNotFoundError`
+- `apps/backend/src/application/workspace/transfer-ownership.usecase.ts` — `WorkspaceNotFoundError`
+- `apps/backend/src/application/agent-chat/send-message.usecase.ts` — `ConversationNotFoundError` + `NotConversationParticipantError`
+- `apps/backend/src/application/generation/start-session.usecase.ts` — `saveIdempotencyKey()` call
+
+**Schema (1):**
+- `CLAUDE.md` — 6 Domain Design Rules added
+
+### Verification
+
+- Typecheck: 4/4 packages clean (domain, infra-db, backend, frontend)
+- Tests: 4/4 pass
+- Lint: 0 errors, 10 pre-existing `as any` warnings (DB cast, not introduced by this change)
+
+### Wiki updates
+
+- `Wiki/log.md` — this entry
+- `Wiki/index.md` — maintenance note added
+- `Wiki/synthesis/phase-8-real-auth-plan.md` — remediation section added
+
+---
+
+## [2026-08-02] implementation | Phase 8 — Real Authentication (Backend)
+
+Phase 8 (backend) of [[synthesis/implementation-roadmap-2026-08-01]] implemented. Branch: `feature/phase-8-real-auth`. Workstreams A, B, C, E complete. Workstream D (frontend auth flow) remaining.
+
+### Deliverables
+
+1. **Identity domain** (`packages/domain/src/identity/`)
+   - `User` aggregate — `register()`, `fromOAuth()`, `verifyPassword()`, `reconstitute()`, `PasswordHasher` interface
+   - `Email` value object — Zod-validated, lowercase normalization
+   - `UserRole` value object — `admin|member`
+   - `UserStatus` value object — `active|disabled`
+   - `UserRepository` interface — user + auth_sessions + oauth_accounts CRUD
+   - `AuthSession`, `OAuthAccount` read models
+   - Domain errors: `InvalidCredentialsError`, `UserAlreadyExistsError`, `UserDisabledError`, `InvalidRefreshTokenError`
+
+2. **Infrastructure** (`packages/infra-db/`, `apps/backend/src/infrastructure/`)
+   - `AuthSessionsTable`, `OAuthAccountsTable` added to Kysely `DB` interface
+   - `KyselyUserRepository` — full CRUD for users + auth_sessions + oauth_accounts
+   - `BcryptPasswordHasher` — cost factor 12
+   - Seed migration `008_seed_user.sql` — `dev@flow-app.local` / `password123`
+
+3. **Token service** (`apps/backend/src/infrastructure/token-service.ts`)
+   - JWT access tokens (HS256, 15min expiry)
+   - Opaque refresh tokens (32-byte crypto random, 7-day expiry)
+   - `verifyAccessToken()` with algorithm check
+
+4. **Auth service** (`apps/backend/src/api/auth/auth-service.ts`)
+   - `register()` — email uniqueness check, password hash, user creation
+   - `login()` — email lookup, password verify, status check
+   - `refresh()` — token rotation (delete old, create new)
+   - `logout()` — session deletion
+   - `loginWithOAuth()` — find-or-create user, link OAuth account
+
+5. **Passport.js** (`apps/backend/src/infrastructure/passport-config.ts`)
+   - Local strategy (email + password)
+   - Google OAuth2 strategy (conditional on config)
+
+6. **Auth routes** (`apps/backend/src/api/auth/auth-routes.ts`)
+   - `POST /api/auth/register` — create account
+   - `POST /api/auth/login` — authenticate (rate limited: 5/15min)
+   - `POST /api/auth/refresh` — rotate tokens (httpOnly cookie)
+   - `POST /api/auth/logout` — clear cookie
+   - `GET /api/auth/me` — current user (JWT required)
+   - `GET /api/auth/google` — OAuth redirect
+   - `GET /api/auth/google/callback` — OAuth callback
+
+7. **Auth middleware** (`apps/backend/src/middleware/`)
+   - `authenticate.ts` — JWT verification, `setAuthUser()` helper
+   - `authenticateOrDev()` — dev fallback (JWT if Bearer present, else seed user)
+   - `auth-rate-limit.ts` — `express-rate-limit` on login
+   - `auth-types.ts` — `AuthUser` interface, `getAuthUser()`/`setAuthUser()`, Express.Request augmentation
+
+8. **Config** (`apps/backend/src/config.ts`)
+   - Added: `JWT_EXPIRES_IN`, `REFRESH_TOKEN_EXPIRES_IN_SECONDS`, `GOOGLE_CLIENT_ID/SECRET`, `GITHUB_CLIENT_ID/SECRET`, `AUTH_RATE_LIMIT_WINDOW_MS`, `AUTH_RATE_LIMIT_MAX_ATTEMPTS`, `SEED_USER_ID`
+
+9. **Wiring** (`apps/backend/src/app.ts`, `server.ts`)
+   - Auth routes registered BEFORE auth middleware (public endpoints)
+   - `authenticateOrDev` replaces `devAuthMiddleware` in non-production
+   - `AppDeps` extended with `tokenService`, `authService`
+   - All auth deps wired in `server.ts`
+
+### Lint Fix — 7 warnings resolved
+
+| File | Before | After |
+|------|--------|-------|
+| `authenticate.ts` | `(req as any).user = ...` | `setAuthUser(req, ...)` |
+| `auth-routes.ts` | `(req as any).user` | `getAuthUser(req)` |
+| `dev-auth.ts` | `(req as any).user` | `setAuthUser()`/`getAuthUser()` |
+| `workspace-role.ts` | `(req as any).user?.sub` | `getAuthUser(req)?.sub` |
+| `token-service.ts` | `as any` on `expiresIn` | `as StringValue` (branded type from `ms`) |
+| `passport-config.ts` | `user: any` | `user: Express.User` with explicit cast |
+| `app.ts` | `(req as any).log` | `req.log` (augmented by `pino-http`) |
+
+### Files
+
+**New files (17):**
+- `packages/domain/src/identity/User.ts`
+- `packages/domain/src/identity/value-objects/Email.ts`
+- `packages/domain/src/identity/value-objects/UserRole.ts`
+- `packages/domain/src/identity/value-objects/UserStatus.ts`
+- `packages/domain/src/identity/UserRepository.ts`
+- `packages/domain/src/identity/AuthSession.ts`
+- `packages/domain/src/identity/OAuthAccount.ts`
+- `packages/domain/src/identity/errors.ts`
+- `packages/domain/src/identity/index.ts`
+- `packages/infra-db/src/repositories/user-repository.ts`
+- `packages/infra-db/migrations/008_seed_user.sql`
+- `apps/backend/src/infrastructure/bcrypt-hasher.ts`
+- `apps/backend/src/infrastructure/token-service.ts`
+- `apps/backend/src/infrastructure/passport-config.ts`
+- `apps/backend/src/api/auth/auth-service.ts`
+- `apps/backend/src/api/auth/auth-routes.ts`
+- `apps/backend/src/middleware/authenticate.ts`
+- `apps/backend/src/middleware/auth-rate-limit.ts`
+- `apps/backend/src/middleware/auth-types.ts`
+
+**Modified files (8):**
+- `packages/domain/src/index.ts` — identity exports
+- `packages/infra-db/src/types.ts` — AuthSessionsTable, OAuthAccountsTable
+- `packages/infra-db/src/index.ts` — KyselyUserRepository export
+- `apps/backend/src/config.ts` — 8 new env vars
+- `apps/backend/src/app.ts` — auth routes + middleware, AppDeps extended
+- `apps/backend/src/server.ts` — auth deps wired
+- `apps/backend/.env.example` — new vars documented
+- `apps/backend/package.json` — bcrypt, passport, express-rate-limit + types
+
+### Verification
+
+- Typecheck: 4/4 packages clean (domain, infra-db, backend, frontend)
+- Tests: 4/4 pass
+- Lint: 0 errors, 0 warnings (all auth-related files)
+
+### Wiki updates
+
+- `Wiki/synthesis/implementation-roadmap-2026-08-01.md` — Phase 8 marked 🟡 (backend complete)
+- `Wiki/synthesis/phase-8-real-auth-plan.md` — implementation section added, exit criteria updated
+- `Wiki/overview.md` — Phase 8 moved to Completed (partial), critical gaps updated
+- `Wiki/index.md` — maintenance note added
+- `Wiki/log.md` — this entry
+
+---
+
+## [2026-08-02] analysis | DDD Drift Risk — Phase 9, 10, 11
+
+Pre-mortem DDD drift risk analysis for upcoming phases against the 6 CLAUDE.md Domain Design Rules.
+
+### Phase 9 — Deployment & CI/CD
+🟢 **NEGLIGIBLE**. Pure infrastructure: Dockerfile, railway.json, CI workflows. Zero domain code.
+
+### Phase 10 — Testing & Quality
+🟡 **MODERATE**. 4 risks:
+1. `new Session(...)` instead of `Session.create()`/`reconstitute()` — bypasses factory invariants
+2. `(session as any)._status` in test assertions — breaks encapsulation
+3. `throw new Error()` in test fixtures — bypasses ErrorMapper
+4. Asserting DB state instead of aggregate API — tests DB, not domain
+
+### Phase 11 — Gamification
+🔴 **HIGH**. 8 risks, 3 at high probability:
+1. 9 new VOs as `type` aliases instead of classes (Rule 4)
+2. `throw new Error()` in domain services (Rule 3)
+3. Event handler bypasses aggregate → direct DB mutation (Rule 1)
+4. Repository.save() with leaderboard side-effects (Rule 5)
+5. Non-standard factory naming (Rule 6)
+6. Bare Error for game logic (Rule 3)
+7. Cross-context `as any` in AchievementEvaluator (Rule 1)
+8. Event types as bare strings without source context import
+
+### Recommendation
+Phase 11: pre-commit checklist against 6 Domain Design Rules for every new file under `packages/domain/src/gamification/`.
+
+### Wiki updates
+- `Wiki/synthesis/implementation-roadmap-2026-08-01.md` — DDD Drift Risk sections added to Phase 9, 10, 11
+- `Wiki/synthesis/gamification-proposal.md` — DDD Governance Risks section + guardrail checklist
+- `Wiki/index.md` — maintenance note
+- `Wiki/log.md` — this entry
+
+---
+
 ## [2026-08-02] fix | ESM import hoisting — SEED_USER_ID not loaded from .env
 
 ### Problem

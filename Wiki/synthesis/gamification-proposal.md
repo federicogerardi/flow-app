@@ -204,6 +204,37 @@ MessageAdded (agent) ──────────────▶    onAgentMes
 | **No new infrastructure** | Existing PostgreSQL + SSE infrastructure |
 | **Positive-only** | No penalties, no XP deductions, no badge revocations |
 
+## DDD Governance Risks (2026-08-02 assessment)
+
+Phase 11 is the highest DDD drift risk in the roadmap. Pre-commit verification against the 6 CLAUDE.md Domain Design Rules is recommended for every file under `packages/domain/src/gamification/`.
+
+### High-Probability Risks
+
+| Risk | Rule | Mitigation |
+|------|------|------------|
+| 9 new VOs as `type` aliases (e.g. `type ChallengeStatus = 'active' \| 'completed'`) | Rule 4 | All VOs must be classes with `private constructor`, `static from()`, `equals()` |
+| Event handler mutates DB directly (`xp += 50` in worker) instead of calling `playerProfile.addXP()` | Rule 1 | All gamification mutations flow through aggregate methods |
+| `PlayerProfileRepository.save()` has side-effects (leaderboard, notifications) | Rule 5 | `save()` persists only aggregate + owned entities; projections are separate |
+
+### Medium-Probability Risks
+
+| Risk | Rule | Mitigation |
+|------|------|------------|
+| `XPCalculator` / `AchievementEvaluator` throw bare `Error` | Rule 3 | Game logic errors extend `DomainError` |
+| Factory naming: `PlayerProfile.init()`, `Achievement.unlock()` | Rule 6 | Aggregate roots use `create()`; child entities use role-specific factories |
+| `AchievementEvaluator` accesses `(session as any)._status` for cross-context checks | Rule 1 | Cross-context access via public API only |
+| Event types as bare strings: `'SessionCompleted'` instead of importing from source context | — | Reference event types from origin bounded context |
+
+### Guardrail
+
+Checklist per ogni nuovo file `packages/domain/src/gamification/`:
+- [ ] Rule 1: No `as any` su campi privati (propri o di altri aggregate)
+- [ ] Rule 2: Zero import da `zod`, `yup`, o librerie di validazione
+- [ ] Rule 3: Ogni errore estende `DomainError` con `code` + `retryable`
+- [ ] Rule 4: Ogni VO con dominio finito è una classe, non un type alias
+- [ ] Rule 5: `save()` tocca solo le tabelle dell'aggregate + owned entities
+- [ ] Rule 6: `static create()` per aggregate root, `static reconstitute()` per hydration
+
 ## Sources
 
 - [[Gamification]] — Feature overview

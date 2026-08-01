@@ -12,3 +12,6 @@ export * from './workspace';
 
 // Re-export agent-chat
 export * from './agent-chat';
+
+// Re-export identity
+export * from './identity';

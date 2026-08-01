@@ -3,6 +3,7 @@ import type { SessionStatus } from '../value-objects/SessionStatus';
 import type { ToolKey } from '../value-objects/ToolKey';
 import { SessionLifecycle, type SessionEventType } from '../session-lifecycle';
 import type { DomainEvent } from '../../shared/domain-event';
+import { DomainError } from '../../shared/domain-error';
 
 export class Session {
   private _status: SessionStatus;
@@ -172,12 +173,13 @@ export class Session {
   }
 }
 
-export class InvalidSessionStateError extends Error {
+export class InvalidSessionStateError extends DomainError {
+  readonly code = 'INVALID_STATE';
+  readonly retryable = false;
   constructor(
     readonly currentState: SessionStatus,
     readonly attemptedEvent: SessionEventType,
   ) {
     super(`Cannot apply "${attemptedEvent}" in state "${currentState}"`);
-    this.name = 'InvalidSessionStateError';
   }
 }

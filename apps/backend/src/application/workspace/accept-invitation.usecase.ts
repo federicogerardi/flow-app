@@ -1,4 +1,5 @@
 import type { WorkspaceRepository } from '@flow-app/domain';
+import { WorkspaceNotFoundError } from '@flow-app/domain';
 
 export interface AcceptInvitationCommand {
   workspaceId: string;
@@ -16,7 +17,7 @@ export class AcceptInvitationUseCase {
 
   async execute(cmd: AcceptInvitationCommand): Promise<AcceptInvitationResult> {
     const workspace = await this.workspaceRepo.findById(cmd.workspaceId);
-    if (!workspace) throw new Error('Workspace not found');
+    if (!workspace) throw new WorkspaceNotFoundError(cmd.workspaceId);
 
     workspace.acceptInvitation(cmd.userId);
     await this.workspaceRepo.save(workspace);

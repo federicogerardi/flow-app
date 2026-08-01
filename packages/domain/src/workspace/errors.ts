@@ -55,3 +55,11 @@ export class InvalidMembershipStateError extends DomainError {
     super(message);
   }
 }
+
+export class WorkspaceNotFoundError extends DomainError {
+  readonly code = 'WORKSPACE_NOT_FOUND';
+  readonly retryable = false;
+  constructor(id: string) {
+    super(`Workspace ${id} not found`);
+  }
+}

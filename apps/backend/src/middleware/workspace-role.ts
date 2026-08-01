@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { WorkspaceRepository, MembershipRole } from '@flow-app/domain';
 import { logger } from '../infrastructure/logger.js';
+import { getAuthUser } from './auth-types.js';
 
 export function requireWorkspaceRole(
   workspaceRepo: WorkspaceRepository,
@@ -8,7 +9,7 @@ export function requireWorkspaceRole(
 ) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userId = (req as any).user?.sub;
+      const userId = getAuthUser(req)?.sub;
       if (!userId) {
         res.status(401).json({
           error: { code: 'UNAUTHORIZED', message: 'Authentication required', retryable: false },
@@ -44,8 +45,8 @@ export function requireWorkspaceRole(
         return;
       }
 
-      (req as any).workspaceRole = memberRole;
-      (req as any).workspace = workspace;
+      req.workspaceRole = memberRole;
+      req.workspace = workspace;
       next();
     } catch (err) {
       logger.error({ err }, 'workspace_role_check_error');

@@ -7,6 +7,9 @@ date_updated: 2026-08-02
 
 # Wiki Index — Flow App
 
+> Maintenance note (2026-08-02): DDD drift risk analysis for Phase 9–11 completed. Phase 9 🟢 negligible, Phase 10 🟡 moderate (4 test-code risks), Phase 11 🔴 high (8 risks across new gamification bounded context). Pre-commit guardrail recommended for Phase 11 domain files. Risks documented in roadmap and gamification proposal.
+> Maintenance note (2026-08-02): DDD governance audit completed — 58 files across 4 bounded contexts. 8 findings: 2 critical (encapsulation + zod in domain), 5 important (Error hierarchy + use case errors), 1 minor (repository side-effect). 6 pattern-based rules added to schema.
+> Maintenance note (2026-08-02): Phase 8 backend implemented — Real Authentication (Workstreams A+B+C+E): identity domain (User, Email, UserRole, UserStatus), KyselyUserRepository, BcryptPasswordHasher, TokenService, AuthService, Passport.js, 7 auth endpoints, authenticate middleware, rate limiter. Lint warnings resolved (7→0). Branch: `feature/phase-8-real-auth`.
 > Maintenance note (2026-08-02): Phase 8 implementation plan created — Real Authentication (5 workstreams, 35 files, 8-10 days). Plan: [[synthesis/phase-8-real-auth-plan]].
 > Maintenance note (2026-08-02): ESM hoisting bug fixed — `process.env.SEED_USER_ID` was evaluated at module load time (before `dotenv.config()`), so dev-auth always used the fallback UUID. Moved read to request time inside middleware function.
 > Maintenance note (2026-08-01): Phase 7 implemented — Frontend MVP (4 shared + 4 page components, 5 routes, react-router v7, MUI v6 Grid2, SWR). Backend: `GET /api/sessions`, `GET /api/artifacts/:id`, `SessionRepository.findByWorkspace()`. Build ✅, tests ✅ (8/8).

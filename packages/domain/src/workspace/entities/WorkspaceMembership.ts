@@ -66,6 +66,14 @@ export class WorkspaceMembership {
     this._role = newRole;
   }
 
+  /**
+   * Internal: set role to owner during ownership transfer.
+   * Only the Workspace aggregate root should call this.
+   */
+  _setRoleAsOwner(): void {
+    this._role = 'owner';
+  }
+
   get role(): MembershipRole {
     return this._role;
   }

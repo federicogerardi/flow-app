@@ -95,6 +95,22 @@ export interface MessagesTable {
   created_at: ColumnType<Date, never, never>;
 }
 
+export interface AuthSessionsTable {
+  id: string;
+  user_id: string;
+  refresh_token: string;
+  expires_at: ColumnType<Date, Date, never>;
+  created_at: ColumnType<Date, never, never>;
+}
+
+export interface OAuthAccountsTable {
+  id: string;
+  user_id: string;
+  provider: string;
+  provider_id: string;
+  created_at: ColumnType<Date, never, never>;
+}
+
 export interface DB {
   sessions: SessionsTable;
   artifacts: ArtifactsTable;
@@ -103,6 +119,8 @@ export interface DB {
   workspaces: WorkspacesTable;
   workspace_memberships: WorkspaceMembershipsTable;
   users: UsersTable;
+  auth_sessions: AuthSessionsTable;
+  oauth_accounts: OAuthAccountsTable;
   conversations: ConversationsTable;
   messages: MessagesTable;
 }

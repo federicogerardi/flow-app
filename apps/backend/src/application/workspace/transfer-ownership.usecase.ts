@@ -1,4 +1,5 @@
 import type { WorkspaceRepository } from '@flow-app/domain';
+import { WorkspaceNotFoundError } from '@flow-app/domain';
 
 export interface TransferOwnershipCommand {
   workspaceId: string;
@@ -17,7 +18,7 @@ export class TransferOwnershipUseCase {
 
   async execute(cmd: TransferOwnershipCommand): Promise<TransferOwnershipResult> {
     const workspace = await this.workspaceRepo.findById(cmd.workspaceId);
-    if (!workspace) throw new Error('Workspace not found');
+    if (!workspace) throw new WorkspaceNotFoundError(cmd.workspaceId);
 
     workspace.transferOwnership(cmd.fromUserId, cmd.toUserId);
     await this.workspaceRepo.save(workspace);
