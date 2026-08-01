@@ -52,6 +52,18 @@ export interface WorkspacesTable {
   version: Generated<number>;
 }
 
+export interface WorkspaceMembershipsTable {
+  workspace_id: string;
+  user_id: string;
+  role: string;
+  status: string;
+  invited_by: string | null;
+  invited_at: ColumnType<Date | null, Date | null, Date | null>;
+  joined_at: ColumnType<Date | null, Date | null, Date | null>;
+  created_at: ColumnType<Date, never, never>;
+  updated_at: ColumnType<Date, Date | null, Date>;
+}
+
 export interface UsersTable {
   id: string;
   email: string;
@@ -68,5 +80,6 @@ export interface DB {
   idempotency_keys: IdempotencyKeysTable;
   session_snapshots: SessionSnapshotsTable;
   workspaces: WorkspacesTable;
+  workspace_memberships: WorkspaceMembershipsTable;
   users: UsersTable;
 }

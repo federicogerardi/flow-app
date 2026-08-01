@@ -1,0 +1,192 @@
+import type { Kysely } from 'kysely';
+import type { DB } from '../types';
+import { Workspace, WorkspaceMembership, ConcurrencyError, type WorkspaceRepository } from '@flow-app/domain';
+
+export class KyselyWorkspaceRepository implements WorkspaceRepository {
+  constructor(private readonly db: Kysely<DB>) {}
+
+  async findById(id: string): Promise<Workspace | null> {
+    const workspace = await this.db
+      .selectFrom('workspaces')
+      .where('id', '=', id)
+      .selectAll()
+      .executeTakeFirst();
+
+    if (!workspace) return null;
+
+    const memberships = await this.db
+      .selectFrom('workspace_memberships')
+      .where('workspace_id', '=', id)
+      .selectAll()
+      .execute();
+
+    return Workspace.reconstitute(
+      workspace.id,
+      workspace.created_by,
+      workspace.name,
+      workspace.created_at,
+      workspace.updated_at,
+      workspace.version,
+      memberships.map((m) =>
+        WorkspaceMembership.reconstitute(
+          m.user_id,
+          m.workspace_id,
+          m.role as any,
+          m.status as any,
+          m.invited_by ?? '',
+          m.invited_at ?? new Date(),
+          m.joined_at,
+        ),
+      ),
+    );
+  }
+
+  async findByMember(userId: string): Promise<Workspace[]> {
+    const rows = await this.db
+      .selectFrom('workspace_memberships')
+      .innerJoin('workspaces', 'workspaces.id', 'workspace_memberships.workspace_id')
+      .where('workspace_memberships.user_id', '=', userId)
+      .where('workspace_memberships.status', '=', 'active')
+      .selectAll('workspaces')
+      .execute();
+
+    const workspaces: Workspace[] = [];
+    for (const row of rows) {
+      const workspace = await this.findById(row.id);
+      if (workspace) workspaces.push(workspace);
+    }
+    return workspaces;
+  }
+
+  async save(workspace: Workspace): Promise<void> {
+    await this.db
+      .insertInto('workspaces')
+      .values({
+        id: workspace.workspaceId,
+        created_by: workspace.createdBy,
+        name: workspace.name,
+        version: workspace.version,
+      })
+      .onConflict((oc) =>
+        oc.column('id').doUpdateSet({
+          name: workspace.name,
+          version: workspace.version,
+          updated_at: new Date(),
+        }),
+      )
+      .execute();
+
+    // Sync memberships
+    for (const m of workspace.memberships) {
+      await this.db
+        .insertInto('workspace_memberships')
+        .values({
+          workspace_id: m.workspaceId,
+          user_id: m.userId,
+          role: m.role,
+          status: m.status,
+          invited_by: m.invitedBy,
+          invited_at: m.invitedAt,
+          joined_at: m.joinedAt,
+        })
+        .onConflict((oc) =>
+          oc.columns(['workspace_id', 'user_id']).doUpdateSet({
+            role: m.role,
+            status: m.status,
+            joined_at: m.joinedAt,
+            updated_at: new Date(),
+          }),
+        )
+        .execute();
+    }
+  }
+
+  async saveWithLock(workspace: Workspace, expectedVersion: number): Promise<void> {
+    const result = await this.db
+      .updateTable('workspaces')
+      .set({
+        name: workspace.name,
+        version: workspace.version,
+        updated_at: new Date(),
+      })
+      .where('id', '=', workspace.workspaceId)
+      .where('version', '=', expectedVersion)
+      .executeTakeFirst();
+
+    if (result.numUpdatedRows === 0n) {
+      const current = await this.db
+        .selectFrom('workspaces')
+        .where('id', '=', workspace.workspaceId)
+        .select('version')
+        .executeTakeFirst();
+
+      throw new ConcurrencyError(
+        workspace.workspaceId,
+        expectedVersion,
+        current?.version ?? -1,
+      );
+    }
+
+    // Sync memberships
+    for (const m of workspace.memberships) {
+      await this.db
+        .insertInto('workspace_memberships')
+        .values({
+          workspace_id: m.workspaceId,
+          user_id: m.userId,
+          role: m.role,
+          status: m.status,
+          invited_by: m.invitedBy,
+          invited_at: m.invitedAt,
+          joined_at: m.joinedAt,
+        })
+        .onConflict((oc) =>
+          oc.columns(['workspace_id', 'user_id']).doUpdateSet({
+            role: m.role,
+            status: m.status,
+            joined_at: m.joinedAt,
+            updated_at: new Date(),
+          }),
+        )
+        .execute();
+    }
+  }
+
+  async findMembership(workspaceId: string, userId: string): Promise<WorkspaceMembership | null> {
+    const row = await this.db
+      .selectFrom('workspace_memberships')
+      .where('workspace_id', '=', workspaceId)
+      .where('user_id', '=', userId)
+      .selectAll()
+      .executeTakeFirst();
+
+    if (!row) return null;
+
+    return WorkspaceMembership.reconstitute(
+      row.user_id,
+      row.workspace_id,
+      row.role as any,
+      row.status as any,
+      row.invited_by ?? '',
+      row.invited_at ?? new Date(),
+      row.joined_at,
+    );
+  }
+
+  async findPendingInvitations(userId: string): Promise<Workspace[]> {
+    const rows = await this.db
+      .selectFrom('workspace_memberships')
+      .innerJoin('workspaces', 'workspaces.id', 'workspace_memberships.workspace_id')
+      .where('workspace_memberships.user_id', '=', userId)
+      .where('workspace_memberships.status', '=', 'invited')
+      .selectAll('workspaces')
+      .execute();
+
+    const workspaces: Workspace[] = [];
+    for (const row of rows) {
+      const workspace = await this.findById(row.id);
+      if (workspace) workspaces.push(workspace);
+    }
+    return workspaces;
+  }
+}

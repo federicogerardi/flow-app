@@ -6,3 +6,6 @@ export { ConcurrencyError } from './shared/concurrency-error';
 
 // Re-export generation for convenience
 export * from './generation';
+
+// Re-export workspace
+export * from './workspace';

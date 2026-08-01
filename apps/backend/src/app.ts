@@ -7,12 +7,15 @@ import { httpLogger, logger } from './infrastructure/logger.js';
 import { errorHandler } from './infrastructure/error-handler.js';
 import { createGenerationRoutes } from './api/generation.js';
 import { createAdminRoutes } from './api/admin.js';
+import { createWorkspaceRoutes } from './api/workspaces.js';
 import { devAuthMiddleware } from './middleware/dev-auth.js';
-import type { SessionRepository } from '@flow-app/domain';
+import { requireWorkspaceRole } from './middleware/workspace-role.js';
+import type { SessionRepository, WorkspaceRepository } from '@flow-app/domain';
 import type { JobEventBridge } from './infrastructure/job-event-bridge.js';
 
 export interface AppDeps {
   sessionRepo: SessionRepository;
+  workspaceRepo: WorkspaceRepository;
   eventBridge: JobEventBridge;
   queue: Queue;
 }
@@ -50,11 +53,26 @@ export function createApp(deps: AppDeps) {
     res.json({ message: 'Flow App API', version: '0.0.1' });
   });
 
+  // Generation routes
   const generationRoutes = createGenerationRoutes(deps.sessionRepo);
   app.post('/api/tools/:toolKey/sessions', generationRoutes.startSession);
   app.get('/api/sessions/:id', generationRoutes.getSession);
   app.get('/api/sessions/:id/events', generationRoutes.getEvents);
 
+  // Workspace routes
+  const workspaceRoutes = createWorkspaceRoutes(deps.workspaceRepo);
+  app.get('/api/workspaces', workspaceRoutes.listWorkspaces);
+  app.get('/api/workspaces/:id', requireWorkspaceRole(deps.workspaceRepo, 'owner', 'editor', 'viewer'), workspaceRoutes.getWorkspace);
+  app.post('/api/workspaces/:id/invitations', requireWorkspaceRole(deps.workspaceRepo, 'owner'), workspaceRoutes.inviteMember);
+  app.get('/api/workspaces/:id/members', requireWorkspaceRole(deps.workspaceRepo, 'owner', 'editor', 'viewer'), workspaceRoutes.listMembers);
+  app.delete('/api/workspaces/:id/members/:userId', requireWorkspaceRole(deps.workspaceRepo, 'owner'), workspaceRoutes.removeMember);
+  app.put('/api/workspaces/:id/members/:userId/role', requireWorkspaceRole(deps.workspaceRepo, 'owner'), workspaceRoutes.changeMemberRole);
+  app.post('/api/workspaces/:id/transfer-ownership', requireWorkspaceRole(deps.workspaceRepo, 'owner'), workspaceRoutes.transferOwnership);
+  app.get('/api/invitations', workspaceRoutes.listPendingInvitations);
+  app.post('/api/invitations/:id/accept', workspaceRoutes.acceptInvitation);
+  app.post('/api/invitations/:id/decline', workspaceRoutes.declineInvitation);
+
+  // Admin routes
   const adminRoutes = createAdminRoutes(deps.queue);
   app.get('/admin/jobs', adminRoutes.getJobs);
   app.get('/admin/health', adminRoutes.getHealth);

@@ -6,6 +6,85 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 
 ---
+## [2026-08-01] implementation | Phase 3 — Workspace Collaboration
+
+Phase 3 of [[synthesis/implementation-roadmap-2026-08-01]] implemented. Branch: `feature/phase-3-workspace-collaboration`.
+
+### Deliverables
+
+1. **WorkspaceMembership entity** (`packages/domain/src/workspace/entities/WorkspaceMembership.ts`)
+   - `invite()` factory, `accept()` lifecycle, `changeRole()` mutation
+   - `isOwner`, `isActive` getters
+
+2. **Workspace aggregate** (`packages/domain/src/workspace/entities/Workspace.ts`)
+   - `_memberships` collection (1:N)
+   - `inviteMember()`, `acceptInvitation()`, `removeMember()`, `transferOwnership()`, `changeMemberRole()`
+   - Permission checks: `isOwner()`, `canEdit()`, `canView()`, `getMemberRole()`
+
+3. **Value Objects** (`packages/domain/src/workspace/value-objects/`)
+   - `MembershipRole`: `'owner' | 'editor' | 'viewer'`
+   - `MembershipStatus`: `'invited' | 'active'`
+
+4. **Domain errors** (`packages/domain/src/workspace/errors.ts`)
+   - `NotWorkspaceOwnerError`, `NotAWorkspaceMemberError`, `InsufficientWorkspacePermissionError`
+   - `MemberAlreadyExistsError`, `CannotRemoveOwnerError`, `NotAnActiveMemberError`
+
+5. **Domain events** (`packages/domain/src/workspace/domain-events/index.ts`)
+   - `MemberInvited`, `MemberJoined`, `MemberRemoved`, `OwnershipTransferred`
+
+6. **WorkspaceRepository** (`packages/domain/src/workspace/repositories/WorkspaceRepository.ts` + `packages/infra-db/src/repositories/workspace-repository.ts`)
+   - Interface: `findById()`, `findByMember()`, `save()`, `saveWithLock()`, `findMembership()`, `findPendingInvitations()`
+   - Kysely implementation with membership sync on save
+
+7. **requireWorkspaceRole() middleware** (`apps/backend/src/middleware/workspace-role.ts`)
+   - HTTP guard with role check, admin bypass pattern
+   - Injects `req.workspace` and `req.workspaceRole`
+
+8. **API routes** (`apps/backend/src/api/workspaces.ts`)
+   - 10 endpoints: workspaces list/detail, invitations (CRUD), members (list/remove/role), ownership transfer
+
+9. **Use cases** (`apps/backend/src/application/workspace/`)
+   - `InviteMemberUseCase`, `AcceptInvitationUseCase`, `TransferOwnershipUseCase`
+
+### Files
+
+**New files (13):**
+- `packages/domain/src/workspace/entities/Workspace.ts`
+- `packages/domain/src/workspace/entities/WorkspaceMembership.ts`
+- `packages/domain/src/workspace/value-objects/MembershipRole.ts`
+- `packages/domain/src/workspace/value-objects/MembershipStatus.ts`
+- `packages/domain/src/workspace/domain-events/index.ts`
+- `packages/domain/src/workspace/errors.ts`
+- `packages/domain/src/workspace/index.ts`
+- `packages/domain/src/workspace/repositories/WorkspaceRepository.ts`
+- `packages/infra-db/src/repositories/workspace-repository.ts`
+- `apps/backend/src/api/workspaces.ts`
+- `apps/backend/src/middleware/workspace-role.ts`
+- `apps/backend/src/application/workspace/invite-member.usecase.ts`
+- `apps/backend/src/application/workspace/accept-invitation.usecase.ts`
+- `apps/backend/src/application/workspace/transfer-ownership.usecase.ts`
+
+**Modified files (5):**
+- `packages/domain/src/index.ts` — workspace exports added
+- `packages/infra-db/src/index.ts` — KyselyWorkspaceRepository export
+- `packages/infra-db/src/types.ts` — WorkspaceMembershipsTable added
+- `apps/backend/src/app.ts` — workspace routes + middleware wired
+- `apps/backend/src/server.ts` — workspaceRepo dependency added
+
+### Verification
+
+- `npm run build --workspace=apps/backend`: 0 errors
+- `npm test`: 8 tests pass
+
+### Wiki updates
+
+- `Wiki/synthesis/implementation-roadmap-2026-08-01.md` — Phase 3 marked ✅ with implementation details
+- `Wiki/overview.md` — Phase 3 status updated
+- `Wiki/index.md` — maintenance note added
+- `Wiki/log.md` — this entry
+
+---
+
 ## [2026-08-01] validation | API endpoints verification + infrastructure setup
 
 Full API verification against managed PostgreSQL + Redis. All endpoints green.

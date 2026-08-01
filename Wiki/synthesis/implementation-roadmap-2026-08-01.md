@@ -84,7 +84,7 @@ Implementation (2026-08-01, branch `feature/phase-2-reliability-ops`):
 - `worker-process.ts` — SIGTERM graceful shutdown: `worker.pause()` → drain (30s timeout) → `worker.close()`
 - `CleanupJob` — hourly scheduled cleanup for expired idempotency keys + snapshots >7 days
 
-### Phase 3 — Workspace Collaboration (Weeks 5–6)
+### Phase 3 — Workspace Collaboration (Weeks 5–6) ✅
 
 Focus:
 
@@ -96,6 +96,19 @@ Exit criteria:
 
 - Owner/editor/viewer behavior is consistent across API and domain rules.
 - Migration path is validated in staging with no data drift.
+
+Implementation (2026-08-01, branch `feature/phase-3-workspace-collaboration`):
+
+- `WorkspaceMembership` entity — `invite()`, `accept()`, `changeRole()`, `isOwner`, `isActive`
+- `Workspace` aggregate — `_memberships` collection, `inviteMember()`, `acceptInvitation()`, `removeMember()`, `transferOwnership()`, `changeMemberRole()`, permission checks (`isOwner`, `canEdit`, `canView`, `getMemberRole`)
+- Value Objects — `MembershipRole` (`owner|editor|viewer`), `MembershipStatus` (`invited|active`)
+- Domain errors — `NotWorkspaceOwnerError`, `NotAWorkspaceMemberError`, `InsufficientWorkspacePermissionError`, `MemberAlreadyExistsError`, `CannotRemoveOwnerError`, `NotAnActiveMemberError`
+- Domain events — `MemberInvited`, `MemberJoined`, `MemberRemoved`, `OwnershipTransferred`
+- `WorkspaceRepository` interface — `findById()`, `findByMember()`, `save()`, `saveWithLock()`, `findMembership()`, `findPendingInvitations()`
+- `KyselyWorkspaceRepository` — Kysely implementation with membership sync
+- `requireWorkspaceRole()` middleware — HTTP guard with role check, admin bypass pattern
+- API routes — 10 endpoints (workspaces CRUD, invitations, members, ownership transfer)
+- Use cases — `InviteMemberUseCase`, `AcceptInvitationUseCase`, `TransferOwnershipUseCase`
 
 ### Phase 4 — Prompt Governance Runtime (Week 7)
 
