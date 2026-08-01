@@ -72,7 +72,8 @@ class ApiClient {
   // ── Workspaces ───────────────────────────────────────────────────────────────
 
   async listWorkspaces() {
-    return this.request<any[]>('GET', '/api/workspaces');
+    const res = await this.request<{ workspaces: any[] }>('GET', '/api/workspaces');
+    return res.workspaces ?? [];
   }
 
   async getWorkspace(workspaceId: string) {
