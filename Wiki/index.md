@@ -2,11 +2,12 @@
 type: index
 tags:
   - wiki/index
-date_updated: 2026-08-01
+date_updated: 2026-08-02
 ---
 
 # Wiki Index — Flow App
 
+> Maintenance note (2026-08-02): Phase 8 implementation plan created — Real Authentication (5 workstreams, 35 files, 8-10 days). Plan: [[synthesis/phase-8-real-auth-plan]].
 > Maintenance note (2026-08-02): ESM hoisting bug fixed — `process.env.SEED_USER_ID` was evaluated at module load time (before `dotenv.config()`), so dev-auth always used the fallback UUID. Moved read to request time inside middleware function.
 > Maintenance note (2026-08-01): Phase 7 implemented — Frontend MVP (4 shared + 4 page components, 5 routes, react-router v7, MUI v6 Grid2, SWR). Backend: `GET /api/sessions`, `GET /api/artifacts/:id`, `SessionRepository.findByWorkspace()`. Build ✅, tests ✅ (8/8).
 > Maintenance note (2026-08-01): Phase 5 implemented — Agent Chat bounded context (Conversation, Message, 7 agents, 6 API routes, privacy invariant). Build ✅, tests ✅ (8/8).
@@ -164,5 +165,6 @@ date_updated: 2026-08-01
 | [[synthesis/project-model-multi-dimension-audit-2026-08-01]] | Project model governance audit — 4 areas, coverage assessment, maturity score, priority gaps | 2026-08-01 |
 | [[synthesis/lint-report-2026-08-01-coherence]] | Coherence lint — structural pass, queued-state drift closed | 2026-08-01 |
 | [[synthesis/implementation-roadmap-2026-08-01]] | Rational development roadmap — phase plan from bootstrap to expansion tracks | 2026-08-01 |
+| [[synthesis/phase-8-real-auth-plan]] | Phase 8 implementation plan — Real Authentication (5 workstreams, 35 files) | 2026-08-02 |
 | [[synthesis/frontend-mvp-plan-2026-08-01]] | Frontend MVP plan — 13 components, 5 routes, 7-step execution | 2026-08-01 |
 | [[overview]] | High-level synthesis (v3) | 2026-07-31 |

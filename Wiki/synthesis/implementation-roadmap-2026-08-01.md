@@ -6,8 +6,8 @@ tags:
   - wiki/implementation
 date_updated: 2026-08-01
 phase_count: 11
-phases_complete: 5
-phases_remaining: 6
+phases_complete: 7
+phases_remaining: 4
 ---
 
 # Implementation Roadmap — Rational Development Sequence (2026-08-01)
@@ -306,9 +306,11 @@ Implementation (2026-08-01, branch `dev`):
 - Workspace CRUD with member management
 - Responsive (desktop primary, tablet acceptable)
 
-### Phase 8 — Real Authentication (Week 14)
+### Phase 8 — Real Authentication (Week 14) 🟡
 
-**Current gap**: `dev-auth.ts` middleware injects a hardcoded seed user. No login, no registration, no real JWT verification. The config schema already defines `JWT_SECRET` and the `jsonwebtoken` dependency is installed — the scaffolding is there.
+**Plan**: [[phase-8-real-auth-plan]] — detailed implementation plan (5 workstreams, 35 files, 8-10 days estimated effort).
+
+**Current gap** (unchanged): `dev-auth.ts` middleware injects a hardcoded seed user. No login, no registration, no real JWT verification. The config schema already defines `JWT_SECRET` and the `jsonwebtoken` dependency is installed — the scaffolding is there.
 
 **Design authority**: the authentication architecture is already specified in [[Auth Dependencies]] (Passport.js + JWT + bcrypt + OAuth strategies) and [[Auth Middleware]] (JWT verification, role guards, CSRF protection). Phase 8 implements those designs.
 

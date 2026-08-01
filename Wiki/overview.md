@@ -81,7 +81,7 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 
 ## Implementation Status
 
-### Completed (Phase 0–5)
+### Completed (Phase 0–7)
 
 | Phase | Status | Scope |
 |-------|--------|-------|
@@ -90,26 +90,24 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 | Phase 2 — Reliability & Ops Hardening | ✅ | Optimistic locking, health monitor, graceful shutdown, cleanup job |
 | Phase 3 — Workspace Collaboration | ✅ | Membership model, role enforcement, API routes, middleware |
 | Phase 4 — Prompt Governance Runtime | ✅ | Prompt versioning, components, composer, filesystem repository |
-| Phase 5 — Expansion Tracks | ✅ | Agent Chat (Conversation, Message, 7 agents), Gamification pending |
+| Phase 5 — Expansion Tracks | ✅ | Agent Chat (Conversation, Message, 7 agents) |
+| Phase 6 — Real LLM Integration | ✅ | LlmGateway, ModelRegistry, 4 tiers, worker + chat wiring |
+| Phase 7 — Frontend MVP | ✅ | 4 shared components, 4 pages, 5 routes, MUI + SWR + react-router v7 |
 
-### Planned (Phase 6–11)
+### Planned (Phase 8–11)
 
 | Phase | Priority | Scope |
 |-------|----------|-------|
-| Phase 6 — Real LLM Integration | ✅ | LlmGateway, ModelRegistry, 4 tiers, worker + chat wiring |
-| Phase 7 — Frontend MVP | ✅ | 4 shared components, 4 pages, 5 routes, MUI + SWR + react-router v7 |
-| Phase 8 — Real Authentication | 🟡 High | JWT auth replacing dev stub: register, login, refresh, protected routes |
+| Phase 8 — Real Authentication | 🟡 High | JWT auth replacing dev stub: register, login, refresh, OAuth, protected routes. [[synthesis/phase-8-real-auth-plan|Detailed plan →]] |
 | Phase 9 — Deployment & CI/CD | 🟡 High | Dockerfile, Railway config, GitHub Actions pipeline |
 | Phase 10 — Testing & Quality | 🟢 Medium | Domain tests, API tests, worker tests, CI quality gates |
 | Phase 11 — Gamification | 🟢 Medium | Points, achievements, leaderboards, event-driven rewards |
 
-### Critical Gaps
+### Critical Gaps (remaining)
 
-1. **LLM is mocked** — `executeStep` returns `'Mock generated content'`, agent chat never generates AI replies
-2. **Frontend is a skeleton** — single `<h1>`, no routing, no pages, API client is wired but unused
-3. **Auth is a dev stub** — hardcoded seed user, no login/register, JWT secret defined but never used
-4. **Zero deployment** — no Dockerfile, no CI/CD, no Railway config, runs only via `npm run dev`
-5. **Near-zero tests** — 1 test file (Identifier), vitest/supertest/testing-library installed but unused
+1. **Auth is a dev stub** — hardcoded seed user, no login/register, JWT secret defined but never used. Phase 8 planned.
+2. **Zero deployment** — no Dockerfile, no CI/CD, no Railway config, runs only via `npm run dev`. Phase 9 planned.
+3. **Near-zero tests** — 1 test file (Identifier), vitest/supertest/testing-library installed but unused. Phase 10 planned.
 
 ## Infrastructure (Railway dev)
 
