@@ -5,6 +5,9 @@ tags:
   - wiki/roadmap
   - wiki/implementation
 date_updated: 2026-08-01
+phase_count: 11
+phases_complete: 5
+phases_remaining: 6
 ---
 
 # Implementation Roadmap — Rational Development Sequence (2026-08-01)
@@ -143,6 +146,287 @@ Implementation (2026-08-01, branch `feature/phase-3-workspace-collaboration`):
 - **Privacy invariant** — conversations private to creator, enforced at domain + API layers
 - **Lint fix** — `migrate.ts` console.log → process.stdout/write (0 errors)
 
+### Phase 6 — Real LLM Integration (Week 9-10)
+
+**Current gap**: the session worker returns `'Mock generated content'` and agent chat's `SendMessageUseCase` never generates AI replies. The entire value proposition is stubbed out.
+
+**Design authority**: the LLM gateway architecture is already specified in [[LLM Gateway - OpenRouter]] — `LlmGateway` class using the OpenAI SDK (OpenRouter-compatible), 4 `ModelTier` values with primary/fallback model pairs, and cost tracking. Phase 6 implements that design, not reinvents it.
+
+**Goal**: wire real LLM calls via OpenRouter to both the generation pipeline and agent chat, using the prompt governance runtime built in Phase 4.
+
+**Tasks expected**:
+
+1. **Implement `LlmGateway`** — as designed in [[LLM Gateway - OpenRouter]]
+   - `apps/backend/src/infrastructure/llm-gateway.ts` — OpenAI SDK wrapper for OpenRouter API
+   - `apps/backend/src/infrastructure/model-registry.ts` — `ModelTier` → primary/fallback model IDs
+   - Token usage tracking (`inputTokens`, `outputTokens`, `modelId`) from OpenRouter response headers
+   - Cost estimation per call (OpenRouter provides per-request cost)
+   - Config via `OPENROUTER_API_KEY` (already defined in env schema)
+
+2. **Session worker LLM wiring** — replace hardcoded mock in `session-worker.ts` `executeStep`
+   - Use `PromptComposer` from Phase 4 to build the full prompt from the tool's `StepDefinition`
+   - Pass composed prompt to `LlmGateway.generate()` with the `ModelTier` from `StepDefinition`
+   - Parse structured output via Zod schemas (tool-specific, TypeScript-native)
+   - Error fallback: primary model → tier fallback model → `fallbackOutput` from `StepDefinition`
+
+3. **Agent chat LLM wiring** — implement assistant reply generation in `SendMessageUseCase`
+   - Compose persona system prompt + conversation history (last N messages)
+   - Call `LlmGateway.generate()` with `balanced` tier
+   - Create `Message.agent()` domain object with the response
+   - Persist both user and agent message atomically
+
+4. **Token budget control** — per-session and per-conversation token limits
+   - `TOKEN_BUDGET_MAX_TOTAL` (default 100K)
+   - `TOKEN_BUDGET_WARNING_THRESHOLD` (default 80%)
+   - Prevent run-away costs with hard cap
+
+5. **Error resilience** — model unavailable, timeout, rate limit
+   - `LLMUnavailableError`, `LLMRateLimitError`, `LLMTimeoutError` domain errors
+   - Exponential backoff + circuit breaker for provider outages
+   - Graceful degradation to the `fallbackOutput` in `StepDefinition`
+
+**Exit criteria**:
+
+- Session worker generates real AI content using composed prompts
+- Agent chat returns real AI replies from persona-tuned system prompts
+- Token tracking is accurate and budgets are enforced
+- Model swap is a config change (per [[LLM Gateway - OpenRouter]] model registry)
+
+### Phase 7 — Frontend MVP (Week 11-13)
+
+**Current gap**: the frontend is a single `<h1>` with MUI dependencies installed but zero components. The API client, SSE client, and SWR hooks are wired and functional — the UI just needs to be built on top of them.
+
+**Goal**: deliver a functional SPA covering the full user workflow: workspace selection → session configuration → live generation progress → results review → agent chat refinement.
+
+**Tasks expected**:
+
+1. **Routing & layout** — react-router v7 with protected routes
+   - `/dashboard` → session/workspace overview
+   - `/workspaces/:id` → workspace detail + member management
+   - `/workspaces/:id/sessions/new` → session creation wizard
+   - `/workspaces/:id/sessions/:id` → session detail with live progress
+   - `/workspaces/:id/conversations/:id` → agent chat panel
+
+2. **Dashboard page** — list recent sessions, workspaces, quick-start buttons
+   - SWR-powered data fetching from existing API client
+   - Session status badges (draft/queued/running/completed/failed)
+
+3. **Session creation wizard** — multi-step form configuring generation inputs
+   - Step 1: select tool/template
+   - Step 2: input form fields (target audience, goals, brand guidelines, etc.)
+   - Step 3: review & start
+
+4. **Live generation progress** — SSE-powered real-time pipeline view
+   - Step-by-step progress indicator (animated pipeline)
+   - Completed artifacts appear as they finish (not all at once)
+   - Error states with retry option
+
+5. **Results review** — display generated content with diff/compare
+   - Formatted artifact rendering (markdown → HTML)
+   - Copy-to-clipboard, download as file
+
+6. **Agent chat panel** — conversational refinement interface
+   - Agent persona selector (7 agents from Phase 5)
+   - Chat message list with streaming (for real generation feel)
+   - Message send + auto-scroll
+
+7. **Workspace management UI** — members, roles, invites
+   - Invite by email, role selector (owner/editor/viewer)
+   - Member list with role badges
+
+**Tech choices**:
+
+- **MUI v6** (already installed) for design system — AppBar, Drawer, Cards, Stepper
+- **SWR** (already installed) for data fetching
+- **SSE client** (already implemented in `sse-client.ts`) for real-time events
+- **zustand** or **jotai** for client-side state (lightweight, no boilerplate)
+
+**Exit criteria**:
+
+- Full workflow: dashboard → create session → watch generation → review results
+- Agent chat sends/receives messages (real LLM responses from Phase 6)
+- Workspace CRUD with member management
+- Responsive (desktop primary, tablet acceptable)
+
+### Phase 8 — Real Authentication (Week 14)
+
+**Current gap**: `dev-auth.ts` middleware injects a hardcoded seed user. No login, no registration, no real JWT verification. The config schema already defines `JWT_SECRET` and the `jsonwebtoken` dependency is installed — the scaffolding is there.
+
+**Design authority**: the authentication architecture is already specified in [[Auth Dependencies]] (Passport.js + JWT + bcrypt + OAuth strategies) and [[Auth Middleware]] (JWT verification, role guards, CSRF protection). Phase 8 implements those designs.
+
+**Goal**: replace the dev stub with real authentication supporting registration, login, token refresh, Google/GitHub OAuth, and frontend auth flow.
+
+**Tasks expected**:
+
+1. **User entity** — extend existing `User` aggregate with password hashing
+   - `bcrypt` for password storage (cost factor 12)
+   - `User.register()` and `User.verifyPassword()` domain methods
+
+2. **Passport.js integration** — as designed in [[Auth Dependencies]]
+   - `passport-local` strategy for email/password login
+   - `passport-google-oauth2` strategy for Google OAuth
+   - `passport-oauth2` strategy for GitHub OAuth
+   - JWT issuance after successful Passport authentication
+
+3. **Auth endpoints** — `/api/auth/register`, `/api/auth/login`, `/api/auth/refresh`
+   - Access token (15 min) + refresh token (7 days, httpOnly cookie)
+   - Rate limiting on login (5 attempts / 15 min)
+
+4. **Auth middleware** — replace `dev-auth.ts` with real JWT verification per [[Auth Middleware]]
+   - `Bearer` token extraction from `Authorization` header
+   - `jwt.verify()` with algorithm check (HS256)
+   - User lookup from decoded `sub` claim
+   - Conditional: use dev-auth only when `NODE_ENV === 'development' && !req.headers.authorization`
+
+5. **Frontend auth flow** — login/register/OAuth pages, protected routes
+   - Login form → store access token in memory (not localStorage)
+   - Axios/fetch interceptor for token refresh on 401
+   - `AuthContext` for current user state
+   - Google/GitHub OAuth buttons
+
+6. **Workspace privacy** — enforce `userId` scope on all queries
+   - Already implemented in domain layer (Phase 3)
+   - Auth middleware provides the real userId instead of the seed
+
+**Exit criteria**:
+
+- Registration, login, refresh all functional
+- Google OAuth login flow functional
+- Protected routes redirect unauthenticated users
+- Token refresh is transparent to the user
+- Dev-auth only active in development without explicit auth header
+
+### Phase 9 — Deployment & CI/CD (Week 15)
+
+**Current gap**: no Dockerfile, no `railway.json`, no CI/CD pipelines, no GitHub Actions. The app runs only via `npm run dev`.
+
+**Goal**: production-ready deployment on Railway with automated CI/CD, environment parity, and health monitoring.
+
+**Tasks expected**:
+
+1. **Dockerfile** — multi-stage build for both frontend and backend
+   - Stage 1: build frontend (Vite → static assets)
+   - Stage 2: build backend (TypeScript → Node.js)
+   - Stage 3: production image (Node 22-alpine, minimal deps)
+
+2. **Railway config** — `railway.json` with service definitions
+   - `backend` service (Express on port 3000, health check `/health`)
+   - `worker` service (BullMQ worker process, same image, different start command)
+   - PostgreSQL + Redis via Railway managed services
+   - Environment-specific configs (dev/staging/production)
+
+3. **GitHub Actions CI/CD** — automated build, test, deploy pipeline
+   - PR → build + lint + test (vitest)
+   - Merge to `dev` → deploy to Railway dev environment
+   - Merge to `staging` → deploy to Railway staging environment
+   - Merge to `main` → deploy to Railway production environment (manual approval gate)
+
+4. **Environment config** — parity across environments
+   - `.env.example` with all required vars documented
+   - `NODE_ENV`-specific config loading
+   - Secrets via Railway variable references (never in repo)
+
+5. **Health monitoring** — production observability
+   - Railway health checks on `/health`
+   - `QueueHealthMonitor` alerts (already built in Phase 2)
+   - Structured logging (already built with pino)
+
+**Exit criteria**:
+
+- `railway up` deploys successfully
+- CI runs on every PR (build + lint + test)
+- Staging and production environments exist on Railway
+- Health checks pass in all environments
+
+### Phase 10 — Testing & Quality (Week 16)
+
+**Current gap**: 1 test file (`Identifier` value object). `supertest`, `@testing-library/react`, and `msw` are installed as devDependencies but unused. The entire domain model, API layer, and worker logic is untested.
+
+**Goal**: achieve meaningful test coverage across the stack, focusing on domain logic, API contracts, and critical paths. Not aiming for 100% — targeting confidence in the areas that matter most.
+
+**Tasks expected**:
+
+1. **Domain entity tests** — unit tests for all aggregates and value objects
+   - `Session`, `Workspace`, `Conversation`, `Message`, `Artifact`
+   - State transitions, invariants, error conditions
+   - Idempotency key behavior, optimistic locking
+
+2. **Repository integration tests** — test Kysely repositories against real PostgreSQL
+   - Test container or `docker-compose` DB
+   - CRUD operations, optimistic locking conflicts, transaction rollback
+   - Row-level privacy (conversations scoped to user)
+
+3. **API endpoint tests** — supertest against Express app
+   - All endpoints: generation, workspaces, agent chat, admin
+   - Idempotency replay, error responses, SSE events
+   - Auth middleware behavior (dev + real)
+
+4. **Worker tests** — BullMQ job processing
+   - Job completion, retry, failure paths
+   - Stalled job detection
+   - Graceful shutdown behavior
+
+5. **Critical path E2E** — one happy-path test per bounded context
+   - Session creation → polling → artifact retrieval
+   - Workspace creation → invite → accept → role check
+   - Agent chat: start conversation → send message → receive reply
+
+6. **CI enforcement** — quality gates
+   - Tests must pass for PR merge
+   - Coverage threshold: 60% domain, 40% infra, 30% API (minimums)
+
+**Exit criteria**:
+
+- All domain entity tests pass
+- API smoke tests for all route groups
+- Worker job lifecycle tests
+- CI blocks merge on test failure
+
+### Phase 11 — Gamification (Week 17+)
+
+**Current gap**: gamification was deferred from Phase 5. It's the engagement layer — points, achievements, leaderboards — that makes the platform sticky for teams.
+
+**Goal**: add a cross-context gamification system that rewards productive usage patterns without creating perverse incentives.
+
+**Tasks expected**:
+
+1. **Points system** — `GamificationEvent` domain events
+   - Session completed → +10 pts
+   - Artifact approved → +5 pts
+   - Workspace invite accepted → +3 pts
+   - Agent chat interaction → +1 pt
+   - Configurable point values per action type
+
+2. **Achievements & badges** — milestone-based unlocks
+   - "First Session" → complete 1 session
+   - "Power User" → complete 50 sessions
+   - "Team Player" → join 3 workspaces
+   - "Prompt Master" → use all 7 agent personas
+   - Badge display in user profile
+
+3. **Leaderboards** — workspace-scoped and global
+   - Weekly/monthly points ranking
+   - Opt-in visibility (privacy-first)
+   - Avoid gamification pressure (no negative consequences)
+
+4. **Gamification repository** — `GamificationRepository` interface + Kysely impl
+   - Points ledger (append-only, auditable)
+   - Achievements table
+   - Leaderboard queries
+
+5. **Event-driven wiring** — consume domain events from Phase 1-5
+   - `SessionCompleted` → award points
+   - `MembershipAccepted` → award points
+   - `MessageAdded` → award points
+   - Use BullMQ for async gamification processing (don't block main flow)
+
+**Exit criteria**:
+
+- Points awarded on key actions
+- Achievements unlock and display
+- Leaderboards update daily
+- Gamification events are async (don't slow down core workflows)
+
 ## Cross-Phase Non-Negotiables
 
 - No merge without passing [[Quality Gate Matrix]] required checks.
@@ -150,7 +434,7 @@ Implementation (2026-08-01, branch `feature/phase-3-workspace-collaboration`):
 - No naming drift from canonical queue lifecycle (`QUEUE` / `WORKER_PICKUP`, `canQueue`).
 - No production promotion without [[CI-CD Promotion Policy]] gates.
 
-## Risk Register (Top 4)
+## Risk Register (Top 7)
 
 1. **Scope expansion too early**
    - Mitigation: phase gates and feature flags for non-core contexts.
@@ -160,16 +444,27 @@ Implementation (2026-08-01, branch `feature/phase-3-workspace-collaboration`):
    - Mitigation: replay/idempotency tests, snapshot recovery, queue SLO guardrails.
 4. **Governance bypass pressure**
    - Mitigation: documented exception workflow and expiration policy.
+5. **LLM cost overruns** (Phase 6)
+   - Mitigation: token budgets with hard caps, per-session limits, provider cost tracking.
+6. **Frontend complexity creep** (Phase 7)
+   - Mitigation: MUI design system constraints, component library audit before custom builds, MVP-first mindset.
+7. **Auth implementation delay** (Phase 8)
+   - Mitigation: dev-auth continues working during frontend build, auth is additive not blocking.
 
 ## Recommended Immediate Backlog Order
 
-1. Bootstrap + CI guardrails
-2. Core session vertical slice
-3. Reliability hardening
-4. Workspace sharing
-5. Prompt governance runtime
-6. Agent chat
-7. Gamification
+1. Bootstrap + CI guardrails ✅
+2. Core session vertical slice ✅
+3. Reliability hardening ✅
+4. Workspace sharing ✅
+5. Prompt governance runtime ✅
+6. Agent chat ✅
+7. **Real LLM integration** (Phase 6) — unblocking the core value prop
+8. **Frontend MVP** (Phase 7) — users need an interface
+9. **Real authentication** (Phase 8) — replace dev stub
+10. **Deployment & CI/CD** (Phase 9) — get it live
+11. **Testing & quality** (Phase 10) — build confidence
+12. **Gamification** (Phase 11) — engagement layer
 
 ## Referenced Pages
 
@@ -184,5 +479,13 @@ Implementation (2026-08-01, branch `feature/phase-3-workspace-collaboration`):
 - [[Workspace Sharing]]
 - [[Workspace Permissions]]
 - [[Prompt Versioning]]
+- [[Prompt Components]]
+- [[PromptComposer]]
 - [[Agent Chat]]
 - [[Gamification]]
+- [[LLM Gateway - OpenRouter]]
+- [[Auth Dependencies]]
+- [[Auth Middleware]]
+- [[Testing Strategy]]
+- [[Token Budget Control]]
+- [[Railway Deployment Config]]

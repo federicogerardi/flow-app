@@ -81,6 +81,8 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 
 ## Implementation Status
 
+### Completed (Phase 0–5)
+
 | Phase | Status | Scope |
 |-------|--------|-------|
 | Phase 0 — Foundation Bootstrap | ✅ | Monorepo, tooling, CI, Docker Compose |
@@ -90,10 +92,29 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 | Phase 4 — Prompt Governance Runtime | ✅ | Prompt versioning, components, composer, filesystem repository |
 | Phase 5 — Expansion Tracks | ✅ | Agent Chat (Conversation, Message, 7 agents), Gamification pending |
 
+### Planned (Phase 6–11)
+
+| Phase | Priority | Scope |
+|-------|----------|-------|
+| Phase 6 — Real LLM Integration | 🔴 Critical | Replace mock worker + stub chat with real Claude/OpenAI calls |
+| Phase 7 — Frontend MVP | 🔴 Critical | React SPA: dashboard, session wizard, live progress, agent chat UI |
+| Phase 8 — Real Authentication | 🟡 High | JWT auth replacing dev stub: register, login, refresh, protected routes |
+| Phase 9 — Deployment & CI/CD | 🟡 High | Dockerfile, Railway config, GitHub Actions pipeline |
+| Phase 10 — Testing & Quality | 🟢 Medium | Domain tests, API tests, worker tests, CI quality gates |
+| Phase 11 — Gamification | 🟢 Medium | Points, achievements, leaderboards, event-driven rewards |
+
+### Critical Gaps
+
+1. **LLM is mocked** — `executeStep` returns `'Mock generated content'`, agent chat never generates AI replies
+2. **Frontend is a skeleton** — single `<h1>`, no routing, no pages, API client is wired but unused
+3. **Auth is a dev stub** — hardcoded seed user, no login/register, JWT secret defined but never used
+4. **Zero deployment** — no Dockerfile, no CI/CD, no Railway config, runs only via `npm run dev`
+5. **Near-zero tests** — 1 test file (Identifier), vitest/supertest/testing-library installed but unused
+
 ## Infrastructure (Railway dev)
 
 | Resource | Endpoint | Status |
 |----------|----------|--------|
-| PostgreSQL | Railway dev (TCP proxy 5432) | ✅ 17 tables, 6 migrations |
+| PostgreSQL | Railway dev (TCP proxy 5432) | ✅ 19 tables, 7 migrations |
 | Redis | Railway dev (TCP proxy 6379) | ✅ ACTIVE |
-| Backend API | `localhost:3000` | ✅ 7 endpoints verified |
+| Backend API | `localhost:3000` | ✅ 17 endpoints verified |

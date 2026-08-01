@@ -6,6 +6,54 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 
 ---
+## [2026-08-01] roadmap | Phase 6-11 expansion
+
+Roadmap [[synthesis/implementation-roadmap-2026-08-01]] expanded after Phase 0-5 completion. PR #5 merged to `dev`. Branch tracking fix applied.
+
+### Gap analysis findings
+
+1. **LLM is mocked** — `executeStep` returns `'Mock generated content'`, agent chat never generates AI replies
+2. **Frontend is a skeleton** — single `<h1>`, no routing, no pages; API client is wired but unused
+3. **Auth is a dev stub** — hardcoded seed user, no login/register, JWT secret defined but never used
+4. **Zero deployment** — no Dockerfile, no CI/CD, no Railway config
+5. **Near-zero tests** — 1 test file (Identifier), all test tooling installed but unused
+
+### New phases added
+
+| Phase | Scope |
+|-------|-------|
+| Phase 6 — Real LLM Integration | LLM provider abstraction, session worker wiring, agent chat wiring, token budgets |
+| Phase 7 — Frontend MVP | React SPA with MUI, routing, session wizard, live progress, agent chat UI |
+| Phase 8 — Real Authentication | JWT auth replacing dev stub: register, login, refresh, protected routes |
+| Phase 9 — Deployment & CI/CD | Dockerfile, Railway config, GitHub Actions CI/CD pipeline |
+| Phase 10 — Testing & Quality | Domain tests, API tests, worker tests, CI quality gates |
+| Phase 11 — Gamification | Points, achievements, leaderboards, event-driven rewards |
+
+### Wiki updates
+
+- `Wiki/synthesis/implementation-roadmap-2026-08-01.md` — Phase 6-11 added, risk register expanded, frontmatter updated
+- `Wiki/overview.md` — completed/planned phases table, critical gaps listed
+- `Wiki/index.md` — maintenance note added
+- `Wiki/log.md` — this entry
+
+### Consistency verification (post-write)
+
+Cross-referenced all 4 modified pages against existing wiki. Found 3 contradictions — all fixed:
+
+1. **Phase 6 LLM design** diverged from [[LLM Gateway - OpenRouter]] — aligned with existing `LlmGateway` + `ModelTier` design
+2. **Phase 8 auth** omitted Passport.js from [[Auth Dependencies]] — added Passport strategies + OAuth support
+3. **Pydantic reference** (Python tool in Node.js project) — changed to Zod only
+
+Additional verifications passed:
+- ✅ No Italian prose in any modified page
+- ✅ No anchor links (all wikilinks are page-level)
+- ✅ 2 forward-reference wikilinks ([[Token Budget Control]], [[Railway Deployment Config]]) — pages don't exist yet, acceptable
+- ✅ No environment references (Rule 8)
+- ✅ Frontmatter valid on all pages
+- ✅ Referenced pages section updated with existing wiki pages
+
+---
+
 ## [2026-08-01] implementation | Phase 5 — Agent Chat
 
 Phase 5 (Agent Chat) of [[synthesis/implementation-roadmap-2026-08-01]] implemented. Branch: `feature/phase-3-workspace-collaboration`.
