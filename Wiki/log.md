@@ -6,6 +6,51 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 
 ---
+## [2026-08-02] fix | ESM import hoisting — SEED_USER_ID not loaded from .env
+
+### Problem
+
+`dev-auth.ts` evaluated `process.env.SEED_USER_ID` at **module load time** (line 3, top-level constant). In ESM, all `import` statements are hoisted and resolved before the importing module's code executes. This means:
+
+1. `server.ts` → ESM resolves all imports (including `dev-auth.ts`)
+2. `dev-auth.ts` → `const SEED_USER_ID = process.env.SEED_USER_ID ?? '...'` ← evaluated HERE
+3. `server.ts` → `dotenv.config({ path: '.env' })` ← runs AFTER imports
+
+Result: `process.env.SEED_USER_ID` was always `undefined` at evaluation time, falling back to `'00000000-0000-0000-0000-000000000001'`. The actual seed user in DB is `a0eebc99-...`, so `findByMember()` returned empty → workspace list was always empty → dashboard showed only EmptyState.
+
+### Fix
+
+Moved `process.env.SEED_USER_ID` read from module-level constant to inside the middleware function body. At request time, `dotenv.config()` has already run, so the env var is available.
+
+```typescript
+// Before (broken — module load time)
+const SEED_USER_ID = process.env.SEED_USER_ID ?? '00000000-0000-0000-0000-000000000001';
+export function devAuthMiddleware(req, _res, next) {
+  (req as any).user = { sub: SEED_USER_ID };
+  next();
+}
+
+// After (fixed — request time)
+export function devAuthMiddleware(req, _res, next) {
+  const seedUserId = process.env.SEED_USER_ID ?? '00000000-0000-0000-0000-000000000001';
+  (req as any).user = { sub: seedUserId };
+  next();
+}
+```
+
+### Secondary fix
+
+`DashboardPage` was early-returning with `<EmptyState>` when workspaces was empty, hiding the tools grid entirely. Removed the early return — tools grid is now always visible.
+
+### Files
+
+- `apps/backend/src/middleware/dev-auth.ts` — read env at request time
+- `apps/frontend/src/pages/DashboardPage.tsx` — tools always visible
+- `apps/backend/.env` — `SEED_USER_ID` added
+- `apps/backend/.env.example` — `SEED_USER_ID` documented
+
+---
+
 ## [2026-08-01] implementation | Phase 7 — Frontend MVP
 
 Phase 7 of [[synthesis/implementation-roadmap-2026-08-01]] implemented. Branch: `dev`.

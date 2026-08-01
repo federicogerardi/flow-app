@@ -252,6 +252,7 @@ Implementation (2026-08-01, branch `dev`):
 - **Backend endpoints** — `GET /api/sessions` + `GET /api/artifacts/:id` added
 - **SessionRepository** — `findByWorkspace()` method added (interface + Kysely impl)
 - **Context7 verified** — React Router v7 canonical import `"react-router"`, MUI v6 Grid2 + `size` prop, `@mui/icons-material@6.x`
+- **Bug fix** — ESM import hoisting caused `SEED_USER_ID` to be read before `dotenv.config()` ran (documented in [[log]])
 
 **Goal**: deliver a functional SPA covering the full user workflow: workspace selection → session configuration → live generation progress → results review → agent chat refinement.
 
