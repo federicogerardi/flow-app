@@ -8,14 +8,16 @@ import { errorHandler } from './infrastructure/error-handler.js';
 import { createGenerationRoutes } from './api/generation.js';
 import { createAdminRoutes } from './api/admin.js';
 import { createWorkspaceRoutes } from './api/workspaces.js';
+import { createAgentChatRoutes } from './api/agent-chat.js';
 import { devAuthMiddleware } from './middleware/dev-auth.js';
 import { requireWorkspaceRole } from './middleware/workspace-role.js';
-import type { SessionRepository, WorkspaceRepository } from '@flow-app/domain';
+import type { SessionRepository, WorkspaceRepository, ConversationRepository } from '@flow-app/domain';
 import type { JobEventBridge } from './infrastructure/job-event-bridge.js';
 
 export interface AppDeps {
   sessionRepo: SessionRepository;
   workspaceRepo: WorkspaceRepository;
+  conversationRepo: ConversationRepository;
   eventBridge: JobEventBridge;
   queue: Queue;
 }
@@ -71,6 +73,15 @@ export function createApp(deps: AppDeps) {
   app.get('/api/invitations', workspaceRoutes.listPendingInvitations);
   app.post('/api/invitations/:id/accept', workspaceRoutes.acceptInvitation);
   app.post('/api/invitations/:id/decline', workspaceRoutes.declineInvitation);
+
+  // Agent Chat routes
+  const agentChatRoutes = createAgentChatRoutes(deps.conversationRepo);
+  app.get('/api/workspaces/:workspaceId/agents', requireWorkspaceRole(deps.workspaceRepo, 'owner', 'editor', 'viewer'), agentChatRoutes.listAgents);
+  app.get('/api/workspaces/:workspaceId/conversations', requireWorkspaceRole(deps.workspaceRepo, 'owner', 'editor', 'viewer'), agentChatRoutes.listConversations);
+  app.post('/api/workspaces/:workspaceId/conversations', requireWorkspaceRole(deps.workspaceRepo, 'owner', 'editor'), agentChatRoutes.startConversation);
+  app.get('/api/conversations/:id', agentChatRoutes.getConversation);
+  app.post('/api/conversations/:id/messages', agentChatRoutes.sendMessage);
+  app.post('/api/conversations/:id/archive', agentChatRoutes.archiveConversation);
 
   // Admin routes
   const adminRoutes = createAdminRoutes(deps.queue);

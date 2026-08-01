@@ -9,3 +9,6 @@ export * from './generation';
 
 // Re-export workspace
 export * from './workspace';
+
+// Re-export agent-chat
+export * from './agent-chat';
