@@ -19,21 +19,29 @@ Define one deterministic release path across environments so every deployment is
 
 ## Environments
 
-- **Dev**: fast feedback, feature validation, integration checks.
-- **Staging**: production-like validation for release candidates.
-- **Prod**: customer-facing environment with strict gates.
+| Environment | Branch | Deploy | Gates |
+|-------------|--------|--------|-------|
+| **Dev** | `dev` | Auto on merge | CI checks pass |
+| **Staging** | `staging` | Auto on merge | CI checks + smoke tests |
+| **Prod** | `main` | Manual approval | CI + staging validation + release owner approval |
 
 ## Promotion Flow
 
-1. Change merged to `main` after PR checks.
-2. CI runs build, typecheck, tests, lint, contract checks.
-3. Deploy artifact to **Dev** automatically.
-4. Run smoke checks in Dev (API health, core routes, basic workflow).
-5. Promote same artifact to **Staging**.
-6. Run staging verification (regression subset + migration check + observability sanity).
-7. Manual approval gate (release owner).
-8. Promote same artifact to **Prod**.
-9. Run post-deploy checks and monitor burn-in window.
+1. Feature branch → PR to `dev` → CI checks → merge.
+2. `dev` → auto-sync to `staging` via `branch-sync.yml`.
+3. Staging validation (smoke tests, regression, migration check).
+4. `staging` → PR to `main` → CI + manual approval → merge.
+5. `main` → deploy to **Prod**.
+6. `main` → auto-sync back to `staging` + `dev` via `branch-sync.yml`.
+
+## Branch Sync
+
+After every PR merge, downstream branches are synchronized automatically:
+
+- PR merged to `main` → `staging` + `dev` synced.
+- PR merged to `staging` → `dev` synced.
+
+Workflow: `.github/workflows/branch-sync.yml`. See [[Git Governance Policy]] for details.
 
 ## Required Gates by Stage
 
