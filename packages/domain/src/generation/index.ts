@@ -32,4 +32,17 @@ export type { SessionRepository } from './repositories/SessionRepository';
 
 // Tools
 export { toolRegistry, getTool } from './tools';
-export type { ToolDefinition, StepDefinition, ModelTier } from './tools/tool-definition';
+export type { ToolDefinition, StepDefinition, StepPromptDefinition, ModelTier } from './tools/tool-definition';
+
+// Prompting
+export {
+  PromptTemplateId,
+  PromptVersion,
+  PromptComponent,
+  PromptComponentRegistry,
+  PromptComponentNotFoundError,
+  PromptComposer,
+  getDefaultComponents,
+  DEFAULT_COMPONENTS,
+} from './prompting';
+export type { PromptTemplateContent, PromptTemplateRepository, ComposedPrompt, PromptComponentType } from './prompting';

@@ -1,0 +1,143 @@
+import { randomUUID } from 'node:crypto';
+import type { AgentKey } from '../value-objects/AgentKey';
+import type { ConversationStatus } from '../value-objects/ConversationStatus';
+import type { DomainEvent } from '../../shared/domain-event';
+import { Message } from './Message';
+
+export class ConversationArchivedError extends Error {
+  readonly code = 'INVALID_STATE';
+  readonly retryable = false;
+  constructor(conversationId: string) {
+    super(`Conversation ${conversationId} is archived and cannot receive new messages`);
+    this.name = 'ConversationArchivedError';
+  }
+}
+
+export class ConversationAlreadyArchivedError extends Error {
+  readonly code = 'INVALID_STATE';
+  readonly retryable = false;
+  constructor(conversationId: string) {
+    super(`Conversation ${conversationId} is already archived`);
+    this.name = 'ConversationAlreadyArchivedError';
+  }
+}
+
+export class Conversation {
+  private _messages: Message[];
+  private _status: ConversationStatus;
+  private _title: string | null;
+  private _updatedAt: Date;
+
+  private constructor(
+    readonly conversationId: string,
+    readonly workspaceId: string,
+    readonly userId: string,
+    readonly agentKey: AgentKey,
+    readonly createdAt: Date,
+    updatedAt: Date,
+    status: ConversationStatus,
+    title: string | null,
+    messages: Message[],
+  ) {
+    this._updatedAt = updatedAt;
+    this._status = status;
+    this._title = title;
+    this._messages = messages;
+  }
+
+  static start(workspaceId: string, userId: string, agentKey: AgentKey): Conversation {
+    const now = new Date();
+    return new Conversation(
+      randomUUID(),
+      workspaceId,
+      userId,
+      agentKey,
+      now,
+      now,
+      'active',
+      null,
+      [],
+    );
+  }
+
+  static reconstitute(
+    conversationId: string,
+    workspaceId: string,
+    userId: string,
+    agentKey: AgentKey,
+    createdAt: Date,
+    updatedAt: Date,
+    status: ConversationStatus,
+    title: string | null,
+    messages: Message[],
+  ): Conversation {
+    return new Conversation(
+      conversationId,
+      workspaceId,
+      userId,
+      agentKey,
+      createdAt,
+      updatedAt,
+      status,
+      title,
+      messages,
+    );
+  }
+
+  addMessage(message: Message): DomainEvent {
+    if (this._status !== 'active') {
+      throw new ConversationArchivedError(this.conversationId);
+    }
+    this._messages.push(message);
+    this._updatedAt = new Date();
+
+    // Auto-title from first user message
+    if (!this._title && message.role === 'user') {
+      this._title = message.content.slice(0, 80) + (message.content.length > 80 ? '...' : '');
+    }
+
+    return {
+      eventType: 'MessageAdded',
+      occurredAt: new Date(),
+      aggregateId: this.conversationId,
+    };
+  }
+
+  archive(): DomainEvent {
+    if (this._status !== 'active') {
+      throw new ConversationAlreadyArchivedError(this.conversationId);
+    }
+    this._status = 'archived';
+    this._updatedAt = new Date();
+
+    return {
+      eventType: 'ConversationArchived',
+      occurredAt: new Date(),
+      aggregateId: this.conversationId,
+    };
+  }
+
+  recentMessages(n: number = 20): Message[] {
+    return this._messages.slice(-n);
+  }
+
+  get status(): ConversationStatus {
+    return this._status;
+  }
+
+  get messages(): ReadonlyArray<Message> {
+    return this._messages;
+  }
+
+  get title(): string | null {
+    return this._title;
+  }
+
+  get updatedAt(): Date {
+    return this._updatedAt;
+  }
+
+  get isActive(): boolean {
+    return this._status === 'active';
+  }
+}

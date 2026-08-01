@@ -32,13 +32,23 @@ export interface ApiCallInput {
   cache: { enabled: boolean; ttlSeconds: number };
 }
 
+export interface StepPromptDefinition {
+  /** Legacy template path (backward compatibility) */
+  template?: string;
+  /** Versioned template identity (e.g. "blog-post/seo-structure") */
+  templateId?: string;
+  /** Prompt version: semver or "latest" */
+  version?: string;
+  /** Model tier for this step */
+  model: ModelTier;
+  /** Component keys to include (overrides tool defaults) */
+  components?: string[];
+}
+
 export interface StepDefinition {
   order: number;
   label: string;
-  prompt: {
-    template: string;
-    model: ModelTier;
-  };
+  prompt: StepPromptDefinition;
   enrichment: 'serial' | 'hybrid';
   apiSources?: string[];
   execution: {
@@ -53,6 +63,7 @@ export interface ToolDefinition {
   description: string;
   creditCost?: number;
   produces?: string;
+  defaultComponents?: string[];
   acquisition: {
     userText?: TextInput[];
     files?: FileInput[];

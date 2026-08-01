@@ -7,7 +7,10 @@ date_updated: 2026-08-01
 
 # Wiki Index — Flow App
 
-> Maintenance note (2026-08-01): API verification completed — Railway PostgreSQL + Redis provisioned, 6 migrations executed, all endpoints green, idempotency replay verified.
+> Maintenance note (2026-08-01): Phase 5 implemented — Agent Chat bounded context (Conversation, Message, 7 agents, 6 API routes, privacy invariant). Build ✅, tests ✅ (8/8).
+> Maintenance note (2026-08-01): Phase 4 implemented — Prompt Governance Runtime (PromptTemplateId, PromptVersion, PromptComponent, PromptComposer, filesystem repository, 12 default components). Build ✅, tests ✅ (8/8).
+> Maintenance note (2026-08-01): Phase 3 implemented — workspace collaboration (membership entity, aggregate, domain events, repository, middleware, 10 API routes, 3 use cases). Build ✅, tests ✅ (8/8).
+> Maintenance note (2026-08-01): API verification completed — managed PostgreSQL + Redis provisioned, 6 migrations executed, all endpoints green, idempotency replay verified.
 > Maintenance note (2026-08-01): Phase 2 implemented — reliability and ops hardening (optimistic locking, health monitor, graceful shutdown, cleanup job). Build ✅, tests ✅ (8/8).
 > Maintenance note (2026-08-01): branch sync policy documented — permanent branches (main/staging/dev), auto-sync workflow, promotion flow updated in Git Governance Policy and CI-CD Promotion Policy.
 > Maintenance note (2026-08-01): Phase 0-1 implemented — monorepo bootstrap + core async generation vertical slice. PR #1 open. Code verified (typecheck 0 errors, 8 tests pass, lint 0 errors).

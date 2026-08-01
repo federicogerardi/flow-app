@@ -52,6 +52,18 @@ export interface WorkspacesTable {
   version: Generated<number>;
 }
 
+export interface WorkspaceMembershipsTable {
+  workspace_id: string;
+  user_id: string;
+  role: string;
+  status: string;
+  invited_by: string | null;
+  invited_at: ColumnType<Date | null, Date | null, Date | null>;
+  joined_at: ColumnType<Date | null, Date | null, Date | null>;
+  created_at: ColumnType<Date, never, never>;
+  updated_at: ColumnType<Date, Date | null, Date>;
+}
+
 export interface UsersTable {
   id: string;
   email: string;
@@ -62,11 +74,35 @@ export interface UsersTable {
   updated_at: ColumnType<Date, Date | null, Date>;
 }
 
+export interface ConversationsTable {
+  id: string;
+  workspace_id: string;
+  user_id: string;
+  agent_key: string;
+  title: string | null;
+  status: Generated<string>;
+  created_at: ColumnType<Date, never, never>;
+  updated_at: ColumnType<Date, Date | null, Date>;
+}
+
+export interface MessagesTable {
+  id: string;
+  conversation_id: string;
+  role: string;
+  content: string;
+  tokens_used: number | null;
+  model_used: string | null;
+  created_at: ColumnType<Date, never, never>;
+}
+
 export interface DB {
   sessions: SessionsTable;
   artifacts: ArtifactsTable;
   idempotency_keys: IdempotencyKeysTable;
   session_snapshots: SessionSnapshotsTable;
   workspaces: WorkspacesTable;
+  workspace_memberships: WorkspaceMembershipsTable;
   users: UsersTable;
+  conversations: ConversationsTable;
+  messages: MessagesTable;
 }
