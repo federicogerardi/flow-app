@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-07-31
+date_updated: 2026-08-01
 source_count: 4
 confidence: high
 ---
@@ -368,6 +368,37 @@ Already documented in [[BullMQ Worker Wiring]], summary:
 1. **SIGTERM**: worker.pause() → finish active jobs (30s timeout) → worker.close()
 2. **Crash**: XState snapshot persisted at each step → retry resumes from the snapshot
 3. **Stalled**: BullMQ detects stall (30s), retry with new worker (max 2)
+
+## Implementation
+
+Implemented in Phase 2 (2026-08-01, branch `feature/phase-2-reliability-ops`):
+
+| Component | File | Description |
+|-----------|------|-------------|
+| Worker structured logging | `apps/backend/src/generation/worker/session-worker.ts` | `job_started`/`job_completed`/`job_failed` schema with `sessionId`, `durationMs`, `attempts`, `toolKey`, `stepCount`, `error`, `stack` |
+| Worker stall config | `apps/backend/src/generation/worker/session-worker.ts` | `lockDuration: 120s`, `stalledInterval: 30s`, `maxStalledCount: 2` |
+| `QueueHealthMonitor` | `apps/backend/src/generation/worker/health-monitor.ts` | SLO checks with warning/critical thresholds, `collectMetrics()`, `checkHealth()` |
+| `GET /admin/jobs` | `apps/backend/src/api/admin.ts` | Queue stats, worker uptime, stability metrics |
+| `GET /admin/health` | `apps/backend/src/api/admin.ts` | Health check endpoint returning status + active alerts |
+| Worker graceful shutdown | `apps/backend/src/generation/worker/worker-process.ts` | SIGTERM handler: `pause()` → drain (30s) → `close()` |
+| `CleanupJob` | `apps/backend/src/infrastructure/cleanup-job.ts` | Hourly: expired idempotency keys + snapshots >7 days |
+
+### Worker process entry point
+
+`apps/backend/src/generation/worker/worker-process.ts` — standalone worker process with:
+
+- SIGTERM/SIGINT graceful shutdown handler
+- 30s drain timeout before force close
+- `isShuttingDown` guard to prevent double shutdown
+
+### Health monitor thresholds
+
+| Metric | Warning | Critical |
+|--------|---------|----------|
+| Failure rate (24h) | > 2% | > 5% |
+| Queue depth (waiting) | > 10 | > 50 |
+| P95 job duration | > 120s | > 180s |
+| Stalled jobs | >= 1 | >= 2 |
 
 ---
 

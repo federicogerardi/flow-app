@@ -2,15 +2,18 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import type { Queue } from 'bullmq';
 import { httpLogger, logger } from './infrastructure/logger.js';
 import { errorHandler } from './infrastructure/error-handler.js';
 import { createGenerationRoutes } from './api/generation.js';
+import { createAdminRoutes } from './api/admin.js';
 import type { SessionRepository } from '@flow-app/domain';
 import type { JobEventBridge } from './infrastructure/job-event-bridge.js';
 
 export interface AppDeps {
   sessionRepo: SessionRepository;
   eventBridge: JobEventBridge;
+  queue: Queue;
 }
 
 export function createApp(deps: AppDeps) {
@@ -46,6 +49,10 @@ export function createApp(deps: AppDeps) {
   app.post('/api/tools/:toolKey/sessions', generationRoutes.startSession);
   app.get('/api/sessions/:id', generationRoutes.getSession);
   app.get('/api/sessions/:id/events', generationRoutes.getEvents);
+
+  const adminRoutes = createAdminRoutes(deps.queue);
+  app.get('/admin/jobs', adminRoutes.getJobs);
+  app.get('/admin/health', adminRoutes.getHealth);
 
   app.use(errorHandler);
 
