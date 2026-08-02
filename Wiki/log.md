@@ -1914,3 +1914,42 @@ Created [[phase-9-architectural-targets]] — decision record cataloguing 11 VAL
 - **STRUCTURAL (5 gaps, RFC required)**: Session `_artifacts` collection, domain event payloads, Workspace assets, temporal invariants, tool stub content. Each needs a design decision before implementation.
 
 See [[phase-9-architectural-targets]] for full roadmaps and prioritization.
+
+## [2026-08-02] feat(domain) | Phase 9a — V10 + V1 Complete
+
+### V10 — Zero `throw new Error()` in domain (Rule 3 compliance)
+
+12 new `DomainError` subclasses created across 8 files. Every `throw new Error(...)` in `packages/domain/src/` replaced with a properly typed error:
+
+| File | Error class(es) | code |
+|------|----------------|------|
+| `StepNumber.ts` | `InvalidStepNumberError` | `VALIDATION_ERROR` |
+| `WorkspaceMembership.ts` | `CannotInviteAsOwnerError`, `InvalidMembershipAcceptError`, `CannotAssignOwnerRoleError` | `VALIDATION_ERROR`, `INVALID_STATE` |
+| `PromptTemplateId.ts` | `InvalidPromptTemplateKeyError`, `InvalidPromptTemplateIdFormatError` | `VALIDATION_ERROR` |
+| `PromptVersion.ts` | `InvalidPromptVersionError` | `VALIDATION_ERROR` |
+| `PromptComponent.ts` | `EmptyComponentContentError` | `VALIDATION_ERROR` |
+| `UserStatus.ts` | `InvalidUserStatusError` | `VALIDATION_ERROR` |
+| `UserRole.ts` | `InvalidUserRoleError` | `VALIDATION_ERROR` |
+| `PromptComponentRegistry.ts` | `PromptComponentNotFoundError` (fixed: `extends Error` → `extends DomainError`) | `VALIDATION_ERROR` |
+
+### V1 — `SessionStatus` type alias → class (Rule 4 compliance)
+
+`SessionStatus` converted from 8-line type alias to 67-line class:
+
+- 7 static readonly instances: `Draft`, `Ready`, `Queued`, `Running`, `Completed`, `Failed`, `Cancelled`
+- `static from(value: string)` with exhaustive switch throwing `InvalidSessionStatusError`
+- `isTerminal()` returns true for `completed`/`failed`/`cancelled`
+- `equals()`, `toString()` (returns `SessionStatusValue`), `value` getter
+- `SessionLifecycle` updated: `getValidTransition()` accepts class, returns class, `initialState` is `SessionStatus.Draft`
+- `Session.create()` uses `SessionStatus.Draft` instead of `'draft'`
+- `session-repository.ts`: `SessionStatus.from(row.status)` for reads, `session.status.value` for writes
+- Zero `as SessionStatus` casts in repository
+
+### Verification
+
+- `npm run lint`: 0 errors, 0 warnings
+- `npm run typecheck`: 0 errors
+- `npm test`: 8/8 pass
+- `grep -rn "throw new Error" packages/domain/src/`: 0 matches
+
+18 files modified. Next: Phase 9b (MembershipRole, ToolKey, AgentKey, SessionEvent discriminated union).
