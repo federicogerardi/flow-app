@@ -31,7 +31,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Railway CLI
-        run: curl -fsSL https://railway.com/install.sh | sh -s -- -y
+        run: |
+          curl -fsSL https://github.com/railwayapp/cli/releases/download/v3.21.0/railway-v3.21.0-x86_64-unknown-linux-gnu.tar.gz -o /tmp/railway.tar.gz
+          tar xzf /tmp/railway.tar.gz -C /tmp
+          chmod +x /tmp/railway
+          echo /tmp >> "$GITHUB_PATH"
       - name: Deploy to Railway
         run: railway up --ci --environment dev
         env:
@@ -50,7 +54,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Railway CLI
-        run: curl -fsSL https://railway.com/install.sh | sh -s -- -y
+        run: |
+          curl -fsSL https://github.com/railwayapp/cli/releases/download/v3.21.0/railway-v3.21.0-x86_64-unknown-linux-gnu.tar.gz -o /tmp/railway.tar.gz
+          tar xzf /tmp/railway.tar.gz -C /tmp
+          chmod +x /tmp/railway
+          echo /tmp >> "$GITHUB_PATH"
       - name: Deploy to Railway
         run: railway up --ci --environment staging
         env:
@@ -66,7 +74,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Railway CLI
-        run: curl -fsSL https://railway.com/install.sh | sh -s -- -y
+        run: |
+          curl -fsSL https://github.com/railwayapp/cli/releases/download/v3.21.0/railway-v3.21.0-x86_64-unknown-linux-gnu.tar.gz -o /tmp/railway.tar.gz
+          tar xzf /tmp/railway.tar.gz -C /tmp
+          chmod +x /tmp/railway
+          echo /tmp >> "$GITHUB_PATH"
       - name: Deploy to Railway
         run: railway up --ci --environment production
         env:
