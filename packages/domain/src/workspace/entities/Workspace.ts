@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { DomainEvent } from '../../shared/domain-event';
-import type { MembershipRole } from '../value-objects/MembershipRole';
+import { MembershipRole } from '../value-objects/MembershipRole';
 import { WorkspaceMembership } from './WorkspaceMembership';
 import {
   NotWorkspaceOwnerError,
@@ -33,7 +33,7 @@ export class Workspace {
     const ownerMembership = WorkspaceMembership.reconstitute(
       createdBy,
       workspaceId,
-      'owner',
+      MembershipRole.Owner,
       'active',
       createdBy,
       now,
@@ -100,7 +100,7 @@ export class Workspace {
     const newOwner = this._memberships.find((m) => m.userId === to && m.isActive);
     if (!newOwner) throw new NotAnActiveMemberError(to, this.workspaceId);
     const currentOwner = this._memberships.find((m) => m.userId === from);
-    if (currentOwner) currentOwner.changeRole('editor');
+    if (currentOwner) currentOwner.changeRole(MembershipRole.Editor);
     newOwner._setRoleAsOwner();
     this._version++;
     return {
@@ -132,7 +132,7 @@ export class Workspace {
 
   canEdit(userId: string): boolean {
     const role = this.getMemberRole(userId);
-    return role === 'owner' || role === 'editor';
+    return role?.isOwner === true || role?.isEditor === true;
   }
 
   canView(userId: string): boolean {

@@ -3,8 +3,8 @@ import {
   Session,
   getTool,
   ReadinessPolicy,
+  ToolKey,
   type SessionRepository,
-  type ToolKey,
   type AcquisitionData,
   DomainError,
 } from '@flow-app/domain';
@@ -53,13 +53,13 @@ export class StartSessionUseCase {
     if (existing) {
       return {
         session: existing,
-        toolKey: existing.toolKey,
-        stepCount: getTool(existing.toolKey as ToolKey)?.steps.length ?? 0,
+        toolKey: existing.toolKey.value,
+        stepCount: getTool(existing.toolKey)?.steps.length ?? 0,
         replayed: true,
       };
     }
 
-    const tool = getTool(cmd.toolKey as ToolKey);
+    const tool = getTool(ToolKey.from(cmd.toolKey));
     if (!tool) throw new ToolNotFoundError(cmd.toolKey);
 
     const acquisitionData: AcquisitionData = {
@@ -76,7 +76,7 @@ export class StartSessionUseCase {
     if (!readiness.isReady) throw new ReadinessError(readiness.missing);
 
     const session = Session.create(
-      cmd.toolKey as ToolKey,
+      ToolKey.from(cmd.toolKey),
       cmd.workspaceId,
       cmd.userId,
       idempotencyHash,

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { AgentKey } from '../value-objects/AgentKey';
+import { AgentKey } from '../value-objects/AgentKey';
 import type { ConversationStatus } from '../value-objects/ConversationStatus';
 import type { DomainEvent } from '../../shared/domain-event';
 import { DomainError } from '../../shared/domain-error';

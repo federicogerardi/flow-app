@@ -1,4 +1,4 @@
-import type { MembershipRole } from '../value-objects/MembershipRole';
+import { MembershipRole } from '../value-objects/MembershipRole';
 import type { MembershipStatus } from '../value-objects/MembershipStatus';
 import { DomainError } from '../../shared/domain-error';
 
@@ -19,7 +19,7 @@ export class WorkspaceMembership {
     role: MembershipRole,
     invitedBy: string,
   ): WorkspaceMembership {
-    if (role === 'owner') {
+    if (role.isOwner) {
       throw new CannotInviteAsOwnerError();
     }
     return new WorkspaceMembership(
@@ -61,7 +61,7 @@ export class WorkspaceMembership {
   }
 
   changeRole(newRole: MembershipRole): void {
-    if (newRole === 'owner') {
+    if (newRole.isOwner) {
       throw new CannotAssignOwnerRoleError();
     }
     this._role = newRole;
@@ -72,7 +72,7 @@ export class WorkspaceMembership {
    * Only the Workspace aggregate root should call this.
    */
   _setRoleAsOwner(): void {
-    this._role = 'owner';
+    this._role = MembershipRole.Owner;
   }
 
   get role(): MembershipRole {
@@ -88,7 +88,7 @@ export class WorkspaceMembership {
   }
 
   get isOwner(): boolean {
-    return this._role === 'owner' && this.isActive;
+    return this._role.isOwner && this.isActive;
   }
 }
 

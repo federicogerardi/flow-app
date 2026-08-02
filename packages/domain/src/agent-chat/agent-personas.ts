@@ -1,7 +1,7 @@
-import type { AgentKey } from './value-objects/AgentKey';
+import { AgentKey, type AgentKeyValue } from './value-objects/AgentKey';
 
 export interface AgentPersona {
-  key: AgentKey;
+  key: AgentKeyValue;
   name: string;
   role: string;
   essence: string;
@@ -9,7 +9,7 @@ export interface AgentPersona {
   capabilities: string[];
 }
 
-export const AGENT_PERSONAS: Record<AgentKey, AgentPersona> = {
+export const AGENT_PERSONAS: Record<AgentKeyValue, AgentPersona> = {
   strategist: {
     key: 'strategist',
     name: 'Marketing Strategist',
@@ -97,7 +97,7 @@ Provide specific subject line options and A/B test ideas.`,
 };
 
 export function getAgent(key: AgentKey): AgentPersona {
-  return AGENT_PERSONAS[key];
+  return AGENT_PERSONAS[key.value];
 }
 
 export function listAgents(): AgentPersona[] {

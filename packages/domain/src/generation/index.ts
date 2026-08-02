@@ -4,7 +4,8 @@ export { Artifact } from './entities/Artifact';
 
 // Value Objects
 export { SessionId } from './value-objects/SessionId';
-export type { ToolKey } from './value-objects/ToolKey';
+export { ToolKey, InvalidToolKeyError } from './value-objects/ToolKey';
+export type { ToolKeyValue } from './value-objects/ToolKey';
 export { StepNumber, InvalidStepNumberError } from './value-objects/StepNumber';
 export { ArtifactId } from './value-objects/ArtifactId';
 export { ArtifactContent } from './value-objects/ArtifactContent';
@@ -16,7 +17,7 @@ export type { AcquisitionData } from './value-objects/ReadinessPolicy';
 
 // Lifecycle
 export { SessionLifecycle } from './session-lifecycle';
-export type { SessionState, SessionEventType } from './session-lifecycle';
+export type { SessionState, SessionEventType, SessionEvent } from './session-lifecycle';
 
 // Domain Events
 export { SessionStarted } from './domain-events/SessionStarted';

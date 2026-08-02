@@ -1,6 +1,6 @@
 import type { Kysely } from 'kysely';
 import type { DB } from '../types';
-import { Workspace, WorkspaceMembership, ConcurrencyError, type WorkspaceRepository, type MembershipRole, type MembershipStatus } from '@flow-app/domain';
+import { Workspace, WorkspaceMembership, ConcurrencyError, MembershipRole, type WorkspaceRepository, type MembershipStatus } from '@flow-app/domain';
 
 export class KyselyWorkspaceRepository implements WorkspaceRepository {
   constructor(private readonly db: Kysely<DB>) {}
@@ -31,7 +31,7 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
         WorkspaceMembership.reconstitute(
           m.user_id,
           m.workspace_id,
-          m.role as MembershipRole,
+          MembershipRole.from(m.role),
           m.status as MembershipStatus,
           m.invited_by ?? '',
           m.invited_at ?? new Date(),
@@ -83,7 +83,7 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
         .values({
           workspace_id: m.workspaceId,
           user_id: m.userId,
-          role: m.role,
+          role: m.role.value,
           status: m.status,
           invited_by: m.invitedBy,
           invited_at: m.invitedAt,
@@ -91,7 +91,7 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
         })
         .onConflict((oc) =>
           oc.columns(['workspace_id', 'user_id']).doUpdateSet({
-            role: m.role,
+            role: m.role.value,
             status: m.status,
             joined_at: m.joinedAt,
             updated_at: new Date(),
@@ -134,7 +134,7 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
         .values({
           workspace_id: m.workspaceId,
           user_id: m.userId,
-          role: m.role,
+          role: m.role.value,
           status: m.status,
           invited_by: m.invitedBy,
           invited_at: m.invitedAt,
@@ -142,7 +142,7 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
         })
         .onConflict((oc) =>
           oc.columns(['workspace_id', 'user_id']).doUpdateSet({
-            role: m.role,
+            role: m.role.value,
             status: m.status,
             joined_at: m.joinedAt,
             updated_at: new Date(),
@@ -165,7 +165,7 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
     return WorkspaceMembership.reconstitute(
       row.user_id,
       row.workspace_id,
-      row.role as MembershipRole,
+      MembershipRole.from(row.role),
       row.status as MembershipStatus,
       row.invited_by ?? '',
       row.invited_at ?? new Date(),

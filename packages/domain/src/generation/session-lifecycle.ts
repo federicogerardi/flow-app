@@ -1,4 +1,5 @@
 import { SessionStatus, type SessionStatusValue } from './value-objects/SessionStatus';
+import type { Artifact } from './entities/Artifact';
 
 export type SessionEventType =
   | 'CONFIGURE'
@@ -8,6 +9,15 @@ export type SessionEventType =
   | 'COMPLETE'
   | 'FAIL'
   | 'CANCEL';
+
+export type SessionEvent =
+  | { type: 'CONFIGURE' }
+  | { type: 'QUEUE' }
+  | { type: 'WORKER_PICKUP' }
+  | { type: 'ADD_ARTIFACT'; artifact: Artifact; isLast: boolean; stepLabel: string }
+  | { type: 'COMPLETE' }
+  | { type: 'FAIL'; errorCode: string; errorMessage: string }
+  | { type: 'CANCEL' };
 
 export type SessionState = SessionStatusValue;
 

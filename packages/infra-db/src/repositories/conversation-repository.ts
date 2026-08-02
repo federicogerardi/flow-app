@@ -1,6 +1,6 @@
 import type { Kysely } from 'kysely';
 import type { DB } from '../types';
-import { Conversation, Message, type ConversationRepository, type Pagination, type AgentKey, type ConversationStatus, type MessageRole } from '@flow-app/domain';
+import { Conversation, Message, AgentKey, type ConversationRepository, type Pagination, type ConversationStatus, type MessageRole } from '@flow-app/domain';
 
 export class KyselyConversationRepository implements ConversationRepository {
   constructor(private readonly db: Kysely<DB>) {}
@@ -25,7 +25,7 @@ export class KyselyConversationRepository implements ConversationRepository {
       row.id,
       row.workspace_id,
       row.user_id,
-      row.agent_key as AgentKey,
+      AgentKey.from(row.agent_key),
       row.created_at,
       row.updated_at ?? row.created_at,
       row.status as ConversationStatus,
@@ -79,7 +79,7 @@ export class KyselyConversationRepository implements ConversationRepository {
           row.id,
           row.workspace_id,
           row.user_id,
-          row.agent_key as AgentKey,
+          AgentKey.from(row.agent_key),
           row.created_at,
           row.updated_at ?? row.created_at,
           row.status as ConversationStatus,
@@ -109,7 +109,7 @@ export class KyselyConversationRepository implements ConversationRepository {
         id: conversation.conversationId,
         workspace_id: conversation.workspaceId,
         user_id: conversation.userId,
-        agent_key: conversation.agentKey,
+        agent_key: conversation.agentKey.value,
         title: conversation.title,
         status: conversation.status,
       })

@@ -1,5 +1,6 @@
 import type { ToolDefinition } from './tool-definition';
-import type { ToolKey } from '../value-objects/ToolKey';
+import type { ToolKeyValue } from '../value-objects/ToolKey';
+import { ToolKey } from '../value-objects/ToolKey';
 
 const blogPostTool: ToolDefinition = {
   toolKey: 'blog-post',
@@ -45,7 +46,7 @@ const blogPostTool: ToolDefinition = {
   ],
 };
 
-export const toolRegistry: Record<ToolKey, ToolDefinition> = {
+export const toolRegistry: Record<ToolKeyValue, ToolDefinition> = {
   'blog-post': blogPostTool,
   'landing-funnel': blogPostTool,
   'landing-page': blogPostTool,
@@ -60,5 +61,5 @@ export const toolRegistry: Record<ToolKey, ToolDefinition> = {
 };
 
 export function getTool(key: ToolKey): ToolDefinition | undefined {
-  return toolRegistry[key];
+  return toolRegistry[key.value];
 }

@@ -1,4 +1,4 @@
-import type { ToolKey } from '../value-objects/ToolKey';
+import type { ToolKeyValue } from '../value-objects/ToolKey';
 
 export type ModelTier = 'premium' | 'balanced' | 'light' | 'search';
 
@@ -58,7 +58,7 @@ export interface StepDefinition {
 }
 
 export interface ToolDefinition {
-  toolKey: ToolKey;
+  toolKey: ToolKeyValue;
   name: string;
   description: string;
   creditCost?: number;

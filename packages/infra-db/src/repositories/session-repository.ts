@@ -1,6 +1,6 @@
 import type { Kysely } from 'kysely';
 import type { DB, SessionStatus as DBSessionStatus } from '../types';
-import { Session, ConcurrencyError, SessionStatus, type SessionRepository, type SessionFilters, type ToolKey } from '@flow-app/domain';
+import { Session, ConcurrencyError, SessionStatus, ToolKey, type SessionRepository, type SessionFilters } from '@flow-app/domain';
 
 export class KyselySessionRepository implements SessionRepository {
   constructor(private readonly db: Kysely<DB>) {}
@@ -16,7 +16,7 @@ export class KyselySessionRepository implements SessionRepository {
 
     return Session.reconstitute(
       row.id,
-      row.tool_key as ToolKey,
+      ToolKey.from(row.tool_key),
       row.workspace_id,
       row.user_id,
       row.idempotency_key_hash,
@@ -43,7 +43,7 @@ export class KyselySessionRepository implements SessionRepository {
 
     return Session.reconstitute(
       row.id,
-      row.tool_key as ToolKey,
+      ToolKey.from(row.tool_key),
       row.workspace_id,
       row.user_id,
       row.idempotency_key_hash,
@@ -76,7 +76,7 @@ export class KyselySessionRepository implements SessionRepository {
     return rows.map((row) =>
       Session.reconstitute(
         row.id,
-        row.tool_key as ToolKey,
+        ToolKey.from(row.tool_key),
         row.workspace_id,
         row.user_id,
         row.idempotency_key_hash,
@@ -96,7 +96,7 @@ export class KyselySessionRepository implements SessionRepository {
       .insertInto('sessions')
       .values({
         id: session.sessionId,
-        tool_key: session.toolKey,
+        tool_key: session.toolKey.value,
         workspace_id: session.workspaceId,
         user_id: session.userId,
         idempotency_key_hash: session.idempotencyKeyHash,

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { SessionStatus } from '../value-objects/SessionStatus';
 import type { ToolKey } from '../value-objects/ToolKey';
-import { SessionLifecycle, type SessionEventType } from '../session-lifecycle';
+import { SessionLifecycle, type SessionEventType, type SessionEvent } from '../session-lifecycle';
 import type { DomainEvent } from '../../shared/domain-event';
 import { DomainError } from '../../shared/domain-error';
 
@@ -117,7 +117,7 @@ export class Session {
     return this._version;
   }
 
-  apply(event: { type: SessionEventType; [key: string]: unknown }): DomainEvent | null {
+  apply(event: SessionEvent): DomainEvent | null {
     const nextState = SessionLifecycle.getValidTransition(this._status, event.type);
     if (!nextState) {
       throw new InvalidSessionStateError(this._status, event.type);
@@ -150,8 +150,8 @@ export class Session {
         };
 
       case 'FAIL':
-        this._errorCode = (event.errorCode as string) ?? 'UNKNOWN';
-        this._errorMessage = (event.errorMessage as string) ?? 'Unknown error';
+        this._errorCode = event.errorCode;
+        this._errorMessage = event.errorMessage;
         this._completedAt = new Date();
         return {
           eventType: 'SessionFailed',
