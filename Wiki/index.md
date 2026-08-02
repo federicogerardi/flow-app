@@ -173,4 +173,3 @@ maintenance: 2026-08-02 — health maintenance: 4 wiki-lint issues fixed (log.md
 | [[synthesis/phase-9-architectural-targets]] | 11 VALIDATION + 5 STRUCTURAL gaps for Phase 9+ | 2026-08-02 |
 | [[synthesis/phase-9-implementation-plan]] | Phase 9 implementation plan — 11 gaps across 4 phases, ~12h | 2026-08-02 |
 | [[overview]] | High-level synthesis (v3) | 2026-07-31 |
-<!-- test paths-ignore -->
