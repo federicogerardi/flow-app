@@ -4,10 +4,10 @@ tags:
   - wiki/synthesis
   - wiki/roadmap
   - wiki/implementation
-date_updated: 2026-08-01
-phase_count: 11
-phases_complete: 7
-phases_remaining: 4
+date_updated: 2026-08-02
+phase_count: 12
+phases_complete: 9
+phases_remaining: 3
 ---
 
 # Implementation Roadmap — Rational Development Sequence (2026-08-01)
@@ -379,7 +379,53 @@ Implementation (2026-08-02, branch `feature/phase-8-real-auth`):
 - Token refresh is transparent to the user
 - Dev-auth only active in development without explicit auth header
 
-### Phase 9 — Deployment & CI/CD (Week 15)
+### Phase 9 — DDD Architectural Remediation (Week 15) ✅
+
+**Plan**: [[phase-9-implementation-plan]] — 47 steps across 4 sub-phases (9a–9d).
+
+**Current gap**: 11 VALIDATION gaps between wiki design and code — type-alias value objects with no runtime validation, weakly-typed session events, `throw new Error()` bypassing ErrorMapper.
+
+**Status**: ✅ Complete (2026-08-02). All 11 VALIDATION gaps closed. Structural gaps S1–S3 deferred to Phase 10+.
+
+**Goal**: convert all domain type aliases to classes (Rule 4), replace `throw new Error()` with `DomainError` subclasses (Rule 3), type session events as discriminated union, add artifact lifecycle guards.
+
+Implementation (2026-08-02, branch `dev`):
+
+- **Phase 9a** — Foundation:
+  - V10: 12 new `DomainError` subclasses across 8 files (zero `throw new Error` in domain)
+  - V1: `SessionStatus` type alias → class (7 states, `isTerminal()`, `equals()`)
+  
+- **Phase 9b** — Core:
+  - V2: `MembershipRole` type alias → class (`isOwner`/`isEditor`/`isViewer` getters)
+  - V9: `SessionEvent` discriminated union (7 typed event shapes, zero `as` casts)
+  - V3: `ToolKey` type alias → class (11 static instances)
+  - V4: `AgentKey` type alias → class (7 static instances)
+
+- **Phase 9c** — Remaining VOs:
+  - V5: `ConversationStatus` → class (`isActive`/`isArchived` getters)
+  - V6: `MessageRole` → class (`isUser`/`isAgent`/`isSystem` getters)
+  - V7: `MembershipStatus` → class (`isPending`/`isActive` getters)
+  - V8: `ArtifactStatus` → class (`canTransitionTo()`/`apply()` lifecycle guards)
+  - V11: Artifact lifecycle guards integrated into `ArtifactStatus` class
+
+- **Phase 9d** — Cleanup:
+  - `PromptComponentType` type alias → class (5 instances, `isSystemRule`/`isFormatConstraint`/etc.)
+  - `UserStatus` getter consistency fix (`isActive()` method → getter)
+
+- **CI fix** — `send-message.usecase.ts` string comparison hidden by incremental build cache
+- **CI optimization** — `paths-ignore` on push trigger (skip CI for Wiki/, *.md, .obsidian/)
+
+**Impact**: ~70 files modified. Zero `as` casts on converted VOs. All 8 type aliases resolved (only `ModelTier` remains — intentional infra/config).
+
+**Exit criteria**:
+
+- Zero `throw new Error(...)` in `packages/domain/src/`
+- All 8 type-alias VOs converted to classes
+- `Session.apply()` uses `SessionEvent` discriminated union
+- All existing tests pass
+- No circular imports introduced
+
+### Phase 10 — Deployment & CI/CD (Week 16)
 
 **Current gap**: no Dockerfile, no `railway.json`, no CI/CD pipelines, no GitHub Actions. The app runs only via `npm run dev`.
 
@@ -414,7 +460,7 @@ Implementation (2026-08-02, branch `feature/phase-8-real-auth`):
    - `QueueHealthMonitor` alerts (already built in Phase 2)
    - Structured logging (already built with pino)
 
-**DDD Drift Risk**: 🟢 **NEGLIGIBLE** — Phase 9 is 100% infrastructure code (Dockerfile, railway.json, CI YAML). Zero domain or application code changes. No DDD rules at risk.
+**DDD Drift Risk**: 🟢 **NEGLIGIBLE** — Phase 10 is 100% infrastructure code (Dockerfile, railway.json, CI YAML). Zero domain or application code changes. No DDD rules at risk.
 
 **Exit criteria**:
 
@@ -423,7 +469,7 @@ Implementation (2026-08-02, branch `feature/phase-8-real-auth`):
 - Staging and production environments exist on Railway
 - Health checks pass in all environments
 
-### Phase 10 — Testing & Quality (Week 16)
+### Phase 11 — Testing & Quality (Week 17)
 
 **Current gap**: 1 test file (`Identifier` value object). `supertest`, `@testing-library/react`, and `msw` are installed as devDependencies but unused. The entire domain model, API layer, and worker logic is untested.
 
@@ -476,7 +522,7 @@ Implementation (2026-08-02, branch `feature/phase-8-real-auth`):
 - Worker job lifecycle tests
 - CI blocks merge on test failure
 
-### Phase 11 — Gamification (Week 17+)
+### Phase 12 — Gamification (Week 18+)
 
 **Current gap**: gamification was deferred from Phase 5. It's the engagement layer — points, achievements, leaderboards — that makes the platform sticky for teams.
 
@@ -514,7 +560,7 @@ Implementation (2026-08-02, branch `feature/phase-8-real-auth`):
    - `MessageAdded` → award points
    - Use BullMQ for async gamification processing (don't block main flow)
 
-**DDD Drift Risk**: 🔴 **HIGH** — Phase 11 is a full new bounded context (~25 domain files, 2 aggregates, 9 VOs, 2 domain services, event-driven cross-context wiring). 8 specific risks, 3 at high probability:
+**DDD Drift Risk**: 🔴 **HIGH** — Phase 12 is a full new bounded context (~25 domain files, 2 aggregates, 9 VOs, 2 domain services, event-driven cross-context wiring). 8 specific risks, 3 at high probability:
 
 | # | Risk | CLAUDE.md Rule | Prevention |
 |---|------|---------------|------------|
@@ -568,17 +614,17 @@ Implementation (2026-08-02, branch `feature/phase-8-real-auth`):
 4. Workspace sharing ✅
 5. Prompt governance runtime ✅
 6. Agent chat ✅
-7. **Real LLM integration** (Phase 6) — unblocking the core value prop
-8. **Frontend MVP** (Phase 7) — users need an interface
-9. **Real authentication** (Phase 8) — replace dev stub
-10. **Deployment & CI/CD** (Phase 9) — get it live
-11. **Testing & quality** (Phase 10) — build confidence
-12. **Gamification** (Phase 11) — engagement layer
+7. Real LLM integration (Phase 6) ✅
+8. Frontend MVP (Phase 7) ✅
+9. Real authentication (Phase 8) — 🟡 backend done, frontend remaining
+10. **DDD architectural remediation** (Phase 9) ✅ — type aliases → classes, DomainError, discriminated unions
+11. **Deployment & CI/CD** (Phase 10) — get it live
+12. **Testing & quality** (Phase 11) — build confidence
+13. **Gamification** (Phase 12) — engagement layer
 
 ## Referenced Pages
 
 - [[API Contract Baseline v1]]
-- [[Quality Gate Matrix]]
 - [[Quality Gate Matrix]]
 - [[CI-CD Promotion Policy]]
 - [[Session Machine (XState v5)]]
@@ -598,3 +644,6 @@ Implementation (2026-08-02, branch `feature/phase-8-real-auth`):
 - [[Testing Strategy]]
 - [[Token Budget Control]]
 - [[Railway Deployment Config]]
+- [[phase-9-implementation-plan]]
+- [[phase-9-architectural-targets]]
+- [[rule-4-vo-debt]]
