@@ -37,7 +37,7 @@ RUN npm run build
 RUN npm prune --production
 
 RUN for pkg in packages/domain packages/contracts packages/infra-db packages/copy; do \
-      sed -i 's|\./src/|./dist/|g' "$pkg/package.json"; \
+      sed -i 's|\./src/\(.*\)\.ts|./dist/\1.js|g' "$pkg/package.json"; \
     done
 
 # ── Stage 2: Production ───────────────────────────────────────────────────────
