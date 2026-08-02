@@ -12,6 +12,15 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-02] synthesis | Deployment patterns filed
+
+Filed [[synthesis/deployment-patterns-phase-10]] — findings from Phase 10 reverse proxy attempts:
+- 4 architectures evaluated (public URL, nginx, runtime URL, Caddy)
+- 8 root causes documented for nginx/reverse proxy failures
+- Runtime URL pattern documented as alternative to build-time Vite env vars
+- Docker/Node/Railway lessons learned
+- Recommendations per scenario (dev vs production)
+
 ## [2026-08-02] implement | Phase 10 — Deployment & CI/CD
 
 Implemented Phase 10 of [[synthesis/implementation-roadmap-2026-08-01]] — production deployment artifacts.

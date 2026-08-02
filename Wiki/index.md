@@ -171,6 +171,8 @@ maintenance: 2026-08-02 — health maintenance: 4 wiki-lint issues fixed (log.md
 | [[synthesis/lint-report-2026-07-30]] | Wiki health-check — 0 orphans, 0 broken links | 2026-07-30 |
 | [[synthesis/prompting-mechanics-proposal]] | Prompting mechanics architecture — versioning, components, context injection | 2026-08-01 |
 | [[synthesis/workspace-sharing-proposal]] | Workspace sharing architecture — membership, permissions, invitations | 2026-08-01 |
+| [[synthesis/deployment-patterns-phase-10]] | Deployment patterns — reverse proxy, build-time vs runtime URL, lessons learned | 2026-08-02 |
+
 | [[synthesis/agent-chat-proposal]] | Agent chat architecture — 7 agents, conversational context, SSE streaming | 2026-08-01 |
 | [[synthesis/gamification-proposal]] | Gamification overlay — XP, badges, leaderboards, seasons, workspace health | 2026-08-01 |
 | [[synthesis/project-model-multi-dimension-audit-2026-08-01]] | Project model governance audit — 4 areas, coverage assessment, maturity score, priority gaps | 2026-08-01 |

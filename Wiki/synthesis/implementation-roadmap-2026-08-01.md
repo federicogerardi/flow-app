@@ -448,6 +448,8 @@ Implementation (2026-08-02, branch `dev`):
 
 **Next steps for Railway provisioning**: create Railway project, provision PostgreSQL + Redis services, set `RAILWAY_TOKEN` secret in GitHub, create environments (dev/staging/production).
 
+**Reverse proxy findings**: documented in [[deployment-patterns-phase-10]] — nginx approach failed (10+ attempts) due to template conflicts, builder switch issues, and Docker/node ESM quirks. Current architecture uses backend public URL + CORS.
+
 **Exit criteria**:
 
 - `railway up` deploys successfully
