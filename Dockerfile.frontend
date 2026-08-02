@@ -27,18 +27,10 @@ COPY apps/frontend/src apps/frontend/src
 
 RUN npm run build --workspace=apps/frontend
 
-# ── Stage 2: Nginx ─────────────────────────────────────────────────────────────
-FROM nginx:1.27-alpine
+# ── Stage 2: Caddy ─────────────────────────────────────────────────────────────
+FROM caddy:2-alpine
 
-RUN apk add --no-cache curl
-
-COPY --from=builder /app/apps/frontend/dist /usr/share/nginx/html
-
-# Remove nginx base default.conf, replace with our template
-RUN rm -f /etc/nginx/conf.d/default.conf
-COPY nginx-frontend.conf /etc/nginx/templates/default.conf.template
-
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:${PORT}/ || exit 1
+COPY --from=builder /app/apps/frontend/dist /usr/share/caddy
+COPY Caddyfile /etc/caddy/Caddyfile
 
 EXPOSE 80
