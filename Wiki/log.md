@@ -2017,3 +2017,68 @@ type SessionEvent =
 - `grep "as ToolKey|as AgentKey|as MembershipRole"`: 0 matches
 
 20 files modified. Next: Phase 9c (ConversationStatus, MessageRole, MembershipStatus, ArtifactStatus, Artifact lifecycle).
+
+## [2026-08-02] feat(domain) | Phase 9c — ConversationStatus + MessageRole + ArtifactStatus + MembershipStatus Complete
+
+### 7.1 — ConversationStatus type alias → class
+
+`ConversationStatus` converted from 1-line type alias to 48-line class:
+
+- 2 static readonly instances: `Active`, `Archived`
+- `isActive`, `isArchived` convenience getters
+- `Conversation.addMessage()`: `this._status !== 'active'` → `this._status.isArchived`
+- `Conversation.archive()`: `this._status !== 'active'` → `!this._status.isActive`; `'archived'` → `ConversationStatus.Archived`
+- `Conversation.isActive` getter delegates to `this._status.isActive`
+- `conversation-repository.ts`: `ConversationStatus.from(row.status)` for reads, `.value` for writes
+- Zero `as ConversationStatus` casts in codebase
+
+### 7.2 — MessageRole type alias → class
+
+`MessageRole` converted from 1-line type alias to 58-line class:
+
+- 3 static readonly instances: `User`, `Agent`, `System`
+- `isUser`, `isAgent`, `isSystem` convenience getters
+- `Message.user()`: `'user'` → `MessageRole.User`
+- `Message.agent()`: `'agent'` → `MessageRole.Agent`
+- `Message.system()`: `'system'` → `MessageRole.System`
+- `Conversation.addMessage()`: `message.role === 'user'` → `message.role.isUser`
+- `conversation-repository.ts`: `MessageRole.from(m.role)` for reads, `.value` for writes
+- Zero `as MessageRole` casts in codebase
+
+### 7.3 — ArtifactStatus type alias → class (with lifecycle guards)
+
+`ArtifactStatus` converted from 1-line type alias to 94-line class:
+
+- 4 static readonly instances: `Pending`, `Generating`, `Completed`, `Failed`
+- `isPending`, `isGenerating`, `isCompleted`, `isFailed` convenience getters
+- `isTerminal` getter (completed or failed — terminal states)
+- `canTransitionTo(target: ArtifactStatus): boolean` — checks allowed transitions:
+  - `pending` → `generating`
+  - `generating` → `completed` | `failed`
+  - `completed`, `failed` → no transitions
+- `apply(target: ArtifactStatus): ArtifactStatus` — transitions or throws `InvalidArtifactTransitionError`
+- `Artifact.create()`: `'completed'` → `ArtifactStatus.Completed`
+- Zero `as ArtifactStatus` casts in codebase
+
+### 7.4 — MembershipStatus type alias → class
+
+`MembershipStatus` converted from 1-line type alias to 48-line class:
+
+- 2 static readonly instances: `Invited`, `Active`
+- `isPending`, `isActive` convenience getters
+- `WorkspaceMembership.invite()`: `'invited'` → `MembershipStatus.Invited`
+- `WorkspaceMembership.accept()`: `this._status !== 'invited'` → `!this._status.isPending`; `'active'` → `MembershipStatus.Active`
+- `WorkspaceMembership.isActive` getter delegates to `this._status.isActive`
+- `Workspace.create()`: `'active'` → `MembershipStatus.Active`
+- `Workspace.acceptInvitation()`: `m.status === 'invited'` → `m.status.isPending`
+- `workspace-repository.ts`: `MembershipStatus.from(m.status)` for reads, `.value` for writes
+- Zero `as MembershipStatus` casts in codebase
+
+### Verification
+
+- `npm run lint`: 0 errors, 0 warnings
+- `npm run typecheck`: 0 errors
+- `npm test`: 8/8 pass
+- `grep "as ConversationStatus|as MessageRole|as ArtifactStatus|as MembershipStatus"`: 0 matches
+
+14 files modified. Next: Phase 9d (PromptComponent, PromptTemplateId, UserStatus — remaining type aliases).
