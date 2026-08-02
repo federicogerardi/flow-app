@@ -93,6 +93,7 @@ export function createApp(deps: AppDeps) {
 
   // Workspace routes
   const workspaceRoutes = createWorkspaceRoutes(deps.workspaceRepo);
+  app.post('/api/workspaces', workspaceRoutes.createWorkspace);
   app.get('/api/workspaces', workspaceRoutes.listWorkspaces);
   app.get('/api/workspaces/:id', requireWorkspaceRole(deps.workspaceRepo, 'owner', 'editor', 'viewer'), workspaceRoutes.getWorkspace);
   app.post('/api/workspaces/:id/invitations', requireWorkspaceRole(deps.workspaceRepo, 'owner'), workspaceRoutes.inviteMember);

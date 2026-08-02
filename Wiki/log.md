@@ -255,6 +255,45 @@ Phase 11: pre-commit checklist against 6 Domain Design Rules for every new file 
 
 ---
 
+## [2026-08-02] sync | Wiki alignment — code vs spec gap analysis
+
+Full gap analysis between implemented code (frontend 13 files, backend 6 route files) and Wiki specs (7 pages). Key findings:
+
+### API Routes drift
+- 12 endpoints match between code and Wiki
+- 21 endpoints are Wiki-spec only (never implemented — mostly assets, admin CRUD, workspace CRUD)
+- 20 endpoints are code-only (never documented — workspace membership, agent chat, token refresh, OAuth)
+
+Fixes applied to `Wiki/concepts/API Routes.md`:
+- Auth base path corrected (`/auth/` → `/api/auth/`)
+- Route index rewritten with ✅/⬜ status column (49 rows)
+- Added: refresh, me, Google OAuth, workspace membership (9 routes), agent chat (6 routes)
+- Marked as planned ⬜: assets (5 routes), workspace CRUD (3 routes), admin CRUD (10 routes), session cancel, artifact download
+- Error Code Catalog expanded with 10 new codes
+- Mapping to Application Services updated
+
+### Frontend component gap
+- 8/37 components built (22%): AppShell (basic), PageHeader, EmptyState, ErrorState, LoadingSkeleton + 4 page components
+- Tool components: 0/6 built (SetupPanel, KnowledgePanel, ReadinessSnapshot, FeedbackPanel, SessionSummary, ToolCard)
+- Workspace components: 0/4 built
+- Agent Chat: ConversationPage exists but not componentized
+- Auth: 0 login/register pages, no AuthContext, no guards
+
+Fixes applied:
+- `Frontend Architecture.md` — Implementation Status section with layer breakdown
+- `UI Component Map.md` — Implementation Status table (8/37, 22%)
+- `frontend-mvp-plan-2026-08-01.md` — Actual Delivery section vs plan
+
+### Files updated
+- `Wiki/concepts/API Routes.md` — 651→490 lines
+- `Wiki/concepts/Frontend Architecture.md` — status added
+- `Wiki/concepts/UI Component Map.md` — status added
+- `Wiki/synthesis/frontend-mvp-plan-2026-08-01.md` — Actual Delivery section
+- `Wiki/index.md` — maintenance note
+- `Wiki/log.md` — this entry
+
+---
+
 ## [2026-08-02] fix | ESM import hoisting — SEED_USER_ID not loaded from .env
 
 ### Problem

@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { WorkspaceRepository } from '@flow-app/domain';
+import { Workspace } from '@flow-app/domain';
 import { InviteMemberUseCase } from '../application/workspace/invite-member.usecase.js';
 import { AcceptInvitationUseCase } from '../application/workspace/accept-invitation.usecase.js';
 import { TransferOwnershipUseCase } from '../application/workspace/transfer-ownership.usecase.js';
@@ -10,6 +11,32 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository) {
   const transferOwnershipUC = new TransferOwnershipUseCase(workspaceRepo);
 
   return {
+    createWorkspace: async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const userId = (req as any).user.sub as string;
+        const { name } = req.body;
+
+        if (!name || typeof name !== 'string' || name.trim().length === 0) {
+          res.status(422).json({
+            error: { code: 'VALIDATION_ERROR', message: 'Workspace name is required', retryable: false },
+          });
+          return;
+        }
+
+        const workspace = Workspace.create(name.trim(), userId);
+        await workspaceRepo.save(workspace);
+
+        res.status(201).json({
+          id: workspace.workspaceId,
+          name: workspace.name,
+          createdBy: workspace.createdBy,
+          createdAt: workspace.createdAt.toISOString(),
+        });
+      } catch (error) {
+        next(error);
+      }
+    },
+
     listWorkspaces: async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = (req as any).user.sub as string;

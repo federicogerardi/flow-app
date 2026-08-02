@@ -1,0 +1,45 @@
+export const toolPage = {
+  cta: {
+    submit:     'Genera',
+    submitting: 'Avvio in corso...',
+    cancel:     'Annulla generazione',
+    download:   'Scarica risultato',
+    new:        'Nuova generazione',
+  },
+  readiness: {
+    title:        'Pronto per generare?',
+    allSet:       'Tutti i requisiti soddisfatti. Pronto per generare.',
+    missingFile:  'Carica un file',
+    missingText:  'Inserisci un valore',
+    missingAsset: 'Seleziona un asset o creane uno',
+    statusOk:      'Configurato',
+    statusMissing: 'Richiesto — mancante',
+    statusOptional:'Opzionale',
+  },
+  progress: {
+    stepLabel:    'Step {current} di {total}',
+    completed:    'Generazione completata',
+    failed:       'Generazione fallita',
+    cancelled:    'Generazione annullata',
+    reconnecting: 'Riconnessione in corso...',
+  },
+  feedback: {
+    sessionStarted:   'Generazione avviata',
+    stepCompleted:    '"{label}" completato',
+    sessionCompleted: 'Risultato pronto',
+    sessionFailed:    'Errore durante "{label}"',
+  },
+  download: {
+    formatMd:   'Markdown',
+    formatDocx: 'Word',
+    formatPdf:  'PDF',
+    formatTxt:  'Testo',
+  },
+  config: {
+    title: 'Configurazione',
+    topic: 'Argomento',
+    topicPlaceholder: 'Inserisci l\'argomento del contenuto',
+    language: 'Lingua',
+    startCta: 'Avvia generazione',
+  },
+} as const;

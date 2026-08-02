@@ -6,6 +6,7 @@ import { api } from '../api/client';
 import { PageHeader } from '../components/PageHeader';
 import { LoadingSkeleton } from '../components/LoadingSkeleton';
 import { ErrorState } from '../components/ErrorState';
+import { copy } from '@flow-app/copy';
 
 export default function ConversationPage() {
   const { conversationId } = useParams<{ conversationId: string }>();
@@ -57,7 +58,7 @@ export default function ConversationPage() {
       <PageHeader
         title={conversation.title ?? `Chat with ${conversation.agentName}`}
         breadcrumbs={[
-          { label: 'Dashboard', path: '/dashboard' },
+          { label: copy.t('workspace.nav.home'), path: '/dashboard' },
           { label: conversation.agentName },
         ]}
       />
@@ -113,7 +114,7 @@ export default function ConversationPage() {
             maxRows={4}
           />
           <Button variant="contained" onClick={handleSend} disabled={sending || !newMessage.trim()}>
-            Send
+            {copy.t('shared.actions.send')}
           </Button>
         </Box>
       </Card>

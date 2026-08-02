@@ -1,12 +1,13 @@
 import { Box, Card, CardActionArea, CardContent, Chip, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
-import { useNavigate } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import useSWR from 'swr';
 import { api } from '../api/client';
 import { PageHeader } from '../components/PageHeader';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
 import { LoadingSkeleton } from '../components/LoadingSkeleton';
+import { copy } from '@flow-app/copy';
 
 const TOOLS = [
   { key: 'blog-post', name: 'Blog Post', description: 'SEO-optimized blog article', icon: '📝' },
@@ -24,32 +25,38 @@ const TOOLS = [
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const { workspaceId } = useParams<{ workspaceId: string }>();
   const { data: workspaces, isLoading, error } = useSWR('workspaces', () => api.listWorkspaces());
 
-  const defaultWorkspace = workspaces?.[0];
+  const currentWorkspace = workspaces?.find((w: any) => w.id === workspaceId);
+
+  if (isLoading) return <LoadingSkeleton />;
+  if (error) return <ErrorState message={error.message} />;
+  if (!currentWorkspace) {
+    return (
+      <EmptyState
+        title={copy.t('workspace.switcher.selectWorkspace')}
+        message={copy.t('workspace.switcher.noWorkspaces')}
+      />
+    );
+  }
 
   return (
     <Box>
       <PageHeader
-        title="Dashboard"
-        subtitle={defaultWorkspace ? `Workspace: ${defaultWorkspace.name}` : 'Select a tool to start generating'}
+        title={currentWorkspace.name}
+        subtitle={copy.t('workspace.dashboard.subtitle')}
       />
 
-      {/* Tools grid — always visible */}
       <Typography variant="h3" sx={{ mb: 2 }}>
-        Tools
+        {copy.t('workspace.dashboard.tools')}
       </Typography>
       <Grid container spacing={2}>
         {TOOLS.map((tool) => (
           <Grid size={{ xs: 12, sm: 6, md: 4 }} key={tool.key}>
             <Card>
               <CardActionArea
-                onClick={() => {
-                  if (defaultWorkspace) {
-                    navigate(`/workspaces/${defaultWorkspace.id}/tools/${tool.key}`);
-                  }
-                }}
-                disabled={!defaultWorkspace}
+                onClick={() => navigate(`/workspaces/${workspaceId}/tools/${tool.key}`)}
                 sx={{ p: 2 }}
               >
                 <CardContent sx={{ '&:last-child': { pb: 2 } }}>
@@ -66,20 +73,11 @@ export default function DashboardPage() {
         ))}
       </Grid>
 
-      {/* Sessions section */}
       <Box sx={{ mt: 4 }}>
         <Typography variant="h3" sx={{ mb: 2 }}>
-          Recent Sessions
+          {copy.t('workspace.dashboard.recentSessions')}
         </Typography>
-        {isLoading ? (
-          <LoadingSkeleton />
-        ) : error ? (
-          <ErrorState message={error.message} />
-        ) : defaultWorkspace ? (
-          <RecentSessions workspaceId={defaultWorkspace.id} />
-        ) : (
-          <EmptyState title="No workspace available" message="Create a workspace to start generating content." />
-        )}
+        <RecentSessions workspaceId={workspaceId!} />
       </Box>
     </Box>
   );
@@ -93,7 +91,7 @@ function RecentSessions({ workspaceId }: { workspaceId: string }) {
 
   if (isLoading) return <LoadingSkeleton />;
   if (!sessions || sessions.data.length === 0) {
-    return <EmptyState title="No sessions yet" message="Select a tool above to start your first generation." />;
+    return <EmptyState title={copy.t('workspace.detail.noSessions')} message={copy.t('workspace.dashboard.noSessions')} />;
   }
 
   return (

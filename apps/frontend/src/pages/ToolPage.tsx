@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router';
 import { api } from '../api/client';
 import { PageHeader } from '../components/PageHeader';
 import { ErrorState } from '../components/ErrorState';
+import { copy } from '@flow-app/copy';
 
 export default function ToolPage() {
   const { workspaceId, toolKey } = useParams<{ workspaceId: string; toolKey: string }>();
@@ -24,7 +25,7 @@ export default function ToolPage() {
       const result = await api.startSession(toolKey, { workspaceId: workspaceId!, inputs });
       navigate(`/workspaces/${workspaceId}/sessions/${result.session.id}`);
     } catch (err: any) {
-      setError(err.message ?? 'Failed to start session');
+      setError(err.message ?? copy.t('errors.generation.failedToStart'));
     } finally {
       setSubmitting(false);
     }
@@ -35,7 +36,7 @@ export default function ToolPage() {
       <PageHeader
         title={toolKey?.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) ?? 'Tool'}
         breadcrumbs={[
-          { label: 'Dashboard', path: '/dashboard' },
+          { label: copy.t('workspace.nav.home'), path: workspaceId ? `/workspaces/${workspaceId}` : '/dashboard' },
           { label: toolKey ?? '' },
         ]}
       />
@@ -45,19 +46,19 @@ export default function ToolPage() {
       <Card>
         <CardContent>
           <Typography variant="h3" sx={{ mb: 2 }}>
-            Configuration
+            {copy.t('toolPage.config.title')}
           </Typography>
 
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
             <TextField
-              label="Topic"
-              placeholder="Enter the topic for your content"
+              label={copy.t('toolPage.config.topic')}
+              placeholder={copy.t('toolPage.config.topicPlaceholder')}
               value={inputs.topic ?? ''}
               onChange={(e) => handleInputChange('topic', e.target.value)}
               fullWidth
             />
             <TextField
-              label="Language"
+              label={copy.t('toolPage.config.language')}
               placeholder="it"
               value={inputs.language ?? ''}
               onChange={(e) => handleInputChange('language', e.target.value)}
@@ -71,7 +72,7 @@ export default function ToolPage() {
             disabled={submitting || !inputs.topic}
             size="large"
           >
-            {submitting ? 'Starting...' : 'Start Generation'}
+            {submitting ? copy.t('toolPage.cta.submitting') : copy.t('toolPage.cta.submit')}
           </Button>
         </CardContent>
       </Card>

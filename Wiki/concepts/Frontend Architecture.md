@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/architecture
-date_updated: 2026-07-31
+date_updated: 2026-08-02
 source_count: 7
 confidence: high
 ---
@@ -13,6 +13,22 @@ confidence: high
 
 > Unification, reusability, minimal surface area — workspace-centric UI  
 > `apps/frontend/src/`
+
+## Implementation Status (2026-08-02)
+
+> 🟡 **Partial — 8/17 components built**. Core workflow functional (dashboard → tool → session → agent chat) but workspace-centric routing, asset management, and many component abstractions are not yet implemented. See gap analysis in [[synthesis/implementation-roadmap-2026-08-01|Phase 7 status]] and `Wiki/log.md`.
+
+| Layer | Spec | Built | Gap |
+|-------|------|-------|-----|
+| Layout | 3 | 1 (AppShell base) | WorkspaceDashboard, ToolPageLayout missing |
+| Workspace | 4 | 0 | WorkspaceCard, WorkspaceForm, SessionList, AssetList |
+| Tool | 5 | 0 | SetupPanel, KnowledgePanel, ReadinessSnapshot, FeedbackPanel, SessionSummary |
+| Shared | 5 | 4 | PageHeader, EmptyState, ErrorState, LoadingSkeleton ✅ — missing ConfirmDialog |
+| Auth | — | 0 | No login/register pages, no AuthContext, no guards |
+
+**Routes implemented** (5): `/dashboard`, `/workspaces/:workspaceId/tools/:toolKey`, `/workspaces/:workspaceId/sessions/:sessionId`, `/workspaces/:workspaceId/conversations/:conversationId`, `* → /dashboard`.
+
+**Routes planned but not built**: `/workspaces/:id` (workspace dashboard), `/workspaces/:id/assets`, `/workspaces/:id/team`, `/workspaces/:id/templates`, `/workspaces/:id/audit`, `/profile`, `/login`, `/register`.
 
 ## Decisions
 

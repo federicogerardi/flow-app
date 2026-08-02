@@ -76,6 +76,10 @@ class ApiClient {
     return res.workspaces ?? [];
   }
 
+  async createWorkspace(name: string) {
+    return this.request<any>('POST', '/api/workspaces', { name });
+  }
+
   async getWorkspace(workspaceId: string) {
     return this.request<any>('GET', `/api/workspaces/${workspaceId}`);
   }

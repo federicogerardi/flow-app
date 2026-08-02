@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-08-01
+date_updated: 2026-08-02
 source_count: 4
 confidence: high
 ---
@@ -16,7 +16,7 @@ confidence: high
 
 ## Conventions
 
-- Base path: `/api/` for resources, `/auth/` for authentication, `/admin/` for admin
+- Base path: `/api/` for resources, `/api/auth/` for authentication, `/admin/` for admin
 - All IDs: UUID strings
 - Auth required unless marked 🔓
 - Request body: `application/json` unless file upload
@@ -51,46 +51,59 @@ Compatibility rule: no breaking response-schema change inside the same API major
 
 ## Route Index
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `GET` | `/health` | 🔓 | Health check |
-| `POST` | `/auth/register` | 🔓 | Register |
-| `POST` | `/auth/login` | 🔓 | Login email/password |
-| `POST` | `/auth/logout` | ✅ | Logout |
-| `GET` | `/auth/session` | ✅ | Current session |
-| `GET` | `/auth/:provider/start` | 🔓 | OAuth start |
-| `GET` | `/auth/:provider/callback` | 🔓 | OAuth callback |
-| `GET` | `/api/workspaces` | ✅ | List workspaces |
-| `POST` | `/api/workspaces` | ✅ | Create workspace |
-| `GET` | `/api/workspaces/:id` | ✅ | Get workspace |
-| `PUT` | `/api/workspaces/:id` | ✅ | Update workspace |
-| `DELETE` | `/api/workspaces/:id` | ✅ | Delete workspace |
-| `GET` | `/api/workspaces/:id/assets` | ✅ | List assets |
-| `POST` | `/api/workspaces/:id/assets` | ✅ | Create asset (upload) |
-| `GET` | `/api/workspaces/:wid/assets/:aid` | ✅ | Get asset |
-| `PUT` | `/api/workspaces/:wid/assets/:aid` | ✅ | Update asset |
-| `DELETE` | `/api/workspaces/:wid/assets/:aid` | ✅ | Delete asset |
-| `POST` | `/api/tools/:toolKey/sessions` | ✅ | Start generation |
-| `GET` | `/api/sessions` | ✅ | List sessions |
-| `GET` | `/api/sessions/:id` | ✅ | Get session |
-| `GET` | `/api/sessions/:id/events` | ✅ | SSE progress stream |
-| `POST` | `/api/sessions/:id/cancel` | ✅ | Cancel session |
-| `GET` | `/api/artifacts/:id` | ✅ | Get artifact |
-| `GET` | `/api/artifacts/:id/download` | ✅ | Download artifact |
-| `GET` | `/admin/users` | 🔒 admin | List users |
-| `POST` | `/admin/users` | 🔒 admin | Create user |
-| `PUT` | `/admin/users/:id` | 🔒 admin | Update user |
-| `GET` | `/admin/models` | 🔒 admin | List LLM models |
-| `POST` | `/admin/models` | 🔒 admin | Create model |
-| `PUT` | `/admin/models/:id` | 🔒 admin | Update model |
-| `DELETE` | `/admin/models/:id` | 🔒 admin | Delete model |
-| `GET` | `/admin/api-services` | 🔒 admin | List API services |
-| `POST` | `/admin/api-services` | 🔒 admin | Create API service |
-| `PUT` | `/admin/api-services/:id` | 🔒 admin | Update API service |
-| `DELETE` | `/admin/api-services/:id` | 🔒 admin | Delete API service |
-| `GET` | `/admin/jobs` | 🔒 admin | List ToolWorkflowJobs |
+> **Last synced**: 2026-08-02 against `apps/backend/src/app.ts`.
+> ✅ = implemented, 🟡 = partial, ⬜ = planned (not built), 🔜 = deferred to future phase.
 
-🔓 = public, ✅ = authenticated, 🔒 = admin only
+| Method | Path | Auth | Status | Notes |
+|--------|------|------|--------|-------|
+| `GET` | `/health` | 🔓 | ✅ | Health check |
+| `GET` | `/api` | 🔓 | ✅ | API info (version, message) |
+| `POST` | `/api/auth/register` | 🔓 | ✅ | Register email/password |
+| `POST` | `/api/auth/login` | 🔓 | ✅ | Login (rate limited 5/15min) |
+| `POST` | `/api/auth/refresh` | 🔓 | ✅ | Token refresh (httpOnly cookie) |
+| `POST` | `/api/auth/logout` | 🔓 | ✅ | Logout + clear cookie |
+| `GET` | `/api/auth/me` | ✅ | ✅ | Current user info |
+| `GET` | `/api/auth/google` | 🔓 | ✅ | Google OAuth start |
+| `GET` | `/api/auth/google/callback` | 🔓 | ✅ | Google OAuth callback |
+| `GET` | `/api/auth/github` | 🔓 | ⬜ | GitHub OAuth (planned) |
+| `GET` | `/api/workspaces` | ✅ | ✅ | List user's workspaces |
+| `POST` | `/api/workspaces` | ✅ | ⬜ | Create workspace |
+| `GET` | `/api/workspaces/:id` | ✅ | ✅ | Get workspace detail |
+| `PUT` | `/api/workspaces/:id` | ✅ | ⬜ | Update workspace |
+| `DELETE` | `/api/workspaces/:id` | ✅ | ⬜ | Delete workspace |
+| `POST` | `/api/workspaces/:id/invitations` | owner | ✅ | Invite member |
+| `GET` | `/api/workspaces/:id/members` | member | ✅ | List members |
+| `DELETE` | `/api/workspaces/:id/members/:userId` | owner | ✅ | Remove member |
+| `PUT` | `/api/workspaces/:id/members/:userId/role` | owner | ✅ | Change member role |
+| `POST` | `/api/workspaces/:id/transfer-ownership` | owner | ✅ | Transfer ownership |
+| `GET` | `/api/invitations` | ✅ | ✅ | List pending invitations |
+| `POST` | `/api/invitations/:id/accept` | ✅ | ✅ | Accept invitation |
+| `POST` | `/api/invitations/:id/decline` | ✅ | ✅ | Decline invitation |
+| `GET` | `/api/workspaces/:id/assets` | ✅ | ⬜ | List assets (planned) |
+| `POST` | `/api/workspaces/:id/assets` | ✅ | ⬜ | Create asset (planned) |
+| `GET` | `/api/workspaces/:wid/assets/:aid` | ✅ | ⬜ | Get asset (planned) |
+| `PUT` | `/api/workspaces/:wid/assets/:aid` | ✅ | ⬜ | Update asset (planned) |
+| `DELETE` | `/api/workspaces/:wid/assets/:aid` | ✅ | ⬜ | Delete asset (planned) |
+| `POST` | `/api/tools/:toolKey/sessions` | ✅ | ✅ | Start generation (idempotent) |
+| `GET` | `/api/sessions` | ✅ | ✅ | List sessions (filterable) |
+| `GET` | `/api/sessions/:id` | ✅ | ✅ | Get session detail |
+| `GET` | `/api/sessions/:id/events` | ✅ | ✅ | SSE progress stream |
+| `POST` | `/api/sessions/:id/cancel` | ✅ | ⬜ | Cancel running session |
+| `GET` | `/api/artifacts/:id` | ✅ | ✅ | Get artifact content |
+| `GET` | `/api/artifacts/:id/download` | ✅ | ⬜ | Download artifact |
+| `GET` | `/api/workspaces/:wid/agents` | member | ✅ | List 7 agent personas |
+| `GET` | `/api/workspaces/:wid/conversations` | member | ✅ | List user's conversations |
+| `POST` | `/api/workspaces/:wid/conversations` | member | ✅ | Start conversation |
+| `GET` | `/api/conversations/:id` | ✅ | ✅ | Get conversation + messages |
+| `POST` | `/api/conversations/:id/messages` | ✅ | ✅ | Send message (LLM reply) |
+| `POST` | `/api/conversations/:id/archive` | ✅ | ✅ | Archive conversation |
+| `GET` | `/admin/jobs` | 🔒 | ✅ | Queue stats + worker health |
+| `GET` | `/admin/health` | 🔒 | ✅ | Health check + active alerts |
+| `GET` | `/admin/users` | 🔒 | ⬜ | List users (planned) |
+| `POST` | `/admin/users` | 🔒 | ⬜ | Create user (planned) |
+| `PUT` | `/admin/users/:id` | 🔒 | ⬜ | Update user (planned) |
+
+🔓 = public, ✅ = authenticated, 🔒 = admin only, `owner`/`member` = workspace role required
 
 ---
 
@@ -111,218 +124,104 @@ Compatibility rule: no breaking response-schema change inside the same API major
 
 ## Authentication
 
-### `POST /auth/register`
+> Mounted at `/api/auth/` in code. All auth endpoints are public (mounted before auth middleware).
 
-**Request**:
-```json
-{
-  "email": "user@example.com",
-  "password": "min-8-chars"
-}
-```
+### `POST /api/auth/register` ✅
 
-**Response** `201`:
-```json
-{
-  "user": { "id": "uuid", "email": "user@example.com", "role": "member" },
-  "accessToken": "jwt...",
-  "refreshToken": "refresh..."
-}
-```
+**Request**: `{ "email": "user@example.com", "password": "min-8-chars" }`
 
-**Errors**: `409` email already exists, `422` invalid password
+**Response** `201`: `{ "user": { "id": "uuid", "email": "string", "role": "member" }, "accessToken": "jwt...", "expiresIn": 900 }` + `Set-Cookie: refresh_token=...` (httpOnly, SameSite=Strict, 7d)
 
-### `POST /auth/login`
+**Errors**: `409 CONFLICT` (email already exists), `422 VALIDATION_ERROR`
 
-**Request**:
-```json
-{
-  "email": "user@example.com",
-  "password": "..."
-}
-```
+### `POST /api/auth/login` ✅
 
-**Response** `200`: same shape as register
+Rate limited: 5 attempts / 15 min.
 
-**Errors**: `401` invalid credentials, `403` user disabled
+**Request**: `{ "email": "user@example.com", "password": "..." }`
 
-### `GET /auth/session`
+**Response** `200`: same shape as register + `Set-Cookie`
 
-**Response** `200`:
-```json
-{
-  "user": { "id": "uuid", "email": "user@example.com", "role": "member" },
-  "expiresAt": "2026-08-01T00:00:00Z"
-}
-```
+**Errors**: `401 UNAUTHORIZED`, `403 FORBIDDEN` (disabled user), `429 RATE_LIMITED`
 
-**Errors**: `401` no valid session
+### `POST /api/auth/refresh` ✅
 
-### `POST /auth/logout`
+Token rotation via httpOnly cookie. Deletes old session, issues new tokens.
 
-**Response** `204` No Content
+**Request**: (no body — reads `refresh_token` cookie)
 
-### `GET /auth/google/start`
+**Response** `200`: same shape as login + new cookie
 
-**Response** `302` redirect to Google OAuth
+**Errors**: `401 UNAUTHORIZED` (expired/revoked or missing cookie)
 
-### `GET /auth/google/callback`
+### `POST /api/auth/logout` ✅
 
-**Response** `302` redirect to frontend with `accessToken` in query
+Clears cookie, deletes session.
+
+**Request**: (no body — reads `refresh_token` cookie)
+
+**Response** `200`: `{ "message": "Logged out" }` + cleared cookie
+
+### `GET /api/auth/me` ✅
+
+Current user from JWT. Requires `Authorization: Bearer <token>` (authenticated route).
+
+**Response** `200`: `{ "id": "uuid", "email": "string", "role": "string" }`
+
+### `GET /api/auth/google` ✅
+
+OAuth redirect. Returns `501 NOT_CONFIGURED` if `GOOGLE_CLIENT_ID` not set.
+
+### `GET /api/auth/google/callback` ✅
+
+OAuth callback. Success → redirect to frontend `?token=<accessToken>&expiresIn=<seconds>`. Failure → redirect `/login?error=oauth_failed`. Sets `refresh_token` cookie.
+
+### `GET /api/auth/github` ⬜
+
+GitHub OAuth planned. Same pattern as Google.
 
 ---
 
 ## Workspaces
 
-### `GET /api/workspaces`
+### `GET /api/workspaces` ✅
 
-**Response** `200`:
-```json
-{
-  "data": [
-    {
-      "id": "uuid",
-      "name": "Q3 Campaign",
-      "assetCount": 3,
-      "createdAt": "2026-07-01T00:00:00Z"
-    }
-  ],
-  "total": 5
-}
-```
+**Response** `200`: `{ "workspaces": [{ "id": "uuid", "name": "string", ... }] }`
 
-### `POST /api/workspaces`
+### `GET /api/workspaces/:id` ✅
 
-**Request**:
-```json
-{
-  "name": "Q3 Campaign"
-}
-```
+Returns workspace detail. Requires workspace membership.
 
-**Response** `201`:
-```json
-{
-  "id": "uuid",
-  "name": "Q3 Campaign",
-  "createdAt": "2026-07-30T00:00:00Z"
-}
-```
+### `PUT /api/workspaces/:id` ⬜
 
-### `GET /api/workspaces/:id`
+Update workspace name. Planned — not yet implemented.
 
-**Response** `200`:
-```json
-{
-  "id": "uuid",
-  "name": "Q3 Campaign",
-  "assets": [
-    {
-      "id": "uuid",
-      "assetType": "brand-voice",
-      "source": "generated",
-      "createdAt": "2026-07-15T00:00:00Z"
-    }
-  ],
-  "recentSessions": [
-    {
-      "id": "uuid",
-      "toolKey": "blog-post",
-      "status": "completed",
-      "createdAt": "2026-07-29T00:00:00Z"
-    }
-  ],
-  "createdAt": "2026-07-01T00:00:00Z"
-}
-```
+### `DELETE /api/workspaces/:id` ⬜
 
-### `PUT /api/workspaces/:id`
+Delete workspace (cascades to assets). Planned — not yet implemented.
 
-**Request**: `{ "name": "Q4 Campaign" }`  
-**Response** `200`: updated workspace
+### Workspace Membership ✅
 
-### `DELETE /api/workspaces/:id`
+All membership routes are implemented and role-gated via `requireWorkspaceRole()` middleware:
 
-**Response** `204` No Content (cascades to assets)
+| Method | Path | Role | Description |
+|--------|------|------|-------------|
+| `POST` | `/api/workspaces/:id/invitations` | owner | Invite member |
+| `GET` | `/api/workspaces/:id/members` | owner/editor/viewer | List members |
+| `DELETE` | `/api/workspaces/:id/members/:userId` | owner | Remove member |
+| `PUT` | `/api/workspaces/:id/members/:userId/role` | owner | Change role |
+| `POST` | `/api/workspaces/:id/transfer-ownership` | owner | Transfer ownership |
+| `GET` | `/api/invitations` | authenticated | List pending invitations |
+| `POST` | `/api/invitations/:id/accept` | authenticated | Accept invitation |
+| `POST` | `/api/invitations/:id/decline` | authenticated | Decline invitation |
 
 ---
 
-## Assets
+## Assets ⬜
 
-### `GET /api/workspaces/:id/assets`
-
-**Response** `200`:
-```json
-{
-  "data": [
-    {
-      "id": "uuid",
-      "assetType": "brand-voice",
-      "source": "generated",
-      "sourceRef": "artifact-uuid",
-      "createdAt": "2026-07-15T00:00:00Z",
-      "updatedAt": "2026-07-20T00:00:00Z"
-    }
-  ],
-  "total": 1
-}
-```
-
-### `POST /api/workspaces/:id/assets`
-
-Creates an asset from file upload or manual text.
-
-**Request** (`multipart/form-data`):
-```
-assetType: "brief"
-source: "uploaded"
-file: <binary>
-```
-
-Or (`application/json`):
-```json
-{
-  "assetType": "brief",
-  "source": "manual",
-  "content": "# Brief\n\n..."
-}
-```
-
-**Response** `201`:
-```json
-{
-  "id": "uuid",
-  "assetType": "brief",
-  "source": "manual",
-  "createdAt": "2026-07-30T00:00:00Z"
-}
-```
-
-**Errors**: `409` asset type already exists in workspace, `422` invalid type
-
-### `GET /api/workspaces/:wid/assets/:aid`
-
-**Response** `200`:
-```json
-{
-  "id": "uuid",
-  "assetType": "brand-voice",
-  "source": "generated",
-  "sourceRef": "artifact-uuid",
-  "content": "# Brand Voice\n\n...",
-  "createdAt": "2026-07-15T00:00:00Z",
-  "updatedAt": "2026-07-20T00:00:00Z"
-}
-```
-
-### `PUT /api/workspaces/:wid/assets/:aid`
-
-**Request**: `{ "content": "updated content" }`  
-**Response** `200`: updated asset
-
-### `DELETE /api/workspaces/:wid/assets/:aid`
-
-**Response** `204` No Content
+> **Status**: planned. Workspace asset CRUD (5 endpoints) is specified but not yet implemented.
+> Assets are currently managed implicitly through session generation (artifacts can be promoted to assets).
+> Blocked by: asset management domain model not yet built. Target: Phase 9-10.
 
 ---
 
@@ -455,145 +354,85 @@ event: session_failed
 data: {"sessionId":"uuid","status":"failed","failedAtStep":2,"error":{"code":"LLM_TIMEOUT","message":"..."}}
 ```
 
-### `POST /api/sessions/:id/cancel`
+### `POST /api/sessions/:id/cancel` ⬜
 
-**Response** `200`:
-```json
-{
-  "id": "uuid",
-  "status": "cancelled",
-  "cancelledAtStep": 1
-}
-```
+Cancels a running session. Planned — not yet implemented. Endpoint registered in Wiki spec only.
 
 ---
 
 ## Artifacts
 
-### `GET /api/artifacts/:id`
+### `GET /api/artifacts/:id` ✅
 
-**Response** `200`:
-```json
-{
-  "id": "uuid",
-  "sessionId": "uuid",
-  "stepNumber": 3,
-  "content": "# Generated content...",
-  "status": "completed",
-  "createdAt": "2026-07-29T10:03:00Z"
-}
-```
+Returns artifact content by ID.
 
-### `GET /api/artifacts/:id/download`
+### `GET /api/artifacts/:id/download` ⬜
 
-**Query**: `?format=docx` (options: `md`, `txt`, `docx`, `pdf`)
+Download in `md`/`txt`/`docx`/`pdf` format. Planned — not yet implemented.
 
-**Response** `200`: binary file download with `Content-Disposition: attachment`
+---
 
-**Errors**: `404` artifact not found, `400` unsupported format
+## Agent Chat ✅
+
+All 6 agent chat endpoints are implemented (Phase 5).
+
+### `GET /api/workspaces/:workspaceId/agents`
+
+List 7 available agent personas (strategist, copywriter, seo-specialist, ads-specialist, analyst, creative-director, email-marketer). Requires workspace membership.
+
+### `GET /api/workspaces/:workspaceId/conversations`
+
+List user's conversations in the workspace. Privacy: user-scoped only (conversations private to creator).
+
+### `POST /api/workspaces/:workspaceId/conversations`
+
+Start a new conversation. Request: `{ "agentKey": "copywriter" }`. Response: `{ "conversationId": "uuid", "agentName": "Copywriter" }`.
+
+### `GET /api/conversations/:id`
+
+Get conversation with all messages. Response includes `title`, `agentKey`, `agentName`, `messages[]`.
+
+### `POST /api/conversations/:id/messages`
+
+Send a user message. Request: `{ "content": "string" }`. The server generates an agent reply via LLM. Response: `{ "userMessageId": "uuid", "agentMessageId": "uuid", "agentContent": "string" }`.
+
+### `POST /api/conversations/:id/archive`
+
+Archive the conversation. No body. Response `200`.
 
 ---
 
 ## Admin
 
-### `GET /admin/users`
+### `GET /admin/jobs` ✅
 
-**Response** `200`:
-```json
-{
-  "data": [
-    {
-      "id": "uuid",
-      "email": "user@example.com",
-      "role": "member",
-      "status": "active",
-      "createdAt": "2026-07-01T00:00:00Z"
-    }
-  ],
-  "total": 5
-}
-```
+Queue stats: waiting, active, completed, failed, delayed counts + worker uptime.
 
-### `POST /admin/users`
+### `GET /admin/health` ✅
 
-**Request**: `{ "email": "...", "role": "member" }`  
-**Response** `201`: created user
+System health: `{ "status": "healthy", "alerts": [] }`.
 
-### `PUT /admin/users/:id`
+### `GET /admin/users` ⬜
+### `POST /admin/users` ⬜
+### `PUT /admin/users/:id` ⬜
+### `GET /admin/models` ⬜
+### `POST /admin/models` ⬜
+### `PUT /admin/models/:id` ⬜
+### `DELETE /admin/models/:id` ⬜
+### `GET /admin/api-services` ⬜
+### `POST /admin/api-services` ⬜
+### `PUT /admin/api-services/:id` ⬜
+### `DELETE /admin/api-services/:id` ⬜
 
-**Request**: `{ "role": "admin" }` or `{ "status": "disabled" }`  
-**Response** `200`: updated user
+> All admin CRUD endpoints are planned but not yet implemented. Admin panel is deferred to Phase 10+.
 
-### `GET /admin/models`
+### `GET /admin/jobs` ✅
 
-**Response** `200`:
-```json
-{
-  "data": [
-    {
-      "id": "uuid",
-      "label": "GPT-4o",
-      "provider": "openai",
-      "modelId": "gpt-4o",
-      "tier": "premium",
-      "enabled": true,
-      "sortOrder": 1
-    }
-  ],
-  "total": 4
-}
-```
+Returns BullMQ job status: active, waiting, completed, failed + worker uptime.
 
-### `POST /admin/models`
+### `GET /admin/health` ✅
 
-**Request**: `{ "label": "...", "provider": "openai", "modelId": "gpt-4o", "tier": "premium" }`  
-**Response** `201`: created model
-
-### `GET /admin/api-services`
-
-**Response** `200`:
-```json
-{
-  "data": [
-    {
-      "id": "uuid",
-      "label": "SerpAPI",
-      "endpoint": "https://serpapi.com/search",
-      "enabled": true
-    }
-  ],
-  "total": 1
-}
-```
-
-### `POST /admin/api-services`
-
-**Request**: `{ "label": "...", "endpoint": "...", "authHeaderName": "X-API-Key", "authHeaderValue": "..." }`  
-**Response** `201`: created service. Auth header value is write-only: never returned in responses.
-
-### `GET /admin/jobs`
-
-Returns BullMQ job status for monitoring.
-
-**Response** `200`:
-```json
-{
-  "active": 3,
-  "waiting": 1,
-  "completed": 142,
-  "failed": 2,
-  "recent": [
-    {
-      "id": "job-uuid",
-      "sessionId": "uuid",
-      "toolKey": "blog-post",
-      "status": "active",
-      "progress": 66,
-      "startedAt": "..."
-    }
-  ]
-}
-```
+System health: `{ "status": "healthy", "alerts": [] }`.
 
 ---
 
@@ -620,28 +459,39 @@ All errors follow a consistent shape:
 | HTTP | Code | When |
 |------|------|------|
 | 400 | `BAD_REQUEST` | Malformed request body |
-| 401 | `UNAUTHORIZED` | Missing or expired token |
-| 403 | `FORBIDDEN` | Role insufficient (member accessing admin) |
+| 401 | `UNAUTHORIZED` | Invalid credentials or expired token |
+| 401 | `MISSING_TOKEN` | Authorization header missing |
+| 401 | `INVALID_TOKEN` | JWT expired or invalid |
+| 403 | `FORBIDDEN` | Insufficient role or disabled user |
 | 404 | `NOT_FOUND` | Resource doesn't exist |
-| 409 | `CONFLICT` | Generic write conflict (concurrent update / duplicate uniqueness violation) |
-| 409 | `ASSET_TYPE_EXISTS` | Asset type already in workspace |
-| 422 | `READINESS_FAILED` | Missing required inputs for session start |
+| 404 | `TOOL_NOT_FOUND` | Unknown tool key |
+| 404 | `SESSION_NOT_FOUND` | Session ID not found |
+| 404 | `WORKSPACE_NOT_FOUND` | Workspace ID not found |
+| 404 | `ARTIFACT_NOT_FOUND` | Artifact ID not found |
+| 404 | `CONVERSATION_NOT_FOUND` | Conversation ID not found |
+| 409 | `CONFLICT` | Optimistic lock failure or duplicate |
+| 409 | `INVALID_STATE` | Invalid state transition |
+| 422 | `READINESS_FAILED` | Missing required inputs |
 | 422 | `VALIDATION_ERROR` | Invalid field values |
-| 429 | `QUOTA_EXCEEDED` | Monthly credit limit reached |
-| 429 | `RATE_LIMITED` | Too many requests |
-| 500 | `INTERNAL_ERROR` | Unexpected error |
+| 429 | `RATE_LIMITED` | Too many requests (rate limiter) |
+| 501 | `NOT_CONFIGURED` | Feature not enabled (e.g., OAuth) |
+| 502 | `LLM_GATEWAY_ERROR` | LLM provider failure |
+| 500 | `INTERNAL_ERROR` | Unexpected server error |
 
 ---
 
 ## Mapping to Application Services
 
-| Route | Application Service | Domain Events |
-|-------|-------------------|---------------|
-| `POST /api/tools/:toolKey/sessions` | `StartSessionUseCase` | — |
-| `GET /api/sessions/:id/events` | SSE emitter | `SessionStarted`, `StepCompleted`, `SessionCompleted`, `SessionFailed` |
-| `POST /api/sessions/:id/cancel` | Cancel action in `sessionMachine` | `SessionCancelled` |
-| `POST /api/workspaces/:id/assets` | Workspace CRUD | `AssetCreated` |
-| `PUT /api/workspaces/:wid/assets/:aid` | Workspace CRUD | `AssetUpdated` |
+| Route | Application Service | Status |
+|-------|-------------------|--------|
+| `POST /api/tools/:toolKey/sessions` | `StartSessionUseCase` | ✅ |
+| `GET /api/sessions/:id/events` | SSE emitter via `JobEventBridge` | ✅ |
+| `POST /api/workspaces/:id/invitations` | `InviteMemberUseCase` | ✅ |
+| `POST /api/invitations/:id/accept` | `AcceptInvitationUseCase` | ✅ |
+| `POST /api/workspaces/:id/transfer-ownership` | `TransferOwnershipUseCase` | ✅ |
+| `POST /api/conversations/:id/messages` | `SendMessageUseCase` | ✅ |
+| `POST /api/api/auth/register` | `AuthService.register()` | ✅ |
+| `POST /api/api/auth/login` | `AuthService.login()` | ✅ |
 
 ## Sources
 

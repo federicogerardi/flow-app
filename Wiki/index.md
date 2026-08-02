@@ -7,7 +7,7 @@ date_updated: 2026-08-02
 
 # Wiki Index — Flow App
 
-> Maintenance note (2026-08-02): DDD drift risk analysis for Phase 9–11 completed. Phase 9 🟢 negligible, Phase 10 🟡 moderate (4 test-code risks), Phase 11 🔴 high (8 risks across new gamification bounded context). Pre-commit guardrail recommended for Phase 11 domain files. Risks documented in roadmap and gamification proposal.
+> Maintenance note (2026-08-02): Wiki aligned with codebase reality — gap analysis between 26 code files and 7 Wiki spec pages. API Routes page fully rewritten (12 ✅, 21 ⬜planned, 20 🆕code-only documented). Frontend Architecture/UI Component Map status tables added (8/37 components built, 22%). Assets/Admin CRUD/Wizard components marked as deferred.
 > Maintenance note (2026-08-02): DDD governance audit completed — 58 files across 4 bounded contexts. 8 findings: 2 critical (encapsulation + zod in domain), 5 important (Error hierarchy + use case errors), 1 minor (repository side-effect). 6 pattern-based rules added to schema.
 > Maintenance note (2026-08-02): Phase 8 backend implemented — Real Authentication (Workstreams A+B+C+E): identity domain (User, Email, UserRole, UserStatus), KyselyUserRepository, BcryptPasswordHasher, TokenService, AuthService, Passport.js, 7 auth endpoints, authenticate middleware, rate limiter. Lint warnings resolved (7→0). Branch: `feature/phase-8-real-auth`.
 > Maintenance note (2026-08-02): Phase 8 implementation plan created — Real Authentication (5 workstreams, 35 files, 8-10 days). Plan: [[synthesis/phase-8-real-auth-plan]].
