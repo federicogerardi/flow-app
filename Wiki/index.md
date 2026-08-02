@@ -3,7 +3,8 @@ type: index
 tags:
   - wiki/index
 date_updated: 2026-08-02
-maintenance: 2026-08-02 — critical findings executed: all 8 findings (C1–C8) closed. Typecheck ✅, build ✅, tests 8/8.
+maintenance: 2026-08-02 — high-severity remediation plan filed: 10 findings, 5 phases, 19 files. Plan: [[synthesis/high-fix-plan-2026-08-02]].
+maintenance: 2026-08-02 — high-severity remediation plan filed: 10 findings (H1–H10), 5 phases, 19 files. Plan: [[synthesis/high-fix-plan-2026-08-02]].
 maintenance: 2026-08-02 — critical findings executed: all 8 findings (C1–C8) closed across 3 phases. Phase 1: auth error forwarding, WCAG contrast, OS theme reactivity, React render purity. Phase 2: ErrorBoundary + responsive drawer. Phase 3: artifact persistence + VO serialization. Typecheck ✅, build ✅, tests 8/8.
 maintenance: 2026-08-02 — critical fix plan filed: 8 fixes across 3 phases (Quick Wins → Frontend Architecture → Data Integrity), 27 files, 4-5 hours. Plan: [[synthesis/critical-fix-plan-2026-08-02]].
 maintenance: 2026-08-02 — multi-agent code review filed: 41 findings across 6 domains (DDD, backend, frontend, types, code quality, UI/UX). 8 critical, 10 high, 18 medium, 5 low. Synthesis: [[synthesis/code-review-2026-08-02]].
@@ -180,4 +181,5 @@ maintenance: 2026-08-02 — health maintenance: 4 wiki-lint issues fixed (log.md
 | [[synthesis/phase-9-implementation-plan]] | Phase 9 implementation plan — 11 gaps across 4 phases, ~12h | 2026-08-02 |
 | [[synthesis/code-review-2026-08-02]] | Multi-agent code review — phases 0–9, 41 findings (8 critical, 10 high, 18 medium, 5 low) | 2026-08-02 |
 | [[synthesis/critical-fix-plan-2026-08-02]] | Critical findings implementation plan — 8 fixes across 3 phases, 27 files | 2026-08-02 |
+| [[synthesis/high-fix-plan-2026-08-02]] | High-severity remediation plan — 10 findings (H1–H10), 5 phases, 19 files | 2026-08-02 |
 | [[overview]] | High-level synthesis (v3) | 2026-07-31 |

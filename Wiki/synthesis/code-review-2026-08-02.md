@@ -363,6 +363,11 @@ switch (event.type) {
 8. **H6** — Fix flusso OAuth (token in-memory se refresh cookie fallisce)
 9. **M1-M18** — Debito tecnico schedulabile, priorità a M4 (ARIA), M6 (status chip), M12 (queueDepth)
 
+### Piani di Remediation
+
+- **Critici**: [[critical-fix-plan-2026-08-02]] — tutti e 8 eseguiti ✅
+- **Alta severità**: [[high-fix-plan-2026-08-02]] — 10 finding, 5 fasi, 19 file, 📋 pianificato
+
 ---
 
 ## Sources

@@ -12,6 +12,35 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-02] plan | High-severity remediation plan filed
+
+Filed [[synthesis/high-fix-plan-2026-08-02]]. 10 findings (H1–H10) from [[synthesis/code-review-2026-08-02]] organized into 5 phases, touching 19 files.
+
+**Phase 1 — Domain DDD violations (H1, H2, H3, H10)**:
+- H1: `Conversation.start()` → `create()` (Rule 6)
+- H2: `User.register()` + `fromOAuth()` → `create()` (Rule 6)
+- H3: `ModelTier` type alias → class VO (Rule 4) — new `InvalidModelTierError`
+- H10: `default: return null` → exhaustiveness check in `Session.apply()`
+
+**Phase 2 — Data integrity (H4, H5)**:
+- H4: `workspace-repository saveWithLock()` → `db.transaction()`
+- H5: 3 new errors (`SessionNotFoundError`, `ToolNotFoundError`, `UnknownModelTierError`) replacing bare `throw new Error()` in worker + model-registry
+
+**Phase 3 — Auth flow (H6)**:
+- `AuthContext.trySilentRefresh()` falls back to in-memory token + `GET /api/auth/me` when cookie refresh fails after OAuth
+
+**Phase 4 — Frontend gaps (H7, H8)**:
+- H7: `useSession()` gets `error` state + `.catch()`
+- H8: `ToolPage` reads `toolRegistry[].acquisition.userText` for dynamic inputs
+
+**Phase 5 — Monitoring (H9)**:
+- `countStalled()` queries waiting jobs with `attemptsMade > 0` instead of counting retry-exhausted jobs
+- M12 piggyback: `queueDepth` sums `waiting + active + delayed`
+
+Wiki: index.md, code-review-2026-08-02.md, log.md updated.
+
+---
+
 ## [2026-08-02] execute | Critical findings — all 8 closed
 
 Executed [[synthesis/critical-fix-plan-2026-08-02]]. All 8 critical findings (C1–C8) from [[synthesis/code-review-2026-08-02]] resolved across 3 phases.
