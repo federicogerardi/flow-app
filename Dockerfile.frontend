@@ -8,6 +8,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages/domain/package.json packages/domain/
 COPY packages/contracts/package.json packages/contracts/
+COPY packages/copy/package.json packages/copy/
 COPY apps/frontend/package.json apps/frontend/
 
 RUN npm ci
@@ -17,6 +18,8 @@ COPY packages/domain/tsconfig.json packages/domain/
 COPY packages/domain/src packages/domain/src
 COPY packages/contracts/tsconfig.json packages/contracts/
 COPY packages/contracts/src packages/contracts/src
+COPY packages/copy/tsconfig.json packages/copy/
+COPY packages/copy/src packages/copy/src
 COPY apps/frontend/tsconfig.json apps/frontend/
 COPY apps/frontend/vite.config.ts apps/frontend/
 COPY apps/frontend/index.html apps/frontend/
