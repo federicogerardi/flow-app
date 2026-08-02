@@ -1,6 +1,13 @@
 name: Deploy
 
 on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to deploy
+        type: choice
+        options: [dev, staging, production]
+        default: dev
   push:
     branches: [main, staging, dev]
     paths-ignore:
