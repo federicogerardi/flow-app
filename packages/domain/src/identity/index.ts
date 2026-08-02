@@ -1,9 +1,9 @@
 export { User } from './User';
 export type { PasswordHasher, UserProps } from './User';
 export { Email } from './value-objects/Email';
-export { UserRole } from './value-objects/UserRole';
+export { UserRole, InvalidUserRoleError } from './value-objects/UserRole';
 export type { UserRoleValue } from './value-objects/UserRole';
-export { UserStatus } from './value-objects/UserStatus';
+export { UserStatus, InvalidUserStatusError } from './value-objects/UserStatus';
 export type { UserStatusValue } from './value-objects/UserStatus';
 export type { UserRepository } from './UserRepository';
 export type { AuthSession } from './AuthSession';

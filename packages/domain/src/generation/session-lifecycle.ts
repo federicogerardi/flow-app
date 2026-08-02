@@ -1,4 +1,4 @@
-import type { SessionStatus } from './value-objects/SessionStatus';
+import { SessionStatus, type SessionStatusValue } from './value-objects/SessionStatus';
 
 export type SessionEventType =
   | 'CONFIGURE'
@@ -9,7 +9,7 @@ export type SessionEventType =
   | 'FAIL'
   | 'CANCEL';
 
-export type SessionState = SessionStatus;
+export type SessionState = SessionStatusValue;
 
 interface StateDefinition {
   transitions: Partial<Record<SessionEventType, SessionState>>;
@@ -48,19 +48,20 @@ const states: Record<SessionState, StateDefinition> = {
 };
 
 export const SessionLifecycle = {
-  initialState: 'draft' as SessionState,
+  initialState: SessionStatus.Draft,
   states,
 
   getValidTransition(
-    currentState: SessionState,
+    currentState: SessionStatus,
     event: SessionEventType,
-  ): SessionState | null {
-    const stateDef = states[currentState];
+  ): SessionStatus | null {
+    const stateDef = states[currentState.value];
     if (!stateDef) return null;
-    return stateDef.transitions[event] ?? null;
+    const target = stateDef.transitions[event];
+    return target ? SessionStatus.from(target) : null;
   },
 
-  isFinalState(state: SessionState): boolean {
-    return states[state]?.isFinal ?? false;
+  isFinalState(state: SessionStatus): boolean {
+    return states[state.value]?.isFinal ?? false;
   },
 };

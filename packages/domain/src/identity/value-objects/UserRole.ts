@@ -1,3 +1,5 @@
+import { DomainError } from '../../shared/domain-error';
+
 export type UserRoleValue = 'admin' | 'member';
 
 export class UserRole {
@@ -13,7 +15,7 @@ export class UserRole {
       case 'member':
         return UserRole.Member;
       default:
-        throw new Error(`Invalid UserRole: ${value}`);
+        throw new InvalidUserRoleError(value);
     }
   }
 
@@ -31,5 +33,13 @@ export class UserRole {
 
   get value(): UserRoleValue {
     return this._value;
+  }
+}
+
+export class InvalidUserRoleError extends DomainError {
+  readonly code = 'VALIDATION_ERROR';
+  readonly retryable = false;
+  constructor(value: string) {
+    super(`Invalid UserRole: ${value}`);
   }
 }

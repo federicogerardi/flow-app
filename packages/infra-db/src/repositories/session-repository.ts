@@ -1,6 +1,6 @@
 import type { Kysely } from 'kysely';
-import type { DB } from '../types';
-import { Session, ConcurrencyError, type SessionRepository, type SessionFilters, type ToolKey, type SessionStatus } from '@flow-app/domain';
+import type { DB, SessionStatus as DBSessionStatus } from '../types';
+import { Session, ConcurrencyError, SessionStatus, type SessionRepository, type SessionFilters, type ToolKey } from '@flow-app/domain';
 
 export class KyselySessionRepository implements SessionRepository {
   constructor(private readonly db: Kysely<DB>) {}
@@ -20,7 +20,7 @@ export class KyselySessionRepository implements SessionRepository {
       row.workspace_id,
       row.user_id,
       row.idempotency_key_hash,
-      row.status,
+      SessionStatus.from(row.status),
       row.current_step_index,
       row.started_at,
       row.completed_at,
@@ -47,7 +47,7 @@ export class KyselySessionRepository implements SessionRepository {
       row.workspace_id,
       row.user_id,
       row.idempotency_key_hash,
-      row.status,
+      SessionStatus.from(row.status),
       row.current_step_index,
       row.started_at,
       row.completed_at,
@@ -63,7 +63,7 @@ export class KyselySessionRepository implements SessionRepository {
       .where('workspace_id', '=', workspaceId);
 
     if (filters?.status) {
-      query = query.where('status', '=', filters.status as SessionStatus);
+      query = query.where('status', '=', filters.status as DBSessionStatus);
     }
 
     const rows = await query
@@ -80,7 +80,7 @@ export class KyselySessionRepository implements SessionRepository {
         row.workspace_id,
         row.user_id,
         row.idempotency_key_hash,
-        row.status,
+        SessionStatus.from(row.status),
         row.current_step_index,
         row.started_at,
         row.completed_at,
@@ -100,7 +100,7 @@ export class KyselySessionRepository implements SessionRepository {
         workspace_id: session.workspaceId,
         user_id: session.userId,
         idempotency_key_hash: session.idempotencyKeyHash,
-        status: session.status,
+        status: session.status.value,
         current_step_index: session.currentStepIndex,
         started_at: session.startedAt,
         completed_at: session.completedAt,
@@ -110,7 +110,7 @@ export class KyselySessionRepository implements SessionRepository {
       })
       .onConflict((oc) =>
         oc.column('id').doUpdateSet({
-          status: session.status,
+          status: session.status.value,
           current_step_index: session.currentStepIndex,
           started_at: session.startedAt,
           completed_at: session.completedAt,
@@ -127,7 +127,7 @@ export class KyselySessionRepository implements SessionRepository {
     const result = await this.db
       .updateTable('sessions')
       .set({
-        status: session.status,
+        status: session.status.value,
         current_step_index: session.currentStepIndex,
         started_at: session.startedAt,
         completed_at: session.completedAt,
@@ -141,7 +141,6 @@ export class KyselySessionRepository implements SessionRepository {
       .executeTakeFirst();
 
     if (result.numUpdatedRows === 0n) {
-      // Version mismatch — fetch actual version for error details
       const current = await this.db
         .selectFrom('sessions')
         .where('id', '=', session.sessionId)

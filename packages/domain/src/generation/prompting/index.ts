@@ -1,7 +1,7 @@
-export { PromptTemplateId } from './PromptTemplateId';
-export { PromptVersion } from './PromptVersion';
+export { PromptTemplateId, InvalidPromptTemplateKeyError, InvalidPromptTemplateIdFormatError } from './PromptTemplateId';
+export { PromptVersion, InvalidPromptVersionError } from './PromptVersion';
 export type { PromptTemplateContent } from './PromptTemplateContent';
-export { PromptComponent } from './PromptComponent';
+export { PromptComponent, EmptyComponentContentError } from './PromptComponent';
 export { PromptComponentRegistry, PromptComponentNotFoundError } from './PromptComponentRegistry';
 export { PromptComposer } from './PromptComposer';
 export type { ComposedPrompt } from './PromptComposer';

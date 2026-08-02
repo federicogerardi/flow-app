@@ -1,5 +1,6 @@
 import type { MembershipRole } from '../value-objects/MembershipRole';
 import type { MembershipStatus } from '../value-objects/MembershipStatus';
+import { DomainError } from '../../shared/domain-error';
 
 export class WorkspaceMembership {
   private constructor(
@@ -19,7 +20,7 @@ export class WorkspaceMembership {
     invitedBy: string,
   ): WorkspaceMembership {
     if (role === 'owner') {
-      throw new Error('Cannot invite a user as owner. Use transferOwnership().');
+      throw new CannotInviteAsOwnerError();
     }
     return new WorkspaceMembership(
       userId,
@@ -46,7 +47,7 @@ export class WorkspaceMembership {
 
   accept(): WorkspaceMembership {
     if (this._status !== 'invited') {
-      throw new Error(`Cannot accept: membership is ${this._status}, expected invited`);
+      throw new InvalidMembershipAcceptError(this._status);
     }
     return new WorkspaceMembership(
       this.userId,
@@ -61,7 +62,7 @@ export class WorkspaceMembership {
 
   changeRole(newRole: MembershipRole): void {
     if (newRole === 'owner') {
-      throw new Error('Cannot assign owner role via changeRole(). Use transferOwnership().');
+      throw new CannotAssignOwnerRoleError();
     }
     this._role = newRole;
   }
@@ -88,5 +89,29 @@ export class WorkspaceMembership {
 
   get isOwner(): boolean {
     return this._role === 'owner' && this.isActive;
+  }
+}
+
+export class CannotInviteAsOwnerError extends DomainError {
+  readonly code = 'VALIDATION_ERROR';
+  readonly retryable = false;
+  constructor() {
+    super('Cannot invite a user as owner. Use transferOwnership().');
+  }
+}
+
+export class InvalidMembershipAcceptError extends DomainError {
+  readonly code = 'INVALID_STATE';
+  readonly retryable = false;
+  constructor(currentStatus: string) {
+    super(`Cannot accept: membership is ${currentStatus}, expected invited`);
+  }
+}
+
+export class CannotAssignOwnerRoleError extends DomainError {
+  readonly code = 'VALIDATION_ERROR';
+  readonly retryable = false;
+  constructor() {
+    super('Cannot assign owner role via changeRole(). Use transferOwnership().');
   }
 }

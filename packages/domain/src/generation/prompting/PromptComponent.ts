@@ -1,4 +1,5 @@
 import type { PromptVersion } from './PromptVersion';
+import { DomainError } from '../../shared/domain-error';
 
 export type PromptComponentType =
   | 'system_rule'
@@ -24,7 +25,7 @@ export class PromptComponent {
     description: string,
   ): PromptComponent {
     if (!content.trim()) {
-      throw new Error('Component content must not be empty');
+      throw new EmptyComponentContentError();
     }
     return new PromptComponent(componentKey, type, content, version, description);
   }
@@ -37,5 +38,13 @@ export class PromptComponent {
     description: string,
   ): PromptComponent {
     return new PromptComponent(componentKey, type, content, version, description);
+  }
+}
+
+export class EmptyComponentContentError extends DomainError {
+  readonly code = 'VALIDATION_ERROR';
+  readonly retryable = false;
+  constructor() {
+    super('Component content must not be empty');
   }
 }

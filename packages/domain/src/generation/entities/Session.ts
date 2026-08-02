@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { SessionStatus } from '../value-objects/SessionStatus';
+import { SessionStatus } from '../value-objects/SessionStatus';
 import type { ToolKey } from '../value-objects/ToolKey';
 import { SessionLifecycle, type SessionEventType } from '../session-lifecycle';
 import type { DomainEvent } from '../../shared/domain-event';
@@ -49,7 +49,7 @@ export class Session {
       workspaceId,
       userId,
       idempotencyKeyHash,
-      'draft',
+      SessionStatus.Draft,
       0,
       null,
       null,

@@ -1,6 +1,7 @@
 import { PromptComponent } from './PromptComponent';
+import { DomainError } from '../../shared/domain-error';
 
-export class PromptComponentNotFoundError extends Error {
+export class PromptComponentNotFoundError extends DomainError {
   readonly code = 'VALIDATION_ERROR';
   readonly retryable = false;
   constructor(componentKey: string) {

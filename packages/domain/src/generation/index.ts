@@ -5,10 +5,11 @@ export { Artifact } from './entities/Artifact';
 // Value Objects
 export { SessionId } from './value-objects/SessionId';
 export type { ToolKey } from './value-objects/ToolKey';
-export { StepNumber } from './value-objects/StepNumber';
+export { StepNumber, InvalidStepNumberError } from './value-objects/StepNumber';
 export { ArtifactId } from './value-objects/ArtifactId';
 export { ArtifactContent } from './value-objects/ArtifactContent';
-export type { SessionStatus } from './value-objects/SessionStatus';
+export { SessionStatus, InvalidSessionStatusError } from './value-objects/SessionStatus';
+export type { SessionStatusValue } from './value-objects/SessionStatus';
 export type { ArtifactStatus } from './value-objects/ArtifactStatus';
 export { ReadinessPolicy } from './value-objects/ReadinessPolicy';
 export type { AcquisitionData } from './value-objects/ReadinessPolicy';
@@ -44,5 +45,9 @@ export {
   PromptComposer,
   getDefaultComponents,
   DEFAULT_COMPONENTS,
+  InvalidPromptTemplateKeyError,
+  InvalidPromptTemplateIdFormatError,
+  InvalidPromptVersionError,
+  EmptyComponentContentError,
 } from './prompting';
 export type { PromptTemplateContent, PromptTemplateRepository, ComposedPrompt, PromptComponentType } from './prompting';

@@ -12,6 +12,24 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-02] synthesis | Phase 9 implementation plan filed
+
+Created `synthesis/phase-9-implementation-plan.md` — comprehensive implementation plan for the 11 VALIDATION + 2 quick-win STRUCTURAL gaps documented in `phase-9-architectural-targets.md`. Every file path verified by reading actual source. Plan covers 4 phases:
+
+- **9a** (P0, ~1h 40m): V10 (throw new Error → DomainError across 8 files) + V1 (SessionStatus class)
+- **9b** (P0/P1, ~4h): V2 (MembershipRole class), V9 (SessionEvent discriminated union), V3 (ToolKey class), V4 (AgentKey class)
+- **9c** (P2, ~3h): V5-V8 (remaining VO classes) + V11 (Artifact lifecycle methods)
+- **9d** (P1, ~5h): S4 (temporal invariants fix) + S5 (11 real tool definitions)
+
+Key findings during file verification:
+- 3 prompt files live under `generation/prompting/` not `prompt/` (target doc paths corrected)
+- `PromptComponentNotFoundError` extends `Error` not `DomainError` — added to V10 scope
+- `Artifact.create()` default status change from `Completed` to `Pending` requires caller audit
+- Circular dependency risk between `SessionStatus` ↔ `SessionLifecycle` mitigated by keeping transition logic in lifecycle only
+- S1, S2, S3 deferred to Phase 10+ as RFC-first design decisions
+
+Index updated. Log filed.
+
 ## [2026-08-02] remediation | Wiki drift — source of truth alignment post Phase 8
 
 Comprehensive drift remediation to make the Wiki the authoritative source of truth for development status. Cross-referenced all Wiki claims against actual runtime code across 5 layers (domain, infrastructure, API, DB, frontend).

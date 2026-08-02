@@ -1,3 +1,5 @@
+import { DomainError } from '../../shared/domain-error';
+
 export type UserStatusValue = 'active' | 'disabled';
 
 export class UserStatus {
@@ -13,7 +15,7 @@ export class UserStatus {
       case 'disabled':
         return UserStatus.Disabled;
       default:
-        throw new Error(`Invalid UserStatus: ${value}`);
+        throw new InvalidUserStatusError(value);
     }
   }
 
@@ -31,5 +33,13 @@ export class UserStatus {
 
   get value(): UserStatusValue {
     return this._value;
+  }
+}
+
+export class InvalidUserStatusError extends DomainError {
+  readonly code = 'VALIDATION_ERROR';
+  readonly retryable = false;
+  constructor(value: string) {
+    super(`Invalid UserStatus: ${value}`);
   }
 }
