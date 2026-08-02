@@ -1,4 +1,5 @@
 import { Box, Typography, Button, Alert } from '@mui/material';
+import { copy } from '@flow-app/copy';
 
 interface ErrorStateProps {
   title?: string;
@@ -6,7 +7,7 @@ interface ErrorStateProps {
   onRetry?: () => void;
 }
 
-export function ErrorState({ title = 'Something went wrong', message, onRetry }: ErrorStateProps) {
+export function ErrorState({ title = copy.t('shared.status.error'), message, onRetry }: ErrorStateProps) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 8 }}>
       <Alert severity="error" sx={{ mb: 2, maxWidth: 500 }}>
@@ -15,7 +16,7 @@ export function ErrorState({ title = 'Something went wrong', message, onRetry }:
       </Alert>
       {onRetry && (
         <Button variant="outlined" onClick={onRetry}>
-          Retry
+          {copy.t('shared.actions.retry')}
         </Button>
       )}
     </Box>

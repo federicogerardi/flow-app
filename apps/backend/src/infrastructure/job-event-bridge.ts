@@ -66,14 +66,16 @@ export class JobEventBridge {
 
     const channel = `session:${sessionId}:events`;
 
-    const messageHandler = (ch: string, message: string) => {
-      if (ch === channel) {
-        onEvent(JSON.parse(message));
+    const messageHandler = (_ch: string, message: string) => {
+      try {
+        onEvent(JSON.parse(message) as SSEPayload);
+      } catch {
+        logger.warn({ channel }, 'malformed SSE message — skipped');
       }
     };
 
-    this.sub.subscribe(channel);
     this.sub.on('message', messageHandler);
+    this.sub.subscribe(channel);
 
     return () => {
       this.sub?.unsubscribe(channel);

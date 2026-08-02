@@ -79,13 +79,14 @@ export function AppShell() {
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      <AppBar position="fixed" sx={{ zIndex: (t) => t.zIndex.drawer + 1, bgcolor: 'background.paper', color: 'text.primary', boxShadow: 1 }}>
+      <AppBar position="fixed" role="banner" sx={{ zIndex: (t) => t.zIndex.drawer + 1, bgcolor: 'background.paper', color: 'text.primary', boxShadow: 1 }}>
         <Toolbar>
           {!isDesktop && (
             <IconButton
               color="inherit"
               edge="start"
               onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
               sx={{ mr: 1 }}
             >
               <MenuIcon />
@@ -101,6 +102,7 @@ export function AppShell() {
             <>
               <IconButton
                 onClick={(e) => setUserMenuAnchor(e.currentTarget)}
+                aria-label="User menu"
                 sx={{ p: 0.5 }}
               >
                 <Avatar
@@ -151,6 +153,8 @@ export function AppShell() {
         open={isDesktop || mobileOpen}
         onClose={() => setMobileOpen(false)}
         ModalProps={{ keepMounted: true }}
+        role="navigation"
+        aria-label="Main navigation"
         sx={{
           width: DRAWER_WIDTH,
           flexShrink: 0,
@@ -172,6 +176,8 @@ export function AppShell() {
             value={activeWorkspaceId ?? ''}
             onChange={(e) => handleWorkspaceChange(e.target.value)}
             displayEmpty
+            aria-label="Select workspace"
+            inputProps={{ 'aria-label': 'Current workspace' }}
             renderValue={(selected) => {
               if (!selected) return <em style={{ opacity: 0.5 }}>{copy.t('workspace.switcher.selectWorkspace')}</em>;
               const ws = workspaces?.find((w) => w.id === selected);
@@ -192,7 +198,7 @@ export function AppShell() {
               </MenuItem>
             ))}
           </Select>
-          <IconButton size="small" onClick={() => setCreateOpen(true)} title={copy.t('workspace.list.createCta')}>
+          <IconButton size="small" onClick={() => setCreateOpen(true)} aria-label={copy.t('workspace.list.createCta')} title={copy.t('workspace.list.createCta')}>
             <AddIcon fontSize="small" />
           </IconButton>
         </Box>
@@ -236,7 +242,7 @@ export function AppShell() {
         </Box>
       </Drawer>
 
-      <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
+      <Box component="main" role="main" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
         <Outlet />
       </Box>
 

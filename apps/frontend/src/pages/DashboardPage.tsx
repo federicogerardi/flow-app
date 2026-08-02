@@ -8,6 +8,7 @@ import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
 import { LoadingSkeleton } from '../components/LoadingSkeleton';
 import { copy } from '@flow-app/copy';
+import { statusColorMap } from '../shared/statusColors';
 
 const TOOLS = [
   { key: 'blog-post', name: 'Blog Post', description: 'SEO-optimized blog article', icon: '📝' },
@@ -109,7 +110,7 @@ function RecentSessions({ workspaceId }: { workspaceId: string }) {
             </Box>
             <Chip
               label={s.status}
-              color={s.status === 'completed' ? 'success' : s.status === 'failed' ? 'error' : 'primary'}
+              color={statusColorMap[s.status] ?? 'default'}
               size="small"
             />
           </CardContent>

@@ -5,6 +5,7 @@ import { PageHeader } from '../components/PageHeader';
 import { LoadingSkeleton } from '../components/LoadingSkeleton';
 import { ErrorState } from '../components/ErrorState';
 import { copy } from '@flow-app/copy';
+import { statusColorMap } from '../shared/statusColors';
 
 export default function SessionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -13,14 +14,6 @@ export default function SessionPage() {
   if (loading) return <LoadingSkeleton />;
   if (error) return <ErrorState message={error.message} />;
   if (!session) return <LoadingSkeleton />;
-
-  const statusColor: Record<string, 'default' | 'primary' | 'success' | 'error' | 'warning'> = {
-    draft: 'default',
-    queued: 'warning',
-    running: 'primary',
-    completed: 'success',
-    failed: 'error',
-  };
 
   return (
     <Box>
@@ -36,7 +29,7 @@ export default function SessionPage() {
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
             <Typography variant="h3">Status</Typography>
-            <Chip label={session.status} color={statusColor[session.status] ?? 'default'} />
+            <Chip label={session.status} color={statusColorMap[session.status] ?? 'default'} />
           </Box>
 
           {session.status === 'running' && progress && (

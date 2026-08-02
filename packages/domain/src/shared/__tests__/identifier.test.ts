@@ -7,6 +7,12 @@ class TestId extends Identifier<string> {
   }
 }
 
+class OtherId extends Identifier<string> {
+  static from(value: string): OtherId {
+    return new OtherId(value);
+  }
+}
+
 describe('Identifier', () => {
   it('should store and return value', () => {
     const id = TestId.from('abc-123');
@@ -23,6 +29,12 @@ describe('Identifier', () => {
     const id1 = TestId.from('abc');
     const id2 = TestId.from('def');
     expect(id1.equals(id2)).toBe(false);
+  });
+
+  it('should return false for cross-type equality with same value', () => {
+    const id1 = TestId.from('abc');
+    const id2 = OtherId.from('abc');
+    expect(id1.equals(id2 as unknown as TestId)).toBe(false);
   });
 
   it('should convert to string', () => {
