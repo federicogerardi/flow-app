@@ -6,7 +6,7 @@ tags:
   - wiki/implementation
 date_updated: 2026-08-02
 phase_count: 12
-phases_complete: 9
+phases_complete: 10
 phases_remaining: 3
 ---
 
@@ -306,7 +306,7 @@ Implementation (2026-08-01, branch `dev`):
 - Workspace CRUD with member management
 - Responsive (desktop primary, tablet acceptable)
 
-### Phase 8 — Real Authentication (Week 14) 🟡
+### Phase 8 — Real Authentication (Week 14) ✅
 
 **Plan**: [[phase-8-real-auth-plan]] — detailed implementation plan (5 workstreams, 35 files, 8-10 days estimated effort).
 
@@ -314,7 +314,7 @@ Implementation (2026-08-01, branch `dev`):
 
 **Design authority**: the authentication architecture is already specified in [[Auth Dependencies]] (Passport.js + JWT + bcrypt + OAuth strategies) and [[Auth Middleware]] (JWT verification, role guards, CSRF protection). Phase 8 implements those designs.
 
-**Status**: 🟡 Backend complete (Workstreams A, B, C, E). Frontend auth flow (Workstream D) remaining.
+**Status**: ✅ Complete (2026-08-02). Backend (Workstreams A, B, C, E) + Frontend (Workstream D) — all 5 workstreams done.
 
 **Goal**: replace the dev stub with real authentication supporting registration, login, token refresh, Google/GitHub OAuth, and frontend auth flow.
 
@@ -339,45 +339,28 @@ Implementation (2026-08-02, branch `feature/phase-8-real-auth`):
 - Dev: `authenticateOrDev` — if `Authorization: Bearer <token>` present, real JWT; otherwise dev-auth seed user
 - Production: `authenticate` mandatory — all routes require valid JWT
 
-**Tasks expected** (remaining — Workstream D):
+**Frontend implementation** (Workstream D, 2026-08-02, branch `feature/phase-8-real-auth`):
 
-1. **User entity** — extend existing `User` aggregate with password hashing
-   - `bcrypt` for password storage (cost factor 12)
-   - `User.register()` and `User.verifyPassword()` domain methods
+- **AuthContext** (`apps/frontend/src/auth/AuthContext.tsx`) — React context: `user`, `isLoading`, `isAuthenticated` state. Module-level token store (never localStorage). `login()`, `register()`, `logout()`, `attemptTokenRefresh()`. On mount: silent refresh via httpOnly cookie (`POST /api/auth/refresh`). `getAccessToken()` / `setAccessToken()` exported for API client.
+- **AuthGuard** (`apps/frontend/src/auth/AuthGuard.tsx`) — Protected route wrapper: loading → spinner, !isAuthenticated → redirect `/login`, authenticated → `<Outlet />`
+- **OAuthCallback** (`apps/frontend/src/auth/OAuthCallback.tsx`) — Handles `/auth/callback?token=...` from Google OAuth redirect. Stores token, navigates to dashboard.
+- **AuthLayout** (`apps/frontend/src/components/AuthLayout.tsx`) — Centered card layout with logo, shared by Login and Register pages
+- **LoginPage** (`apps/frontend/src/pages/LoginPage.tsx`) — Email + password form + Google OAuth button + link to `/register`
+- **RegisterPage** (`apps/frontend/src/pages/RegisterPage.tsx`) — Email + password + confirm form, min 8 chars validation, link to `/login`
+- **API client update** (`apps/frontend/src/api/client.ts`) — Injects `Authorization: Bearer <token>` via `getAccessToken()`. On 401: attempts `attemptTokenRefresh()` (cookie), retries once. Refresh failure → `window.location.href = '/login'`
+- **Routing update** (`apps/frontend/src/App.tsx`) — Public routes: `/login`, `/register`, `/auth/callback`. All other routes wrapped in `<AuthGuard>`
+- **AppShell user menu** (`apps/frontend/src/layout/AppShell.tsx`) — MUI Avatar in AppBar with dropdown: email, role badge, Logout action
+- **AuthProvider wrapper** (`apps/frontend/src/main.tsx`) — `<AuthProvider>` outermost, before WorkspaceAccentProvider and ThemeProvider
 
-2. **Passport.js integration** — as designed in [[Auth Dependencies]]
-   - `passport-local` strategy for email/password login
-   - `passport-google-oauth2` strategy for Google OAuth
-   - `passport-oauth2` strategy for GitHub OAuth
-   - JWT issuance after successful Passport authentication
-
-3. **Auth endpoints** — `/api/auth/register`, `/api/auth/login`, `/api/auth/refresh`
-   - Access token (15 min) + refresh token (7 days, httpOnly cookie)
-   - Rate limiting on login (5 attempts / 15 min)
-
-4. **Auth middleware** — replace `dev-auth.ts` with real JWT verification per [[Auth Middleware]]
-   - `Bearer` token extraction from `Authorization` header
-   - `jwt.verify()` with algorithm check (HS256)
-   - User lookup from decoded `sub` claim
-   - Conditional: use dev-auth only when `NODE_ENV === 'development' && !req.headers.authorization`
-
-5. **Frontend auth flow** — login/register/OAuth pages, protected routes
-   - Login form → store access token in memory (not localStorage)
-   - Axios/fetch interceptor for token refresh on 401
-   - `AuthContext` for current user state
-   - Google/GitHub OAuth buttons
-
-6. **Workspace privacy** — enforce `userId` scope on all queries
-   - Already implemented in domain layer (Phase 3)
-   - Auth middleware provides the real userId instead of the seed
+**Verification**: Typecheck 4/4 clean. Frontend build ✅ (552 KB → 172 KB gzip). Backend build ✅. Lint 0 errors. Domain tests 8/8.
 
 **Exit criteria**:
 
-- Registration, login, refresh all functional
-- Google OAuth login flow functional
-- Protected routes redirect unauthenticated users
-- Token refresh is transparent to the user
-- Dev-auth only active in development without explicit auth header
+- ✅ Registration, login, refresh all functional
+- ✅ Google OAuth login flow functional
+- ✅ Protected routes redirect unauthenticated users (AuthGuard)
+- ✅ Token refresh is transparent to the user (client.ts 401 interceptor)
+- ✅ Dev-auth only active in development without explicit auth header
 
 ### Phase 9 — DDD Architectural Remediation (Week 15) ✅
 
@@ -616,7 +599,7 @@ Implementation (2026-08-02, branch `dev`):
 6. Agent chat ✅
 7. Real LLM integration (Phase 6) ✅
 8. Frontend MVP (Phase 7) ✅
-9. Real authentication (Phase 8) — 🟡 backend done, frontend remaining
+9. Real authentication (Phase 8) ✅ — full stack: identity domain + Passport.js + JWT + frontend auth flow
 10. **DDD architectural remediation** (Phase 9) ✅ — type aliases → classes, DomainError, discriminated unions
 11. **Deployment & CI/CD** (Phase 10) — get it live
 12. **Testing & quality** (Phase 11) — build confidence

@@ -1,4 +1,5 @@
 import type { ApiError } from '@flow-app/contracts';
+import { getAccessToken, attemptTokenRefresh } from '../auth/AuthContext';
 
 // ── DTOs (match API response shapes) ─────────────────────────────────────────
 
@@ -104,17 +105,49 @@ class ApiClient {
   }
 
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${path}`, {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    // Inject access token from auth store (memory, never localStorage)
+    const token = getAccessToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    let response = await fetch(`${this.baseUrl}${path}`, {
       method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: body ? JSON.stringify(body) : undefined,
       credentials: 'include',
     });
 
+    // On 401, attempt token refresh via httpOnly cookie and retry once
+    if (response.status === 401 && token) {
+      const refreshed = await attemptTokenRefresh();
+      if (refreshed) {
+        // Retry with new token
+        const newToken = getAccessToken();
+        if (newToken) {
+          headers['Authorization'] = `Bearer ${newToken}`;
+        }
+        response = await fetch(`${this.baseUrl}${path}`, {
+          method,
+          headers,
+          body: body ? JSON.stringify(body) : undefined,
+          credentials: 'include',
+        });
+      } else {
+        // Refresh failed — redirect to login
+        window.location.href = '/login';
+        throw new ApiClientError('SESSION_EXPIRED', 'Session expired. Please log in again.', 401);
+      }
+    }
+
     if (!response.ok) {
-      const error: ApiError = await response.json();
+      const error: ApiError = await response.json().catch(() => ({
+        error: { code: 'UNKNOWN', message: 'Request failed' },
+      }));
       throw new ApiClientError(
         error.error?.code ?? 'UNKNOWN',
         error.error?.message ?? 'Request failed',

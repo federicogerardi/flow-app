@@ -12,6 +12,36 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-02] implementation | Phase 8 — Real Authentication (Workstream D) complete
+
+Phase 8 Real Authentication is now fully complete. Workstream D (Frontend Auth Flow) implemented on branch `feature/phase-8-real-auth`:
+
+**6 new files created:**
+- `apps/frontend/src/auth/AuthContext.tsx` — React context: user state, module-level token store (never localStorage), `login()`, `register()`, `logout()`, `attemptTokenRefresh()`. On mount: silent refresh via httpOnly cookie. `getAccessToken()` / `setAccessToken()` exported for API client.
+- `apps/frontend/src/auth/AuthGuard.tsx` — Protected route wrapper: loading → spinner, !isAuthenticated → redirect /login, authenticated → Outlet.
+- `apps/frontend/src/auth/OAuthCallback.tsx` — Handles `/auth/callback?token=...` from Google OAuth redirect. Stores token in memory, navigates to dashboard. AuthContext silent refresh handles rest.
+- `apps/frontend/src/components/AuthLayout.tsx` — Centered card layout with "flow app" logo, shared by LoginPage and RegisterPage.
+- `apps/frontend/src/pages/LoginPage.tsx` — Email + password form, Google OAuth button, link to /register. MUI TextField, Button, Alert.
+- `apps/frontend/src/pages/RegisterPage.tsx` — Email + password + confirm form, validation (min 8 chars, match), link to /login.
+
+**4 files modified:**
+- `apps/frontend/src/api/client.ts` — Injects `Authorization: Bearer <token>` from `getAccessToken()`. On 401: attempts `attemptTokenRefresh()` via cookie, retries request once. If refresh fails: redirects to `/login`.
+- `apps/frontend/src/App.tsx` — Added public routes (`/login`, `/register`, `/auth/callback`). All existing routes wrapped in `<AuthGuard>`.
+- `apps/frontend/src/layout/AppShell.tsx` — Added user avatar (MUI Avatar) in AppBar with dropdown menu: email, role badge, Logout action.
+- `apps/frontend/src/main.tsx` — Wrapped app in `<AuthProvider>` (outermost, before WorkspaceAccentProvider).
+
+**Verification**: Typecheck 4/4 packages clean. Frontend build ✅ (552 KB → 172 KB gzipped). Backend build ✅. Lint 0 errors, 0 warnings. Domain tests 8/8 pass.
+
+**Phase 8 exit criteria — all 12 met**, including the 2 previously pending:
+- 5. ✅ Protected routes redirect to `/login` when unauthenticated (AuthGuard)
+- 6. ✅ Frontend token refresh is transparent to user (client.ts 401 interceptor)
+
+Full auth flow: login/register → token in memory + httpOnly cookie → API calls with Bearer → 401 auto-refresh → logout. Dev mode: `authenticateOrDev` maintains backward compat (no auth header → seed user).
+
+Wiki updated: `index.md` (maintenance note), `log.md` (this entry), `implementation-roadmap-2026-08-01.md` (Phase 8 → ✅, frontmatter: phases_complete 9→10), `phase-8-real-auth-plan.md` (Workstream D completed, exit criteria 5+6 → ✅, frontend files documented).
+
+---
+
 ## [2026-08-02] synthesis | Phase 9 implementation plan filed
 
 Created `synthesis/phase-9-implementation-plan.md` — comprehensive implementation plan for the 11 VALIDATION + 2 quick-win STRUCTURAL gaps documented in `phase-9-architectural-targets.md`. Every file path verified by reading actual source. Plan covers 4 phases:

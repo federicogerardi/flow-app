@@ -1,4 +1,4 @@
-import { AppBar, Box, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, Divider, Button, Select, MenuItem, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton } from '@mui/material';
+import { AppBar, Box, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, Divider, Button, Select, MenuItem, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Avatar, Menu } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import BuildIcon from '@mui/icons-material/Build';
 import PlayCircleIcon from '@mui/icons-material/PlayCircle';
@@ -13,6 +13,7 @@ import { api } from '../api/client';
 import { useWorkspaceAccent } from '../theme/WorkspaceAccentProvider';
 import { copy } from '@flow-app/copy';
 import { useState } from 'react';
+import { useAuth } from '../auth/AuthContext';
 
 const DRAWER_WIDTH = 280;
 
@@ -32,10 +33,12 @@ export function AppShell() {
   const { workspaceId: activeWorkspaceId } = useParams<{ workspaceId: string }>();
   const { data: workspaces } = useSWR('workspaces', () => api.listWorkspaces());
   const accent = useWorkspaceAccent();
+  const { user, logout } = useAuth();
 
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [creating, setCreating] = useState(false);
+  const [userMenuAnchor, setUserMenuAnchor] = useState<HTMLElement | null>(null);
 
   const handleWorkspaceChange = (newId: string) => {
     navigate(`/workspaces/${newId}`);
@@ -78,6 +81,54 @@ export function AppShell() {
             flow app
           </Typography>
           <Box sx={{ flexGrow: 1 }} />
+
+          {/* User Menu */}
+          {user && (
+            <>
+              <IconButton
+                onClick={(e) => setUserMenuAnchor(e.currentTarget)}
+                sx={{ p: 0.5 }}
+              >
+                <Avatar
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    bgcolor: accent,
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  {user.email.charAt(0).toUpperCase()}
+                </Avatar>
+              </IconButton>
+              <Menu
+                anchorEl={userMenuAnchor}
+                open={Boolean(userMenuAnchor)}
+                onClose={() => setUserMenuAnchor(null)}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                slotProps={{ paper: { sx: { minWidth: 200, mt: 1 } } }}
+              >
+                <Box sx={{ px: 2, py: 1 }}>
+                  <Typography variant="body2" fontWeight={600} noWrap>
+                    {user.email}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {user.role}
+                  </Typography>
+                </Box>
+                <Divider />
+                <MenuItem
+                  onClick={() => {
+                    setUserMenuAnchor(null);
+                    logout().then(() => navigate('/login'));
+                  }}
+                >
+                  Logout
+                </MenuItem>
+              </Menu>
+            </>
+          )}
         </Toolbar>
       </AppBar>
 

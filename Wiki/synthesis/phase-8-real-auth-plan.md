@@ -773,8 +773,8 @@ const app = createApp({
 2. ✅ Login with valid credentials → returns access + refresh tokens
 3. ✅ Refresh token rotation → old token invalidated, new tokens issued
 4. ✅ Logout → clears refresh cookie, invalidates session
-5. ⬜ Protected routes redirect to `/login` when unauthenticated (Workstream D)
-6. ⬜ Frontend token refresh is transparent to user (Workstream D)
+5. ✅ Protected routes redirect to `/login` when unauthenticated (Workstream D)
+6. ✅ Frontend token refresh is transparent to user (Workstream D)
 7. ✅ `requireWorkspaceRole()` works with real auth (Phase 3 unchanged)
 8. ✅ Rate limiting on login (5 attempts / 15 min)
 9. ✅ Google OAuth login flow (if `GOOGLE_CLIENT_ID` configured)
@@ -787,10 +787,10 @@ const app = createApp({
 ## Implementation (2026-08-02)
 
 **Branch**: `feature/phase-8-real-auth`
-**Workstreams completed**: A (Domain), B (Infrastructure), C (Backend Auth), E (Integration)
-**Workstream remaining**: D (Frontend Auth Flow)
+**Workstreams completed**: A (Domain), B (Infrastructure), C (Backend Auth), D (Frontend Auth Flow), E (Integration)
+**Status**: ✅ All 5 workstreams complete. Phase 8 fully done.
 
-### Files Created (17)
+### Files Created (23 — was 17, +6 frontend)
 
 | Workstream | File | Purpose |
 |------------|------|---------|
@@ -813,8 +813,14 @@ const app = createApp({
 | C | `apps/backend/src/middleware/authenticate.ts` | JWT `authenticate()` + `authenticateOrDev()` |
 | C | `apps/backend/src/middleware/auth-rate-limit.ts` | 5 attempts / 15 min on login |
 | C | `apps/backend/src/middleware/auth-types.ts` | `AuthUser` interface, `getAuthUser()`/`setAuthUser()`, Express augmentation |
+| **D** | `apps/frontend/src/auth/AuthContext.tsx` | Auth state, token store, `login()`/`register()`/`logout()`, silent refresh |
+| **D** | `apps/frontend/src/auth/AuthGuard.tsx` | Protected route wrapper: loading → spinner, !auth → /login |
+| **D** | `apps/frontend/src/auth/OAuthCallback.tsx` | Handles `/auth/callback?token=...` OAuth redirect |
+| **D** | `apps/frontend/src/components/AuthLayout.tsx` | Centered card layout for auth pages |
+| **D** | `apps/frontend/src/pages/LoginPage.tsx` | Email + password form, Google OAuth button |
+| **D** | `apps/frontend/src/pages/RegisterPage.tsx` | Email + password + confirm form |
 
-### Files Modified (8)
+### Files Modified (12 — was 8, +4 frontend)
 
 | File | Change |
 |------|--------|
@@ -826,6 +832,10 @@ const app = createApp({
 | `apps/backend/src/server.ts` | Wired `BcryptPasswordHasher`, `TokenService`, `AuthService`, `KyselyUserRepository` |
 | `apps/backend/.env.example` | Added `REFRESH_TOKEN_EXPIRES_IN_SECONDS`, `AUTH_RATE_LIMIT_*` |
 | `apps/backend/package.json` | Added `bcrypt`, `passport`, `passport-local`, `passport-google-oauth20`, `express-rate-limit` + types |
+| **D** | `apps/frontend/src/api/client.ts` | Token injection from `getAccessToken()`, 401 → refresh → retry interceptor |
+| **D** | `apps/frontend/src/App.tsx` | Added public auth routes, wrapped existing routes in AuthGuard |
+| **D** | `apps/frontend/src/layout/AppShell.tsx` | User avatar + dropdown menu in AppBar (email, role, logout) |
+| **D** | `apps/frontend/src/main.tsx` | AuthProvider wrapper (outermost provider) |
 
 ### Auth Endpoints Available
 
@@ -856,7 +866,9 @@ All `@typescript-eslint/no-explicit-any` warnings resolved (7 → 0):
 ### Verification
 
 - Typecheck: 4/4 packages clean (domain, infra-db, backend, frontend)
-- Tests: 4/4 pass
+- Frontend build: ✅ Vite production build (552 KB → 172 KB gzipped)
+- Backend build: ✅ tsc clean
+- Tests: 8/8 pass (domain)
 - Lint: 0 errors, 0 warnings (on all changed files)
 
 ### DDD Governance Remediation (2026-08-02)
