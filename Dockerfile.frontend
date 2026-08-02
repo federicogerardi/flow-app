@@ -11,6 +11,7 @@ COPY packages/contracts/package.json packages/contracts/
 COPY packages/copy/package.json packages/copy/
 COPY apps/frontend/package.json apps/frontend/
 
+# Install ALL deps for build (needed for typecheck + vite)
 RUN npm ci
 
 COPY tsconfig.json ./
@@ -27,10 +28,42 @@ COPY apps/frontend/src apps/frontend/src
 
 RUN npm run build --workspace=apps/frontend
 
-# ── Stage 2: Caddy ─────────────────────────────────────────────────────────────
-FROM caddy:2-alpine
+# ── Stage 2: Serve ─────────────────────────────────────────────────────────────
+FROM node:22-alpine
 
-COPY --from=builder /app/apps/frontend/dist /usr/share/caddy
-COPY Caddyfile /etc/caddy/Caddyfile
+WORKDIR /app
 
-EXPOSE 80
+# Install only what we need to serve
+RUN npm install express@4 http-proxy@1
+
+COPY --from=builder /app/apps/frontend/dist ./dist
+
+COPY <<'EOF' server.mjs
+import express from 'express';
+import httpProxy from 'http-proxy';
+
+const PORT = process.env.PORT || 3000;
+const BACKEND = process.env.BACKEND_URL;
+
+if (!BACKEND) {
+  console.error('FATAL: BACKEND_URL not set');
+  process.exit(1);
+}
+
+const app = express();
+const proxy = httpProxy.createProxyServer({ target: BACKEND, changeOrigin: true });
+
+proxy.on('error', (_err, _req, res) => {
+  if (res && !res.headersSent) res.status(502).json({ error: 'backend unavailable' });
+});
+
+app.get('/health', (_req, res) => res.json({ status: 'ok' }));
+app.use('/api', (req, res) => proxy.web(req, res));
+app.use(express.static('dist'));
+app.get('*', (_req, res) => res.sendFile('index.html', { root: './dist' }));
+
+app.listen(PORT, () => console.log(`frontend on :${PORT}`));
+EOF
+
+EXPOSE 3000
+CMD ["node", "server.mjs"]
