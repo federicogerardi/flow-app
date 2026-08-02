@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Wiki/synthesis/implementation-roadmap-2026-08-01.md",
+                "file": "Wiki/sources/USER-STORIES.md",
                 "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "implementation-roadmap-2026-08-01"
+              "title": "USER-STORIES"
             }
           }
         ]
@@ -41,9 +41,7 @@
               "type": "file-explorer",
               "state": {
                 "sortOrder": "alphabetical",
-                "autoReveal": false,
-                "showSearch": false,
-                "searchQuery": ""
+                "autoReveal": false
               },
               "icon": "lucide-folder-closed",
               "title": "Files"
@@ -173,8 +171,8 @@
             "state": {
               "type": "llm-wiki-query-view",
               "state": {},
-              "icon": "lucide-ghost",
-              "title": "llm-wiki-query-view"
+              "icon": "message-circle",
+              "title": "Query Wiki - Conversational Query"
             }
           }
         ],
@@ -200,41 +198,51 @@
   },
   "active": "278473b8b390cf25",
   "lastOpenFiles": [
-    "Wiki/synthesis/phase-8-real-auth-plan.md",
-    "node_modules/@mui/icons-material/ZoomOutTwoTone.d.ts",
-    "node_modules/@mui/icons-material/ZoomOutSharp.d.ts",
-    "node_modules/@mui/icons-material/ZoomOutRounded.d.ts",
-    "node_modules/@mui/icons-material/ZoomOutOutlined.d.ts",
-    "node_modules/@mui/icons-material/ZoomOutMapTwoTone.d.ts",
-    "node_modules/@mui/icons-material/ZoomOutMapSharp.d.ts",
-    "node_modules/@mui/icons-material/ZoomOutMapRounded.d.ts",
-    "node_modules/@mui/icons-material/ZoomOutMapOutlined.d.ts",
-    "node_modules/@mui/icons-material/ZoomOutMap.d.ts",
-    "node_modules/@mui/icons-material/ZoomOut.d.ts",
-    "node_modules/@mui/icons-material/README.md",
-    "node_modules/@mui/icons-material/CHANGELOG.md",
-    "node_modules/react-router/LICENSE.md",
-    "node_modules/react-router/README.md",
-    "node_modules/react-router/CHANGELOG.md",
-    "node_modules/react-router/docs/start/framework/testing.md",
-    "node_modules/react-router/docs/start/framework/routing.md",
-    "node_modules/react-router/docs/start/framework/route-module.md",
-    "node_modules/react-router/docs/start/framework/rendering.md",
-    "node_modules/react-router/docs/start/framework/pending-ui.md",
-    "node_modules/react-router/docs/start/framework/navigating.md",
-    "node_modules/react-router/docs/start/framework/installation.md",
-    "node_modules/react-router/docs/start/framework/index.md",
-    "node_modules/react-router/docs/start/framework/deploying.md",
-    "node_modules/react-router/docs/start/framework/data-loading.md",
-    "node_modules/react-router/docs/start/framework/actions.md",
-    "node_modules/react-router/docs/start/declarative/url-values.md",
-    "node_modules/react-router/docs/start/declarative/routing.md",
-    "node_modules/react-router/docs/start/declarative/navigating.md",
-    "node_modules/react-router/docs/start/declarative/installation.md",
-    "node_modules/react-router/docs/start/declarative/index.md",
-    "node_modules/react-router/docs/start/data/testing.md",
-    "node_modules/react-router/docs/start/data/routing.md",
-    "node_modules/react-router/docs/start/data/route-object.md",
-    "node_modules/react-router/docs/start/data/pending-ui.md"
+    "apps/backend/src/types/express.d.ts",
+    "apps/backend/src/types",
+    "Wiki/schema/config.md",
+    "Wiki/concepts/Idempotency.md",
+    "Wiki/sources/USER-STORIES.md",
+    "Wiki/synthesis/implementation-roadmap-2026-08-01.md",
+    "Wiki/concepts/Railway Deployment Config.md",
+    "Wiki/concepts/Token Budget Control.md",
+    "apps/frontend/src/theme/WorkspaceAccentProvider.tsx",
+    "packages/copy/src/types.ts",
+    "packages/copy/src/it/index.ts",
+    "packages/copy/src/it/admin.ts",
+    "packages/copy/src/it/notifications.ts",
+    "packages/copy/src/it/auth.ts",
+    "packages/copy/src/it/workspace.ts",
+    "packages/copy/src/it/tool-page.ts",
+    "packages/copy/src/it/errors.ts",
+    "node_modules/@types/bcrypt/README.md",
+    "node_modules/@types/passport/README.md",
+    "node_modules/@types/oauth/README.md",
+    "node_modules/@types/passport-strategy/README.md",
+    "node_modules/@types/passport-google-oauth20/README.md",
+    "node_modules/@types/passport-oauth2/README.md",
+    "node_modules/@types/passport-local/README.md",
+    "node_modules/bcrypt/SECURITY.md",
+    "node_modules/bcrypt/README.md",
+    "node_modules/bcrypt/ISSUE_TEMPLATE.md",
+    "node_modules/bcrypt/CHANGELOG.md",
+    "node_modules/oauth/Readme.md",
+    "node_modules/passport-google-oauth20/README.md",
+    "node_modules/passport-google-oauth20/CONTRIBUTING.md",
+    "node_modules/base64url/readme.md",
+    "node_modules/uid2/README.md",
+    "node_modules/uid2/HISTORY.md",
+    "node_modules/passport-oauth2/README.md",
+    "node_modules/passport-oauth2/CHANGELOG.md",
+    "node_modules/passport/sponsors/workos.png",
+    "node_modules/passport/sponsors/snyk.png",
+    "node_modules/passport/sponsors/loginradius.png",
+    "node_modules/passport/sponsors/fusionauth.svg",
+    "node_modules/passport/sponsors/fusionauth.png",
+    "node_modules/passport/sponsors/descope.svg",
+    "node_modules/passport/sponsors/descope-dark.svg",
+    "node_modules/pino-pretty/demo.png",
+    "node_modules/istanbul-reports/lib/html-spa/assets/sort-arrow-sprite.png",
+    "node_modules/istanbul-reports/lib/html/assets/sort-arrow-sprite.png"
   ]
 }
