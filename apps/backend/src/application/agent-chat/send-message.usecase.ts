@@ -1,4 +1,4 @@
-import { Message, ConversationNotFoundError, NotConversationParticipantError, type ConversationRepository, getAgent } from '@flow-app/domain';
+import { Message, ConversationNotFoundError, NotConversationParticipantError, ModelTier, type ConversationRepository, getAgent } from '@flow-app/domain';
 import type { LlmGateway } from '../../infrastructure/llm-gateway.js';
 import { logger } from '../../infrastructure/logger.js';
 
@@ -52,7 +52,7 @@ export class SendMessageUseCase {
     try {
       log.info('agent_chat_llm_call_start');
       const result = await this.llmGateway.generate({
-        model: 'balanced',
+        model: ModelTier.Balanced,
         systemPrompt: agent.systemPrompt,
         userPrompt,
       });

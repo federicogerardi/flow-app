@@ -24,6 +24,35 @@ Extended [[DDD Domain Design Rules]] with 7 architectural patterns discovered fr
 
 Created [[DDD Domain Design Rules]] — authoritative governance reference encoding all DDD tactical patterns from Phase 0–9. 12 rules: 6 core rules from CLAUDE.md (no `as any`, zero external validation, DomainError hierarchy, class VOs, repository purity, canonical factories) + 6 architectural patterns from codebase (aggregate root design, domain events, repository interfaces, cross-context references, barrel exports, domain services). 12 sources cross-referenced. Updated: `Wiki/index.md` (concepts table), `Wiki/concepts/DDD Domain Design Rules.md` (new, 440 lines).
 
+## [2026-08-02] execute | High-severity findings — all 10 closed
+
+Executed [[synthesis/high-fix-plan-2026-08-02]]. All 10 high-severity findings (H1–H10) resolved across 5 phases.
+
+**Phase 1 — Domain DDD (4 files)**:
+- H1: `Conversation.start()` → `create()` + caller update
+- H2: `User.register()` + `User.fromOAuth()` → unified `User.create(opts?)`
+- H3: New `ModelTier` class VO + `InvalidModelTierError`. Ripples: tool-definition.ts, tools/index.ts, model-registry.ts (Map), llm-gateway.ts, send-message.usecase.ts
+- H10: `Session.apply()` default → exhaustiveness check (`never`)
+
+**Phase 2 — Data Integrity (2 files)**:
+- H4: `saveWithLock()` wrapped in `db.transaction()`
+- H5: `SessionNotFoundError`, `ToolNotFoundError`, `UnknownModelTierError` replacing bare `throw new Error()`
+
+**Phase 3 — Auth Flow (1 file)**:
+- H6: `trySilentRefresh()` falls back to in-memory OAuth token + `GET /api/auth/me`
+
+**Phase 4 — Frontend UX (4 files)**:
+- H7: `useSession()` gets `error` state. SessionPage renders `<ErrorState>`
+- H8: New `tool-inputs.ts` with per-tool input definitions. ToolPage renders dynamically
+
+**Phase 5 — Monitoring (1 file)**:
+- H9: `countStalled()` queries waiting + `attemptsMade > 0`
+- M12: `queueDepth` = `waiting + active + delayed`
+
+Verification: typecheck ✅, backend build ✅, frontend build ✅, domain tests 8/8.
+
+---
+
 ## [2026-08-02] plan | High-severity remediation plan filed
 
 Filed [[synthesis/high-fix-plan-2026-08-02]]. 10 findings (H1–H10) from [[synthesis/code-review-2026-08-02]] organized into 5 phases, touching 19 files.

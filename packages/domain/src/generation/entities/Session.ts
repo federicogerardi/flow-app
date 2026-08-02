@@ -178,8 +178,10 @@ export class Session {
           aggregateId: this.sessionId,
         };
 
-      default:
-        return null;
+      default: {
+        const _exhaustive: never = event;
+        return _exhaustive;
+      }
     }
   }
 }
@@ -192,5 +194,13 @@ export class InvalidSessionStateError extends DomainError {
     readonly attemptedEvent: SessionEventType,
   ) {
     super(`Cannot apply "${attemptedEvent}" in state "${currentState}"`);
+  }
+}
+
+export class SessionNotFoundError extends DomainError {
+  readonly code = 'SESSION_NOT_FOUND';
+  readonly retryable = false;
+  constructor(sessionId: string) {
+    super(`Session ${sessionId} not found`);
   }
 }

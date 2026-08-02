@@ -73,7 +73,7 @@ export class QueueHealthMonitor {
       completed,
       failed,
       delayed,
-      queueDepth: waiting,
+      queueDepth: waiting + active + delayed,
       failureRate24h: failed / (completed + failed || 1),
       p95DurationMs: await this.computeP95(),
       stalledJobs: await this.countStalled(),
@@ -168,7 +168,7 @@ export class QueueHealthMonitor {
   }
 
   private async countStalled(): Promise<number> {
-    const stalled = await this.queue.getJobs(['waiting', 'active', 'delayed', 'failed'], 0, 100);
-    return stalled.filter((j) => j.opts?.attempts && j.attemptsMade >= j.opts.attempts).length;
+    const waiting = await this.queue.getJobs(['waiting'], 0, 200);
+    return waiting.filter((j) => j.attemptsMade > 0).length;
   }
 }

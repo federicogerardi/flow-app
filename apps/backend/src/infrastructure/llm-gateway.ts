@@ -134,19 +134,20 @@ export class LlmGateway {
   }
 
   private toDomainError(error: unknown, modelTier: ModelTier, modelId: string): LlmGatewayError {
+    const tier = modelTier.toString();
     if (error instanceof OpenAI.APIError) {
-      if (error.status === 429) return new LlmRateLimitError(modelTier, modelId);
+      if (error.status === 429) return new LlmRateLimitError(tier, modelId);
       if (error.status === 503 || error.status === 500) {
-        return new LlmUnavailableError(modelTier, modelId, error.status);
+        return new LlmUnavailableError(tier, modelId, error.status);
       }
-      return new LlmGatewayError(error.message, modelTier, modelId, error.status);
+      return new LlmGatewayError(error.message, tier, modelId, error.status);
     }
 
     if (error instanceof LlmGatewayError) return error;
 
     return new LlmGatewayError(
       error instanceof Error ? error.message : 'Unknown LLM error',
-      modelTier,
+      tier,
       modelId,
     );
   }

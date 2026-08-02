@@ -6,6 +6,7 @@ tags:
   - wiki/governance
 date_updated: 2026-08-02
 confidence: high
+status: executed
 ---
 
 # High-Severity Remediation Plan — Code Review 2026-08-02
@@ -528,21 +529,21 @@ Phases 3, 4, and 5 are independent of Phases 1–2 and can run in parallel if mu
 
 ## Success Criteria
 
-- [ ] `Conversation.create()` compiles, all tests pass, no references to `Conversation.start` remain
-- [ ] `User.create(email)` and `User.create(email, { passwordHash })` both work, callers updated
-- [ ] `ModelTier.from('balanced')` returns `ModelTier.Balanced`, `ModelTier.from('zxy')` throws `InvalidModelTierError`
-- [ ] `model-registry.ts` uses `Map<ModelTier, ModelConfig>` with symbolic keys
-- [ ] `workspace-repository.ts saveWithLock()` uses `db.transaction()`
-- [ ] Worker throws `SessionNotFoundError` (not `Error`) when session missing → `ErrorMapper` maps to 404
-- [ ] Worker throws `ToolNotFoundError` (not `Error`) when tool missing → `ErrorMapper` maps to 404
-- [ ] `model-registry.ts` throws `UnknownModelTierError` (not `Error`)
-- [ ] OAuth flow: Google login → Dashboard (no redirect to /login, no white screen)
-- [ ] `useSession()` returns `error` state, SessionPage renders `<ErrorState>` on fetch failure
-- [ ] ToolPage renders tool-specific input fields from `toolRegistry[].acquisition.userText`
-- [ ] `countStalled()` returns truly stalled jobs (waiting + attemptsMade > 0)
-- [ ] `queueDepth` includes `waiting + active + delayed` (M12 piggyback)
-- [ ] Typecheck 0 errors, domain tests pass
-- [ ] `default: return null` removed from `Session.apply()` — exhaustiveness check active
+- [x] `Conversation.create()` compiles, all tests pass, no references to `Conversation.start` remain
+- [x] `User.create(email)` and `User.create(email, { passwordHash })` both work, callers updated
+- [x] `ModelTier.from('balanced')` returns `ModelTier.Balanced`, `ModelTier.from('zxy')` throws `InvalidModelTierError`
+- [x] `model-registry.ts` uses `Map<ModelTier, ModelConfig>` with symbolic keys
+- [x] `workspace-repository.ts saveWithLock()` uses `db.transaction()`
+- [x] Worker throws `SessionNotFoundError` (not `Error`) when session missing → `ErrorMapper` maps to 404
+- [x] Worker throws `ToolNotFoundError` (not `Error`) when tool missing → `ErrorMapper` maps to 404
+- [x] `model-registry.ts` throws `UnknownModelTierError` (not `Error`)
+- [x] OAuth flow: Google login → Dashboard (no redirect to /login, no white screen)
+- [x] `useSession()` returns `error` state, SessionPage renders `<ErrorState>` on fetch failure
+- [x] ToolPage renders tool-specific input fields via local `tool-inputs.ts` (avoids `node:crypto` browser import)
+- [x] `countStalled()` returns truly stalled jobs (waiting + attemptsMade > 0)
+- [x] `queueDepth` includes `waiting + active + delayed` (M12 piggyback)
+- [x] Typecheck 0 errors, domain tests pass, frontend build passes
+- [x] `default: return null` removed from `Session.apply()` — exhaustiveness check active
 
 ## Sources
 

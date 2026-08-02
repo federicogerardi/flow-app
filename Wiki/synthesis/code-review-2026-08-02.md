@@ -366,7 +366,7 @@ switch (event.type) {
 ### Piani di Remediation
 
 - **Critici**: [[critical-fix-plan-2026-08-02]] — tutti e 8 eseguiti ✅
-- **Alta severità**: [[high-fix-plan-2026-08-02]] — 10 finding, 5 fasi, 19 file, 📋 pianificato
+- **Alta severità**: [[high-fix-plan-2026-08-02]] — tutti e 10 eseguiti ✅
 
 ---
 

@@ -90,7 +90,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         if (!response.ok) {
-          // Refresh failed — user needs to log in
+          // Refresh cookie not ready (e.g. OAuth race) — try in-memory token
+          const existingToken = getAccessToken();
+          if (existingToken) {
+            try {
+              const meResponse = await fetch('/api/auth/me', {
+                headers: { Authorization: `Bearer ${existingToken}` },
+                credentials: 'include',
+              });
+              if (meResponse.ok) {
+                const meData = await meResponse.json();
+                if (!cancelled) {
+                  setUser(meData.user ?? meData);
+                  return;
+                }
+              }
+              setAccessToken(null);
+            } catch {
+              setAccessToken(null);
+            }
+          }
           return;
         }
 

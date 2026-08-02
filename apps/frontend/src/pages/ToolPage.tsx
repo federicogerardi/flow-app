@@ -1,9 +1,10 @@
-import { Box, Button, Card, CardContent, TextField, Typography } from '@mui/material';
-import { useState } from 'react';
+import { Box, Button, Card, CardContent, MenuItem, TextField, Typography } from '@mui/material';
+import { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { api } from '../api/client';
 import { PageHeader } from '../components/PageHeader';
 import { ErrorState } from '../components/ErrorState';
+import { getToolInputs, type TextInput } from '../tool-inputs';
 import { copy } from '@flow-app/copy';
 
 export default function ToolPage() {
@@ -12,6 +13,14 @@ export default function ToolPage() {
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const toolDef = toolKey ? getToolInputs(toolKey) : [];
+  const userInputs: TextInput[] = toolDef;
+
+  const requiredMissing = useMemo(
+    () => userInputs.some((input) => input.required && !inputs[input.key]?.trim()),
+    [userInputs, inputs],
+  );
 
   const handleInputChange = (key: string, value: string) => {
     setInputs((prev) => ({ ...prev, [key]: value }));
@@ -50,26 +59,31 @@ export default function ToolPage() {
           </Typography>
 
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
-            <TextField
-              label={copy.t('toolPage.config.topic')}
-              placeholder={copy.t('toolPage.config.topicPlaceholder')}
-              value={inputs.topic ?? ''}
-              onChange={(e) => handleInputChange('topic', e.target.value)}
-              fullWidth
-            />
-            <TextField
-              label={copy.t('toolPage.config.language')}
-              placeholder="it"
-              value={inputs.language ?? ''}
-              onChange={(e) => handleInputChange('language', e.target.value)}
-              sx={{ maxWidth: 200 }}
-            />
+            {userInputs.map((input) => (
+              <TextField
+                key={input.key}
+                label={input.label}
+                placeholder={input.placeholder}
+                value={inputs[input.key] ?? ''}
+                onChange={(e) => handleInputChange(input.key, e.target.value)}
+                required={input.required}
+                select={input.type === 'select'}
+                fullWidth={input.type === 'long'}
+                multiline={input.type === 'long'}
+                rows={input.type === 'long' ? 4 : undefined}
+                sx={input.type !== 'long' ? { maxWidth: 400 } : undefined}
+              >
+                {input.type === 'select' && input.options?.map((opt) => (
+                  <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                ))}
+              </TextField>
+            ))}
           </Box>
 
           <Button
             variant="contained"
             onClick={handleSubmit}
-            disabled={submitting || !inputs.topic}
+            disabled={submitting || requiredMissing}
             size="large"
           >
             {submitting ? copy.t('toolPage.cta.submitting') : copy.t('toolPage.cta.submit')}

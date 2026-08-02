@@ -12,12 +12,17 @@ export function useSession(sessionId: string | null) {
   const [session, setSession] = useState<SessionDTO | null>(null);
   const [progress, setProgress] = useState<StepProgress | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     if (!sessionId) return;
 
     setLoading(true);
-    api.getSession(sessionId).then(setSession).finally(() => setLoading(false));
+    setError(null);
+    api.getSession(sessionId)
+      .then(setSession)
+      .catch(setError)
+      .finally(() => setLoading(false));
 
     const unsubscribe = sseClient.connect(sessionId, {
       onStep: (data) => setProgress(data.progress as StepProgress),
@@ -28,7 +33,7 @@ export function useSession(sessionId: string | null) {
     return unsubscribe;
   }, [sessionId]);
 
-  return { session, progress, loading };
+  return { session, progress, loading, error };
 }
 
 export function useWorkspaces() {

@@ -17,7 +17,7 @@ export class StartConversationUseCase {
 
   async execute(cmd: StartConversationCommand): Promise<StartConversationResult> {
     const agent = getAgent(cmd.agentKey);
-    const conversation = Conversation.start(cmd.workspaceId, cmd.userId, cmd.agentKey);
+    const conversation = Conversation.create(cmd.workspaceId, cmd.userId, cmd.agentKey);
 
     await this.conversationRepo.save(conversation);
 

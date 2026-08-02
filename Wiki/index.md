@@ -3,8 +3,8 @@ type: index
 tags:
   - wiki/index
 date_updated: 2026-08-02
-maintenance: 2026-08-02 — high-severity remediation plan filed: 10 findings, 5 phases, 19 files. Plan: [[synthesis/high-fix-plan-2026-08-02]].
-maintenance: 2026-08-02 — high-severity remediation plan filed: 10 findings (H1–H10), 5 phases, 19 files. Plan: [[synthesis/high-fix-plan-2026-08-02]].
+maintenance: 2026-08-02 — high-severity findings executed: all 10 (H1–H10) closed. Typecheck ✅, build ✅, tests 8/8.
+maintenance: 2026-08-02 — high-severity findings executed: all 10 findings (H1–H10) closed across 5 phases. H1: Conversation.start→create. H2: User factories→create. H3: ModelTier class VO. H4: saveWithLock transaction. H5: 3 DomainErrors. H6: OAuth token fallback. H7: useSession error state. H8: dynamic tool inputs. H9: countStalled fix. H10: exhaustiveness check. Typecheck ✅, build ✅, tests 8/8.
 maintenance: 2026-08-02 — critical findings executed: all 8 findings (C1–C8) closed across 3 phases. Phase 1: auth error forwarding, WCAG contrast, OS theme reactivity, React render purity. Phase 2: ErrorBoundary + responsive drawer. Phase 3: artifact persistence + VO serialization. Typecheck ✅, build ✅, tests 8/8.
 maintenance: 2026-08-02 — critical fix plan filed: 8 fixes across 3 phases (Quick Wins → Frontend Architecture → Data Integrity), 27 files, 4-5 hours. Plan: [[synthesis/critical-fix-plan-2026-08-02]].
 maintenance: 2026-08-02 — multi-agent code review filed: 41 findings across 6 domains (DDD, backend, frontend, types, code quality, UI/UX). 8 critical, 10 high, 18 medium, 5 low. Synthesis: [[synthesis/code-review-2026-08-02]].

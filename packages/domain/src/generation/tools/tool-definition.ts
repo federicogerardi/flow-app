@@ -1,6 +1,5 @@
 import type { ToolKeyValue } from '../value-objects/ToolKey';
-
-export type ModelTier = 'premium' | 'balanced' | 'light' | 'search';
+import type { ModelTier } from '../value-objects/ModelTier';
 
 export interface TextInput {
   key: string;

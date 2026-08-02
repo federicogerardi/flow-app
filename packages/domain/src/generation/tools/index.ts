@@ -1,6 +1,16 @@
 import type { ToolDefinition } from './tool-definition';
 import type { ToolKeyValue } from '../value-objects/ToolKey';
 import { ToolKey } from '../value-objects/ToolKey';
+import { ModelTier } from '../value-objects/ModelTier';
+import { DomainError } from '../../shared/domain-error';
+
+export class ToolNotFoundError extends DomainError {
+  readonly code = 'TOOL_NOT_FOUND';
+  readonly retryable = false;
+  constructor(toolKey: unknown) {
+    super(`Tool ${String(toolKey)} not found in registry`);
+  }
+}
 
 const blogPostTool: ToolDefinition = {
   toolKey: 'blog-post',
@@ -26,21 +36,21 @@ const blogPostTool: ToolDefinition = {
       order: 1,
       label: 'SEO Structure',
       enrichment: 'serial',
-      prompt: { templateId: 'blog-post/seo-structure', version: '1.0.0', model: 'balanced' },
+      prompt: { templateId: 'blog-post/seo-structure', version: '1.0.0', model: ModelTier.Balanced },
       execution: { timeoutMs: 60000, maxRetries: 2 },
     },
     {
       order: 2,
       label: 'Outline',
       enrichment: 'serial',
-      prompt: { templateId: 'blog-post/outline', version: '1.0.0', model: 'balanced' },
+      prompt: { templateId: 'blog-post/outline', version: '1.0.0', model: ModelTier.Balanced },
       execution: { timeoutMs: 60000, maxRetries: 2 },
     },
     {
       order: 3,
       label: 'Article',
       enrichment: 'serial',
-      prompt: { templateId: 'blog-post/article', version: '1.0.0', model: 'premium' },
+      prompt: { templateId: 'blog-post/article', version: '1.0.0', model: ModelTier.Premium },
       execution: { timeoutMs: 120000, maxRetries: 2 },
     },
   ],

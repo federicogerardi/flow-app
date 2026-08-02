@@ -29,14 +29,9 @@ export class User {
     private _updatedAt: Date,
   ) {}
 
-  static register(email: Email, passwordHash: string): User {
+  static create(email: Email, opts?: { passwordHash?: string }): User {
     const now = new Date();
-    return new User(randomUUID(), email, passwordHash, UserRole.Member, UserStatus.Active, now, now);
-  }
-
-  static fromOAuth(email: Email): User {
-    const now = new Date();
-    return new User(randomUUID(), email, null, UserRole.Member, UserStatus.Active, now, now);
+    return new User(randomUUID(), email, opts?.passwordHash ?? null, UserRole.Member, UserStatus.Active, now, now);
   }
 
   static reconstitute(props: UserProps): User {

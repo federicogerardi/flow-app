@@ -2,7 +2,7 @@ import { Worker, type Job } from 'bullmq';
 import { createActor, fromPromise } from 'xstate';
 import { sessionMachine, type SessionContext } from '../machines/session-machine.js';
 import type { SessionRepository, Artifact, PromptComposer, PromptTemplateRepository, Session } from '@flow-app/domain';
-import { getTool, Artifact as ArtifactEntity, ContextEnricher, DEFAULT_COMPONENTS } from '@flow-app/domain';
+import { getTool, Artifact as ArtifactEntity, ContextEnricher, DEFAULT_COMPONENTS, SessionNotFoundError, ToolNotFoundError } from '@flow-app/domain';
 import type { JobEventBridge } from '../../infrastructure/job-event-bridge.js';
 import type { LlmGateway } from '../../infrastructure/llm-gateway.js';
 import { logger } from '../../infrastructure/logger.js';
@@ -51,10 +51,10 @@ async function processSessionJob(
 
   try {
     const session = await deps.sessionRepo.findById(sessionId);
-    if (!session) throw new Error(`Session ${sessionId} not found`);
+    if (!session) throw new SessionNotFoundError(sessionId);
 
     const tool = getTool(session.toolKey);
-    if (!tool) throw new Error(`Tool ${session.toolKey} not found`);
+    if (!tool) throw new ToolNotFoundError(session.toolKey.value);
 
     const enricher = new ContextEnricher();
 

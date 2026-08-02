@@ -1,5 +1,5 @@
 // Entities
-export { Session, InvalidSessionStateError } from './entities/Session';
+export { Session, InvalidSessionStateError, SessionNotFoundError } from './entities/Session';
 export { Artifact } from './entities/Artifact';
 
 // Value Objects
@@ -34,8 +34,9 @@ export { ContextEnricher } from './domain-services/ContextEnricher';
 export type { SessionRepository, SessionFilters } from './repositories/SessionRepository';
 
 // Tools
-export { toolRegistry, getTool } from './tools';
-export type { ToolDefinition, StepDefinition, StepPromptDefinition, ModelTier } from './tools/tool-definition';
+export { toolRegistry, getTool, ToolNotFoundError } from './tools';
+export type { ToolDefinition, StepDefinition, StepPromptDefinition, TextInput } from './tools/tool-definition';
+export { ModelTier, InvalidModelTierError } from './value-objects/ModelTier';
 
 // Prompting
 export {

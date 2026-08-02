@@ -3,13 +3,16 @@ import { useParams } from 'react-router';
 import { useSession } from '../api/hooks';
 import { PageHeader } from '../components/PageHeader';
 import { LoadingSkeleton } from '../components/LoadingSkeleton';
+import { ErrorState } from '../components/ErrorState';
 import { copy } from '@flow-app/copy';
 
 export default function SessionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
-  const { session, progress, loading } = useSession(sessionId ?? null);
+  const { session, progress, loading, error } = useSession(sessionId ?? null);
 
-  if (loading || !session) return <LoadingSkeleton />;
+  if (loading) return <LoadingSkeleton />;
+  if (error) return <ErrorState message={error.message} />;
+  if (!session) return <LoadingSkeleton />;
 
   const statusColor: Record<string, 'default' | 'primary' | 'success' | 'error' | 'warning'> = {
     draft: 'default',

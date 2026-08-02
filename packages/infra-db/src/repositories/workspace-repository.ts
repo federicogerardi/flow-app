@@ -102,54 +102,56 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
   }
 
   async saveWithLock(workspace: Workspace, expectedVersion: number): Promise<void> {
-    const result = await this.db
-      .updateTable('workspaces')
-      .set({
-        name: workspace.name,
-        version: workspace.version,
-        updated_at: new Date(),
-      })
-      .where('id', '=', workspace.workspaceId)
-      .where('version', '=', expectedVersion)
-      .executeTakeFirst();
-
-    if (result.numUpdatedRows === 0n) {
-      const current = await this.db
-        .selectFrom('workspaces')
+    await this.db.transaction().execute(async (trx) => {
+      const result = await trx
+        .updateTable('workspaces')
+        .set({
+          name: workspace.name,
+          version: workspace.version,
+          updated_at: new Date(),
+        })
         .where('id', '=', workspace.workspaceId)
-        .select('version')
+        .where('version', '=', expectedVersion)
         .executeTakeFirst();
 
-      throw new ConcurrencyError(
-        workspace.workspaceId,
-        expectedVersion,
-        current?.version ?? -1,
-      );
-    }
+      if (result.numUpdatedRows === 0n) {
+        const current = await trx
+          .selectFrom('workspaces')
+          .where('id', '=', workspace.workspaceId)
+          .select('version')
+          .executeTakeFirst();
 
-    // Sync memberships
-    for (const m of workspace.memberships) {
-      await this.db
-        .insertInto('workspace_memberships')
-        .values({
-          workspace_id: m.workspaceId,
-          user_id: m.userId,
-          role: m.role.value,
-          status: m.status.value,
-          invited_by: m.invitedBy,
-          invited_at: m.invitedAt,
-          joined_at: m.joinedAt,
-        })
-        .onConflict((oc) =>
-          oc.columns(['workspace_id', 'user_id']).doUpdateSet({
+        throw new ConcurrencyError(
+          workspace.workspaceId,
+          expectedVersion,
+          current?.version ?? -1,
+        );
+      }
+
+      // Sync memberships
+      for (const m of workspace.memberships) {
+        await trx
+          .insertInto('workspace_memberships')
+          .values({
+            workspace_id: m.workspaceId,
+            user_id: m.userId,
             role: m.role.value,
             status: m.status.value,
+            invited_by: m.invitedBy,
+            invited_at: m.invitedAt,
             joined_at: m.joinedAt,
-            updated_at: new Date(),
-          }),
-        )
-        .execute();
-    }
+          })
+          .onConflict((oc) =>
+            oc.columns(['workspace_id', 'user_id']).doUpdateSet({
+              role: m.role.value,
+              status: m.status.value,
+              joined_at: m.joinedAt,
+              updated_at: new Date(),
+            }),
+          )
+          .execute();
+      }
+    });
   }
 
   async findMembership(workspaceId: string, userId: string): Promise<WorkspaceMembership | null> {

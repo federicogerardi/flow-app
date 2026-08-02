@@ -40,7 +40,7 @@ export class AuthService {
     }
 
     const passwordHash = await this.hasher.hash(password);
-    const user = User.register(emailVo, passwordHash);
+    const user = User.create(emailVo, { passwordHash });
     await this.userRepo.save(user);
 
     return this.issueTokens(user);
@@ -106,7 +106,7 @@ export class AuthService {
 
     if (!user) {
       // Create new user from OAuth
-      user = User.fromOAuth(emailVo);
+      user = User.create(emailVo);
       await this.userRepo.save(user);
     }
 

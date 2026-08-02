@@ -60,7 +60,7 @@ export class Conversation {
     this._messages = messages;
   }
 
-  static start(workspaceId: string, userId: string, agentKey: AgentKey): Conversation {
+  static create(workspaceId: string, userId: string, agentKey: AgentKey): Conversation {
     const now = new Date();
     return new Conversation(
       randomUUID(),
