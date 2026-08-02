@@ -27,11 +27,13 @@ RUN npm run build --workspace=apps/frontend
 # ── Stage 2: Nginx ─────────────────────────────────────────────────────────────
 FROM nginx:1.27-alpine
 
+RUN apk add --no-cache curl
+
 COPY --from=builder /app/apps/frontend/dist /usr/share/nginx/html
 
 COPY nginx-frontend.conf /etc/nginx/templates/default.conf.template
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD wget -qO- http://localhost:80/ || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:80/ || exit 1
 
 EXPOSE 80
