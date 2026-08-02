@@ -2082,3 +2082,40 @@ type SessionEvent =
 - `grep "as ConversationStatus|as MessageRole|as ArtifactStatus|as MembershipStatus"`: 0 matches
 
 14 files modified. Next: Phase 9d (PromptComponent, PromptTemplateId, UserStatus — remaining type aliases).
+
+## [2026-08-02] feat(domain) | Phase 9d — PromptComponentType + UserStatus Complete
+
+### 8.1 — PromptComponentType type alias → class
+
+`PromptComponentType` converted from 5-line type alias to 68-line class:
+
+- 5 static readonly instances: `SystemRule`, `FormatConstraint`, `SafetyGuard`, `StyleGuide`, `DomainKnowledge`
+- `isSystemRule`, `isFormatConstraint`, `isSafetyGuard`, `isStyleGuide`, `isDomainKnowledge` getters
+- `PromptComponent` internal `type` field uses `PromptComponentTypeValue` (string union) for simplicity
+- `PromptComponent.create()` and `fromFile()` accept `PromptComponentTypeValue`
+- `default-components.ts`: `ComponentDefinition.type` uses `PromptComponentTypeValue`
+- Barrel exports updated in `prompting/index.ts` and `generation/index.ts`
+
+### 8.2 — PromptTemplateId: already a class
+
+`PromptTemplateId` was already converted to a class with `from()`, `fromString()`, `toString()`, `equals()`. No changes needed.
+
+### 8.3 — UserStatus getter consistency fix
+
+`UserStatus` was already a class but had `isActive()` as a method instead of a getter:
+
+- `isActive()` method → `isActive` getter (matches all other VOs)
+- Added `isDisabled` getter
+- `User.ts`: `this._status.isActive()` → `this._status.isActive`
+
+### Remaining type alias
+
+Only `ModelTier` remains as a type alias in domain (`'premium' | 'balanced' | 'light' | 'search'`). This is intentional — it's an infrastructure/config concern, not a domain value object.
+
+### Verification
+
+- `npm run lint`: 0 errors, 0 warnings
+- `npm run typecheck`: 0 errors
+- `npm test`: 8/8 pass
+
+6 files modified. Phase 9 (DDD type alias → class remediation) complete.
