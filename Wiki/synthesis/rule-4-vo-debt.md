@@ -83,6 +83,6 @@ export class SessionStatus {
 
 ## Sources
 
-- [[sources/CLAUDE]] — Rule 4 definition and canonical class pattern
+- [[phase-9-architectural-targets]] — Rule 4 definition and canonical class pattern
 - [[phase-9-implementation-plan]] — Full implementation plan (47 steps)
 - [[phase-9-architectural-targets]] — Decision record with all 16 gaps

@@ -5,7 +5,7 @@ tags:
   - wiki/workspace
   - wiki/sharing
 date_updated: 2026-08-02
-source_count: 8
+source_count: 7
 ---
 
 # Workspace

@@ -4,7 +4,7 @@ tags:
   - wiki/entity
   - wiki/generation
 date_updated: 2026-08-02
-source_count: 5
+source_count: 4
 ---
 
 # Artifact

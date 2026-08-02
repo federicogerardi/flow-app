@@ -18,7 +18,7 @@ source_count: 5
 > - `apply()` accepts `{ type: SessionEventType; [key: string]: unknown }` with per-field casts, not the strongly-typed `SessionEvent` union shown below
 > - The `_artifacts` array doesn't exist on the current Session entity (artifacts are tracked via Artifact table)
 >
-> These are tracked as [[rule-4-vo-debt|Rule 4 VO debt]] and [[session-lifecycle|SessionLifecycle integration debt]]. The wiki page retains the target design for reference.
+> These are tracked as [[rule-4-vo-debt|Rule 4 VO debt]] and [[phase-9-implementation-plan|Phase 9 remediation plan]]. The wiki page retains the target design for reference.
 
 ## Definition
 
