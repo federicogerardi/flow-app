@@ -35,8 +35,8 @@ export default function ConversationPage() {
       await api.sendMessage(conversationId, newMessage.trim());
       setNewMessage('');
       await mutate();
-    } catch (err: any) {
-      console.error('Failed to send message:', err);
+    } catch (err) {
+      console.error('Failed to send message:', err instanceof Error ? err.message : err);
     } finally {
       setSending(false);
     }
@@ -71,7 +71,7 @@ export default function ConversationPage() {
             </Typography>
           )}
 
-          {conversation.messages.map((msg: any) => (
+          {conversation.messages.map((msg) => (
             <Box
               key={msg.id}
               sx={{

@@ -13,7 +13,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository) {
   return {
     createWorkspace: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const userId = (req as any).user.sub as string;
+        const userId = req.user!.sub;
         const { name } = req.body;
 
         if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -39,7 +39,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository) {
 
     listWorkspaces: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const userId = (req as any).user.sub as string;
+        const userId = req.user!.sub as string;
         const workspaces = await workspaceRepo.findByMember(userId);
         res.json({
           workspaces: workspaces.map((w) => ({
@@ -56,14 +56,14 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository) {
 
     getWorkspace: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const workspace = (req as any).workspace;
+        const workspace = req.workspace!;
         res.json({
           id: workspace.workspaceId,
           name: workspace.name,
           createdBy: workspace.createdBy,
           createdAt: workspace.createdAt.toISOString(),
           updatedAt: workspace.updatedAt.toISOString(),
-          members: workspace.memberships.map((m: any) => ({
+          members: workspace.memberships.map((m) => ({
             userId: m.userId,
             role: m.role,
             status: m.status,
@@ -79,7 +79,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository) {
       try {
         const { userId, role } = req.body;
         const workspaceId = req.params.id as string;
-        const invitedBy = (req as any).user.sub as string;
+        const invitedBy = req.user!.sub as string;
 
         const result = await inviteMemberUC.execute({
           workspaceId,
@@ -97,7 +97,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository) {
     acceptInvitation: async (req: Request, res: Response, next: NextFunction) => {
       try {
         const workspaceId = req.params.id as string;
-        const userId = (req as any).user.sub as string;
+        const userId = req.user!.sub as string;
 
         const result = await acceptInvitationUC.execute({ workspaceId, userId });
         res.json(result);
@@ -109,7 +109,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository) {
     declineInvitation: async (req: Request, res: Response, next: NextFunction) => {
       try {
         const workspaceId = req.params.id as string;
-        const userId = (req as any).user.sub as string;
+        const userId = req.user!.sub as string;
 
         const workspace = await workspaceRepo.findById(workspaceId);
         if (!workspace) {
@@ -129,9 +129,9 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository) {
 
     listMembers: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const workspace = (req as any).workspace;
+        const workspace = req.workspace!;
         res.json({
-          members: workspace.memberships.map((m: any) => ({
+          members: workspace.memberships.map((m) => ({
             userId: m.userId,
             role: m.role,
             status: m.status,
@@ -148,7 +148,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository) {
       try {
         const workspaceId = req.params.id as string;
         const memberUserId = req.params.userId as string;
-        const removedBy = (req as any).user.sub as string;
+        const removedBy = req.user!.sub as string;
 
         const workspace = await workspaceRepo.findById(workspaceId);
         if (!workspace) {
@@ -171,7 +171,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository) {
         const workspaceId = req.params.id as string;
         const memberUserId = req.params.userId as string;
         const { role } = req.body;
-        const changedBy = (req as any).user.sub as string;
+        const changedBy = req.user!.sub as string;
 
         const workspace = await workspaceRepo.findById(workspaceId);
         if (!workspace) {
@@ -193,7 +193,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository) {
       try {
         const workspaceId = req.params.id as string;
         const { toUserId } = req.body;
-        const fromUserId = (req as any).user.sub as string;
+        const fromUserId = req.user!.sub as string;
 
         const result = await transferOwnershipUC.execute({
           workspaceId,
@@ -209,7 +209,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository) {
 
     listPendingInvitations: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const userId = (req as any).user.sub as string;
+        const userId = req.user!.sub as string;
         const workspaces = await workspaceRepo.findPendingInvitations(userId);
         res.json({
           invitations: workspaces.map((w) => ({

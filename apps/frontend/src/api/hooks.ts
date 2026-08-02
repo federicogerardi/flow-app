@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from './client.js';
+import type { SessionDTO, WorkspaceDTO } from './client.js';
 import { sseClient } from './sse-client.js';
 
 interface StepProgress {
@@ -8,7 +9,7 @@ interface StepProgress {
 }
 
 export function useSession(sessionId: string | null) {
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<SessionDTO | null>(null);
   const [progress, setProgress] = useState<StepProgress | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -31,7 +32,7 @@ export function useSession(sessionId: string | null) {
 }
 
 export function useWorkspaces() {
-  const [workspaces, setWorkspaces] = useState<any[]>([]);
+  const [workspaces, setWorkspaces] = useState<WorkspaceDTO[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

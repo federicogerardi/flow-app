@@ -28,7 +28,7 @@ export default function DashboardPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const { data: workspaces, isLoading, error } = useSWR('workspaces', () => api.listWorkspaces());
 
-  const currentWorkspace = workspaces?.find((w: any) => w.id === workspaceId);
+  const currentWorkspace = workspaces?.find((w) => w.id === workspaceId);
 
   if (isLoading) return <LoadingSkeleton />;
   if (error) return <ErrorState message={error.message} />;
@@ -96,7 +96,7 @@ function RecentSessions({ workspaceId }: { workspaceId: string }) {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-      {sessions.data.map((s: any) => (
+      {sessions.data.map((s) => (
         <Card key={s.id} variant="outlined">
           <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.5, '&:last-child': { pb: 1.5 } }}>
             <Box>

@@ -62,7 +62,7 @@ export default function SessionPage() {
               {copy.t('toolPage.progress.completed')}
             </Typography>
             <Divider sx={{ mb: 2 }} />
-            {session.artifacts.map((artifact: any, i: number) => (
+            {session.artifacts.map((artifact, i: number) => (
               <Box key={artifact.artifactId ?? i} sx={{ mb: 3 }}>
                 <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
                   Step {artifact.stepNumber}

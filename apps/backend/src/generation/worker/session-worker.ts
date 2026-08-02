@@ -1,6 +1,6 @@
 import { Worker, type Job } from 'bullmq';
 import { createActor, fromPromise } from 'xstate';
-import { sessionMachine } from '../machines/session-machine.js';
+import { sessionMachine, type SessionContext } from '../machines/session-machine.js';
 import type { SessionRepository, ToolKey, Artifact, PromptComposer, PromptTemplateRepository } from '@flow-app/domain';
 import { getTool, Artifact as ArtifactEntity, ContextEnricher, DEFAULT_COMPONENTS } from '@flow-app/domain';
 import type { JobEventBridge } from '../../infrastructure/job-event-bridge.js';
@@ -60,7 +60,7 @@ async function processSessionJob(
 
     const machine = sessionMachine.provide({
       actors: {
-        executeStep: fromPromise<Artifact, any>(async ({ input }) => {
+        executeStep: fromPromise<Artifact, SessionContext>(async ({ input }) => {
           const stepIndex = input.currentStepIndex;
           const step = tool.steps[stepIndex];
           if (!step) throw new Error(`Step ${stepIndex} not found in tool ${tool.toolKey}`);
@@ -124,7 +124,7 @@ async function processSessionJob(
             result.content,
           );
         }),
-        persistSession: fromPromise<void, any>(async ({ input }) => {
+        persistSession: fromPromise<void, { session: Session }>(async ({ input }) => {
           const expectedVersion = session.version;
           await deps.sessionRepo.saveWithLock(input.session, expectedVersion);
         }),

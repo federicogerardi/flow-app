@@ -1,7 +1,7 @@
 import { setup, assign, fromPromise } from 'xstate';
 import type { Session, ToolDefinition, AcquisitionData, Artifact } from '@flow-app/domain';
 
-interface SessionContext {
+export interface SessionContext {
   session: Session;
   tool: ToolDefinition;
   currentStepIndex: number;
@@ -14,6 +14,11 @@ type SessionEvent =
   | { type: 'QUEUE' }
   | { type: 'WORKER_PICKUP' }
   | { type: 'CANCEL' };
+
+/** Event emitted by XState when executeStep actor completes (onDone) */
+interface StepDoneEvent {
+  output: Artifact;
+}
 
 export const sessionMachine = setup({
   types: {
@@ -37,12 +42,12 @@ export const sessionMachine = setup({
   actions: {
     updateStepResults: assign({
       stepResults: ({ context, event }) => {
-        const output = (event as any).output as Artifact;
+        const output = (event as unknown as StepDoneEvent).output;
         return [...context.stepResults, output];
       },
     }),
     callApply: ({ context, event }) => {
-      const output = (event as any).output as Artifact;
+      const output = (event as unknown as StepDoneEvent).output;
       const stepIndex = context.currentStepIndex;
       context.session.apply({
         type: 'ADD_ARTIFACT',

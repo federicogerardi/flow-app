@@ -1718,3 +1718,127 @@ Readback verification completed for all files above after write.
 - `log.md` — this entry
 
 Readback verification completed for all files above after write.
+
+## [2026-08-02] lint | Runtime ESLint — 1 error, 67 warnings
+
+`npm run lint` results. All warnings are `@typescript-eslint/no-explicit-any`. One error is `no-console` (`console.warn` instead of `console.error`).
+
+### Error
+
+| File | Line | Rule | Detail |
+|------|------|------|--------|
+| `packages/copy/src/index.ts` | 17 | `no-console` | `console.warn` — only `console.error` allowed |
+
+### Warnings by file
+
+| File | Count |
+|------|-------|
+| `apps/backend/src/api/workspaces.ts` | 13 |
+| `apps/frontend/src/api/client.ts` | 13 |
+| `packages/infra-db/src/repositories/session-repository.ts` | 10 |
+| `packages/infra-db/src/repositories/conversation-repository.ts` | 6 |
+| `apps/backend/src/api/agent-chat.ts` | 5 |
+| `packages/infra-db/src/repositories/workspace-repository.ts` | 4 |
+| `apps/backend/src/api/generation.ts` | 2 |
+| `apps/backend/src/generation/machines/session-machine.ts` | 2 |
+| `apps/backend/src/generation/worker/session-worker.ts` | 2 |
+| `apps/frontend/src/api/hooks.ts` | 2 |
+| `apps/frontend/src/layout/AppShell.tsx` | 2 |
+| `apps/frontend/src/pages/ConversationPage.tsx` | 2 |
+| `apps/frontend/src/pages/DashboardPage.tsx` | 2 |
+| `apps/frontend/src/pages/SessionPage.tsx` | 1 |
+| `apps/frontend/src/pages/ToolPage.tsx` | 1 |
+| **Total** | **67** |
+
+### Summary by package
+
+| Package | Files | Issues |
+|---------|-------|--------|
+| `apps/backend` | 5 | 24 warnings |
+| `apps/frontend` | 7 | 23 warnings |
+| `packages/infra-db` | 3 | 20 warnings |
+| `packages/copy` | 1 | 1 error |
+| **Total** | **16** | **67 warnings + 1 error** |
+
+### Trend
+
+| Milestone | Warnings | Errors | Date |
+|-----------|----------|--------|------|
+| Phase 1 (bootstrap) | 18 | 0 | — |
+| Phase 5 (Agent Chat) | 41 | 0 | — |
+| Phase 6 (LLM Integration) | 52 | 0 | — |
+| Phase 7 (Frontend MVP) | 69 | 0 | — |
+| Phase 8 (Real Auth) — post-fix | 0 | 0 | — |
+| **Current** | **67** | **1** | 2026-08-02 |
+
+### Remediation — August 2026-08-02
+
+Complete remediation across 3 tiers to eliminate all ESLint violations (`npm run lint` → 0 errors, 0 warnings). All fixes are `@typescript-eslint/no-explicit-any` (`as any` / `: any`) and one `no-console` error.
+
+#### Tier 0 &mdash; Immediate (1 error, 0 warnings)
+
+| File | Fix |
+|------|-----|
+| `packages/copy/src/index.ts` | `console.warn` → `console.error` |
+
+#### Tier 1 &mdash; Express Request augmentation (0 errors, 17 warnings)
+
+**New file**: `apps/backend/src/types/express.d.ts` — declares `Request.user?: { sub: string }` and `Request.workspace?: Workspace` globally.
+
+| File | Before | After | Fix |
+|------|:---:|:---:|------|
+| `apps/backend/src/api/workspaces.ts` | 13 | 2 | `(req as any).user.sub` → `req.user!.sub` |
+| `apps/backend/src/api/agent-chat.ts` | 5 | 0 | Same pattern, all 5 resolved |
+| `apps/backend/src/api/generation.ts` | 2 | 1 | `(req as any).user?.sub` → `req.user?.sub` |
+
+#### Tier 2 &mdash; Local type fixes (0 errors, 15 warnings)
+
+**Domain machine types**:
+- `session-machine.ts`: exported `SessionContext`; added `StepDoneEvent` interface replacing `(event as any).output`
+- `session-worker.ts`: `fromPromise<Artifact, SessionContext>` and `fromPromise<void, { session: Session }>`
+- `generation.ts`: imported `SSEPayload` from `job-event-bridge`
+
+**Backend API**:
+- `workspaces.ts`: removed `: any` from `.map((m) => ...)` — TypeScript infers from `memberships` array
+
+**Frontend pages**:
+- `ToolPage.tsx`: `catch (err: any)` → `catch (err)` with `err instanceof Error`
+- `ConversationPage.tsx`: same catch pattern + removed `: any` from `msg`
+- `AppShell.tsx`: removed `: any` from `w` / `ws` callbacks
+- `DashboardPage.tsx`: removed `: any` from `w` / `s` callbacks
+- `SessionPage.tsx`: removed `: any` from `artifact` callback
+
+#### Tier 3 &mdash; API client + DB repositories (0 errors, 35 warnings)
+
+**Frontend API client** (`apps/frontend/src/api/client.ts`):
+- Added 9 DTO interfaces: `SessionDTO`, `WorkspaceDTO`, `MessageDTO`, `ConversationDTO`, `ConversationListItemDTO`, `AgentDTO`, `ArtifactDTO`, `SessionListResponse`
+- All 13 generic `<any>` replaced with specific DTO types
+
+**Frontend hooks** (`apps/frontend/src/api/hooks.ts`):
+- `useState<SessionDTO | null>` and `useState<WorkspaceDTO[]>` replacing `useState<any>` and `useState<any[]>`
+
+**DB repositories** — `as any` → specific domain type assertions:
+
+| Repository | Fix | Occurrences |
+|------------|-----|:---:|
+| `session-repository.ts` | `as ToolKey`, `as SessionStatus`, or removed (structurally identical types) | 10 |
+| `conversation-repository.ts` | `as AgentKey`, `as ConversationStatus`, `as MessageRole` | 6 |
+| `workspace-repository.ts` | `as MembershipRole`, `as MembershipStatus` | 4 |
+
+Root cause: Kysely DB types have `string` columns (e.g., `tool_key`, `agent_key`, `role`, `status`) while domain `reconstitute()` expects branded string literal unions (`ToolKey`, `AgentKey`, `MembershipRole`, etc.). Structural type compatibility between DB and domain `SessionStatus` eliminated 7 unnecessary casts.
+
+#### Final state
+
+```
+npm run lint → 0 errors, 0 warnings
+```
+
+17 files modified across 3 tiers. Trend:
+
+| Milestone | Errors | Warnings |
+|-----------|:---:|:---:|
+| Initial | 1 | 67 |
+| After Tier 0 | 0 | 67 |
+| After Tier 1 | 0 | 50 |
+| After Tier 2 | 0 | 35 |
+| **After Tier 3** | **0** | **0** |

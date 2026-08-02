@@ -14,7 +14,7 @@ class Copy {
     for (const part of parts) {
       value = (value as Record<string, unknown>)?.[part];
       if (value === undefined) {
-        console.warn(`[copy] Missing key: ${key}`);
+        console.error(`[copy] Missing key: ${key}`);
         return key;
       }
     }

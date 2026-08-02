@@ -25,7 +25,7 @@ export function createAgentChatRoutes(conversationRepo: ConversationRepository, 
 
     listConversations: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const userId = (req as any).user.sub as string;
+        const userId = req.user!.sub as string;
         const workspaceId = req.params.workspaceId as string;
         const conversations = await conversationRepo.findByUserAndWorkspace(userId, workspaceId);
 
@@ -55,7 +55,7 @@ export function createAgentChatRoutes(conversationRepo: ConversationRepository, 
 
     startConversation: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const userId = (req as any).user.sub as string;
+        const userId = req.user!.sub as string;
         const workspaceId = req.params.workspaceId as string;
         const { agentKey } = req.body;
 
@@ -73,7 +73,7 @@ export function createAgentChatRoutes(conversationRepo: ConversationRepository, 
 
     getConversation: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const userId = (req as any).user.sub as string;
+        const userId = req.user!.sub as string;
         const conversationId = req.params.id as string;
 
         const conversation = await conversationRepo.findById(conversationId);
@@ -116,7 +116,7 @@ export function createAgentChatRoutes(conversationRepo: ConversationRepository, 
 
     sendMessage: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const userId = (req as any).user.sub as string;
+        const userId = req.user!.sub as string;
         const conversationId = req.params.id as string;
         const { content } = req.body;
 
@@ -134,7 +134,7 @@ export function createAgentChatRoutes(conversationRepo: ConversationRepository, 
 
     archiveConversation: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const userId = (req as any).user.sub as string;
+        const userId = req.user!.sub as string;
         const conversationId = req.params.id as string;
 
         const conversation = await conversationRepo.findById(conversationId);

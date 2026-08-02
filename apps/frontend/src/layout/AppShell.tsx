@@ -106,7 +106,7 @@ export function AppShell() {
             displayEmpty
             renderValue={(selected) => {
               if (!selected) return <em style={{ opacity: 0.5 }}>{copy.t('workspace.switcher.selectWorkspace')}</em>;
-              const ws = workspaces?.find((w: any) => w.id === selected);
+              const ws = workspaces?.find((w) => w.id === selected);
               return (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: accent, flexShrink: 0 }} />
@@ -115,7 +115,7 @@ export function AppShell() {
               );
             }}
           >
-            {workspaces?.map((ws: any) => (
+            {workspaces?.map((ws) => (
               <MenuItem key={ws.id} value={ws.id}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: accent, flexShrink: 0 }} />

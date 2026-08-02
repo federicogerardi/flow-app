@@ -4,6 +4,7 @@ import { StartSessionUseCase } from '../application/generation/start-session.use
 import { enqueueSession } from '../generation/jobs/enqueue-session.job.js';
 import type { SessionRepository } from '@flow-app/domain';
 import type { DB } from '@flow-app/infra-db';
+import type { SSEPayload } from '../infrastructure/job-event-bridge.js';
 
 export function createGenerationRoutes(sessionRepo: SessionRepository, db: Kysely<DB>) {
   const startSessionUC = new StartSessionUseCase(sessionRepo);
@@ -83,7 +84,7 @@ export function createGenerationRoutes(sessionRepo: SessionRepository, db: Kysel
       try {
         const toolKey = req.params.toolKey as string;
         const { workspaceId, inputs } = req.body;
-        const userId = (req as any).user?.sub ?? 'anonymous';
+        const userId = req.user?.sub ?? 'anonymous';
 
         const result = await startSessionUC.execute({
           userId,
@@ -144,7 +145,7 @@ export function createGenerationRoutes(sessionRepo: SessionRepository, db: Kysel
       });
 
       const { eventBridge } = req.app.locals;
-      const unsubscribe = eventBridge.subscribe(id, (payload: any) => {
+      const unsubscribe = eventBridge.subscribe(id, (payload: SSEPayload) => {
         res.write(`event: ${payload.event}\ndata: ${JSON.stringify(payload.data)}\n\n`);
 
         if (payload.event === 'session_completed' || payload.event === 'session_failed') {

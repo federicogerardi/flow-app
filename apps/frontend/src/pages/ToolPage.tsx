@@ -24,8 +24,8 @@ export default function ToolPage() {
     try {
       const result = await api.startSession(toolKey, { workspaceId: workspaceId!, inputs });
       navigate(`/workspaces/${workspaceId}/sessions/${result.session.id}`);
-    } catch (err: any) {
-      setError(err.message ?? copy.t('errors.generation.failedToStart'));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : copy.t('errors.generation.failedToStart'));
     } finally {
       setSubmitting(false);
     }
