@@ -1953,3 +1953,67 @@ See [[phase-9-architectural-targets]] for full roadmaps and prioritization.
 - `grep -rn "throw new Error" packages/domain/src/`: 0 matches
 
 18 files modified. Next: Phase 9b (MembershipRole, ToolKey, AgentKey, SessionEvent discriminated union).
+
+## [2026-08-02] feat(domain) | Phase 9b — V2 + V9 + V3 + V4 Complete
+
+### V2 — MembershipRole type alias → class
+
+`MembershipRole` converted from 1-line type alias to 46-line class:
+
+- 3 static readonly instances: `Owner`, `Editor`, `Viewer`
+- `isOwner`, `isEditor`, `isViewer` convenience getters
+- `WorkspaceMembership`: `role === 'owner'` → `role.isOwner`; `this._role = 'owner'` → `MembershipRole.Owner`
+- `Workspace`: `MembershipRole.Owner`, `MembershipRole.Editor` static instances; `canEdit()` uses `role?.isOwner || role?.isEditor`
+- `workspace-repository.ts`: `MembershipRole.from(m.role)` for reads, `m.role.value` for writes
+- `app.ts`: `requireWorkspaceRole(MembershipRole.Owner, MembershipRole.Editor, MembershipRole.Viewer)`
+- Zero `as MembershipRole` casts in codebase
+
+### V9 — SessionEvent discriminated union
+
+`session-lifecycle.ts` now exports a typed `SessionEvent` union:
+
+```typescript
+type SessionEvent =
+  | { type: 'CONFIGURE' }
+  | { type: 'QUEUE' }
+  | { type: 'WORKER_PICKUP' }
+  | { type: 'ADD_ARTIFACT'; artifact: Artifact; isLast: boolean; stepLabel: string }
+  | { type: 'COMPLETE' }
+  | { type: 'FAIL'; errorCode: string; errorMessage: string }
+  | { type: 'CANCEL' }
+```
+
+- `Session.apply(event: SessionEvent)` — no more `{ type: SessionEventType; [key: string]: unknown }`
+- `event.errorCode` / `event.errorMessage` accessed directly — no `as` casts
+- XState machine `callApply` action already sends correct shapes — zero changes needed
+
+### V3 — ToolKey type alias → class
+
+`ToolKey` converted from 12-line type alias to 58-line class:
+
+- 11 static readonly instances: `LandingFunnel`, `LandingPage`, ..., `AiOverviewAnalysis`
+- `tools/index.ts`: `Record<ToolKeyValue, ToolDefinition>` (string keys)
+- `tool-definition.ts`: `toolKey: ToolKeyValue` (not class)
+- `getTool(key: ToolKey)` uses `key.value` to index registry
+- `session-repository.ts`: `ToolKey.from(row.tool_key)` for reads, `session.toolKey.value` for writes
+- `start-session.usecase.ts`: `ToolKey.from(cmd.toolKey)` instead of `as ToolKey`
+- `session-worker.ts`: removed `as ToolKey` cast (toolKey is already class instance)
+- Zero `as ToolKey` casts in codebase
+
+### V4 — AgentKey type alias → class
+
+`AgentKey` converted from 8-line type alias to 50-line class:
+
+- 7 static readonly instances: `Strategist`, `Copywriter`, ..., `EmailMarketer`
+- `agent-personas.ts`: `Record<AgentKeyValue, AgentPersona>`, `getAgent(key)` uses `key.value`
+- `conversation-repository.ts`: `AgentKey.from(row.agent_key)` for reads, `.value` for writes
+- Zero `as AgentKey` casts in codebase
+
+### Verification
+
+- `npm run lint`: 0 errors, 0 warnings
+- `npm run typecheck`: 0 errors
+- `npm test`: 8/8 pass
+- `grep "as ToolKey|as AgentKey|as MembershipRole"`: 0 matches
+
+20 files modified. Next: Phase 9c (ConversationStatus, MessageRole, MembershipStatus, ArtifactStatus, Artifact lifecycle).
