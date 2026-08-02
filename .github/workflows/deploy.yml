@@ -37,7 +37,7 @@ jobs:
           chmod +x /tmp/railway
           echo /tmp >> "$GITHUB_PATH"
       - name: Deploy to Railway
-        run: railway up --ci --environment dev --project "$RAILWAY_PROJECT_ID"
+        run: railway up --ci --environment dev --project "$RAILWAY_PROJECT_ID" --service backend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_DEV }}
           RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
@@ -58,7 +58,7 @@ jobs:
           chmod +x /tmp/railway
           echo /tmp >> "$GITHUB_PATH"
       - name: Deploy to Railway
-        run: railway up --ci --environment staging --project "$RAILWAY_PROJECT_ID"
+        run: railway up --ci --environment staging --project "$RAILWAY_PROJECT_ID" --service backend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
           RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
@@ -79,7 +79,7 @@ jobs:
           chmod +x /tmp/railway
           echo /tmp >> "$GITHUB_PATH"
       - name: Deploy to Railway
-        run: railway up --ci --environment production --project "$RAILWAY_PROJECT_ID"
+        run: railway up --ci --environment production --project "$RAILWAY_PROJECT_ID" --service backend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_PRODUCTION }}
           RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
