@@ -1,11 +1,173 @@
-<!-- llm-wiki-log-header-start -->
+---
+type: log
+tags:
+  - wiki/log
+date_updated: 2026-08-02
+---
+
 # Wiki Operation Log
 
 Every ingest, lint run, and maintenance operation is recorded here automatically. For a better experience, use the **Operation History** panel:
 - Cmd+P → "View operation history"
 - Or open from Settings → Auto Maintenance → Operation History
-
 ---
+
+## [2026-08-02] remediation | Wiki drift — source of truth alignment post Phase 8
+
+Comprehensive drift remediation to make the Wiki the authoritative source of truth for development status. Cross-referenced all Wiki claims against actual runtime code across 5 layers (domain, infrastructure, API, DB, frontend).
+
+### Drift audit results
+
+| Layer | Wiki Pages | Gaps Found | Runtime | Doc-only |
+|-------|-----------|:---:|:---:|:---:|
+| API Routes | 1 | 3 | 1 (⬜→✅) | 2 (typos) |
+| Domain structure | 1 | 6 | 4 (usage/, asset/, tools, agent-chat) | 2 |
+| DB Schema | 1 | 2 | 1 (7 untyped tables) | 1 (conversations docs) |
+| Frontend Architecture | 1 | 5 | 2 (listTools, useWorkspace) | 3 (routes, methods, SWR) |
+| Config/Middleware | 1 | 4 | 0 | 4 (env vars, files) |
+| Overview | 1 | — | 1 (usage/ context status) | — |
+| **Total** | **6** | **21** | **8** | **13** |
+
+### Files remediated (6)
+
+**`Wiki/concepts/packages-domain Structure.md`** — Major rewrite:
+- Added `agent-chat/` full tree (12 files: Conversation, Message, 3 VOs, personas, events, repository)
+- Removed `usage/` tree entirely (10 files — not implemented)
+- Fixed `generation/`: removed non-existent `IdempotencyKey.ts`, `CrawlData.ts`, `AcquisitionData.ts`; consolidated 11 individual tool `.ts` files → single `tools/index.ts` with 11 definitions
+- Fixed `workspace/`: removed Asset subsystem (Asset.ts, 6 Asset VOs, AssetResolver, AssetCreated/Updated — not implemented); added WorkspaceMembership.ts, errors.ts, domain-events/index.ts
+- Fixed `identity/`: removed incorrect `entities/` subdirectory (flat structure); `Role.ts` → `UserRole.ts`; added `UserStatus.ts`, `AuthSession.ts`, `OAuthAccount.ts`, `errors.ts`
+- Fixed `shared/`: added `domain-error.ts`, `concurrency-error.ts`, `__tests__/`
+- Updated file count table (63 → 58), barrel exports, cross-context references, Package Boundaries examples
+- Added implementation note documenting what's planned vs implemented
+
+**`Wiki/concepts/API Routes.md`** — Status fixes:
+- `POST /api/workspaces`: ⬜ → ✅ (fully implemented in code)
+- Agent chat route params: `:wid` → `:workspaceId` for code consistency
+- Fixed doubled `/api/api/` typos in Mapping table
+- Updated "Last synced" note
+
+**`Wiki/concepts/Database Schema.md`** — Missing content added:
+- Added Agent Chat section with `conversations` + `messages` CREATE TABLE definitions, column docs, and indexes
+- Updated ER diagram to include conversations + messages relationships
+- Updated migration strategy (added 007, 008)
+- Corrected Kysely `DB` interface to reflect reality: only 11/18 tables typed (7 are migration-only with no TypeScript definitions)
+
+**`Wiki/concepts/Frontend Architecture.md`** — Corrections:
+- Route count: 5 → 7 (added `/` redirect and `/workspaces/:workspaceId`)
+- Documented missing `listTools` API method and missing `useWorkspace` hook
+- Added `cancelSession` and `createWorkspace` to documented methods
+
+**`Wiki/overview.md`** — Context status:
+- `Usage & Quota` row: "Two-track limits" → "🔴 Planned — DB tables exist (005), domain code not yet implemented"
+
+**`Wiki/index.md`** — Maintenance note updated
+
+### Wiki lint
+
+`scripts/wiki-lint.py`: ✅ 0 failures (110 pages validated)
+
+### Files modified (6)
+
+- `Wiki/concepts/packages-domain Structure.md` — full tree rewrite
+- `Wiki/concepts/API Routes.md` — 3 fixes
+- `Wiki/concepts/Database Schema.md` — conversations + messages added, types corrected
+- `Wiki/concepts/Frontend Architecture.md` — route count + methods corrected
+- `Wiki/overview.md` — usage/ context marked planned
+- `Wiki/index.md` — maintenance note
+
+## [2026-08-02] maintenance | Wiki health check + qmd database post Phase 8
+
+Comprehensive health maintenance of the Wiki/ directory and qmd search database after Phase 1-8 code implementation.
+
+### Wiki lint (`scripts/wiki-lint.py`)
+
+**Starting state**: 4 failures on 108 pages.
+
+**Issues found and fixed**:
+
+| # | Issue | File | Fix |
+|---|-------|------|-----|
+| 1 | Missing frontmatter | `log.md` | Replaced `<!-- llm-wiki-log-header-start -->` HTML comment with proper YAML frontmatter (`type: log`, `tags`, `date_updated`) |
+| 2 | Broken wikilink (false positive) | `overview.md:96` | Changed `[[synthesis/phase-8-real-auth-plan\|Plan →]]` to `[[synthesis/phase-8-real-auth-plan\|Plan →]]` (escaped pipe in markdown table confused parser; standard `|` alias syntax within `[[]]` doesn't need escaping) |
+| 3 | Broken wikilink — missing page | `implementation-roadmap-2026-08-01.md` → `[[Token Budget Control]]` | Created stub: `Wiki/concepts/Token Budget Control.md` (concept page with 3 sources, Phase 6 reference) |
+| 4 | Broken wikilink — missing page | `implementation-roadmap-2026-08-01.md` → `[[Railway Deployment Config]]` | Created stub: `Wiki/concepts/Railway Deployment Config.md` (concept page with 3 sources, Phase 9 reference) |
+
+**End state**: 0 failures on 110 pages.
+
+### Orphan check
+
+**Result**: No orphans found. All 97 content pages (excl. index/log/overview/schema) have at least one inbound wikilink from another page. Wiki is fully connected.
+
+### Source count consistency
+
+**Result**: 88/88 entity + concept pages verified. Zero `source_count` mismatches between frontmatter and `## Sources` sections.
+
+### Index completeness
+
+**Result**: 2 concept pages missing from Concepts table (`Token Budget Control`, `Railway Deployment Config` — newly created). Added to index.
+
+### Italian prose compliance
+
+**5 violations found and fixed across 3 files**:
+
+| File | Line | Fix |
+|------|------|-----|
+| `entities/Quota.md` | 23 | Full Italian paragraph translated to English |
+| `concepts/Git Governance Policy.md` | 24-28 | Table headers + cell content (`Scopo→Purpose`, `Protezione→Protection`, `Push diretto→Direct push`, `produzione→production`, `sviluppo→development`, `Nessuna→None`, `Consentito→Allowed`, `Solo PR→PR only`) |
+| `concepts/Workspace Gamification.md` | 175 | Single Italian sentence translated to English |
+
+### Environment reference leaks (Rule 8)
+
+**6 connection strings sanitized across 3 files**:
+
+| File | Before | After |
+|------|--------|-------|
+| `Docker Compose - Local Dev.md` | `postgresql://flow_app:flow_app@localhost:5432/flow_app` | `<DATABASE_URL>` |
+| `Docker Compose - Local Dev.md` | `redis://localhost:6379` | `<REDIS_URL>` |
+| `Environment Configuration.md` | `postgresql://postgres:postgres@localhost:5432/flow_app` | `<DATABASE_URL>` |
+| `Environment Configuration.md` | `redis://localhost:6379` | `<REDIS_URL>` |
+| `Testing Strategy.md` | `postgresql://postgres:test@localhost:5432/flow_app_test` | `<DATABASE_URL>` |
+| `Testing Strategy.md` | `redis://localhost:6379` | `<REDIS_URL>` |
+
+Remaining hits (`Environment Configuration.md:21,28`) use already-generic placeholders (`user:password@host`) — compliant.
+
+### qmd database
+
+- Collection created: `flow-app` (`/Users/federico/Dev/flow-app`, mask `**/*.md`)
+- Indexed: 113 documents (new: 113)
+- Embedded: 508 chunks across 113 documents (1m 9s, embeddinggemma-300M)
+- Database: `~/.cache/qmd/index.sqlite` (shared across collections)
+
+### Files modified (7)
+
+- `Wiki/log.md` — frontmatter + this entry
+- `Wiki/overview.md` — wikilink syntax fix
+- `Wiki/index.md` — 2 new concept entries + maintenance note
+- `Wiki/entities/Quota.md` — Italian prose translation
+- `Wiki/concepts/Git Governance Policy.md` — Italian table headers → English
+- `Wiki/concepts/Workspace Gamification.md` — Italian sentence → English
+- `Wiki/concepts/Docker Compose - Local Dev.md` — env reference sanitization
+- `Wiki/concepts/Environment Configuration.md` — env reference sanitization
+- `Wiki/concepts/Testing Strategy.md` — env reference sanitization
+
+### Files created (2)
+
+- `Wiki/concepts/Token Budget Control.md` — forward-reference stub
+- `Wiki/concepts/Railway Deployment Config.md` — forward-reference stub
+
+### Final state
+
+| Check | Result |
+|-------|--------|
+| `scripts/wiki-lint.py` | ✅ 0 failures |
+| Orphan pages | ✅ None |
+| Broken wikilinks | ✅ 0 |
+| `source_count` consistency | ✅ 88/88 |
+| Index completeness | ✅ All pages listed |
+| Italian prose | ✅ 0 violations |
+| Environment leaks | ✅ 0 real connections |
+| qmd index | ✅ 113 docs, 508 chunks |
+
 ## [2026-08-02] remediation | DDD Governance — audit findings + CLAUDE.md rules
 
 Full DDD governance audit against Phase 0–8 codebase (58 files, 4 bounded contexts). 8 findings identified, 7 remediated.

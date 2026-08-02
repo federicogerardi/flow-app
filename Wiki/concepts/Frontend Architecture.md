@@ -7,6 +7,7 @@ tags:
 date_updated: 2026-08-02
 source_count: 7
 confidence: high
+maintenance: 2026-08-02 — drift remediation: route count corrected (5→7), documented missing hooks (useWorkspace, listTools), API client methods updated.
 ---
 
 # Frontend Architecture
@@ -26,7 +27,7 @@ confidence: high
 | Shared | 5 | 4 | PageHeader, EmptyState, ErrorState, LoadingSkeleton ✅ — missing ConfirmDialog |
 | Auth | — | 0 | No login/register pages, no AuthContext, no guards |
 
-**Routes implemented** (5): `/dashboard`, `/workspaces/:workspaceId/tools/:toolKey`, `/workspaces/:workspaceId/sessions/:sessionId`, `/workspaces/:workspaceId/conversations/:conversationId`, `* → /dashboard`.
+**Routes implemented** (7): `/` → redirect to first workspace, `/dashboard`, `/workspaces/:workspaceId` (DashboardPage), `/workspaces/:workspaceId/tools/:toolKey`, `/workspaces/:workspaceId/sessions/:sessionId`, `/workspaces/:workspaceId/conversations/:conversationId`, `* → /dashboard`.
 
 **Routes planned but not built**: `/workspaces/:id` (workspace dashboard), `/workspaces/:id/assets`, `/workspaces/:id/team`, `/workspaces/:id/templates`, `/workspaces/:id/audit`, `/profile`, `/login`, `/register`.
 

@@ -3,9 +3,10 @@ type: concept
 tags:
   - wiki/concept
   - wiki/architecture
-date_updated: 2026-08-01
+date_updated: 2026-08-02
 source_count: 5
 confidence: high
+maintenance: 2026-08-02 — drift remediation: added agent-chat tree (12 files), removed usage/ tree (not implemented), fixed identity paths (flat, no entities/), fixed workspace (added Membership, errors; Asset files, IdempotencyKey.ts, CrawlData.ts, AcquisitionData.ts removed — not yet implemented), fixed tools/ (single index.ts not 11 files), added shared/domain-error.ts + concurrency-error.ts.
 ---
 
 # packages/domain — Directory Structure
@@ -25,7 +26,7 @@ packages/domain/
     ├── generation/           # Content Generation — Core Domain
     ├── workspace/            # Workspace & Assets — Supporting
     ├── identity/             # Identity & Access — Generic
-    ├── usage/                # Usage & Quota — Supporting
+    ├── agent-chat/           # Agent Chat — Supporting
     └── shared/               # Shared Kernel
 ```
 
@@ -42,14 +43,11 @@ packages/domain/src/
 │   ├── value-objects/
 │   │   ├── SessionId.ts                 # VO: extends Identifier
 │   │   ├── ToolKey.ts                   # VO: kebab-case string
-│   │   ├── IdempotencyKey.ts            # VO: (userId, workspaceId, toolKey, inputHash)
 │   │   ├── StepNumber.ts                # VO: int >= 1
 │   │   ├── ArtifactId.ts                # VO: extends Identifier
 │   │   ├── ArtifactContent.ts           # VO: immutable string
 │   │   ├── ArtifactStatus.ts            # VO: pending | generating | completed | failed
 │   │   ├── SessionStatus.ts             # VO: queued | draft | ready | running | completed | failed | cancelled
-│   │   ├── CrawlData.ts                 # VO: raw API response (immutable, for replay/cache)
-│   │   ├── AcquisitionData.ts           # VO: structured pre-flight data (userInputs, parsedFiles, apiResponses, assets)
 │   │   └── ReadinessPolicy.ts           # VO: evaluates whether AcquisitionData satisfies ToolDefinition requirements
 │   │
 │   ├── domain-services/
@@ -69,40 +67,24 @@ packages/domain/src/
 │   │
 │   ├── tools/                           # Static tool configurations
 │   │   ├── tool-definition.ts           # ToolDefinition, StepDefinition types
-│   │   ├── index.ts                     # toolRegistry + getTool()
-│   │   ├── landing-funnel.tool.ts
-│   │   ├── landing-page.tool.ts
-│   │   ├── video-script-long-form.tool.ts
-│   │   ├── video-description.tool.ts
-│   │   ├── blog-post.tool.ts
-│   │   ├── ad-copy.tool.ts
-│   │   ├── brief.tool.ts
-│   │   ├── brand-voice.tool.ts
-│   │   ├── buyer-persona.tool.ts
-│   │   ├── marketing-angle.tool.ts
-│   │   └── ai-overview-analysis.tool.ts
+│   │   ├── index.ts                     # toolRegistry + 11 tool definitions (blog-post, landing-funnel, landing-page, video-script-long-form, video-description, ad-copy, brief, brand-voice, buyer-persona, marketing-angle, ai-overview-analysis)
+│   │   └── prompting/                   # Prompt governance (Phase 4)
 │   │
 │   └── index.ts                         # Barrel: exports all public types
 │
 ├── workspace/                           # 🟡 Workspace & Assets (Supporting)
 │   ├── entities/
 │   │   ├── Workspace.ts                 # Aggregate Root
-│   │   └── Asset.ts                     # Entity
+│   │   └── WorkspaceMembership.ts       # Internal Entity (invite/accept/role)
 │   │
 │   ├── value-objects/
-│   │   ├── WorkspaceId.ts               # VO: extends Identifier
-│   │   ├── WorkspaceName.ts             # VO: non-empty string
-│   │   ├── AssetId.ts                   # VO: extends Identifier
-│   │   ├── AssetType.ts                 # VO: brief | brand-voice | persona | angle | ad-copy
-│   │   ├── AssetSource.ts               # VO: generated | uploaded | manual
-│   │   └── AssetContent.ts              # VO: immutable string
-│   │
-│   ├── domain-services/
-│   │   └── AssetResolver.ts             # DS: resolves injectable assets for a tool
+│   │   ├── MembershipRole.ts            # VO: owner | editor | viewer
+│   │   └── MembershipStatus.ts          # VO: invited | active
 │   │
 │   ├── domain-events/
-│   │   ├── AssetCreated.ts              # Event
-│   │   └── AssetUpdated.ts              # Event
+│   │   └── index.ts                     # MemberInvited, MemberJoined, MemberRemoved, OwnershipTransferred
+│   │
+│   ├── errors.ts                        # NotWorkspaceOwnerError, NotAWorkspaceMemberError, etc.
 │   │
 │   ├── repositories/
 │   │   └── WorkspaceRepository.ts       # Interface
@@ -110,59 +92,69 @@ packages/domain/src/
 │   └── index.ts
 │
 ├── identity/                            # 🔵 Identity & Access (Generic)
-│   ├── entities/
-│   │   └── User.ts                      # Aggregate Root
+│   ├── User.ts                          # Aggregate Root (flat — no entities/ subdirectory)
 │   │
 │   ├── value-objects/
-│   │   ├── UserId.ts                    # VO: extends Identifier
 │   │   ├── Email.ts                     # VO: validated email
-│   │   └── Role.ts                      # VO: admin | member
+│   │   ├── UserRole.ts                  # VO: admin | member
+│   │   └── UserStatus.ts               # VO: active | disabled
+│   │
+│   ├── AuthSession.ts                   # Read model
+│   ├── OAuthAccount.ts                  # Read model
+│   ├── errors.ts                        # InvalidCredentialsError, UserAlreadyExistsError, etc.
 │   │
 │   ├── repositories/
 │   │   └── UserRepository.ts            # Interface
 │   │
 │   └── index.ts
 │
-├── usage/                               # 🟠 Usage & Quota (Supporting)
+├── agent-chat/                          # 🟢 Agent Chat (Supporting) — Phase 5
 │   ├── entities/
-│   │   ├── Quota.ts                     # Aggregate Root
-│   │   └── CreditTransaction.ts         # Entity
+│   │   ├── Conversation.ts              # Aggregate Root
+│   │   └── Message.ts                   # Entity (immutable, append-only)
 │   │
 │   ├── value-objects/
-│   │   ├── QuotaId.ts                   # VO: extends Identifier
-│   │   ├── CreditAmount.ts              # VO: int >= 0
-│   │   ├── QuotaPeriod.ts               # VO: YYYY-MM
-│   │   └── TransactionReason.ts         # VO: generation | admin_grant
+│   │   ├── MessageRole.ts               # VO: user | agent | system
+│   │   ├── ConversationStatus.ts        # VO: active | archived
+│   │   └── AgentKey.ts                  # VO: strategist | copywriter | etc.
 │   │
-│   ├── domain-services/
-│   │   └── QuotaEnforcer.ts             # DS: canConsume(quota, amount) → boolean
+│   ├── agent-personas.ts                # 7 static agent configs with system prompts
 │   │
 │   ├── domain-events/
-│   │   ├── CreditConsumed.ts            # Event
-│   │   └── QuotaExceeded.ts             # Event
+│   │   └── index.ts                     # ConversationStarted, MessageAdded, ConversationArchived
 │   │
 │   ├── repositories/
-│   │   └── QuotaRepository.ts           # Interface
+│   │   └── ConversationRepository.ts    # Interface
 │   │
 │   └── index.ts
 │
 └── shared/                              # ⬜ Shared Kernel
+    ├── domain-error.ts                  # DomainError abstract class (code, retryable)
     ├── domain-event.ts                  # DomainEvent interface
     ├── identifier.ts                    # Base Value Object: new Identifier<T>(value)
     ├── date-time.ts                     # DateTime VO wrapper
+    ├── concurrency-error.ts             # ConcurrencyError (extends DomainError)
+    ├── __tests__/
+    │   └── identifier.test.ts           # 1 unit test (only test file)
     └── index.ts
+
+> **Implementation note**: The `usage/` bounded context (Quota aggregate) and the Asset subsystem under `workspace/` (Asset.ts, AssetResolver.ts, Asset VOs) are documented in the wiki but not yet implemented in code. DB migrations exist (005, 003) but domain code and Kysely repository implementations are planned for a future phase. `toolRegistry` condenses all 11 tools into a single `tools/index.ts` rather than individual per-tool files.
 ```
 
 ## File Count
 
-| Context | Entities | VOs | Services | Events | Repos | Tools | Total |
-|---------|----------|-----|----------|--------|-------|-------|-------|
-| generation | 2 | 11 | 1 | 5 | 1 | 12 | 33 |
-| workspace | 2 | 6 | 1 | 2 | 1 | — | 12 |
-| identity | 1 | 3 | — | — | 1 | — | 5 |
-| usage | 2 | 4 | 1 | 2 | 1 | — | 10 |
-| shared | — | — | — | — | — | — | 3 |
-| **Total** | **7** | **24** | **3** | **9** | **4** | **12** | **63** |
+> Actual count from codebase (2026-08-02). `usage/` omitted — not implemented.
+
+| Context | Entities | VOs | Services | Events | Repos | Tools | Other | Total |
+|---------|----------|-----|----------|--------|-------|-------|-------|-------|
+| generation | 2 | 8 | 1 | 5 | 1 | 2 | 1 (session-lifecycle) | 20 |
+| workspace | 2 | 2 | — | 4 | 1 | — | 2 (errors, index) | 11 |
+| identity | 1 | 3 | — | — | 1 | — | 4 (AuthSession, OAuthAccount, errors, index) | 9 |
+| agent-chat | 2 | 3 | — | 3 | 1 | — | 2 (personas, index) | 11 |
+| shared | — | — | — | — | — | — | 7 | 7 |
+| **Total** | **7** | **16** | **1** | **12** | **4** | **2** | **16** | **58** |
+
+> **Planned but not implemented**: `usage/` (Quota aggregate, ~10 files). Asset subsystem (`Asset.ts`, 6 Asset VOs, `AssetResolver.ts`, `AssetCreated`/`AssetUpdated` events). See [[implementation-roadmap-2026-08-01|Phase plan]].
 
 ---
 
@@ -172,13 +164,13 @@ packages/domain/src/
 
 | ✅ IN | Example |
 |-------|---------|
-| Entity classes with business methods | `Session.addArtifact()`, `Workspace.addAsset()` |
-| Value Objects with validation | `Email.validate()`, `IdempotencyKey.from()` |
-| Domain Services (pure logic) | `ContextEnricher.enrich()`, `QuotaEnforcer.canConsume()` |
-| Domain Events (immutable DTOs) | `SessionCompleted`, `AssetCreated` |
+| Entity classes with business methods | `Session.addArtifact()`, `Workspace.inviteMember()` |
+| Value Objects with validation | `Email.create()`, `MembershipRole.from()` |
+| Domain Services (pure logic) | `ContextEnricher.enrich()` |
+| Domain Events (immutable DTOs) | `SessionCompleted`, `MemberInvited` |
 | Repository Interfaces (signatures only) | `SessionRepository.save(session: Session): Promise<void>` |
-| Static Tool Configurations | `landing-funnel.tool.ts` |
-| Shared Kernel | `DomainEvent`, `Identifier`, `DateTime` |
+| Static Tool Configurations | `tools/index.ts` (toolRegistry with 11 tools) |
+| Shared Kernel | `DomainEvent`, `Identifier`, `DateTime`, `DomainError` |
 
 ### What stays OUT
 
@@ -235,14 +227,12 @@ export { Artifact } from './entities/Artifact';
 // Value Objects
 export { SessionId } from './value-objects/SessionId';
 export { ToolKey } from './value-objects/ToolKey';
-export { IdempotencyKey } from './value-objects/IdempotencyKey';
 export { StepNumber } from './value-objects/StepNumber';
 export { ArtifactId } from './value-objects/ArtifactId';
 export { ArtifactContent } from './value-objects/ArtifactContent';
 export { SessionStatus } from './value-objects/SessionStatus';
 export { SessionLifecycle, getValidTransition } from './session-lifecycle';
 export type { SessionState, SessionEventType } from './session-lifecycle';
-export { CrawlData } from './value-objects/CrawlData';
 
 // Domain Services
 export { ContextEnricher } from './domain-services/ContextEnricher';
@@ -283,7 +273,7 @@ class Session {
 | Shared VO | Defined in | Used by |
 |-----------|-----------|---------|
 | `WorkspaceId` | `workspace/value-objects/` | `generation/` (imported, not duplicated) |
-| `UserId` | `identity/value-objects/` | `workspace/`, `usage/`, `generation/` |
+| `UserId` | `identity/value-objects/` | `workspace/`, `generation/`, `agent-chat/` |
 
 ---
 

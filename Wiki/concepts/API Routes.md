@@ -51,8 +51,9 @@ Compatibility rule: no breaking response-schema change inside the same API major
 
 ## Route Index
 
-> **Last synced**: 2026-08-02 against `apps/backend/src/app.ts`.
+> **Last synced**: 2026-08-02 against `apps/backend/src/app.ts` and `apps/backend/src/api/*.ts`.
 > ✅ = implemented, 🟡 = partial, ⬜ = planned (not built), 🔜 = deferred to future phase.
+> Post-drift remediation: `POST /api/workspaces` corrected from ⬜ to ✅. Agent chat route params aligned to `:workspaceId`. Doubled `/api/api/` typos fixed.
 
 | Method | Path | Auth | Status | Notes |
 |--------|------|------|--------|-------|
@@ -67,7 +68,7 @@ Compatibility rule: no breaking response-schema change inside the same API major
 | `GET` | `/api/auth/google/callback` | 🔓 | ✅ | Google OAuth callback |
 | `GET` | `/api/auth/github` | 🔓 | ⬜ | GitHub OAuth (planned) |
 | `GET` | `/api/workspaces` | ✅ | ✅ | List user's workspaces |
-| `POST` | `/api/workspaces` | ✅ | ⬜ | Create workspace |
+| `POST` | `/api/workspaces` | ✅ | ✅ | Create workspace |
 | `GET` | `/api/workspaces/:id` | ✅ | ✅ | Get workspace detail |
 | `PUT` | `/api/workspaces/:id` | ✅ | ⬜ | Update workspace |
 | `DELETE` | `/api/workspaces/:id` | ✅ | ⬜ | Delete workspace |
@@ -91,9 +92,9 @@ Compatibility rule: no breaking response-schema change inside the same API major
 | `POST` | `/api/sessions/:id/cancel` | ✅ | ⬜ | Cancel running session |
 | `GET` | `/api/artifacts/:id` | ✅ | ✅ | Get artifact content |
 | `GET` | `/api/artifacts/:id/download` | ✅ | ⬜ | Download artifact |
-| `GET` | `/api/workspaces/:wid/agents` | member | ✅ | List 7 agent personas |
-| `GET` | `/api/workspaces/:wid/conversations` | member | ✅ | List user's conversations |
-| `POST` | `/api/workspaces/:wid/conversations` | member | ✅ | Start conversation |
+| `GET` | `/api/workspaces/:workspaceId/agents` | member | ✅ | List 7 agent personas |
+| `GET` | `/api/workspaces/:workspaceId/conversations` | member | ✅ | List user's conversations |
+| `POST` | `/api/workspaces/:workspaceId/conversations` | member | ✅ | Start conversation |
 | `GET` | `/api/conversations/:id` | ✅ | ✅ | Get conversation + messages |
 | `POST` | `/api/conversations/:id/messages` | ✅ | ✅ | Send message (LLM reply) |
 | `POST` | `/api/conversations/:id/archive` | ✅ | ✅ | Archive conversation |
@@ -490,8 +491,8 @@ All errors follow a consistent shape:
 | `POST /api/invitations/:id/accept` | `AcceptInvitationUseCase` | ✅ |
 | `POST /api/workspaces/:id/transfer-ownership` | `TransferOwnershipUseCase` | ✅ |
 | `POST /api/conversations/:id/messages` | `SendMessageUseCase` | ✅ |
-| `POST /api/api/auth/register` | `AuthService.register()` | ✅ |
-| `POST /api/api/auth/login` | `AuthService.login()` | ✅ |
+| `POST /api/auth/register` | `AuthService.register()` | ✅ |
+| `POST /api/auth/login` | `AuthService.login()` | ✅ |
 
 ## Sources
 

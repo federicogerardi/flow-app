@@ -72,8 +72,8 @@ npm run dev                  # starts backend (port 3000) + frontend (port 5173)
 
 ```bash
 # apps/backend/.env (local dev)
-DATABASE_URL=postgresql://flow_app:flow_app@localhost:5432/flow_app
-REDIS_URL=redis://localhost:6379
+DATABASE_URL=<DATABASE_URL>
+REDIS_URL=<REDIS_URL>
 # ... other vars from .env.example
 ```
 

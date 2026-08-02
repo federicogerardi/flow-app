@@ -25,7 +25,7 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 | [[Agent Chat]] | Supporting | [[Conversation]] | Conversational, multi-turn guidance with workspace-aware context injection |
 | [[Gamification]] | Supporting | [[PlayerProfile]] | Event-driven XP, levels, badges, streaks, workspace challenges |
 | [[Identity & Access]] | Generic | [[User]] | Auth, roles, sessions |
-| [[Usage & Quota]] | Supporting | [[Quota]] | Two-track limits: artifact gate (anti-abuse) + credit consumption |
+| [[Usage & Quota]] | Supporting | [[Quota]] | 🔴 Planned — DB tables exist (005), domain code not yet implemented |
 
 ## Interaction Models
 
@@ -93,7 +93,7 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 | Phase 5 — Expansion Tracks | ✅ | Agent Chat (Conversation, Message, 7 agents) |
 | Phase 6 — Real LLM Integration | ✅ | LlmGateway, ModelRegistry, 4 tiers, worker + chat wiring |
 | Phase 7 — Frontend MVP | ✅ | 4 shared components, 4 pages, 5 routes, MUI + SWR + react-router v7 |
-| Phase 8 — Real Authentication | 🟡 | Backend complete (JWT, bcrypt, Passport, 7 auth endpoints). Frontend auth flow remaining. [[synthesis/phase-8-real-auth-plan\|Plan →]] |
+| Phase 8 — Real Authentication | 🟡 | Backend complete (JWT, bcrypt, Passport, 7 auth endpoints). Frontend auth flow remaining. [[synthesis/phase-8-real-auth-plan|Plan →]] |
 
 ### Planned (Phase 9–11)
 

@@ -172,7 +172,7 @@ WorkspaceHealth =
 | 40-69 | 🟡 Yellow | Needs Attention |
 | 0-39 | 🔴 Red | At Risk |
 
-Visualizzato come barra nel Workspace Dashboard e nella sidebar:
+Displayed as a bar in the Workspace Dashboard and the sidebar:
 
 ```
 │  Q3 Campaign             │
