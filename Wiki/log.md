@@ -12,6 +12,18 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-02] enhance | DDD Domain Design Rules — workspace instructions upgraded
+
+Upgraded `CLAUDE.md` Domain Design Rules section from 6 rules to 14 enforceable rules with checklists. Added authoritative reference pointer to [[DDD Domain Design Rules]] (19-rule wiki page) as the full governance document. New rules: Rule 7 (Aggregate Root canonical template — private constructor, _version, DomainEvent|null), Rule 8 (Domain Events as immutable DTOs), Rule 9 (Domain-owned lifecycle — SessionLifecycle as single source, XState imports), Rule 10 (Business rules in domain VOs, never in use cases/guards), Rule 11 (Domain enforces for all callers, middleware is optimization), Rule 12 (Aggregate boundaries by business invariants), Rule 13 (Snapshot-based crash recovery), Rule 14 (IdempotencyKey as domain VO with atomic claim). Header updated: Phase 0–8 → Phase 0–9. CLAUDE.md now has 32 `###` sections total.
+
+## [2026-08-02] extend | DDD Domain Design Rules — 7 implicit patterns added
+
+Extended [[DDD Domain Design Rules]] with 7 architectural patterns discovered from wiki cross-references (19 total rules now). New patterns: Pattern 13 (Domain-Owned State Machine — SessionLifecycle as single source of truth, XState as runtime), Pattern 14 (Two-Layer Permission Enforcement — domain validates, middleware short-circuits), Pattern 15 (VO as Business Rule Encapsulation — ReadinessPolicy eliminates leaked logic), Pattern 16 (Aggregate Transaction Boundaries — team-size-driven design, WorkspaceMembership inside Workspace), Pattern 17 (Snapshot-Based Crash Recovery — XState snapshots for worker resume), Pattern 18 (Idempotency as Domain VO — key format, atomic claim), Pattern 19 (Fail-Fast Startup Validation — boot-time checks prevent runtime drift). Updated: `Wiki/index.md` (source_count 12→19), `Wiki/concepts/DDD Domain Design Rules.md` (589→900+ lines). 7 new sources added.
+
+## [2026-08-02] create | DDD Domain Design Rules concept page
+
+Created [[DDD Domain Design Rules]] — authoritative governance reference encoding all DDD tactical patterns from Phase 0–9. 12 rules: 6 core rules from CLAUDE.md (no `as any`, zero external validation, DomainError hierarchy, class VOs, repository purity, canonical factories) + 6 architectural patterns from codebase (aggregate root design, domain events, repository interfaces, cross-context references, barrel exports, domain services). 12 sources cross-referenced. Updated: `Wiki/index.md` (concepts table), `Wiki/concepts/DDD Domain Design Rules.md` (new, 440 lines).
+
 ## [2026-08-02] plan | High-severity remediation plan filed
 
 Filed [[synthesis/high-fix-plan-2026-08-02]]. 10 findings (H1–H10) from [[synthesis/code-review-2026-08-02]] organized into 5 phases, touching 19 files.

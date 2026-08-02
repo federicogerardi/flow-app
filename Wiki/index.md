@@ -108,6 +108,7 @@ maintenance: 2026-08-02 — health maintenance: 4 wiki-lint issues fixed (log.md
 | [[Context Injection]] | high | 6 |
 | [[CrawlData]] | high | 2 |
 | [[Database Schema]] | high | 9 |
+| [[DDD Domain Design Rules]] | high | 19 |
 | [[Dependency Injection Setup]] | high | 4 |
 | [[Docker Compose - Local Dev]] | high | 2 |
 | [[Domain Events]] | high | 4 |

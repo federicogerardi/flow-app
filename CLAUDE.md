@@ -60,10 +60,6 @@ git checkout -b feature/<scope>-<short-name>
 
 ## Linguistic Separation Policy
 
----
-
-## Linguistic Separation Policy
-
 Every document in this project belongs to exactly one language category. Never mix languages within a single document body.
 
 ### Level 1 — Project Documentation
@@ -271,7 +267,9 @@ Example:
 
 ## Domain Design Rules
 
-These rules enforce DDD tactical patterns discovered from governance audits (Phase 0–8). Violations introduce technical debt that compounds across bounded contexts. Apply on every domain/application code write.
+These rules enforce DDD tactical patterns discovered from governance audits (Phase 0–9) and the [[DDD Domain Design Rules|multi-agent code review (41 findings)]]. Violations introduce technical debt that compounds across bounded contexts. Apply on every domain/application code write.
+
+> **Authoritative reference**: [[DDD Domain Design Rules]] (19 rules with rationale, canonical templates, and code references). This section is the concise, enforceable subset — the wiki page is the full governance document.
 
 ### 1 — No `as any` to access private fields in domain aggregates
 
@@ -283,7 +281,7 @@ These rules enforce DDD tactical patterns discovered from governance audits (Pha
 
 // ✅ CORRECT — Add explicit delegation on WorkspaceMembership
 // In WorkspaceMembership:
-_setRoleAsOwner(): void { this._role = 'owner'; }
+_setRoleAsOwner(): void { this._role = MembershipRole.Owner; }
 // In Workspace.transferOwnership():
 newOwner._setRoleAsOwner();
 ```
@@ -354,7 +352,7 @@ export type MembershipRole = 'owner' | 'editor' | 'viewer';
 
 // ✅ CORRECT — class value object
 export class MembershipRole {
-  private constructor(private readonly _value: 'owner' | 'editor' | 'viewer') {}
+  private constructor(private readonly _value: MembershipRoleValue) {}
   static readonly Owner = new MembershipRole('owner');
   static readonly Editor = new MembershipRole('editor');
   static readonly Viewer = new MembershipRole('viewer');
@@ -384,7 +382,7 @@ async save(session: Session): Promise<void> {
 }
 
 // ✅ CORRECT — separate methods
-async save(session: Session): Promise<void> { /* sessions table only */ }
+async save(session: Session): Promise<void> { /* sessions table + artifacts only */ }
 async saveIdempotencyKey(hash: string, sessionId: string): Promise<void> { /* idempotency_keys table */ }
 ```
 
@@ -408,13 +406,185 @@ async saveIdempotencyKey(hash: string, sessionId: string): Promise<void> { /* id
 - [ ] No custom factory names on aggregate roots (no `start()`, `begin()`, `init()`)
 - [ ] `reconstitute()` accepts all fields verbatim (no validation, no defaults) — the database is the source of truth
 
+### 7 — Aggregate roots follow the canonical template
+
+**Pattern**: every aggregate root must use `private constructor`, carry a `_version` for optimistic locking, return `DomainEvent | null` from business methods, and expose child collections as `ReadonlyArray<T>`.
+
+```typescript
+// ✅ CANONICAL — see [[DDD Domain Design Rules#Pattern 7 — Aggregate Root Design]]
+export class AggregateRoot {
+  private _version: number;
+  private _childEntities: ChildEntity[];
+
+  private constructor(readonly id: string, /* all fields */) { ... }
+
+  static create(businessInput: Input): AggregateRoot { /* generates ID, sets defaults */ }
+  static reconstitute(/* all fields verbatim */): AggregateRoot { /* pass-through */ }
+
+  doSomething(input: Input): DomainEvent | null {
+    // 1. Validate preconditions (throw DomainError on failure)
+    // 2. Mutate private state
+    // 3. Increment _version
+    // 4. Return domain event (or null if internal transition)
+  }
+
+  get childEntities(): ReadonlyArray<ChildEntity> { return this._childEntities; }
+  get version(): number { return this._version; }
+}
+```
+
+**Checklist before writing an aggregate root:**
+- [ ] `private constructor` — no external `new`
+- [ ] `_version` field incremented on every mutation
+- [ ] Business methods return `DomainEvent | null`
+- [ ] Child collections exposed as `ReadonlyArray<T>`, never as mutable arrays
+- [ ] Immutable identity fields are `readonly` in constructor
+
+### 8 — Domain events are immutable DTOs, nothing more
+
+**Pattern**: domain events implement the `DomainEvent` interface (`eventType`, `occurredAt`, `aggregateId`). They carry all data the consumer needs — no callbacks, no behavior, no references to live aggregates.
+
+```typescript
+// ✅ CANONICAL
+interface DomainEvent {
+  readonly eventType: string;
+  readonly occurredAt: Date;
+  readonly aggregateId: string;
+}
+
+class SessionCompleted implements DomainEvent {
+  readonly eventType = 'SessionCompleted';
+  readonly occurredAt = new Date();
+  constructor(
+    readonly aggregateId: string,
+    readonly sessionId: string,
+    readonly workspaceId: string,
+    readonly userId: string,
+    readonly toolKey: string,
+    readonly finalArtifactId: string,
+  ) {}
+}
+```
+
+**Checklist before writing a domain event:**
+- [ ] Implements `DomainEvent` interface (all three fields present)
+- [ ] All constructor parameters are `readonly`
+- [ ] No behavior methods — pure data transfer
+- [ ] Carries all information the consumer needs (no callback to source aggregate)
+
+### 9 — Domain-owned lifecycle: domain defines states, XState imports them
+
+**Pattern**: `SessionLifecycle` in `packages/domain` is the single source of truth for states and valid transitions. XState imports it and adds runtime concerns (actors, invocations, persistence). **Never define states in XState that the domain doesn't know about.**
+
+```
+packages/domain/SessionLifecycle  ←  defines states, transitions, getValidTransition()
+         │ imports
+         ▼
+apps/backend/sessionMachine       ←  adds actors, guards (delegating to domain VOs), persistence
+```
+
+**Checklist before writing state machine code:**
+- [ ] All states and transitions are defined in `packages/domain`, never hardcoded in XState
+- [ ] XState guards delegate to domain VOs (e.g., `canQueue` → `ReadinessPolicy.evaluate()`) — no inline business logic
+- [ ] `Session.apply(event)` is the single entry point for state changes — validates via `SessionLifecycle.getValidTransition()` before mutating
+- [ ] Startup validation exists: `validateXStateMatchesDomain()` runs on boot, fails fast on drift
+
+### 10 — Business rules belong in domain Value Objects, never in application services or workflow guards
+
+**Pattern**: logic that was duplicated in `StartSessionUseCase.validateReadiness()` and XState `canQueue` guard now lives in `ReadinessPolicy.evaluate()` — a pure function VO with zero I/O.
+
+```typescript
+// ❌ VIOLATION — business logic in application layer
+private validateReadiness(tool, data) { /* checks required inputs inline */ }
+
+// ✅ CORRECT — delegate to domain VO
+const policy = ReadinessPolicy.from(tool);
+const result = policy.evaluate(acquisitionData);
+if (!result.isReady) throw new ReadinessError(result.missing);
+```
+
+**Checklist before writing business logic:**
+- [ ] No business rules in `apps/backend/src/application/` use cases — delegate to domain VOs
+- [ ] No business rules in XState guards — delegate to domain VOs
+- [ ] New Value Object with behavior: `private constructor` + `static` factory + `equals()`
+- [ ] The VO is a pure function: deterministic, zero I/O, zero infrastructure imports
+
+### 11 — Domain enforces permissions for ALL callers; middleware is a performance optimization
+
+**Pattern**: the domain aggregate root (`Workspace.assertIsOwner()`) throws domain errors on invalid operations. HTTP middleware (`requireWorkspaceRole()`) short-circuits requests before use cases, but it is never the sole enforcer. Workers, CLI scripts, and tests all go through the same domain methods.
+
+```
+HTTP → Middleware (early reject) → Use Case → Domain (ultimate authority, throws DomainError)
+Worker → Use Case → Domain (same method, same enforcement — middleware bypassed intentionally)
+```
+
+**Checklist before writing authorization code:**
+- [ ] Permission checks live in the domain aggregate root (e.g., `assertIsOwner()`, `canEdit()`)
+- [ ] Middleware is an optional optimization — never the only enforcement layer
+- [ ] Every permission failure throws a `DomainError` subclass
+- [ ] No caller (worker, CLI, test) can bypass domain authorization by skipping middleware
+
+### 12 — Aggregate boundaries are driven by business invariants, not data modeling
+
+**Pattern**: the decision to embed `WorkspaceMembership` inside `Workspace` (rather than as a separate aggregate) is intentional — driven by B2B team sizes (2–10 members) and low concurrency. Document the rationale and revisit conditions.
+
+| Factor | Embed in aggregate | Separate aggregate |
+|--------|-------------------|-------------------|
+| Expected cardinality | 1–20 | 50+ |
+| Concurrency on child | Low (<1 change/hour) | High (many changes/second) |
+| Invariant | Must be atomically consistent with root | Eventually consistent is acceptable |
+
+**Checklist before adding an owned entity to an aggregate:**
+- [ ] Document the expected cardinality (max entities per aggregate)
+- [ ] Document the revisit condition (e.g., "split when >50 members")
+- [ ] The child entity cannot be modified independently — all mutations go through the aggregate root
+- [ ] Repository `save()` persists root + owned entities in one transaction
+
+### 13 — Long-running processes persist snapshots, not events
+
+**Pattern**: workers persist the XState actor snapshot (`actor.getPersistedSnapshot()`) after every state transition. On retry, resume from the snapshot — no duplicate work. Snapshot methods are cross-cutting (separate from `save()` per Rule 5).
+
+```typescript
+// Worker
+actor.subscribe(async (state) => {
+  await deps.sessionRepo.saveSnapshot(sessionId, JSON.stringify(state));
+});
+// On retry
+const snapshot = await deps.sessionRepo.loadSnapshot(sessionId);
+const actor = snapshot
+  ? createActor(machine, { snapshot: JSON.parse(snapshot) })
+  : createActor(machine, { input: { session, tool } });
+```
+
+**Checklist before writing worker/process code:**
+- [ ] State is persisted after every transition (not just at the end)
+- [ ] On retry, state is resumed from persisted snapshot (not re-executed from start)
+- [ ] Snapshot persistence uses dedicated repository methods (not side-effects in `save()`)
+
+### 14 — Idempotency keys are domain Value Objects, not infrastructure strings
+
+**Pattern**: `IdempotencyKey` is a class VO in `packages/domain` with its own format (`userId:workspaceId:toolKey:inputHash:templateVersions`) and generation rules. Persistence uses a dedicated `saveIdempotencyKey()` method (Rule 5). The claim must be atomic.
+
+```typescript
+// ✅ Domain VO generates the key, infrastructure persists it
+const key = IdempotencyKey.generate({ userId, workspaceId, toolKey, inputHash, templateVersions });
+await sessionRepo.save(session);                         // Aggregate
+await sessionRepo.saveIdempotencyKey(key.hash, sessionId); // Cross-cutting
+```
+
+**Checklist before implementing idempotency:**
+- [ ] Key generation lives in `packages/domain` as a class VO
+- [ ] Key format includes the prompt version hash to detect template changes
+- [ ] Persistence uses a dedicated repository method (not a side-effect in `save()`)
+- [ ] The claim operation is atomic (Redis `SET NX` or PostgreSQL `INSERT ON CONFLICT`)
+
 ---
 
 ## Wiki Content Rules
 
-These rules prevent the structural anti-patterns discovered during wiki health audits (2026-08-02). They complement the Consistency Enforcement Rules above and apply to every wiki write operation.
+These rules prevent the structural anti-patterns discovered during wiki health audits (2026-08-02). They apply to every wiki write operation. Numbered independently from Consistency Enforcement Rules (1–8) above and Domain Design Rules (1–14).
 
-### 9 — No split-page syndrome (one topic, one page)
+### 1 — No split-page syndrome (one topic, one page)
 
 **Pattern**: three or more pages explaining the same concept from slightly different angles (e.g., `IdempotencyKey` + `Idempotency Implementation` + `IdempotencyKey + Prompt Version` — same hash algorithm, same format, same persistence logic across three pages).
 
@@ -436,7 +606,7 @@ Wiki/concepts/Idempotency UX.md             # Optional: UI patterns only
 - [ ] If 2+ pages already exist, extend the best one — do not create a third
 - [ ] If creating a UX companion page, it must contain ONLY UI/design content, not re-explain the domain concept
 
-### 10 — No stub proliferation (pages <50 lines must justify existence)
+### 2 — No stub proliferation (pages <50 lines must justify existence)
 
 **Pattern**: 30-line pages with 12 lines of frontmatter, 3 source links, and 4 bullet points of body text. These add index entries and graph complexity without providing value.
 
@@ -459,7 +629,7 @@ Wiki/concepts/Auth Dependencies.md          # Absorbed Identity & Access content
 
 **Exception**: entity pages (type: entity) may be concise by nature — they describe a single aggregate/entity and link to sources. The 50-line threshold applies to concept and synthesis pages only.
 
-### 11 — Synthesis pages must be referenced (no isolated analysis)
+### 3 — Synthesis pages must be referenced (no isolated analysis)
 
 **Pattern**: a synthesis page with 18 outgoing links but only 1 inbound link. It's well-informed (reads everything) but invisible to the graph (nobody reads it back). This defeats the purpose — the wiki compounds when synthesis feeds back into the concepts it analyzes.
 
@@ -481,7 +651,7 @@ concepts/Achievements & Badges.md           # Sources section includes [[gamific
 - [ ] Add `[[synthesis/page-name]]` to the `## Sources` section of each
 - [ ] The synthesis should appear in the "Referenced By" section of at least 3 pages
 
-### 12 — Cross-references must add information, not duplicate it
+### 4 — Cross-references must add information, not duplicate it
 
 **Pattern**: pages that cross-reference each other redundantly (A describes X, B also describes X and links to A, C also describes X and links to B). The cross-references create an illusion of structure while the content is triplicated.
 
@@ -503,7 +673,7 @@ concepts/Gamification UX.md         # UI patterns only — "XP triggers: see [[G
 - [ ] Does this page contain original information NOT in the linked page? If not, the cross-reference should replace the duplicate content.
 - [ ] For every `[[link]]` in a page, verify the linked page is the authoritative source for that concept. If multiple pages claim authority, consolidate.
 
-### 13 — Reference-only pages must have a parent concept
+### 5 — Reference-only pages must have a parent concept
 
 **Pattern**: catalog pages (SQL DDL, CSS tokens, component inventories, API route tables) that exist as standalone references with no concept page explaining WHY the reference exists and HOW to use it.
 
@@ -518,7 +688,7 @@ concepts/Domain Events.md                  # Explains pattern, architecture, usa
 concepts/Domain Events Catalog.md          # Linked from Domain Events: "See [[Domain Events Catalog]] for full index"
 ```
 
-### 14 — Verify code exists before documenting it
+### 6 — Verify code exists before documenting it
 
 **Pattern**: wiki pages describing domain entities, value objects, or API endpoints that do not exist in the codebase. The wiki claims implementation but the code doesn't deliver.
 
@@ -545,72 +715,31 @@ packages-domain Structure.md:
 ### Tools
 
 - **Obsidian CLI**: `obsidian read file="..."`, `obsidian search query="..."`, etc. (symlinked to `~/.local/bin/obsidian`)
-- **qmd**: Hybrid BM25/vector search with LLM re-ranking (`qmd query "..."`)
+- **qmd**: Hybrid BM25/vector search with LLM re-ranking (`qmd query "..."`). Must be invoked via `bash` tool — not an internal function.
 - **Dataview**: SQL-like queries over YAML frontmatter (in Obsidian)
 
 #### qmd — Proactive Wiki Exploration
+
+**qmd is a CLI tool, not an internal function.** Invoke it via the `bash` tool: `bash "qmd search 'keyword'"`. Never call it as a tool directly — it must run through a shell.
 
 Use `qmd` **proactively** before any wiki operation (ingest, query, lint) to ground yourself in existing wiki knowledge. Never operate on the wiki from scratch — search first, then act.
 
 **Pre-operation workflow:**
 
-1. **Before ingesting** a source → `qmd query "..." --no-rerank` with the source's key topics to find overlapping entities/concepts already in the wiki. This prevents duplicate pages and ensures new content links back to existing knowledge. If the models aren't cached yet, use `qmd search` instead.
-
-2. **Before answering a query** → `qmd query "..." --no-rerank` with the query terms to discover relevant wiki pages beyond what `index.md` listings reveal. qmd's hybrid search surfaces semantically related content that the index tables alone might miss. Use `qmd search` as fallback if models aren't cached.
-
-3. **Before linting** → `qmd search "..."` (BM25 keyword mode) to find orphan candidates and pages not referenced in `index.md`.
+1. **Before ingesting** a source → `qmd query "<topics>" --no-rerank` to find overlapping entities/concepts. If models aren't cached, use `qmd search` instead.
+2. **Before answering a query** → `qmd query "<terms>" --no-rerank` to discover relevant pages beyond `index.md` listings.
+3. **Before linting** → `qmd search "<keywords>"` (BM25) to find orphan candidates.
 
 **Key commands:**
 
 ```
-qmd search "keyword terms"                  # BM25 only (primary — instant, no models needed)
-qmd vsearch "semantic concept"              # vector similarity (uses embedding model, already downloaded)
-qmd query "..." --no-rerank                 # hybrid BM25 + vector, no LLM re-rank (needs expansion model)
+qmd search "keyword terms"        # BM25 only (primary — instant, no models needed)
+qmd vsearch "semantic concept"    # vector similarity
+qmd query "..." --no-rerank       # hybrid BM25 + vector (needs ~1.28GB expansion model)
 ```
 
-**Always prefer `qmd search`** as the primary command. It uses BM25 full-text only — instant, deterministic, and requires no model downloads. Use `qmd vsearch` when you need semantic (meaning-based) search. Avoid `qmd query` unless the models have been pre-downloaded (see below).
+**Always prefer `qmd search`.** It uses BM25 full-text only — instant, deterministic. Use `qmd vsearch` for semantic search. Avoid `qmd query` unless models are pre-downloaded to `~/.cache/qmd/models/`.
 
-**`qmd query` downloads models on first use.** It needs a 1.28GB expansion model on first run, which will timeout an agent session. If you need hybrid search, pre-download models once (outside agent sessions):
+**Index maintenance** (after wiki changes): `qmd update && qmd embed`
 
-```bash
-qmd query "test" 2>/dev/null &  # downloads ~1.28GB expansion model + ~0.6GB reranker
-```
-
-Once models are cached in `~/.cache/qmd/models/`, `qmd query` runs instantly.
-
-**Collection setup (one-time, per machine):**
-
-This project uses a project-local `.qmd/` config (not tracked in git — absolute paths differ per machine). On each new machine, copy the example template and adapt:
-
-```bash
-# 1. Copy example template and set your absolute vault path
-cp .qmd/index.yml.example .qmd/index.yml
-# Edit .qmd/index.yml — replace <ABSOLUTE_VAULT_PATH> with your machine's path
-#   Linux:   /home/<user>/Dev/Progetti/flow-app
-#   macOS:   /Users/<user>/Dev/flow-app
-
-# 2. Alternatively, create from scratch with the CLI:
-qmd collection add /path/to/vault --name flow-app --mask "**/*.md"
-
-# 3. Index and embed
-qmd update && qmd embed
-```
-
-Models are cached globally in `~/.cache/qmd/models/` (shared across collections, not tracked in git).
-
-**Index maintenance (after wiki changes):**
-
-```
-qmd update && qmd embed                     # re-index after adding/modifying pages
-```
-
-**Effective query patterns for the wiki:**
-
-```
-qmd query "entity X relationships and sources" --no-rerank
-qmd query "concept Y design decisions and tradeoffs" --no-rerank
-qmd query "what does the wiki say about pattern Z" --no-rerank
-qmd search "frontmatter type:entity"        # find all entity pages by frontmatter
-```
-
-**Critical rule:** Always run a qmd query before creating a new wiki page. If qmd returns relevant existing pages, read them and link from the new page instead of duplicating content. The wiki compounds; qmd ensures each new page builds on what's already there.
+**Critical rule:** Always run a qmd query before creating a new wiki page. If qmd returns relevant existing pages, read them and link from the new page instead of duplicating content.
