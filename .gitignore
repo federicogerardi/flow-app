@@ -50,3 +50,4 @@ pgdata/
 *.pid
 *.seed
 *.pid.lock
+.obsidian/workspace.json

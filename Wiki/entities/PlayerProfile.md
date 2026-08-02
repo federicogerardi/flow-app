@@ -13,7 +13,7 @@ source_count: 4
 
 ## Definition
 
-A `PlayerProfile` represents the gamification state for a single [[User]]. It tracks XP, level, streak, and unlocked badges. It is a pure overlay — the User aggregate in [[Identity & Access]] is unchanged.
+A `PlayerProfile` represents the gamification state for a single [[User]]. It tracks XP, level, streak, and unlocked badges. It is a pure overlay — the User aggregate in [[Auth Dependencies]] is unchanged.
 
 ## Ubiquitous Language
 
@@ -159,7 +159,7 @@ class PlayerProfile {
 
 | VO | Type | Description |
 |----|------|-------------|
-| `PlayerId` | UUID (= UserId) | Shared identifier with [[Identity & Access]] |
+| `PlayerId` | UUID (= UserId) | Shared identifier with [[Auth Dependencies]] |
 | `XP` | int ≥ 0 | Experience points |
 | `Level` | int 1-7 | Derived from XP thresholds |
 | `Streak` | int ≥ 0 | Consecutive active days in UTC |
@@ -231,4 +231,4 @@ interface PlayerProfileRepository {
 - [[Gamification]] — Parent bounded context
 - [[Achievements & Badges]] — Badge catalog reference
 - [[Workspace Gamification]] — Leaderboard consumes seasonal XP
-- [[Identity & Access]] — Shared UserId
+- [[Auth Dependencies]] — Shared UserId

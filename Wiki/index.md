@@ -3,10 +3,14 @@ type: index
 tags:
   - wiki/index
 date_updated: 2026-08-02
+maintenance: 2026-08-02 — health maintenance: 4 wiki-lint issues fixed (log.md frontmatter, overview.md escaped pipe, 2 missing concept stubs), 5 Italian prose violations translated, 6 env reference leaks sanitized.
 ---
 
 # Wiki Index — Flow App
 
+> Maintenance note (2026-08-02): Wiki drift remediation — 8 runtime gaps + 13 documentation gaps resolved. `packages-domain Structure.md` rewritten to match code (agent-chat added, usage/ removed, 11 tool files → 1 index.ts, Asset subsystem marked as planned). `API Routes.md`: status fixes + typos. `Database Schema.md`: conversations + messages added, Kysely types corrected. `Frontend Architecture.md`: route count corrected (5→7), hooks/API methods updated. `overview.md`: usage/ context marked 🔴 planned.
+> Maintenance note (2026-08-02): DDD governance audit completed — 58 files across 4 bounded contexts. 8 findings: 2 critical (encapsulation + zod in domain), 5 important (Error hierarchy + use case errors), 1 minor (repository side-effect). 6 pattern-based rules added to schema.
+> Maintenance note (2026-08-02): Phase 8 backend implemented — Real Authentication (Workstreams A+B+C+E): identity domain (User, Email, UserRole, UserStatus), KyselyUserRepository, BcryptPasswordHasher, TokenService, AuthService, Passport.js, 7 auth endpoints, authenticate middleware, rate limiter. Lint warnings resolved (7→0). Branch: `feature/phase-8-real-auth`.
 > Maintenance note (2026-08-02): Phase 8 implementation plan created — Real Authentication (5 workstreams, 35 files, 8-10 days). Plan: [[synthesis/phase-8-real-auth-plan]].
 > Maintenance note (2026-08-02): ESM hoisting bug fixed — `process.env.SEED_USER_ID` was evaluated at module load time (before `dotenv.config()`), so dev-auth always used the fallback UUID. Moved read to request time inside middleware function.
 > Maintenance note (2026-08-01): Phase 7 implemented — Frontend MVP (4 shared + 4 page components, 5 routes, react-router v7, MUI v6 Grid2, SWR). Backend: `GET /api/sessions`, `GET /api/artifacts/:id`, `SessionRepository.findByWorkspace()`. Build ✅, tests ✅ (8/8).
@@ -86,7 +90,7 @@ date_updated: 2026-08-02
 | [[ArtifactContent]] | high | 3 |
 | [[Asset Promotion]] | high | 4 |
 | [[AssetResolver]] | high | 4 |
-| [[Auth Dependencies]] | high | 5 |
+| [[Auth Dependencies]] | high | 6 |
 | [[Auth Middleware]] | high | 4 |
 | [[BullMQ Worker Wiring]] | high | 5 |
 | [[CI-CD Promotion Policy]] | high | 7 |
@@ -97,8 +101,6 @@ date_updated: 2026-08-02
 | [[Context Injection]] | high | 6 |
 | [[CrawlData]] | high | 2 |
 | [[Database Schema]] | high | 9 |
-| [[Definition of Done]] | high | 7 |
-| [[Design Tokens]] | high | 6 |
 | [[Dependency Injection Setup]] | high | 4 |
 | [[Docker Compose - Local Dev]] | high | 2 |
 | [[Domain Events]] | high | 4 |
@@ -113,10 +115,7 @@ date_updated: 2026-08-02
 | [[Git Governance Policy]] | high | 4 |
 | [[Global Deterministic Model Matrix]] | high | 5 |
 | [[Health Check - Deep]] | high | 4 |
-| [[Identity & Access]] | high | 2 |
-| [[Idempotency Implementation]] | high | 5 |
-| [[IdempotencyKey]] | high | 3 |
-| [[IdempotencyKey + Prompt Version]] | high | 6 |
+| [[Idempotency]] | high | 8 |
 | [[Invitation Notification Delivery]] | high | 4 |
 | [[Job Queue - Monitoring and Stability]] | high | 4 |
 | [[LLM Gateway - OpenRouter]] | high | 4 |
@@ -125,6 +124,7 @@ date_updated: 2026-08-02
 | [[Progressive Context Enrichment]] | high | 2 |
 | [[Project Dependencies]] | high | 4 |
 | [[Project Brand Persona]] | high | 5 |
+| [[Railway Deployment Config]] | high | 3 |
 | [[Prompt Admin API]] | high | 5 |
 | [[Prompt Caching Strategy]] | high | 6 |
 | [[Prompt Components]] | high | 6 |
@@ -138,6 +138,7 @@ date_updated: 2026-08-02
 | [[Session Machine (XState v5)]] | high | 4 |
 | [[Secure SDLC Controls]] | high | 7 |
 | [[Testing Strategy]] | high | 3 |
+| [[Token Budget Control]] | high | 3 |
 | [[Tool as Static Configuration]] | high | 4 |
 | [[Tool UX Architecture]] | high | 7 |
 | [[ToolPage Machine (XState v5)]] | high | 5 |
@@ -167,4 +168,7 @@ date_updated: 2026-08-02
 | [[synthesis/implementation-roadmap-2026-08-01]] | Rational development roadmap — phase plan from bootstrap to expansion tracks | 2026-08-01 |
 | [[synthesis/phase-8-real-auth-plan]] | Phase 8 implementation plan — Real Authentication (5 workstreams, 35 files) | 2026-08-02 |
 | [[synthesis/frontend-mvp-plan-2026-08-01]] | Frontend MVP plan — 13 components, 5 routes, 7-step execution | 2026-08-01 |
+| [[synthesis/lint-report-2026-08-01-coherence]] | Coherence lint — structural pass, queued-state drift closed | 2026-08-01 |
+| [[synthesis/rule-4-vo-debt]] | 8 type-alias VOs catalogued with conversion roadmap | 2026-08-02 |
+| [[synthesis/phase-9-architectural-targets]] | 11 VALIDATION + 5 STRUCTURAL gaps for Phase 9+ | 2026-08-02 |
 | [[overview]] | High-level synthesis (v3) | 2026-07-31 |

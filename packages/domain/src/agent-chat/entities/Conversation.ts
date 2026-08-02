@@ -2,23 +2,38 @@ import { randomUUID } from 'node:crypto';
 import type { AgentKey } from '../value-objects/AgentKey';
 import type { ConversationStatus } from '../value-objects/ConversationStatus';
 import type { DomainEvent } from '../../shared/domain-event';
+import { DomainError } from '../../shared/domain-error';
 import { Message } from './Message';
 
-export class ConversationArchivedError extends Error {
+export class ConversationArchivedError extends DomainError {
   readonly code = 'INVALID_STATE';
   readonly retryable = false;
   constructor(conversationId: string) {
     super(`Conversation ${conversationId} is archived and cannot receive new messages`);
-    this.name = 'ConversationArchivedError';
   }
 }
 
-export class ConversationAlreadyArchivedError extends Error {
+export class ConversationAlreadyArchivedError extends DomainError {
   readonly code = 'INVALID_STATE';
   readonly retryable = false;
   constructor(conversationId: string) {
     super(`Conversation ${conversationId} is already archived`);
-    this.name = 'ConversationAlreadyArchivedError';
+  }
+}
+
+export class ConversationNotFoundError extends DomainError {
+  readonly code = 'CONVERSATION_NOT_FOUND';
+  readonly retryable = false;
+  constructor(id: string) {
+    super(`Conversation ${id} not found`);
+  }
+}
+
+export class NotConversationParticipantError extends DomainError {
+  readonly code = 'FORBIDDEN';
+  readonly retryable = false;
+  constructor(userId: string, conversationId: string) {
+    super(`User ${userId} is not authorized to access conversation ${conversationId}`);
   }
 }
 

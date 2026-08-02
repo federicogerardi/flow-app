@@ -85,6 +85,7 @@ export class StartSessionUseCase {
     session.apply({ type: 'CONFIGURE' });
 
     await this.sessionRepo.save(session);
+    await this.sessionRepo.saveIdempotencyKey(idempotencyHash, session.sessionId);
 
     return {
       session,

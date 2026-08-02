@@ -20,7 +20,7 @@ Translate the current documentation baseline into an execution order that minimi
 
 1. **Vertical slice first**: ship one end-to-end generation flow before expanding bounded contexts.
 2. **Contract stability before feature breadth**: keep [[API Contract Baseline v1]] authoritative.
-3. **Operational readiness from day one**: enforce [[Quality Gate Matrix]] and [[Definition of Done]] from the first implementation PR.
+3. **Operational readiness from day one**: enforce [[Quality Gate Matrix]] (incorporates [[Quality Gate Matrix|Definition of Done]]) from the first implementation PR.
 4. **Scoped expansion**: add collaboration and engagement contexts only after core async reliability is stable.
 
 ## Phase Plan
@@ -314,9 +314,32 @@ Implementation (2026-08-01, branch `dev`):
 
 **Design authority**: the authentication architecture is already specified in [[Auth Dependencies]] (Passport.js + JWT + bcrypt + OAuth strategies) and [[Auth Middleware]] (JWT verification, role guards, CSRF protection). Phase 8 implements those designs.
 
+**Status**: 🟡 Backend complete (Workstreams A, B, C, E). Frontend auth flow (Workstream D) remaining.
+
 **Goal**: replace the dev stub with real authentication supporting registration, login, token refresh, Google/GitHub OAuth, and frontend auth flow.
 
-**Tasks expected**:
+Implementation (2026-08-02, branch `feature/phase-8-real-auth`):
+
+- **Identity domain** (`packages/domain/src/identity/`) — User aggregate, Email/UserRole/UserStatus value objects, UserRepository interface, AuthSession/OAuthAccount read models, 4 domain errors
+- **BcryptPasswordHasher** (`apps/backend/src/infrastructure/bcrypt-hasher.ts`) — cost factor 12, implements `PasswordHasher` interface
+- **KyselyUserRepository** (`packages/infra-db/src/repositories/user-repository.ts`) — full CRUD for users + auth_sessions + oauth_accounts
+- **DB types** (`packages/infra-db/src/types.ts`) — `AuthSessionsTable`, `OAuthAccountsTable` added to `DB` interface
+- **Seed migration** (`packages/infra-db/migrations/008_seed_user.sql`) — dev user `dev@flow-app.local` / `password123`
+- **TokenService** (`apps/backend/src/infrastructure/token-service.ts`) — JWT access tokens (HS256, 15min) + opaque refresh tokens (32-byte crypto random)
+- **AuthService** (`apps/backend/src/api/auth/auth-service.ts`) — register/login/refresh/logout/OAuth orchestration with token rotation
+- **Passport.js** (`apps/backend/src/infrastructure/passport-config.ts`) — local + Google OAuth strategies
+- **Auth routes** (`apps/backend/src/api/auth/auth-routes.ts`) — 7 endpoints: register, login, refresh, logout, me, Google, Google callback
+- **authenticate middleware** (`apps/backend/src/middleware/authenticate.ts`) — JWT `authenticate()` + `authenticateOrDev()` (dev fallback)
+- **Rate limiter** (`apps/backend/src/middleware/auth-rate-limit.ts`) — 5 attempts / 15 min on login
+- **Type-safe auth** (`apps/backend/src/middleware/auth-types.ts`) — `AuthUser` interface, `getAuthUser()`/`setAuthUser()` helpers, `Express.Request` augmentation
+- **Env schema** (`apps/backend/src/config.ts`) — `JWT_EXPIRES_IN`, `REFRESH_TOKEN_EXPIRES_IN_SECONDS`, `GOOGLE_CLIENT_ID/SECRET`, `GITHUB_CLIENT_ID/SECRET`, `AUTH_RATE_LIMIT_*`, `SEED_USER_ID`
+- **App wiring** — auth routes registered before auth middleware (public endpoints); `authenticateOrDev` replaces dev-auth in non-production
+
+**Transition strategy**:
+- Dev: `authenticateOrDev` — if `Authorization: Bearer <token>` present, real JWT; otherwise dev-auth seed user
+- Production: `authenticate` mandatory — all routes require valid JWT
+
+**Tasks expected** (remaining — Workstream D):
 
 1. **User entity** — extend existing `User` aggregate with password hashing
    - `bcrypt` for password storage (cost factor 12)
@@ -391,6 +414,8 @@ Implementation (2026-08-01, branch `dev`):
    - `QueueHealthMonitor` alerts (already built in Phase 2)
    - Structured logging (already built with pino)
 
+**DDD Drift Risk**: 🟢 **NEGLIGIBLE** — Phase 9 is 100% infrastructure code (Dockerfile, railway.json, CI YAML). Zero domain or application code changes. No DDD rules at risk.
+
 **Exit criteria**:
 
 - `railway up` deploys successfully
@@ -434,6 +459,15 @@ Implementation (2026-08-01, branch `dev`):
 6. **CI enforcement** — quality gates
    - Tests must pass for PR merge
    - Coverage threshold: 60% domain, 40% infra, 30% API (minimums)
+
+**DDD Drift Risk**: 🟡 **MODERATE** — 4 specific risks introduced by test code:
+
+| # | Risk | CLAUDE.md Rule | Prevention |
+|---|------|---------------|------------|
+| 1 | `new Session(...)` instead of `Session.create()/reconstitute()` | Rule 6 | Acceptation criteria: every test that creates an aggregate MUST use the canonical factory |
+| 2 | `(session as any)._status` in test assertions | Rule 1 | Use public getters (`session.status`, `session.version`); never cast to access private fields |
+| 3 | `throw new Error()` in test fixtures | Rule 3 | Test fixtures that create domain objects must use DomainError subclasses for validation failures |
+| 4 | Asserting invariants via DB query instead of aggregate API | — | `expect(row.status).toBe('completed')` → `expect(session.status).toBe('completed')`; tests verify domain behavior, not database state |
 
 **Exit criteria**:
 
@@ -479,6 +513,21 @@ Implementation (2026-08-01, branch `dev`):
    - `MembershipAccepted` → award points
    - `MessageAdded` → award points
    - Use BullMQ for async gamification processing (don't block main flow)
+
+**DDD Drift Risk**: 🔴 **HIGH** — Phase 11 is a full new bounded context (~25 domain files, 2 aggregates, 9 VOs, 2 domain services, event-driven cross-context wiring). 8 specific risks, 3 at high probability:
+
+| # | Risk | CLAUDE.md Rule | Prevention |
+|---|------|---------------|------------|
+| 1 | 9 Value Objects created as `type` aliases instead of classes | Rule 4 | Every VO (ChallengeStatus, SeasonId, BadgeKey, XP, Level, Streak) must be a class with `private constructor`, `static from()`, `equals()`. No exception — identity context already demonstrates this pattern. |
+| 2 | `XPCalculator`/`AchievementEvaluator` throwing `new Error()` | Rule 3 | All game logic errors must extend `DomainError`: `MaxLevelReachedError`, `BadgeAlreadyUnlockedError`, `InvalidXPValueError`, etc. |
+| 3 | Event handler bypassing aggregate: `playerProfile.xp += 50` directly in worker | Rule 1 | Mutations must go through `playerProfile.addXP(50, 'SessionCompleted')` — the aggregate handles level-up, streak update, badge check internally |
+| 4 | `PlayerProfileRepository.save()` with leaderboard/notification side-effects | Rule 5 | `save()` persists only `player_profiles` + `achievements` tables. Leaderboard projections and notifications are separate methods or separate workers |
+| 5 | `PlayerProfile.init()` or `Achievement.unlock()` instead of `create()` | Rule 6 | Aggregate roots: `PlayerProfile.create(userId)`, `WorkspaceChallenge.create(workspaceId, seasonId)`. Child entity: `Achievement.create(badgeKey, playerId)` |
+| 6 | Bare `Error` for game rules: "Already max level", "Streak already claimed" | Rule 3 | Dedicated error classes: `MaxLevelReachedError`, `StreakAlreadyClaimedError`, `InsufficientXPError` |
+| 7 | `AchievementEvaluator` reading `(session as any)._status` for cross-context checks | Rule 1 | Cross-context access uses only public API: `sessionRepository.findById()` → `session.status` (getter). Never access private fields of other aggregates |
+| 8 | Event types as string literals without importing from source context | — | `PlayerProfile` should reference `SessionCompleted` event type from `packages/domain/src/generation/domain-events/` — not redefine `eventType: 'SessionCompleted'` as a bare string |
+
+**Recommended guardrail**: pre-commit checklist for every new file under `packages/domain/src/gamification/` — verify against all 6 CLAUDE.md Domain Design Rules before merge.
 
 **Exit criteria**:
 
@@ -530,7 +579,7 @@ Implementation (2026-08-01, branch `dev`):
 
 - [[API Contract Baseline v1]]
 - [[Quality Gate Matrix]]
-- [[Definition of Done]]
+- [[Quality Gate Matrix]]
 - [[CI-CD Promotion Policy]]
 - [[Session Machine (XState v5)]]
 - [[BullMQ Worker Wiring]]

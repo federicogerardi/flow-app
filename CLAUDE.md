@@ -267,6 +267,281 @@ Example:
 
 **Enforcement**: if any leak is found during a wiki write, fix it immediately before committing. A single leak in `Wiki/` or repo is a blocking issue.
 
+---
+
+## Domain Design Rules
+
+These rules enforce DDD tactical patterns discovered from governance audits (Phase 0–8). Violations introduce technical debt that compounds across bounded contexts. Apply on every domain/application code write.
+
+### 1 — No `as any` to access private fields in domain aggregates
+
+**Pattern**: aggregate roots that use `(entity as any)._privateField` to mutate child entities violate the encapsulation contract. Child entities must expose explicit delegation methods — even if package-private visibility isn't available in TypeScript, use a clearly named internal setter.
+
+```typescript
+// ❌ VIOLATION — Workspace.transferOwnership()
+(newOwner as any)._role = 'owner';
+
+// ✅ CORRECT — Add explicit delegation on WorkspaceMembership
+// In WorkspaceMembership:
+_setRoleAsOwner(): void { this._role = 'owner'; }
+// In Workspace.transferOwnership():
+newOwner._setRoleAsOwner();
+```
+
+**Checklist before writing domain mutation code:**
+- [ ] No `as any` cast on `this` or any entity private field
+- [ ] Child entity exposes a named method for every mutation the aggregate root needs
+- [ ] Field remains `private` (not `public` or `protected`)
+
+### 2 — Zero external validation libraries in `packages/domain`
+
+**Pattern**: importing `zod`, `class-validator`, `yup`, or any validation framework into the domain layer couples the domain to infrastructure. Value Objects must validate inline using plain TypeScript.
+
+```typescript
+// ❌ VIOLATION — Email.ts
+import { z } from 'zod';
+const schema = z.string().email();
+static create(raw: string): Email { ... schema.safeParse(raw) ... }
+
+// ✅ CORRECT — Inline validation
+static create(raw: string): Email {
+  const normalized = raw.trim().toLowerCase();
+  if (!normalized.includes('@') || normalized.length > 255) {
+    throw new InvalidEmailError(raw);
+  }
+  return new Email(normalized);
+}
+```
+
+**Checklist before writing domain code:**
+- [ ] No `import` from `zod` anywhere under `packages/domain/src/`
+- [ ] No `import` from any validation library in domain files
+- [ ] Validation logic lives in the value object's `static create()` or `private constructor()`
+- [ ] Complex validation extracted to a pure function in `packages/domain/src/shared/`
+
+### 3 — Every domain and application error must extend `DomainError`
+
+**Pattern**: `throw new Error(...)` in domain aggregates, value objects, or application use cases bypasses the `ErrorMapper → HTTP status` pipeline. All errors that reach the API layer MUST be `DomainError` subclasses with `code` and `retryable`.
+
+```typescript
+// ❌ VIOLATION — use case
+throw new Error('Workspace not found');
+
+// ❌ VIOLATION — aggregate
+export class InvalidSessionStateError extends Error { ... }
+
+// ✅ CORRECT
+export class WorkspaceNotFoundError extends DomainError {
+  readonly code = 'WORKSPACE_NOT_FOUND';
+  readonly retryable = false;
+  constructor(id: string) { super(`Workspace ${id} not found`); }
+}
+```
+
+**Checklist before writing domain/application code:**
+- [ ] No `throw new Error(` anywhere in `packages/domain/src/`
+- [ ] No `throw new Error(` anywhere in `apps/backend/src/application/`
+- [ ] Every custom error class extends `DomainError` (not plain `Error`)
+- [ ] Every error has an explicit `code` matching a case in `ErrorMapper.toHttpStatus()`
+
+### 4 — Value Objects with constrained domains must be classes, not type aliases
+
+**Pattern**: `type SessionStatus = 'a' | 'b' | 'c'` provides zero runtime validation and zero behavior (no `isTerminal()`, no `canTransitionTo()`). If a value has a finite set of valid states or requires validation, it MUST be a class with `private constructor`, `static` factory, and `equals()`.
+
+```typescript
+// ❌ VIOLATION — bare type alias
+export type MembershipRole = 'owner' | 'editor' | 'viewer';
+
+// ✅ CORRECT — class value object
+export class MembershipRole {
+  private constructor(private readonly _value: 'owner' | 'editor' | 'viewer') {}
+  static readonly Owner = new MembershipRole('owner');
+  static readonly Editor = new MembershipRole('editor');
+  static readonly Viewer = new MembershipRole('viewer');
+  static from(value: string): MembershipRole { /* switch with throw */ }
+  equals(other: MembershipRole): boolean { return this._value === other._value; }
+  toString(): string { return this._value; }
+}
+```
+
+**Exceptions**: open-ended strings (e.g., `ToolKey` for tool identifiers that may grow unbounded) or truly unconstrained values may remain as type aliases. Document the reason in a comment.
+
+**Checklist before writing domain code:**
+- [ ] Every value with a finite set of valid states is a class, not a type alias
+- [ ] Class has `private constructor` (no `new` from outside)
+- [ ] Class has `static` factory or `static readonly` instances
+- [ ] Class has `equals(other: T): boolean`
+
+### 5 — Repository `save()` persists ONLY the aggregate root and its owned entities
+
+**Pattern**: `SessionRepository.save()` inserting into `idempotency_keys` is a side-effect hidden behind a generic method name. Cross-table operations that are not part of the aggregate's owned entity graph must be separate, explicitly-named methods.
+
+```typescript
+// ❌ VIOLATION — save() does two unrelated things
+async save(session: Session): Promise<void> {
+  await this.db.insertInto('sessions').values(...).execute();
+  await this.db.insertInto('idempotency_keys').values(...).execute(); // ← side-effect
+}
+
+// ✅ CORRECT — separate methods
+async save(session: Session): Promise<void> { /* sessions table only */ }
+async saveIdempotencyKey(hash: string, sessionId: string): Promise<void> { /* idempotency_keys table */ }
+```
+
+**Checklist before writing repository code:**
+- [ ] `save()` method touches ONLY the aggregate root table + owned entity tables (1:N within the aggregate boundary)
+- [ ] Cross-cutting tables (idempotency, events, audit logs) have their own dedicated methods
+- [ ] Method name clearly communicates what is being persisted
+
+### 6 — Factory methods follow canonical naming
+
+**Pattern**: inconsistent factory naming across aggregates — `Session.create()`, `Conversation.start()`, `Message.user()/agent()/system()`. Use `create()` for all aggregate root instantiation from business input.
+
+| Entity type | Factory method | Purpose |
+|-------------|---------------|---------|
+| Aggregate root | `static create(...)` | New entity from business input (generates ID) |
+| Aggregate root | `static reconstitute(...)` | Hydration from persistence (takes existing ID) |
+| Child entity (role-specific) | `static user(...)`, `static agent(...)` | Specialized factory with role-dependent defaults |
+
+**Checklist before writing domain code:**
+- [ ] Every aggregate root has exactly one `static create()` and one `static reconstitute()`
+- [ ] No custom factory names on aggregate roots (no `start()`, `begin()`, `init()`)
+- [ ] `reconstitute()` accepts all fields verbatim (no validation, no defaults) — the database is the source of truth
+
+---
+
+## Wiki Content Rules
+
+These rules prevent the structural anti-patterns discovered during wiki health audits (2026-08-02). They complement the Consistency Enforcement Rules above and apply to every wiki write operation.
+
+### 9 — No split-page syndrome (one topic, one page)
+
+**Pattern**: three or more pages explaining the same concept from slightly different angles (e.g., `IdempotencyKey` + `Idempotency Implementation` + `IdempotencyKey + Prompt Version` — same hash algorithm, same format, same persistence logic across three pages).
+
+**Rule**: if a topic already has two dedicated wiki pages, do not create a third. Extend the most authoritative existing page instead. A concept can have at most **2 pages**: one domain/concept page and one UX/implementation page. Three pages on the same topic is always a split-page syndrome.
+
+```markdown
+# ❌ VIOLATION — three pages on the same idempotency concept
+Wiki/concepts/IdempotencyKey.md             # Key format
+Wiki/concepts/Idempotency Implementation.md  # Redis/DB details
+Wiki/concepts/IdempotencyKey + Prompt Version.md  # Version-hash interaction
+
+# ✅ CORRECT — one authoritative page, optional UX companion
+Wiki/concepts/Idempotency.md                # Key format + implementation + version interaction
+Wiki/concepts/Idempotency UX.md             # Optional: UI patterns only
+```
+
+**Checklist before creating a new concept page:**
+- [ ] Run `qmd query "<topic>" --no-rerank` to find existing pages on the same topic
+- [ ] If 2+ pages already exist, extend the best one — do not create a third
+- [ ] If creating a UX companion page, it must contain ONLY UI/design content, not re-explain the domain concept
+
+### 10 — No stub proliferation (pages <50 lines must justify existence)
+
+**Pattern**: 30-line pages with 12 lines of frontmatter, 3 source links, and 4 bullet points of body text. These add index entries and graph complexity without providing value.
+
+**Rule**: a wiki page under 50 lines of body content (excluding frontmatter) must pass the "section test" — could this content live as a `## Section` inside an existing parent page? If yes, merge it.
+
+```markdown
+# ❌ VIOLATION — 32-line page that could be a section
+Wiki/concepts/Token Budget Control.md       # 4 bullet points, 3 source links
+Wiki/concepts/Identity & Access.md          # 10 lines of body content
+
+# ✅ CORRECT — absorbed into parent pages
+Wiki/concepts/LLM Gateway - OpenRouter.md   # Added "## Token Budget" section
+Wiki/concepts/Auth Dependencies.md          # Absorbed Identity & Access content
+```
+
+**Checklist before creating a page <50 lines:**
+- [ ] Can this content live as a `## Section` in an existing page? If yes, add it there.
+- [ ] If it must be standalone, does it answer a question no other page answers? If not, merge.
+- [ ] Does the page have at least 3 unique, non-boilerplate paragraphs? If not, merge.
+
+**Exception**: entity pages (type: entity) may be concise by nature — they describe a single aggregate/entity and link to sources. The 50-line threshold applies to concept and synthesis pages only.
+
+### 11 — Synthesis pages must be referenced (no isolated analysis)
+
+**Pattern**: a synthesis page with 18 outgoing links but only 1 inbound link. It's well-informed (reads everything) but invisible to the graph (nobody reads it back). This defeats the purpose — the wiki compounds when synthesis feeds back into the concepts it analyzes.
+
+**Rule**: every synthesis page must have at least 3 inbound links from the concept/entity pages it references. After writing a synthesis, update the `## Sources` pages to link back to the synthesis.
+
+```markdown
+# ❌ VIOLATION — invisible synthesis
+synthesis/gamification-proposal.md          # 1 inbound link, 16 outgoing
+# No concept page links back to it. The analysis is wasted.
+
+# ✅ CORRECT — bidirectional graph
+synthesis/gamification-proposal.md          # 5+ inbound links
+concepts/Gamification.md                    # Sources section includes [[gamification-proposal]]
+concepts/Achievements & Badges.md           # Sources section includes [[gamification-proposal]]
+```
+
+**Checklist after writing a synthesis page:**
+- [ ] Identify the 3 most relevant concept pages the synthesis analyzes
+- [ ] Add `[[synthesis/page-name]]` to the `## Sources` section of each
+- [ ] The synthesis should appear in the "Referenced By" section of at least 3 pages
+
+### 12 — Cross-references must add information, not duplicate it
+
+**Pattern**: pages that cross-reference each other redundantly (A describes X, B also describes X and links to A, C also describes X and links to B). The cross-references create an illusion of structure while the content is triplicated.
+
+**Rule**: when page A links to page B, the content in A must NOT re-explain what B already covers. A should say "see [[B]] for X" and move on. If A needs to explain X, X should only live in A — and B should not duplicate it.
+
+```markdown
+# ❌ VIOLATION — gamification roles defined in 3 pages
+concepts/Gamification.md            # Defines XP triggers + badges
+concepts/Workspace Gamification.md  # Re-defines XP triggers + badges
+concepts/Gamification UX.md         # Re-defines XP triggers + UI
+
+# ✅ CORRECT — single source of truth per concept
+concepts/Gamification.md            # Authoritative: XP triggers, badges, seasons
+concepts/Gamification UX.md         # UI patterns only — "XP triggers: see [[Gamification#XP System]]"
+```
+
+**Checklist before adding a cross-reference:**
+- [ ] Does the linked page already explain this concept? If yes, reference it — don't re-explain.
+- [ ] Does this page contain original information NOT in the linked page? If not, the cross-reference should replace the duplicate content.
+- [ ] For every `[[link]]` in a page, verify the linked page is the authoritative source for that concept. If multiple pages claim authority, consolidate.
+
+### 13 — Reference-only pages must have a parent concept
+
+**Pattern**: catalog pages (SQL DDL, CSS tokens, component inventories, API route tables) that exist as standalone references with no concept page explaining WHY the reference exists and HOW to use it.
+
+**Rule**: every reference-only page (catalog, token list, enumeration) must be linked from at least one concept page that provides context and usage guidance. The reference page answers "what"; the concept page answers "why and how."
+
+```markdown
+# ❌ VIOLATION — orphan reference page
+concepts/Domain Events Catalog.md          # 40+ events, no context page links to it directly
+
+# ✅ CORRECT — reference with parent concept
+concepts/Domain Events.md                  # Explains pattern, architecture, usage
+concepts/Domain Events Catalog.md          # Linked from Domain Events: "See [[Domain Events Catalog]] for full index"
+```
+
+### 14 — Verify code exists before documenting it
+
+**Pattern**: wiki pages describing domain entities, value objects, or API endpoints that do not exist in the codebase. The wiki claims implementation but the code doesn't deliver.
+
+**Rule**: before marking a wiki page as "implemented" or listing a file in a structure tree, verify the corresponding code file exists. If code doesn't exist, mark the wiki section as `> **Planned** — not yet implemented.`
+
+```markdown
+# ❌ VIOLATION — wiki claims code that doesn't exist
+packages-domain Structure.md:
+│   ├── usage/                    # ❌ Directory does not exist in code
+│   │   ├── entities/Quota.ts     # ❌ File does not exist
+
+# ✅ CORRECT — wiki reflects reality
+> **Implementation note**: The `usage/` bounded context is planned. DB migrations exist (005)
+> but domain code is not yet implemented. See [[implementation-roadmap-2026-08-01|Phase plan]].
+```
+
+**Checklist before documenting implementation status:**
+- [ ] Verify the claimed file/directory exists at the path described
+- [ ] If code doesn't exist, use `> **Planned**` or `🔴 Planned` markers, never `✅`
+- [ ] Run `scripts/wiki-lint.py` after any status change — it catches broken wikilinks to non-existent pages
+
+---
+
 ### Tools
 
 - **Obsidian CLI**: `obsidian read file="..."`, `obsidian search query="..."`, etc. (symlinked to `~/.local/bin/obsidian`)

@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/governance
   - wiki/quality
-date_updated: 2026-08-01
+date_updated: 2026-08-02
 source_count: 7
 confidence: high
 ---
@@ -63,22 +63,50 @@ Promotion requires:
 
 See [[Frontend Error Observability]].
 
-## Evidence Template
+## Definition of Done
 
-Each release candidate must attach:
+Feature completion requires passing ALL mandatory gates below. The matrix thresholds above supply the numerical values; this section defines the scope and enforcement rules.
 
-1. CI run URL.
-2. OpenAPI diff summary.
-3. Security scan summary.
-4. Smoke test report.
-5. Rollback plan owner.
+### PR Acceptance Checklist
+
+Before merge, the PR must include explicit confirmation of:
+
+1. Scope and impacted contexts.
+2. Test evidence (commands and result summary).
+3. Contract impact (`none` or linked OpenAPI diff).
+4. Security impact (`none` or mitigation details).
+5. Rollback notes for risky changes.
+
+### Coverage Rules
+
+- New business logic requires tests for happy path and at least one failure path.
+- Every new API write endpoint (`POST`, `PUT`, `DELETE`) must include success response schema, non-2xx error schema, and retry/idempotency semantics.
+- Frontend state-machine changes require transition tests for updated states and guards.
+
+### Release Readiness Extension
+
+For production promotion, the DoD extends with:
+
+- staging verification completed,
+- health and readiness checks green,
+- error rate and latency within SLO guardrails,
+- rollback path confirmed.
+
+This aligns feature completion with the promotion gates in [[CI-CD Promotion Policy]].
+
+### Non-Compliance Handling
+
+- If any mandatory gate fails, the feature is not considered done.
+- Emergency bypass is allowed only with documented owner, risk, and follow-up deadline.
+- Repeated bypasses are tracked as governance debt and reviewed monthly.
 
 ## Sources
 
-- [[Definition of Done]]
+- Quality Gate Matrix (incorporates Definition of Done)
 - [[Testing Strategy]]
 - [[Secure SDLC Controls]]
 - [[API Documentation - OpenAPI]]
 - [[CI-CD Promotion Policy]]
 - [[API SLO Catalog]]
 - [[Frontend Error Observability]]
+- [[Git Governance Policy]]

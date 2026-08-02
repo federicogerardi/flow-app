@@ -20,7 +20,7 @@ Coherence lint after operational-go remediation, with two layers:
    - [[API Documentation - OpenAPI]]
    - [[Contracts Package]]
    - [[Error Mapping (Domain to HTTP)]]
-   - [[Idempotency Implementation]]
+   - [[Idempotency]]
 
 ## Results
 
@@ -88,5 +88,5 @@ To reduce ambiguity between `draft` and `queued`, the following clarifications w
 - [[API Documentation - OpenAPI]]
 - [[Contracts Package]]
 - [[Error Mapping (Domain to HTTP)]]
-- [[Idempotency Implementation]]
+- [[Idempotency]]
 - [[Session List - Live Status]]

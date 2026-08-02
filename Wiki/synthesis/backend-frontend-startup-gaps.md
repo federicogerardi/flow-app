@@ -86,7 +86,7 @@ What's missing is the **infrastructure, API, and UI layer** — everything neede
 
 #### B5: Idempotency Algorithm
 
-**Status**: ✅ Done — see [[Idempotency Implementation]]  
+**Status**: ✅ Done — see [[Idempotency]]  
 **Why needed**: Atomic claim mechanism.
 
 **Output**: Redis `SET NX` + PostgreSQL `INSERT ON CONFLICT DO NOTHING`, TTL cleanup, integrated into StartSessionUseCase

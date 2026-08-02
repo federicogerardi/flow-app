@@ -3,13 +3,15 @@ type: entity
 tags:
   - wiki/entity
   - wiki/generation
-date_updated: 2026-07-31
-source_count: 4
+date_updated: 2026-08-02
+source_count: 5
 ---
 
 # Artifact
 
 > Entity — owned by [[Session]] aggregate in [[Content Generation]] context
+>
+> **⚠️ Implementation status (2026-08-02):** The lifecycle methods (`startGeneration`, `complete`, `fail`) shown below are aspirational — the current Artifact entity has no transition guards. `static create()` hardcodes status `'completed'` and accepts `string`/`number` instead of branded VOs. `ArtifactId`, `StepNumber`, `ArtifactContent` VOs exist as classes but are not used in the current `create()` signature.
 
 ## Definition
 
@@ -44,19 +46,23 @@ pending → generating → completed
 
 ## Value Objects
 
-| VO | Type | Description |
-|----|------|-------------|
-| `ArtifactId` | Identifier | Unique within Session |
-| `StepNumber` | int ≥ 1 | Position in the tool's step sequence |
-| `ArtifactContent` | Immutable string | The generated output |
-| `ArtifactStatus` | Enum | `pending` \| `generating` \| `completed` \| `failed` |
+| VO | Code type | Description |
+|----|-----------|-------------|
+| `ArtifactId` | `string` | Unique identifier (class exists but not used as constructor param) |
+| `StepNumber` | `number` | Position in the tool's step sequence |
+| `ArtifactContent` | `string` | The generated output |
+| `ArtifactStatus` | `type` alias: `'pending' \| 'generating' \| 'completed' \| 'failed'` | Lifecycle state |
 
 ## Factory Method
 
 ```typescript
-// Domain: no role argument — role is positional
-static create(stepNumber: StepNumber, content: ArtifactContent): Artifact
+// Actual code signature
+static create(sessionId: string, stepNumber: number, content: string): Artifact {
+  return new Artifact(randomUUID(), sessionId, stepNumber, content, 'completed', new Date());
+}
 ```
+
+> **Note**: `artifactId` in the API response is the `id` field — serialized as `artifactId` for legacy compatibility with frontend code.
 
 ## Status Transitions
 

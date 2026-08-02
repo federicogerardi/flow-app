@@ -1,5 +1,5 @@
 export { Message } from './entities/Message';
-export { Conversation, ConversationArchivedError, ConversationAlreadyArchivedError } from './entities/Conversation';
+export { Conversation, ConversationArchivedError, ConversationAlreadyArchivedError, ConversationNotFoundError, NotConversationParticipantError } from './entities/Conversation';
 export type { AgentKey } from './value-objects/AgentKey';
 export type { MessageRole } from './value-objects/MessageRole';
 export type { ConversationStatus } from './value-objects/ConversationStatus';

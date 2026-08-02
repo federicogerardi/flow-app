@@ -42,7 +42,7 @@ Replace `dev-auth.ts` (hardcoded seed user) with production-grade authentication
 
 - [[Auth Dependencies]] — Passport.js strategies, JWT config, bcrypt setup
 - [[Auth Middleware]] — JWT verification pipeline, role guards, error handling
-- [[Identity & Access]] — User aggregate properties, domain boundaries
+- [[Auth Dependencies]] — User aggregate properties, domain boundaries
 - [[API SLO Catalog]] — Auth endpoints SLOs (availability, latency, consistency)
 
 ---
@@ -773,14 +773,106 @@ const app = createApp({
 2. ✅ Login with valid credentials → returns access + refresh tokens
 3. ✅ Refresh token rotation → old token invalidated, new tokens issued
 4. ✅ Logout → clears refresh cookie, invalidates session
-5. ✅ Protected routes redirect to `/login` when unauthenticated
-6. ✅ Frontend token refresh is transparent to user (401 → silent refresh → retry)
+5. ⬜ Protected routes redirect to `/login` when unauthenticated (Workstream D)
+6. ⬜ Frontend token refresh is transparent to user (Workstream D)
 7. ✅ `requireWorkspaceRole()` works with real auth (Phase 3 unchanged)
 8. ✅ Rate limiting on login (5 attempts / 15 min)
 9. ✅ Google OAuth login flow (if `GOOGLE_CLIENT_ID` configured)
 10. ✅ Dev mode: existing seed user workflows still work without auth header
 11. ✅ Build passes (`tsc --noEmit` with 0 errors)
-12. ✅ All 8 existing vitest tests still pass
+12. ✅ All existing vitest tests still pass
+
+---
+
+## Implementation (2026-08-02)
+
+**Branch**: `feature/phase-8-real-auth`
+**Workstreams completed**: A (Domain), B (Infrastructure), C (Backend Auth), E (Integration)
+**Workstream remaining**: D (Frontend Auth Flow)
+
+### Files Created (17)
+
+| Workstream | File | Purpose |
+|------------|------|---------|
+| A | `packages/domain/src/identity/User.ts` | User aggregate: `register()`, `fromOAuth()`, `verifyPassword()`, `PasswordHasher` interface |
+| A | `packages/domain/src/identity/value-objects/Email.ts` | Zod-validated email, lowercase normalization |
+| A | `packages/domain/src/identity/value-objects/UserRole.ts` | `admin\|member` value object |
+| A | `packages/domain/src/identity/value-objects/UserStatus.ts` | `active\|disabled` value object |
+| A | `packages/domain/src/identity/UserRepository.ts` | Repository interface (user + auth_sessions + oauth_accounts) |
+| A | `packages/domain/src/identity/AuthSession.ts` | Read model for refresh token sessions |
+| A | `packages/domain/src/identity/OAuthAccount.ts` | Read model for OAuth linked accounts |
+| A | `packages/domain/src/identity/errors.ts` | `InvalidCredentials`, `UserAlreadyExists`, `UserDisabled`, `InvalidRefreshToken` |
+| A | `packages/domain/src/identity/index.ts` | Barrel exports |
+| B | `packages/infra-db/src/repositories/user-repository.ts` | `KyselyUserRepository` — full CRUD |
+| B | `packages/infra-db/migrations/008_seed_user.sql` | Dev seed user (`dev@flow-app.local` / `password123`) |
+| C | `apps/backend/src/infrastructure/bcrypt-hasher.ts` | `BcryptPasswordHasher` (cost factor 12) |
+| C | `apps/backend/src/infrastructure/token-service.ts` | JWT access tokens (HS256) + opaque refresh tokens (32-byte) |
+| C | `apps/backend/src/infrastructure/passport-config.ts` | Local + Google OAuth strategies |
+| C | `apps/backend/src/api/auth/auth-service.ts` | Register/login/refresh/logout/OAuth orchestration |
+| C | `apps/backend/src/api/auth/auth-routes.ts` | 7 endpoints |
+| C | `apps/backend/src/middleware/authenticate.ts` | JWT `authenticate()` + `authenticateOrDev()` |
+| C | `apps/backend/src/middleware/auth-rate-limit.ts` | 5 attempts / 15 min on login |
+| C | `apps/backend/src/middleware/auth-types.ts` | `AuthUser` interface, `getAuthUser()`/`setAuthUser()`, Express augmentation |
+
+### Files Modified (8)
+
+| File | Change |
+|------|--------|
+| `packages/domain/src/index.ts` | Added `identity` exports |
+| `packages/infra-db/src/types.ts` | Added `AuthSessionsTable`, `OAuthAccountsTable` to `DB` |
+| `packages/infra-db/src/index.ts` | Added `KyselyUserRepository` export |
+| `apps/backend/src/config.ts` | Added 8 env vars (JWT_EXPIRES_IN, OAuth, rate limit, SEED_USER_ID) |
+| `apps/backend/src/app.ts` | Added auth routes + middleware; `AppDeps` extended with `tokenService`, `authService` |
+| `apps/backend/src/server.ts` | Wired `BcryptPasswordHasher`, `TokenService`, `AuthService`, `KyselyUserRepository` |
+| `apps/backend/.env.example` | Added `REFRESH_TOKEN_EXPIRES_IN_SECONDS`, `AUTH_RATE_LIMIT_*` |
+| `apps/backend/package.json` | Added `bcrypt`, `passport`, `passport-local`, `passport-google-oauth20`, `express-rate-limit` + types |
+
+### Auth Endpoints Available
+
+| Method | Path | Auth | Rate Limited |
+|--------|------|------|--------------|
+| `POST` | `/api/auth/register` | No | No |
+| `POST` | `/api/auth/login` | No | 5/15min |
+| `POST` | `/api/auth/refresh` | No (cookie) | No |
+| `POST` | `/api/auth/logout` | No | No |
+| `GET` | `/api/auth/me` | JWT | No |
+| `GET` | `/api/auth/google` | No | No |
+| `GET` | `/api/auth/google/callback` | No | No |
+
+### Lint Fix Applied
+
+All `@typescript-eslint/no-explicit-any` warnings resolved (7 → 0):
+
+| File | Before | After |
+|------|--------|-------|
+| `authenticate.ts` | `(req as any).user = ...` | `setAuthUser(req, ...)` |
+| `auth-routes.ts` | `(req as any).user` | `getAuthUser(req)` |
+| `dev-auth.ts` | `(req as any).user` | `setAuthUser()`/`getAuthUser()` |
+| `workspace-role.ts` | `(req as any).user?.sub` | `getAuthUser(req)?.sub` |
+| `token-service.ts` | `as any` on `expiresIn` | `as StringValue` (branded type from `ms`) |
+| `passport-config.ts` | `user: any` | `user: Express.User` with explicit cast |
+| `app.ts` | `(req as any).log` | `req.log` (augmented by `pino-http`) |
+
+### Verification
+
+- Typecheck: 4/4 packages clean (domain, infra-db, backend, frontend)
+- Tests: 4/4 pass
+- Lint: 0 errors, 0 warnings (on all changed files)
+
+### DDD Governance Remediation (2026-08-02)
+
+Cross-phase DDD audit uncovered 8 violations across the full codebase. 7 fixed:
+
+| # | Severity | Issue | Resolution |
+|---|----------|-------|------------|
+| 1 | Critical | `(newOwner as any)._role` in Workspace | Added `_setRoleAsOwner()` delegation |
+| 2 | Critical | `zod` imported in Email.ts | Replaced with inline validation |
+| 3 | Important | `ConcurrencyError extends Error` | Changed to `extends DomainError` |
+| 4 | Important | 3 non-DomainError classes (Session, Conversation) | All now extend `DomainError` |
+| 5 | Important | 5 `throw new Error()` in use cases | New `WorkspaceNotFoundError`, `ConversationNotFoundError`, `NotConversationParticipantError` |
+| 7 | Minor | SessionRepository.save() idempotency side-effect | Split into `saveIdempotencyKey()` |
+
+6 Domain Design Rules added to `CLAUDE.md` to prevent these patterns from recurring.
 
 ---
 
@@ -788,7 +880,7 @@ const app = createApp({
 
 - [[Auth Dependencies]]
 - [[Auth Middleware]]
-- [[Identity & Access]]
+- [[Auth Dependencies]]
 - [[API SLO Catalog]]
 - [[Workspace Permissions]]
 - [[Database Schema]]

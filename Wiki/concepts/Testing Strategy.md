@@ -539,8 +539,8 @@ jobs:
       - run: npm ci
       - run: npm test -- --run --coverage
         env:
-          DATABASE_URL: postgresql://postgres:test@localhost:5432/flow_app_test
-          REDIS_URL: redis://localhost:6379
+          DATABASE_URL: <DATABASE_URL>
+          REDIS_URL: <REDIS_URL>
       - uses: actions/upload-artifact@v4
         if: always()
         with:

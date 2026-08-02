@@ -34,7 +34,7 @@ Resolved:
 - **99 links** `[[Wiki/sources/*]]` → `[[sources/*]]` (wrong prefix from doodle migration)
 - **2 links** `[[Wiki/index]]`, `[[Wiki/overview]]` → `[[index]]`, `[[overview]]`
 - **1 typo** `[[Tool as Static Configuration\]]` → `[[Tool as Static Configuration]]` (Markdown table escaping)
-- **2 pages created**: `[[ArtifactContent]]`, `[[IdempotencyKey]]` (value objects mentioned without dedicated page)
+- **2 pages created**: `[[ArtifactContent]]`, `[[Idempotency]]` (value objects mentioned without dedicated page)
 - **6 placeholders** in `schema/config.md` ignored (intentional template)
 
 ### 3. Stale Pages

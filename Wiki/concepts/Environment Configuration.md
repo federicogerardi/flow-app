@@ -116,11 +116,11 @@ NODE_ENV=production
 # apps/backend/.env.example
 
 # Database
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/flow_app
+DATABASE_URL=<DATABASE_URL>
 PG_POOL_MAX=20
 
 # Redis
-REDIS_URL=redis://localhost:6379
+REDIS_URL=<REDIS_URL>
 
 # LLM Gateway
 OPENROUTER_API_KEY=sk-or-v1-your-key-here

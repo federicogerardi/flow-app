@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/architecture
-date_updated: 2026-08-01
+date_updated: 2026-08-02
 source_count: 8
 confidence: high
 ---
@@ -12,7 +12,20 @@ confidence: high
 # UI Component Map
 
 > Complete React/MUI component inventory — props, state bindings, MUI internals  
-> Extends [[Frontend Architecture]] from 17 → 23 → 29 → **37** components (6 UX-v1 + 6 Agent Chat + 8 Gamification additions)  
+> Extends [[Frontend Architecture]] from 17 → 23 → 29 → **37** components (6 UX-v1 + 6 Agent Chat + 8 Gamification additions)
+
+## Implementation Status (2026-08-02)
+
+> 🟡 **8/37 components built (22%)**. Pages exist as monolithic components rather than the layered abstractions specified. Status key: ✅ built, 🟡 partial (inline in page), ⬜ not built.
+
+| Layer | ✅ | 🟡 | ⬜ | Notes |
+|-------|---|-----|-----|-------|
+| Layout | 1 | 0 | 2 | Only AppShell (basic) built |
+| Workspace | 0 | 1 | 3 | SessionList appears inline in DashboardPage |
+| Tool | 0 | 0 | 6 | All 6 tool components deferred |
+| Agent Chat | 0 | 1 | 5 | ConversationPage exists as page, not componentized |
+| Shared | 4 | 0 | 3 | Missing ConfirmDialog, CompletionBanner, QuickGenerateBar |
+| Gamification | 0 | 0 | 8 | All deferred to Phase 11 |  
 > All components are generic (zero tool-specific, zero agent-specific). New agent = zero new component files.
 
 ## Inventory Overview

@@ -21,11 +21,11 @@ Provide one explicit model for branches, pull requests, commit format, and merge
 
 ### Permanent Branches
 
-| Branch | Scopo | Protezione | Push diretto |
-|--------|-------|------------|--------------|
-| `main` | Always releasable, produzione | Status checks + linear history + no force push + no delete | ❌ Solo PR |
-| `staging` | Validation pre-prod, smoke tests | Status checks + no force push + no delete | ❌ Solo PR |
-| `dev` | Fast feedback, sviluppo | Nessuna | ✅ Consentito |
+| Branch | Purpose | Protection | Direct push |
+|--------|---------|------------|-------------|
+| `main` | Always releasable, production | Status checks + linear history + no force push + no delete | ❌ PR only |
+| `staging` | Validation pre-prod, smoke tests | Status checks + no force push + no delete | ❌ PR only |
+| `dev` | Fast feedback, development | None | ✅ Allowed |
 
 ### Temporary Branches
 

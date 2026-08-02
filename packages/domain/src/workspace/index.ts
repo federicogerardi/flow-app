@@ -11,4 +11,5 @@ export {
   CannotRemoveOwnerError,
   NotAnActiveMemberError,
   InvalidMembershipStateError,
+  WorkspaceNotFoundError,
 } from './errors';

@@ -1,4 +1,5 @@
 import type { WorkspaceRepository, MembershipRole } from '@flow-app/domain';
+import { WorkspaceNotFoundError } from '@flow-app/domain';
 
 export interface InviteMemberCommand {
   workspaceId: string;
@@ -19,7 +20,7 @@ export class InviteMemberUseCase {
 
   async execute(cmd: InviteMemberCommand): Promise<InviteMemberResult> {
     const workspace = await this.workspaceRepo.findById(cmd.workspaceId);
-    if (!workspace) throw new Error('Workspace not found');
+    if (!workspace) throw new WorkspaceNotFoundError(cmd.workspaceId);
 
     workspace.inviteMember(cmd.userId, cmd.role, cmd.invitedBy);
     await this.workspaceRepo.save(workspace);

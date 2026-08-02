@@ -69,7 +69,7 @@ interface WorkspaceRepository {
 |-----------|---------|---------|-------------|
 | ← [[Content Generation]] | Domain Event | Async | `SessionCompleted` → promote [[Artifact]] to [[Asset]] |
 | → [[Content Generation]] | Query | Sync | `AssetResolver.resolve()` before generation starts |
-| → [[Identity & Access]] | Shared ID | — | References `UserId` |
+| → [[Auth Dependencies]] | Shared ID | — | References `UserId` |
 
 ## Invariants
 

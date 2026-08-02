@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-07-30
-source_count: 5
+date_updated: 2026-08-02
+source_count: 6
 confidence: high
 ---
 
@@ -390,6 +390,22 @@ export { router as authRouter };
 
 ---
 
+## Bounded Context: Identity & Access
+
+The identity bounded context (`packages/domain/src/identity/`) provides user identity, authentication, and role-based access control. It is a generic subdomain — mostly off-the-shelf patterns (OAuth, JWT, RBAC).
+
+**Aggregate Root**: [[User]] — an authenticated platform user with a role.
+
+**Key concepts**:
+- OAuth (Google, GitHub) + email/password
+- JWT + refresh token session management
+- RBAC: `admin` vs `member`
+- Session listing and revocation
+
+**Cross-context role**: all other contexts reference `UserId` (shared identifier). Identity does not depend on any other context.
+
+---
+
 ## Sources
 
 - [[Auth Middleware]] — JWT middleware and role guards
@@ -397,3 +413,4 @@ export { router as authRouter };
 - [[User]] — Identity & Access aggregate root
 - [[Environment Configuration]] — OAuth env vars
 - [[sources/PRD]] — FR-S01 to FR-S06
+- [[sources/USER-STORIES]] — US-A01 to US-A07

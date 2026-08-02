@@ -11,11 +11,16 @@ import { createGenerationRoutes } from './api/generation.js';
 import { createAdminRoutes } from './api/admin.js';
 import { createWorkspaceRoutes } from './api/workspaces.js';
 import { createAgentChatRoutes } from './api/agent-chat.js';
+import { createAuthRoutes } from './api/auth/auth-routes.js';
 import { devAuthMiddleware } from './middleware/dev-auth.js';
+import { authenticate, authenticateOrDev } from './middleware/authenticate.js';
 import { requireWorkspaceRole } from './middleware/workspace-role.js';
 import type { SessionRepository, WorkspaceRepository, ConversationRepository, PromptComposer, PromptTemplateRepository } from '@flow-app/domain';
 import type { JobEventBridge } from './infrastructure/job-event-bridge.js';
 import type { LlmGateway } from './infrastructure/llm-gateway.js';
+import type { TokenService } from './infrastructure/token-service.js';
+import type { AuthService } from './api/auth/auth-service.js';
+import './middleware/auth-types.js';
 
 export interface AppDeps {
   sessionRepo: SessionRepository;
@@ -27,6 +32,10 @@ export interface AppDeps {
   promptComposer: PromptComposer;
   promptTemplateRepo: PromptTemplateRepository;
   db: Kysely<DB>;
+  tokenService: TokenService;
+  authService: AuthService;
+  authRateLimitWindowMs: number;
+  authRateLimitMaxAttempts: number;
 }
 
 export function createApp(deps: AppDeps) {
@@ -46,13 +55,9 @@ export function createApp(deps: AppDeps) {
   app.use(cookieParser());
   app.use(httpLogger);
   app.use((req, _res, next) => {
-    (req as any).log = logger.child({ reqId: req.id });
+    req.log = logger.child({ reqId: req.id });
     next();
   });
-
-  if (process.env.NODE_ENV !== 'production') {
-    app.use(devAuthMiddleware);
-  }
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -61,6 +66,22 @@ export function createApp(deps: AppDeps) {
   app.get('/api', (_req, res) => {
     res.json({ message: 'Flow App API', version: '0.0.1' });
   });
+
+  // Auth routes (public — before auth middleware)
+  const authRoutes = createAuthRoutes(
+    deps.authService,
+    deps.tokenService,
+    deps.authRateLimitWindowMs,
+    deps.authRateLimitMaxAttempts,
+  );
+  app.use('/api/auth', authRoutes);
+
+  // Auth middleware — everything below requires authentication
+  if (process.env.NODE_ENV === 'production') {
+    app.use(authenticate(deps.tokenService));
+  } else {
+    app.use(authenticateOrDev(deps.tokenService, devAuthMiddleware));
+  }
 
   // Generation routes
   const generationRoutes = createGenerationRoutes(deps.sessionRepo, deps.db);
@@ -72,6 +93,7 @@ export function createApp(deps: AppDeps) {
 
   // Workspace routes
   const workspaceRoutes = createWorkspaceRoutes(deps.workspaceRepo);
+  app.post('/api/workspaces', workspaceRoutes.createWorkspace);
   app.get('/api/workspaces', workspaceRoutes.listWorkspaces);
   app.get('/api/workspaces/:id', requireWorkspaceRole(deps.workspaceRepo, 'owner', 'editor', 'viewer'), workspaceRoutes.getWorkspace);
   app.post('/api/workspaces/:id/invitations', requireWorkspaceRole(deps.workspaceRepo, 'owner'), workspaceRoutes.inviteMember);

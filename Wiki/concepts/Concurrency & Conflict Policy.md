@@ -141,7 +141,7 @@ Worker saves session state via `saveWithLock(session, expectedVersion)` to preve
 
 ## Sources
 
-- [[Idempotency Implementation]]
+- [[Idempotency]]
 - [[API Routes]]
 - [[Error Mapping (Domain to HTTP)]]
 - [[Database Schema]]

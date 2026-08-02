@@ -104,7 +104,7 @@ function validateFile(file: Express.Multer.File): void {
 
 ### 5. Graceful Degradation — Redis Down
 
-**Status**: ✅ Applied — see [[Idempotency Implementation]]  
+**Status**: ✅ Applied — see [[Idempotency]]  
 **Solution**: PostgreSQL fallback for idempotency. Rate limiting disabled. SSE → poll fallback.
 
 **Proposal**: Fail-closed with PostgreSQL fallback where possible.

@@ -4,9 +4,10 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-08-01
+date_updated: 2026-08-02
 source_count: 9
 confidence: high
+maintenance: 2026-08-02 — drift remediation: added Agent Chat tables (conversations, messages), updated ER diagram, updated migration strategy (007, 008), corrected Kysely DB type (only 11/18 tables typed).
 ---
 
 # Database Schema
@@ -118,7 +119,7 @@ CREATE INDEX idx_idempotency_keys_expires_at ON idempotency_keys(expires_at);
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `key_hash` | `VARCHAR(64) PK` | SHA-256 of [[IdempotencyKey]] components |
+| `key_hash` | `VARCHAR(64) PK` | SHA-256 of [[Idempotency]] key components |
 | `expires_at` | `TIMESTAMPTZ` | TTL-based cleanup (e.g. 24h) |
 
 **Usage**: `INSERT INTO idempotency_keys ... ON CONFLICT (key_hash) DO NOTHING RETURNING session_id`. If a row is returned, the key already exists → return existing session.
@@ -382,6 +383,56 @@ CREATE TABLE tool_step_bindings (
 
 ---
 
+## Agent Chat Context (Phase 5)
+
+### `conversations`
+
+```sql
+CREATE TABLE conversations (
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    workspace_id UUID          NOT NULL REFERENCES workspaces(id),
+    user_id      UUID          NOT NULL REFERENCES users(id),
+    agent_key    VARCHAR(50)   NOT NULL,
+    title        VARCHAR(255)  NOT NULL,
+    status       VARCHAR(20)   NOT NULL DEFAULT 'active',
+    created_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_conversations_workspace_id ON conversations(workspace_id);
+CREATE INDEX idx_conversations_user_id      ON conversations(user_id);
+```
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `agent_key` | `VARCHAR(50)` | References one of 7 agent personas (e.g. `strategist`, `copywriter`) |
+| `title` | `VARCHAR(255)` | Auto-generated from first user message |
+| `status` | `VARCHAR(20)` | `active` or `archived` |
+
+### `messages`
+
+```sql
+CREATE TABLE messages (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    conversation_id UUID         NOT NULL REFERENCES conversations(id),
+    role            VARCHAR(10)  NOT NULL,
+    content         TEXT         NOT NULL,
+    tokens_used     INTEGER,
+    model_used      VARCHAR(100),
+    created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_messages_conversation_id ON messages(conversation_id);
+```
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `role` | `VARCHAR(10)` | `user`, `agent`, or `system` |
+| `tokens_used` | `INTEGER` | Total tokens consumed, nullable (user messages don't track) |
+| `model_used` | `VARCHAR(100)` | LLM model ID, nullable |
+
+---
+
 ## Phase 3 — Reliability Schema Extension (Outbox/Inbox)
 
 Current production schema is intentionally lean. For higher reliability in split-service deployments, add the following tables.
@@ -447,6 +498,8 @@ users ───1:N─── workspaces ───1:N─── assets
   │                                        │
   ├──1:N─── quotas ───1:N─── credit_transactions
   │
+  ├──1:N─── conversations ───1:N─── messages
+  │
   ├──1:N─── auth_sessions
   └──1:N─── oauth_accounts
 ```
@@ -457,6 +510,9 @@ users ───1:N─── workspaces ───1:N─── assets
 
 ```typescript
 // packages/infra-db/src/types.ts
+// Note: only 11 of 18 tables have Kysely type definitions.
+// 7 tables have migrations but no types (assets, crawl_data, quotas,
+// credit_transactions, llm_models, api_services, tool_step_bindings).
 
 import type { Generated, ColumnType } from 'kysely';
 
@@ -464,19 +520,14 @@ interface Tables {
   sessions:            SessionsTable;
   artifacts:           ArtifactsTable;
   idempotency_keys:    IdempotencyKeysTable;
-  crawl_data:          CrawlDataTable;
   session_snapshots:   SessionSnapshotsTable;
   workspaces:          WorkspacesTable;
   workspace_memberships: WorkspaceMembershipsTable;
-  assets:              AssetsTable;
   users:               UsersTable;
   auth_sessions:       AuthSessionsTable;
   oauth_accounts:      OauthAccountsTable;
-  quotas:              QuotasTable;
-  credit_transactions: CreditTransactionsTable;
-  llm_models:          LlmModelsTable;
-  api_services:        ApiServicesTable;
-  tool_step_bindings:  ToolStepBindingsTable;
+  conversations:       ConversationsTable;
+  messages:            MessagesTable;
 }
 
 export type DB = Tables;
@@ -521,6 +572,13 @@ CREATE TABLE credit_transactions (...);
 CREATE TABLE llm_models (...);
 CREATE TABLE api_services (...);
 CREATE TABLE tool_step_bindings (...);
+
+-- Migration 007: agent chat (conversations + messages)
+CREATE TABLE conversations (...);
+CREATE TABLE messages (...);
+
+-- Migration 008: seed data (dev user)
+-- No tables created — INSERT only
 ```
 
 ## Sources

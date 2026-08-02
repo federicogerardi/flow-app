@@ -1,4 +1,6 @@
-export class ConcurrencyError extends Error {
+import { DomainError } from './domain-error';
+
+export class ConcurrencyError extends DomainError {
   readonly code = 'CONFLICT';
   readonly retryable = true;
 
@@ -10,6 +12,5 @@ export class ConcurrencyError extends Error {
     super(
       `Resource ${resourceId} modified by another actor (expected v${expectedVersion}, actual v${actualVersion})`,
     );
-    this.name = 'ConcurrencyError';
   }
 }

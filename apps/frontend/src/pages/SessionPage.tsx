@@ -3,6 +3,7 @@ import { useParams } from 'react-router';
 import { useSession } from '../api/hooks';
 import { PageHeader } from '../components/PageHeader';
 import { LoadingSkeleton } from '../components/LoadingSkeleton';
+import { copy } from '@flow-app/copy';
 
 export default function SessionPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -23,7 +24,7 @@ export default function SessionPage() {
       <PageHeader
         title={`Session: ${session.toolKey}`}
         breadcrumbs={[
-          { label: 'Dashboard', path: '/dashboard' },
+          { label: copy.t('workspace.nav.home'), path: '/dashboard' },
           { label: 'Session' },
         ]}
       />
@@ -38,7 +39,7 @@ export default function SessionPage() {
           {session.status === 'running' && progress && (
             <Box sx={{ mb: 2 }}>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                Step {progress.current} of {progress.total}
+                {copy.t('toolPage.progress.stepLabel', { current: String(progress.current), total: String(progress.total) })}
               </Typography>
               <LinearProgress
                 variant="determinate"
@@ -58,10 +59,10 @@ export default function SessionPage() {
         <Card>
           <CardContent>
             <Typography variant="h3" sx={{ mb: 2 }}>
-              Generated Content
+              {copy.t('toolPage.progress.completed')}
             </Typography>
             <Divider sx={{ mb: 2 }} />
-            {session.artifacts.map((artifact: any, i: number) => (
+            {session.artifacts.map((artifact, i: number) => (
               <Box key={artifact.artifactId ?? i} sx={{ mb: 3 }}>
                 <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
                   Step {artifact.stepNumber}

@@ -20,7 +20,7 @@ source_count: 2
 | **Artifact Gate** | Per Artifact | 1000/month | Invisible anti-abuse | No |
 | **Credit Quota** | Per Session | 250/month (free plan) | User consumption | Yes |
 
-I due binari operano indipendentemente: superare il gate blocca TUTTE le generazioni (abuse detection). Esaurire i crediti blocca le generazioni ma l'utente vede quanti crediti ha e quando si resettano.
+The two tracks operate independently: exceeding the artifact gate blocks ALL generations (abuse detection). Exhausting credits blocks generations but the user sees how many credits they have and when they reset.
 
 > **Type-design audit (2026-07-31)**: Fixed `plan` from `readonly` to `private _plan` with getter — `upgradePlan()` needs to mutate it. Added `ReadonlyArray<CreditTransaction>` exposure to prevent external mutation of the transaction log. Added positive-value guard to `addCredits()`. Internal counters (`_artifactLimit`, `_artifactCount`, `_creditLimit`, `_creditConsumed`) remain raw `number` — consider upgrading to `CreditAmount` VO for compile-time non-negative guarantee.
 

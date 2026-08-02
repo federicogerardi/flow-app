@@ -1,5 +1,89 @@
 import type { ApiError } from '@flow-app/contracts';
 
+// ── DTOs (match API response shapes) ─────────────────────────────────────────
+
+export interface SessionDTO {
+  id: string;
+  toolKey: string;
+  workspaceId: string;
+  status: string;
+  currentStepIndex?: number;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  stepCount?: number;
+  createdAt: string;
+  /** Populated via SSE updates after session completion */
+  artifacts?: ArtifactDTO[];
+}
+
+export interface SessionListResponse {
+  data: SessionDTO[];
+  total: number;
+}
+
+export interface ArtifactDTO {
+  id: string;
+  /** Alias for id — used as React key in SessionPage */
+  artifactId?: string;
+  sessionId: string;
+  stepNumber: number;
+  content: string;
+  status: string;
+  createdAt: string | null;
+}
+
+export interface WorkspaceDTO {
+  id: string;
+  name: string;
+  role?: string;
+  createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface MessageDTO {
+  id: string;
+  role: string;
+  content: string;
+  tokensUsed: number;
+  modelUsed: string | null;
+  createdAt: string;
+}
+
+export interface ConversationDTO {
+  id: string;
+  workspaceId: string;
+  agentKey: string;
+  agentName: string;
+  title: string | null;
+  status: string;
+  messages: MessageDTO[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ConversationListItemDTO {
+  id: string;
+  agentKey: string;
+  agentName: string;
+  title: string | null;
+  status: string;
+  messageCount: number;
+  lastMessage: { content: string; role: string; createdAt: string } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AgentDTO {
+  key: string;
+  name: string;
+  role: string;
+  essence: string;
+  capabilities: string[];
+}
+
+// ── API Client ────────────────────────────────────────────────────────────────
+
 export class ApiClientError extends Error {
   constructor(
     public readonly code: string,
@@ -47,16 +131,16 @@ class ApiClient {
   // ── Sessions ─────────────────────────────────────────────────────────────────
 
   async startSession(toolKey: string, body: { workspaceId: string; inputs: Record<string, unknown> }) {
-    return this.request<{ session: any; replayed: boolean }>('POST', `/api/tools/${toolKey}/sessions`, body);
+    return this.request<{ session: SessionDTO; replayed: boolean }>('POST', `/api/tools/${toolKey}/sessions`, body);
   }
 
   async getSession(sessionId: string) {
-    return this.request<any>('GET', `/api/sessions/${sessionId}`);
+    return this.request<SessionDTO>('GET', `/api/sessions/${sessionId}`);
   }
 
   async listSessions(params?: { workspaceId?: string; status?: string; limit?: number }) {
     const query = new URLSearchParams(params as Record<string, string>).toString();
-    return this.request<{ data: any[]; total: number }>('GET', `/api/sessions?${query}`);
+    return this.request<SessionListResponse>('GET', `/api/sessions?${query}`);
   }
 
   async cancelSession(sessionId: string) {
@@ -66,44 +150,54 @@ class ApiClient {
   // ── Artifacts ────────────────────────────────────────────────────────────────
 
   async getArtifact(artifactId: string) {
-    return this.request<any>('GET', `/api/artifacts/${artifactId}`);
+    return this.request<ArtifactDTO>('GET', `/api/artifacts/${artifactId}`);
   }
 
   // ── Workspaces ───────────────────────────────────────────────────────────────
 
   async listWorkspaces() {
-    const res = await this.request<{ workspaces: any[] }>('GET', '/api/workspaces');
+    const res = await this.request<{ workspaces: WorkspaceDTO[] }>('GET', '/api/workspaces');
     return res.workspaces ?? [];
   }
 
+  async createWorkspace(name: string) {
+    return this.request<WorkspaceDTO>('POST', '/api/workspaces', { name });
+  }
+
   async getWorkspace(workspaceId: string) {
-    return this.request<any>('GET', `/api/workspaces/${workspaceId}`);
+    return this.request<WorkspaceDTO>('GET', `/api/workspaces/${workspaceId}`);
   }
 
   async listWorkspaceMembers(workspaceId: string) {
-    return this.request<any[]>('GET', `/api/workspaces/${workspaceId}/members`);
+    return this.request<{ userId: string; role: string; status: string; joinedAt: string | null }[]>(
+      'GET',
+      `/api/workspaces/${workspaceId}/members`,
+    );
   }
 
   // ── Agent Chat ───────────────────────────────────────────────────────────────
 
-  async listAgents(workspaceId: string) {
-    return this.request<{ agents: any[] }>('GET', `/api/workspaces/${workspaceId}/agents`);
+  async listAgents(_workspaceId: string) {
+    return this.request<{ agents: AgentDTO[] }>('GET', `/api/workspaces/${_workspaceId}/agents`);
   }
 
   async listConversations(workspaceId: string) {
-    return this.request<{ conversations: any[] }>('GET', `/api/workspaces/${workspaceId}/conversations`);
+    return this.request<{ conversations: ConversationListItemDTO[] }>(
+      'GET',
+      `/api/workspaces/${workspaceId}/conversations`,
+    );
   }
 
   async startConversation(workspaceId: string, agentKey: string) {
-    return this.request<any>('POST', `/api/workspaces/${workspaceId}/conversations`, { agentKey });
+    return this.request<ConversationDTO>('POST', `/api/workspaces/${workspaceId}/conversations`, { agentKey });
   }
 
   async getConversation(conversationId: string) {
-    return this.request<any>('GET', `/api/conversations/${conversationId}`);
+    return this.request<ConversationDTO>('GET', `/api/conversations/${conversationId}`);
   }
 
   async sendMessage(conversationId: string, content: string) {
-    return this.request<any>('POST', `/api/conversations/${conversationId}/messages`, { content });
+    return this.request<MessageDTO>('POST', `/api/conversations/${conversationId}/messages`, { content });
   }
 
   async archiveConversation(conversationId: string) {

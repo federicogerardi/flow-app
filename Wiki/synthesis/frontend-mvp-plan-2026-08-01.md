@@ -4,7 +4,7 @@ tags:
   - wiki/synthesis
   - wiki/roadmap
   - wiki/frontend
-date_updated: 2026-08-01
+date_updated: 2026-08-02
 source_count: 9
 parent: synthesis/implementation-roadmap-2026-08-01
 ---
@@ -12,6 +12,24 @@ parent: synthesis/implementation-roadmap-2026-08-01
 # Frontend MVP — Implementation Plan (Phase 7)
 
 > Detailed execution plan for Phase 7 of [[synthesis/implementation-roadmap-2026-08-01]].
+
+## Actual Delivery (2026-08-02)
+
+Phase 7 was implemented on `dev` branch with scope significantly reduced from plan. Key gaps:
+
+| Plan item | Planned | Delivered | Notes |
+|-----------|---------|-----------|-------|
+| WorkspaceDashboard component | ✅ | ❌ | DashboardPage is a page, not workspace-centric |
+| ToolPageLayout | ✅ | ❌ | ToolPage is a basic form, no SetupPanel |
+| WorkspaceCard | ✅ | ❌ | No workspace switcher |
+| AssetList | ✅ | ❌ | Asset management not built |
+| SetupPanel | ✅ | ❌ | Hardcoded "topic" + "language" fields |
+| SessionSummary | ✅ | 🟡 | Inline rendering in SessionPage, no separate component |
+| ConversationPage | ✅ | 🟡 | Page exists but not componentized (no ChatMessageBubble, ChatInput) |
+| TeamHub | — | ❌ | Agent selection not built |
+| XState integration | Deferred | Deferred | useState/useReducer used |
+
+**Root cause**: the 7-step implementation order was followed but stopped at step 4 (add 2 backend endpoints + fix hooks). Steps 5-7 (Dashboard + Workspace components, Tool Page SetupPanel, Session Summary + Agent Chat componentization) were partially completed with monolithic page components instead of layered abstractions. The remaining ~20 components represent 80% of the frontend work still pending.
 
 ## Current State
 

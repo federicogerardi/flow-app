@@ -1,6 +1,6 @@
 import type { Kysely } from 'kysely';
 import type { DB } from '../types';
-import { Workspace, WorkspaceMembership, ConcurrencyError, type WorkspaceRepository } from '@flow-app/domain';
+import { Workspace, WorkspaceMembership, ConcurrencyError, type WorkspaceRepository, type MembershipRole, type MembershipStatus } from '@flow-app/domain';
 
 export class KyselyWorkspaceRepository implements WorkspaceRepository {
   constructor(private readonly db: Kysely<DB>) {}
@@ -31,8 +31,8 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
         WorkspaceMembership.reconstitute(
           m.user_id,
           m.workspace_id,
-          m.role as any,
-          m.status as any,
+          m.role as MembershipRole,
+          m.status as MembershipStatus,
           m.invited_by ?? '',
           m.invited_at ?? new Date(),
           m.joined_at,
@@ -165,8 +165,8 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
     return WorkspaceMembership.reconstitute(
       row.user_id,
       row.workspace_id,
-      row.role as any,
-      row.status as any,
+      row.role as MembershipRole,
+      row.status as MembershipStatus,
       row.invited_by ?? '',
       row.invited_at ?? new Date(),
       row.joined_at,

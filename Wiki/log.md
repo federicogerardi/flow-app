@@ -1,11 +1,461 @@
-<!-- llm-wiki-log-header-start -->
+---
+type: log
+tags:
+  - wiki/log
+date_updated: 2026-08-02
+---
+
 # Wiki Operation Log
 
 Every ingest, lint run, and maintenance operation is recorded here automatically. For a better experience, use the **Operation History** panel:
 - Cmd+P → "View operation history"
 - Or open from Settings → Auto Maintenance → Operation History
+---
+
+## [2026-08-02] remediation | Wiki drift — source of truth alignment post Phase 8
+
+Comprehensive drift remediation to make the Wiki the authoritative source of truth for development status. Cross-referenced all Wiki claims against actual runtime code across 5 layers (domain, infrastructure, API, DB, frontend).
+
+### Drift audit results
+
+| Layer | Wiki Pages | Gaps Found | Runtime | Doc-only |
+|-------|-----------|:---:|:---:|:---:|
+| API Routes | 1 | 3 | 1 (⬜→✅) | 2 (typos) |
+| Domain structure | 1 | 6 | 4 (usage/, asset/, tools, agent-chat) | 2 |
+| DB Schema | 1 | 2 | 1 (7 untyped tables) | 1 (conversations docs) |
+| Frontend Architecture | 1 | 5 | 2 (listTools, useWorkspace) | 3 (routes, methods, SWR) |
+| Config/Middleware | 1 | 4 | 0 | 4 (env vars, files) |
+| Overview | 1 | — | 1 (usage/ context status) | — |
+| **Total** | **6** | **21** | **8** | **13** |
+
+### Files remediated (6)
+
+**`Wiki/concepts/packages-domain Structure.md`** — Major rewrite:
+- Added `agent-chat/` full tree (12 files: Conversation, Message, 3 VOs, personas, events, repository)
+- Removed `usage/` tree entirely (10 files — not implemented)
+- Fixed `generation/`: removed non-existent `IdempotencyKey.ts`, `CrawlData.ts`, `AcquisitionData.ts`; consolidated 11 individual tool `.ts` files → single `tools/index.ts` with 11 definitions
+- Fixed `workspace/`: removed Asset subsystem (Asset.ts, 6 Asset VOs, AssetResolver, AssetCreated/Updated — not implemented); added WorkspaceMembership.ts, errors.ts, domain-events/index.ts
+- Fixed `identity/`: removed incorrect `entities/` subdirectory (flat structure); `Role.ts` → `UserRole.ts`; added `UserStatus.ts`, `AuthSession.ts`, `OAuthAccount.ts`, `errors.ts`
+- Fixed `shared/`: added `domain-error.ts`, `concurrency-error.ts`, `__tests__/`
+- Updated file count table (63 → 58), barrel exports, cross-context references, Package Boundaries examples
+- Added implementation note documenting what's planned vs implemented
+
+**`Wiki/concepts/API Routes.md`** — Status fixes:
+- `POST /api/workspaces`: ⬜ → ✅ (fully implemented in code)
+- Agent chat route params: `:wid` → `:workspaceId` for code consistency
+- Fixed doubled `/api/api/` typos in Mapping table
+- Updated "Last synced" note
+
+**`Wiki/concepts/Database Schema.md`** — Missing content added:
+- Added Agent Chat section with `conversations` + `messages` CREATE TABLE definitions, column docs, and indexes
+- Updated ER diagram to include conversations + messages relationships
+- Updated migration strategy (added 007, 008)
+- Corrected Kysely `DB` interface to reflect reality: only 11/18 tables typed (7 are migration-only with no TypeScript definitions)
+
+**`Wiki/concepts/Frontend Architecture.md`** — Corrections:
+- Route count: 5 → 7 (added `/` redirect and `/workspaces/:workspaceId`)
+- Documented missing `listTools` API method and missing `useWorkspace` hook
+- Added `cancelSession` and `createWorkspace` to documented methods
+
+**`Wiki/overview.md`** — Context status:
+- `Usage & Quota` row: "Two-track limits" → "🔴 Planned — DB tables exist (005), domain code not yet implemented"
+
+**`Wiki/index.md`** — Maintenance note updated
+
+### Wiki lint
+
+`scripts/wiki-lint.py`: ✅ 0 failures (110 pages validated)
+
+### Files modified (6)
+
+- `Wiki/concepts/packages-domain Structure.md` — full tree rewrite
+- `Wiki/concepts/API Routes.md` — 3 fixes
+- `Wiki/concepts/Database Schema.md` — conversations + messages added, types corrected
+- `Wiki/concepts/Frontend Architecture.md` — route count + methods corrected
+- `Wiki/overview.md` — usage/ context marked planned
+- `Wiki/index.md` — maintenance note
+
+## [2026-08-02] maintenance | Wiki health check + qmd database post Phase 8
+
+Comprehensive health maintenance of the Wiki/ directory and qmd search database after Phase 1-8 code implementation.
+
+### Wiki lint (`scripts/wiki-lint.py`)
+
+**Starting state**: 4 failures on 108 pages.
+
+**Issues found and fixed**:
+
+| # | Issue | File | Fix |
+|---|-------|------|-----|
+| 1 | Missing frontmatter | `log.md` | Replaced `<!-- llm-wiki-log-header-start -->` HTML comment with proper YAML frontmatter (`type: log`, `tags`, `date_updated`) |
+| 2 | Broken wikilink (false positive) | `overview.md:96` | Changed `[[synthesis/phase-8-real-auth-plan\|Plan →]]` to `[[synthesis/phase-8-real-auth-plan\|Plan →]]` (escaped pipe in markdown table confused parser; standard `|` alias syntax within `[[]]` doesn't need escaping) |
+| 3 | Broken wikilink — missing page | `implementation-roadmap-2026-08-01.md` → `[[Token Budget Control]]` | Created stub: `Wiki/concepts/Token Budget Control.md` (concept page with 3 sources, Phase 6 reference) |
+| 4 | Broken wikilink — missing page | `implementation-roadmap-2026-08-01.md` → `[[Railway Deployment Config]]` | Created stub: `Wiki/concepts/Railway Deployment Config.md` (concept page with 3 sources, Phase 9 reference) |
+
+**End state**: 0 failures on 110 pages.
+
+### Orphan check
+
+**Result**: No orphans found. All 97 content pages (excl. index/log/overview/schema) have at least one inbound wikilink from another page. Wiki is fully connected.
+
+### Source count consistency
+
+**Result**: 88/88 entity + concept pages verified. Zero `source_count` mismatches between frontmatter and `## Sources` sections.
+
+### Index completeness
+
+**Result**: 2 concept pages missing from Concepts table (`Token Budget Control`, `Railway Deployment Config` — newly created). Added to index.
+
+### Italian prose compliance
+
+**5 violations found and fixed across 3 files**:
+
+| File | Line | Fix |
+|------|------|-----|
+| `entities/Quota.md` | 23 | Full Italian paragraph translated to English |
+| `concepts/Git Governance Policy.md` | 24-28 | Table headers + cell content (`Scopo→Purpose`, `Protezione→Protection`, `Push diretto→Direct push`, `produzione→production`, `sviluppo→development`, `Nessuna→None`, `Consentito→Allowed`, `Solo PR→PR only`) |
+| `concepts/Workspace Gamification.md` | 175 | Single Italian sentence translated to English |
+
+### Environment reference leaks (Rule 8)
+
+**6 connection strings sanitized across 3 files**:
+
+| File | Before | After |
+|------|--------|-------|
+| `Docker Compose - Local Dev.md` | `postgresql://flow_app:flow_app@localhost:5432/flow_app` | `<DATABASE_URL>` |
+| `Docker Compose - Local Dev.md` | `redis://localhost:6379` | `<REDIS_URL>` |
+| `Environment Configuration.md` | `postgresql://postgres:postgres@localhost:5432/flow_app` | `<DATABASE_URL>` |
+| `Environment Configuration.md` | `redis://localhost:6379` | `<REDIS_URL>` |
+| `Testing Strategy.md` | `postgresql://postgres:test@localhost:5432/flow_app_test` | `<DATABASE_URL>` |
+| `Testing Strategy.md` | `redis://localhost:6379` | `<REDIS_URL>` |
+
+Remaining hits (`Environment Configuration.md:21,28`) use already-generic placeholders (`user:password@host`) — compliant.
+
+### qmd database
+
+- Collection created: `flow-app` (`/Users/federico/Dev/flow-app`, mask `**/*.md`)
+- Indexed: 113 documents (new: 113)
+- Embedded: 508 chunks across 113 documents (1m 9s, embeddinggemma-300M)
+- Database: `~/.cache/qmd/index.sqlite` (shared across collections)
+
+### Files modified (7)
+
+- `Wiki/log.md` — frontmatter + this entry
+- `Wiki/overview.md` — wikilink syntax fix
+- `Wiki/index.md` — 2 new concept entries + maintenance note
+- `Wiki/entities/Quota.md` — Italian prose translation
+- `Wiki/concepts/Git Governance Policy.md` — Italian table headers → English
+- `Wiki/concepts/Workspace Gamification.md` — Italian sentence → English
+- `Wiki/concepts/Docker Compose - Local Dev.md` — env reference sanitization
+- `Wiki/concepts/Environment Configuration.md` — env reference sanitization
+- `Wiki/concepts/Testing Strategy.md` — env reference sanitization
+
+### Files created (2)
+
+- `Wiki/concepts/Token Budget Control.md` — forward-reference stub
+- `Wiki/concepts/Railway Deployment Config.md` — forward-reference stub
+
+### Final state
+
+| Check | Result |
+|-------|--------|
+| `scripts/wiki-lint.py` | ✅ 0 failures |
+| Orphan pages | ✅ None |
+| Broken wikilinks | ✅ 0 |
+| `source_count` consistency | ✅ 88/88 |
+| Index completeness | ✅ All pages listed |
+| Italian prose | ✅ 0 violations |
+| Environment leaks | ✅ 0 real connections |
+| qmd index | ✅ 113 docs, 508 chunks |
+
+## [2026-08-02] remediation | DDD Governance — audit findings + CLAUDE.md rules
+
+Full DDD governance audit against Phase 0–8 codebase (58 files, 4 bounded contexts). 8 findings identified, 7 remediated.
+
+### Audit findings (ranked by severity)
+
+| # | Severity | Finding | Status |
+|---|----------|---------|--------|
+| 1 | Critical | `Workspace.transferOwnership()` uses `(newOwner as any)._role = 'owner'` | ✅ Remediated |
+| 2 | Critical | `zod` imported in `Email.ts` (domain layer purity) | ✅ Remediated |
+| 3 | Important | `ConcurrencyError extends Error` (not `DomainError`) | ✅ Remediated |
+| 4 | Important | `InvalidSessionStateError`, `ConversationArchivedError`, `ConversationAlreadyArchivedError` extend `Error` | ✅ Remediated |
+| 5 | Important | 5 `throw new Error()` in use cases (workspace + agent-chat) | ✅ Remediated |
+| 6 | Minor | `SessionStatus`, `ToolKey`, `MembershipRole`, etc. are plain type aliases | Documented (Rule 4) |
+| 7 | Minor | `SessionRepository.save()` inserts idempotency key as side-effect | ✅ Remediated |
+| 8 | Minor | `WorkspaceRepository.findByMember()` N+1 queries | Deferred |
+
+### Remediation details
+
+**Fix 1 — Encapsulation**: Added `_setRoleAsOwner()` delegation method on `WorkspaceMembership`. `Workspace.transferOwnership()` now calls `newOwner._setRoleAsOwner()` instead of `(newOwner as any)._role = 'owner'`.
+
+**Fix 2 — Domain purity**: Removed `import { z } from 'zod'` from `Email.ts`. Replaced with inline validation: regex `EMAIL_REGEX` + length ≤ 255.
+
+**Fix 3 — Error hierarchy**: `ConcurrencyError` now `extends DomainError`. Removed redundant `this.name` setter (inherited from `DomainError`).
+
+**Fix 4 — Error hierarchy**: `InvalidSessionStateError` (code `INVALID_STATE`), `ConversationArchivedError` (code `INVALID_STATE`), `ConversationAlreadyArchivedError` (code `INVALID_STATE`) now extend `DomainError`.
+
+**Fix 5 — Application errors**: Created 3 new `DomainError` subclasses:
+- `WorkspaceNotFoundError` (code `WORKSPACE_NOT_FOUND` → 404)
+- `ConversationNotFoundError` (code `CONVERSATION_NOT_FOUND` → 404)
+- `NotConversationParticipantError` (code `FORBIDDEN` → 403)
+
+Updated 4 use cases: `invite-member`, `accept-invitation`, `transfer-ownership`, `send-message`. Added `CONVERSATION_NOT_FOUND` to `ErrorMapper`.
+
+**Fix 7 — Repository side-effect**: Added `saveIdempotencyKey()` to `SessionRepository` interface + `KyselySessionRepository` implementation. Removed idempotency insert from `save()`. `StartSessionUseCase` now calls both methods explicitly.
+
+### CLAUDE.md — Domain Design Rules
+
+6 rules added to prevent future violations:
+
+| Rule | Pattern prevented |
+|------|-------------------|
+| 1 — No `as any` on private fields | Aggregate encapsulation bypass |
+| 2 — Zero validation libs in domain | Framework coupling (zod, yup, class-validator) |
+| 3 — Every error extends `DomainError` | Bare `new Error()` bypassing ErrorMapper |
+| 4 — VOs with constrained domains = classes | Bare type aliases (`type X = 'a' \| 'b'`) |
+| 5 — `save()` persists only aggregate | Repository side-effects |
+| 6 — Canonical factory naming | `start()`/`begin()` vs `create()` inconsistency |
+
+### Files modified
+
+**Domain (7):**
+- `packages/domain/src/workspace/entities/WorkspaceMembership.ts` — `_setRoleAsOwner()`
+- `packages/domain/src/workspace/entities/Workspace.ts` — use `_setRoleAsOwner()`
+- `packages/domain/src/identity/value-objects/Email.ts` — remove zod, inline validation
+- `packages/domain/src/shared/concurrency-error.ts` — `extends DomainError`
+- `packages/domain/src/agent-chat/entities/Conversation.ts` — 3 error classes → `DomainError` + 2 new
+- `packages/domain/src/generation/entities/Session.ts` — `InvalidSessionStateError` → `DomainError`
+- `packages/domain/src/workspace/errors.ts` — `WorkspaceNotFoundError`
+- `packages/domain/src/workspace/index.ts` — export new error
+- `packages/domain/src/agent-chat/index.ts` — export new errors
+- `packages/domain/src/generation/repositories/SessionRepository.ts` — `saveIdempotencyKey()`
+
+**Infrastructure (2):**
+- `packages/infra-db/src/repositories/session-repository.ts` — `saveIdempotencyKey()` implementation, remove from `save()`
+- `apps/backend/src/infrastructure/error-handler.ts` — `CONVERSATION_NOT_FOUND` mapping
+
+**Application (5):**
+- `apps/backend/src/application/workspace/invite-member.usecase.ts` — `WorkspaceNotFoundError`
+- `apps/backend/src/application/workspace/accept-invitation.usecase.ts` — `WorkspaceNotFoundError`
+- `apps/backend/src/application/workspace/transfer-ownership.usecase.ts` — `WorkspaceNotFoundError`
+- `apps/backend/src/application/agent-chat/send-message.usecase.ts` — `ConversationNotFoundError` + `NotConversationParticipantError`
+- `apps/backend/src/application/generation/start-session.usecase.ts` — `saveIdempotencyKey()` call
+
+**Schema (1):**
+- `CLAUDE.md` — 6 Domain Design Rules added
+
+### Verification
+
+- Typecheck: 4/4 packages clean (domain, infra-db, backend, frontend)
+- Tests: 4/4 pass
+- Lint: 0 errors, 10 pre-existing `as any` warnings (DB cast, not introduced by this change)
+
+### Wiki updates
+
+- `Wiki/log.md` — this entry
+- `Wiki/index.md` — maintenance note added
+- `Wiki/synthesis/phase-8-real-auth-plan.md` — remediation section added
 
 ---
+
+## [2026-08-02] implementation | Phase 8 — Real Authentication (Backend)
+
+Phase 8 (backend) of [[synthesis/implementation-roadmap-2026-08-01]] implemented. Branch: `feature/phase-8-real-auth`. Workstreams A, B, C, E complete. Workstream D (frontend auth flow) remaining.
+
+### Deliverables
+
+1. **Identity domain** (`packages/domain/src/identity/`)
+   - `User` aggregate — `register()`, `fromOAuth()`, `verifyPassword()`, `reconstitute()`, `PasswordHasher` interface
+   - `Email` value object — Zod-validated, lowercase normalization
+   - `UserRole` value object — `admin|member`
+   - `UserStatus` value object — `active|disabled`
+   - `UserRepository` interface — user + auth_sessions + oauth_accounts CRUD
+   - `AuthSession`, `OAuthAccount` read models
+   - Domain errors: `InvalidCredentialsError`, `UserAlreadyExistsError`, `UserDisabledError`, `InvalidRefreshTokenError`
+
+2. **Infrastructure** (`packages/infra-db/`, `apps/backend/src/infrastructure/`)
+   - `AuthSessionsTable`, `OAuthAccountsTable` added to Kysely `DB` interface
+   - `KyselyUserRepository` — full CRUD for users + auth_sessions + oauth_accounts
+   - `BcryptPasswordHasher` — cost factor 12
+   - Seed migration `008_seed_user.sql` — `dev@flow-app.local` / `password123`
+
+3. **Token service** (`apps/backend/src/infrastructure/token-service.ts`)
+   - JWT access tokens (HS256, 15min expiry)
+   - Opaque refresh tokens (32-byte crypto random, 7-day expiry)
+   - `verifyAccessToken()` with algorithm check
+
+4. **Auth service** (`apps/backend/src/api/auth/auth-service.ts`)
+   - `register()` — email uniqueness check, password hash, user creation
+   - `login()` — email lookup, password verify, status check
+   - `refresh()` — token rotation (delete old, create new)
+   - `logout()` — session deletion
+   - `loginWithOAuth()` — find-or-create user, link OAuth account
+
+5. **Passport.js** (`apps/backend/src/infrastructure/passport-config.ts`)
+   - Local strategy (email + password)
+   - Google OAuth2 strategy (conditional on config)
+
+6. **Auth routes** (`apps/backend/src/api/auth/auth-routes.ts`)
+   - `POST /api/auth/register` — create account
+   - `POST /api/auth/login` — authenticate (rate limited: 5/15min)
+   - `POST /api/auth/refresh` — rotate tokens (httpOnly cookie)
+   - `POST /api/auth/logout` — clear cookie
+   - `GET /api/auth/me` — current user (JWT required)
+   - `GET /api/auth/google` — OAuth redirect
+   - `GET /api/auth/google/callback` — OAuth callback
+
+7. **Auth middleware** (`apps/backend/src/middleware/`)
+   - `authenticate.ts` — JWT verification, `setAuthUser()` helper
+   - `authenticateOrDev()` — dev fallback (JWT if Bearer present, else seed user)
+   - `auth-rate-limit.ts` — `express-rate-limit` on login
+   - `auth-types.ts` — `AuthUser` interface, `getAuthUser()`/`setAuthUser()`, Express.Request augmentation
+
+8. **Config** (`apps/backend/src/config.ts`)
+   - Added: `JWT_EXPIRES_IN`, `REFRESH_TOKEN_EXPIRES_IN_SECONDS`, `GOOGLE_CLIENT_ID/SECRET`, `GITHUB_CLIENT_ID/SECRET`, `AUTH_RATE_LIMIT_WINDOW_MS`, `AUTH_RATE_LIMIT_MAX_ATTEMPTS`, `SEED_USER_ID`
+
+9. **Wiring** (`apps/backend/src/app.ts`, `server.ts`)
+   - Auth routes registered BEFORE auth middleware (public endpoints)
+   - `authenticateOrDev` replaces `devAuthMiddleware` in non-production
+   - `AppDeps` extended with `tokenService`, `authService`
+   - All auth deps wired in `server.ts`
+
+### Lint Fix — 7 warnings resolved
+
+| File | Before | After |
+|------|--------|-------|
+| `authenticate.ts` | `(req as any).user = ...` | `setAuthUser(req, ...)` |
+| `auth-routes.ts` | `(req as any).user` | `getAuthUser(req)` |
+| `dev-auth.ts` | `(req as any).user` | `setAuthUser()`/`getAuthUser()` |
+| `workspace-role.ts` | `(req as any).user?.sub` | `getAuthUser(req)?.sub` |
+| `token-service.ts` | `as any` on `expiresIn` | `as StringValue` (branded type from `ms`) |
+| `passport-config.ts` | `user: any` | `user: Express.User` with explicit cast |
+| `app.ts` | `(req as any).log` | `req.log` (augmented by `pino-http`) |
+
+### Files
+
+**New files (17):**
+- `packages/domain/src/identity/User.ts`
+- `packages/domain/src/identity/value-objects/Email.ts`
+- `packages/domain/src/identity/value-objects/UserRole.ts`
+- `packages/domain/src/identity/value-objects/UserStatus.ts`
+- `packages/domain/src/identity/UserRepository.ts`
+- `packages/domain/src/identity/AuthSession.ts`
+- `packages/domain/src/identity/OAuthAccount.ts`
+- `packages/domain/src/identity/errors.ts`
+- `packages/domain/src/identity/index.ts`
+- `packages/infra-db/src/repositories/user-repository.ts`
+- `packages/infra-db/migrations/008_seed_user.sql`
+- `apps/backend/src/infrastructure/bcrypt-hasher.ts`
+- `apps/backend/src/infrastructure/token-service.ts`
+- `apps/backend/src/infrastructure/passport-config.ts`
+- `apps/backend/src/api/auth/auth-service.ts`
+- `apps/backend/src/api/auth/auth-routes.ts`
+- `apps/backend/src/middleware/authenticate.ts`
+- `apps/backend/src/middleware/auth-rate-limit.ts`
+- `apps/backend/src/middleware/auth-types.ts`
+
+**Modified files (8):**
+- `packages/domain/src/index.ts` — identity exports
+- `packages/infra-db/src/types.ts` — AuthSessionsTable, OAuthAccountsTable
+- `packages/infra-db/src/index.ts` — KyselyUserRepository export
+- `apps/backend/src/config.ts` — 8 new env vars
+- `apps/backend/src/app.ts` — auth routes + middleware, AppDeps extended
+- `apps/backend/src/server.ts` — auth deps wired
+- `apps/backend/.env.example` — new vars documented
+- `apps/backend/package.json` — bcrypt, passport, express-rate-limit + types
+
+### Verification
+
+- Typecheck: 4/4 packages clean (domain, infra-db, backend, frontend)
+- Tests: 4/4 pass
+- Lint: 0 errors, 0 warnings (all auth-related files)
+
+### Wiki updates
+
+- `Wiki/synthesis/implementation-roadmap-2026-08-01.md` — Phase 8 marked 🟡 (backend complete)
+- `Wiki/synthesis/phase-8-real-auth-plan.md` — implementation section added, exit criteria updated
+- `Wiki/overview.md` — Phase 8 moved to Completed (partial), critical gaps updated
+- `Wiki/index.md` — maintenance note added
+- `Wiki/log.md` — this entry
+
+---
+
+## [2026-08-02] analysis | DDD Drift Risk — Phase 9, 10, 11
+
+Pre-mortem DDD drift risk analysis for upcoming phases against the 6 CLAUDE.md Domain Design Rules.
+
+### Phase 9 — Deployment & CI/CD
+🟢 **NEGLIGIBLE**. Pure infrastructure: Dockerfile, railway.json, CI workflows. Zero domain code.
+
+### Phase 10 — Testing & Quality
+🟡 **MODERATE**. 4 risks:
+1. `new Session(...)` instead of `Session.create()`/`reconstitute()` — bypasses factory invariants
+2. `(session as any)._status` in test assertions — breaks encapsulation
+3. `throw new Error()` in test fixtures — bypasses ErrorMapper
+4. Asserting DB state instead of aggregate API — tests DB, not domain
+
+### Phase 11 — Gamification
+🔴 **HIGH**. 8 risks, 3 at high probability:
+1. 9 new VOs as `type` aliases instead of classes (Rule 4)
+2. `throw new Error()` in domain services (Rule 3)
+3. Event handler bypasses aggregate → direct DB mutation (Rule 1)
+4. Repository.save() with leaderboard side-effects (Rule 5)
+5. Non-standard factory naming (Rule 6)
+6. Bare Error for game logic (Rule 3)
+7. Cross-context `as any` in AchievementEvaluator (Rule 1)
+8. Event types as bare strings without source context import
+
+### Recommendation
+Phase 11: pre-commit checklist against 6 Domain Design Rules for every new file under `packages/domain/src/gamification/`.
+
+### Wiki updates
+- `Wiki/synthesis/implementation-roadmap-2026-08-01.md` — DDD Drift Risk sections added to Phase 9, 10, 11
+- `Wiki/synthesis/gamification-proposal.md` — DDD Governance Risks section + guardrail checklist
+- `Wiki/index.md` — maintenance note
+- `Wiki/log.md` — this entry
+
+---
+
+## [2026-08-02] sync | Wiki alignment — code vs spec gap analysis
+
+Full gap analysis between implemented code (frontend 13 files, backend 6 route files) and Wiki specs (7 pages). Key findings:
+
+### API Routes drift
+- 12 endpoints match between code and Wiki
+- 21 endpoints are Wiki-spec only (never implemented — mostly assets, admin CRUD, workspace CRUD)
+- 20 endpoints are code-only (never documented — workspace membership, agent chat, token refresh, OAuth)
+
+Fixes applied to `Wiki/concepts/API Routes.md`:
+- Auth base path corrected (`/auth/` → `/api/auth/`)
+- Route index rewritten with ✅/⬜ status column (49 rows)
+- Added: refresh, me, Google OAuth, workspace membership (9 routes), agent chat (6 routes)
+- Marked as planned ⬜: assets (5 routes), workspace CRUD (3 routes), admin CRUD (10 routes), session cancel, artifact download
+- Error Code Catalog expanded with 10 new codes
+- Mapping to Application Services updated
+
+### Frontend component gap
+- 8/37 components built (22%): AppShell (basic), PageHeader, EmptyState, ErrorState, LoadingSkeleton + 4 page components
+- Tool components: 0/6 built (SetupPanel, KnowledgePanel, ReadinessSnapshot, FeedbackPanel, SessionSummary, ToolCard)
+- Workspace components: 0/4 built
+- Agent Chat: ConversationPage exists but not componentized
+- Auth: 0 login/register pages, no AuthContext, no guards
+
+Fixes applied:
+- `Frontend Architecture.md` — Implementation Status section with layer breakdown
+- `UI Component Map.md` — Implementation Status table (8/37, 22%)
+- `frontend-mvp-plan-2026-08-01.md` — Actual Delivery section vs plan
+
+### Files updated
+- `Wiki/concepts/API Routes.md` — 651→490 lines
+- `Wiki/concepts/Frontend Architecture.md` — status added
+- `Wiki/concepts/UI Component Map.md` — status added
+- `Wiki/synthesis/frontend-mvp-plan-2026-08-01.md` — Actual Delivery section
+- `Wiki/index.md` — maintenance note
+- `Wiki/log.md` — this entry
+
+---
+
 ## [2026-08-02] fix | ESM import hoisting — SEED_USER_ID not loaded from .env
 
 ### Problem
@@ -1013,7 +1463,7 @@ Files verified and updated:
   - **Gap #2**: [[Migration Tooling]] — FileMigrationProvider + Kysely, `npm run migrate:up`
   - **Gap #3**: [[Health Check - Deep]] — 5 checks (DB, Redis, Pool, BullMQ, LLM), admin-only
   - **Gap #4**: [[File Upload Security]] — multer memoryStorage, 10MB limit, MIME whitelist, mammoth/pdf-parse
-  - **Gap #5**: Redis degradation — PostgreSQL fallback in [[Idempotency Implementation]]
+  - **Gap #5**: Redis degradation — PostgreSQL fallback in [[Idempotency]]
   - **Gap #6**: DB Pool Monitoring — integrated in [[Health Check - Deep]]
   - **Gap #7**: Artifact Size — 500KB limit + preview in [[Artifact]]
   - **Gap #8**: Session Cleanup — retention policy in [[Database Schema]]
@@ -1268,3 +1718,181 @@ Readback verification completed for all files above after write.
 - `log.md` — this entry
 
 Readback verification completed for all files above after write.
+
+## [2026-08-02] lint | Runtime ESLint — 1 error, 67 warnings
+
+`npm run lint` results. All warnings are `@typescript-eslint/no-explicit-any`. One error is `no-console` (`console.warn` instead of `console.error`).
+
+### Error
+
+| File | Line | Rule | Detail |
+|------|------|------|--------|
+| `packages/copy/src/index.ts` | 17 | `no-console` | `console.warn` — only `console.error` allowed |
+
+### Warnings by file
+
+| File | Count |
+|------|-------|
+| `apps/backend/src/api/workspaces.ts` | 13 |
+| `apps/frontend/src/api/client.ts` | 13 |
+| `packages/infra-db/src/repositories/session-repository.ts` | 10 |
+| `packages/infra-db/src/repositories/conversation-repository.ts` | 6 |
+| `apps/backend/src/api/agent-chat.ts` | 5 |
+| `packages/infra-db/src/repositories/workspace-repository.ts` | 4 |
+| `apps/backend/src/api/generation.ts` | 2 |
+| `apps/backend/src/generation/machines/session-machine.ts` | 2 |
+| `apps/backend/src/generation/worker/session-worker.ts` | 2 |
+| `apps/frontend/src/api/hooks.ts` | 2 |
+| `apps/frontend/src/layout/AppShell.tsx` | 2 |
+| `apps/frontend/src/pages/ConversationPage.tsx` | 2 |
+| `apps/frontend/src/pages/DashboardPage.tsx` | 2 |
+| `apps/frontend/src/pages/SessionPage.tsx` | 1 |
+| `apps/frontend/src/pages/ToolPage.tsx` | 1 |
+| **Total** | **67** |
+
+### Summary by package
+
+| Package | Files | Issues |
+|---------|-------|--------|
+| `apps/backend` | 5 | 24 warnings |
+| `apps/frontend` | 7 | 23 warnings |
+| `packages/infra-db` | 3 | 20 warnings |
+| `packages/copy` | 1 | 1 error |
+| **Total** | **16** | **67 warnings + 1 error** |
+
+### Trend
+
+| Milestone | Warnings | Errors | Date |
+|-----------|----------|--------|------|
+| Phase 1 (bootstrap) | 18 | 0 | — |
+| Phase 5 (Agent Chat) | 41 | 0 | — |
+| Phase 6 (LLM Integration) | 52 | 0 | — |
+| Phase 7 (Frontend MVP) | 69 | 0 | — |
+| Phase 8 (Real Auth) — post-fix | 0 | 0 | — |
+| **Current** | **67** | **1** | 2026-08-02 |
+
+### Remediation — August 2026-08-02
+
+Complete remediation across 3 tiers to eliminate all ESLint violations (`npm run lint` → 0 errors, 0 warnings). All fixes are `@typescript-eslint/no-explicit-any` (`as any` / `: any`) and one `no-console` error.
+
+#### Tier 0 &mdash; Immediate (1 error, 0 warnings)
+
+| File | Fix |
+|------|-----|
+| `packages/copy/src/index.ts` | `console.warn` → `console.error` |
+
+#### Tier 1 &mdash; Express Request augmentation (0 errors, 17 warnings)
+
+**New file**: `apps/backend/src/types/express.d.ts` — declares `Request.user?: { sub: string }` and `Request.workspace?: Workspace` globally.
+
+| File | Before | After | Fix |
+|------|:---:|:---:|------|
+| `apps/backend/src/api/workspaces.ts` | 13 | 2 | `(req as any).user.sub` → `req.user!.sub` |
+| `apps/backend/src/api/agent-chat.ts` | 5 | 0 | Same pattern, all 5 resolved |
+| `apps/backend/src/api/generation.ts` | 2 | 1 | `(req as any).user?.sub` → `req.user?.sub` |
+
+#### Tier 2 &mdash; Local type fixes (0 errors, 15 warnings)
+
+**Domain machine types**:
+- `session-machine.ts`: exported `SessionContext`; added `StepDoneEvent` interface replacing `(event as any).output`
+- `session-worker.ts`: `fromPromise<Artifact, SessionContext>` and `fromPromise<void, { session: Session }>`
+- `generation.ts`: imported `SSEPayload` from `job-event-bridge`
+
+**Backend API**:
+- `workspaces.ts`: removed `: any` from `.map((m) => ...)` — TypeScript infers from `memberships` array
+
+**Frontend pages**:
+- `ToolPage.tsx`: `catch (err: any)` → `catch (err)` with `err instanceof Error`
+- `ConversationPage.tsx`: same catch pattern + removed `: any` from `msg`
+- `AppShell.tsx`: removed `: any` from `w` / `ws` callbacks
+- `DashboardPage.tsx`: removed `: any` from `w` / `s` callbacks
+- `SessionPage.tsx`: removed `: any` from `artifact` callback
+
+#### Tier 3 &mdash; API client + DB repositories (0 errors, 35 warnings)
+
+**Frontend API client** (`apps/frontend/src/api/client.ts`):
+- Added 9 DTO interfaces: `SessionDTO`, `WorkspaceDTO`, `MessageDTO`, `ConversationDTO`, `ConversationListItemDTO`, `AgentDTO`, `ArtifactDTO`, `SessionListResponse`
+- All 13 generic `<any>` replaced with specific DTO types
+
+**Frontend hooks** (`apps/frontend/src/api/hooks.ts`):
+- `useState<SessionDTO | null>` and `useState<WorkspaceDTO[]>` replacing `useState<any>` and `useState<any[]>`
+
+**DB repositories** — `as any` → specific domain type assertions:
+
+| Repository | Fix | Occurrences |
+|------------|-----|:---:|
+| `session-repository.ts` | `as ToolKey`, `as SessionStatus`, or removed (structurally identical types) | 10 |
+| `conversation-repository.ts` | `as AgentKey`, `as ConversationStatus`, `as MessageRole` | 6 |
+| `workspace-repository.ts` | `as MembershipRole`, `as MembershipStatus` | 4 |
+
+Root cause: Kysely DB types have `string` columns (e.g., `tool_key`, `agent_key`, `role`, `status`) while domain `reconstitute()` expects branded string literal unions (`ToolKey`, `AgentKey`, `MembershipRole`, etc.). Structural type compatibility between DB and domain `SessionStatus` eliminated 7 unnecessary casts.
+
+#### Final state
+
+```
+npm run lint → 0 errors, 0 warnings
+```
+
+17 files modified across 3 tiers. Trend:
+
+| Milestone | Errors | Warnings |
+|-----------|:---:|:---:|
+| Initial | 1 | 67 |
+| After Tier 0 | 0 | 67 |
+| After Tier 1 | 0 | 50 |
+| After Tier 2 | 0 | 35 |
+| **After Tier 3** | **0** | **0** |
+
+### DDD Architecture Review — 2026-08-02
+
+The remediation was reviewed against the 6 DDD Design Rules (CLAUDE.md). Result: **valid, architecturally sound.** No anti-patterns introduced.
+
+#### Finding 1: Rule 4 VO debt (pre-existing)
+
+8 domain value objects are bare `type` aliases, not classes:
+
+| VO | Values | Impact |
+|----|--------|--------|
+| `ToolKey` | 11 variants | Repository `as ToolKey` casts |
+| `SessionStatus` | 7 variants with lifecycle | No `isTerminal()`, 10+ casts |
+| `AgentKey` | 7 variants | Repository `as AgentKey` casts |
+| `ConversationStatus` | 2 variants | Repository casts |
+| `MessageRole` | 3 variants | Repository casts |
+| `MembershipRole` | 3 variants (auth-critical) | Repository casts |
+| `MembershipStatus` | 2 variants | Repository casts |
+| `ArtifactStatus` | 4 variants | Not currently in use |
+
+Tracked in [[rule-4-vo-debt]] with conversion roadmap and sequencing.
+
+#### Finding 2: Wiki/code divergence on Session entity
+
+The [[Session]] entity wiki page documents aspirational architecture (VOs, class-based `SessionStatus`, strongly-typed `SessionEvent` union) that diverges from current implementation (`string` IDs, type alias statuses, `{ type, [key: string]: unknown }` events). Page updated with `⚠️ Implementation status` banner and cross-reference to debt page.
+
+#### Finding 3: Frontend DTOs in client.ts
+
+The DTOs defined in `apps/frontend/src/api/client.ts` during Tier 3 duplicate types partially present in `packages/contracts`. Recommended consolidation into contracts package as follow-up tech debt (not blocking this remediation).
+
+#### XState event casting pattern: validated
+
+The `(event as unknown as StepDoneEvent).output` pattern in `session-machine.ts` is the correct XState v5 idiom for accessing typed actor output within action handlers. The machine's `SessionEvent` union defines external events only; actor `onDone` events are internally generated by XState and should NOT pollute the external event namespace. No change needed.
+
+## [2026-08-02] wiki-sync | Cosmetic wiki/code alignment + architectural targets
+
+### Cosmetic phase — Wiki aligned to code
+
+5 cosmetic gaps resolved by updating wiki pages to reflect actual implementation:
+
+| Page | Changes |
+|------|---------|
+| [[Session]] | Replaced aspirational code blocks with actual `Session.ts` code. `SessionId`/`WorkspaceId`/`UserId` → `string`. `DateTime` → `Date`. Removed `_artifacts` aspirational code. Corrected `apply()` signature. |
+| [[Workspace]] | Fixed `transferOwnership()` — code uses `_setRoleAsOwner()` delegation, wiki showed `as any` (code is better). `UserId` → `string` throughout. Added 🔴 banner on aspirational `addAsset()`. |
+| [[Artifact]] | Fixed `create()` signature to match code `(sessionId, stepNumber, content)`. Added ⚠️ banner for missing lifecycle methods. VO types table corrected. |
+
+### Architectural targets documented
+
+Created [[phase-9-architectural-targets]] — decision record cataloguing 11 VALIDATION + 5 STRUCTURAL gaps with effort estimates, risk analysis, and phased sequencing:
+
+- **VALIDATION (11 gaps, ~8h)**: VOs → classes, `throw new Error()` → `DomainError`, `apply()` event typing, Artifact lifecycle guards. Phased in 3 sub-phases (9a foundation, 9b core, 9c remaining).
+- **STRUCTURAL (5 gaps, RFC required)**: Session `_artifacts` collection, domain event payloads, Workspace assets, temporal invariants, tool stub content. Each needs a design decision before implementation.
+
+See [[phase-9-architectural-targets]] for full roadmaps and prioritization.

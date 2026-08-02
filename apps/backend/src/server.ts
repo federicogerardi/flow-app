@@ -11,13 +11,16 @@ import { validateConfig } from './config.js';
 import { createApp } from './app.js';
 import { logger } from './infrastructure/logger.js';
 import { createDatabase } from '@flow-app/infra-db';
-import { KyselySessionRepository, KyselyWorkspaceRepository, KyselyConversationRepository } from '@flow-app/infra-db';
+import { KyselySessionRepository, KyselyWorkspaceRepository, KyselyConversationRepository, KyselyUserRepository } from '@flow-app/infra-db';
 import { JobEventBridge } from './infrastructure/job-event-bridge.js';
 import { getSessionQueue } from './generation/jobs/enqueue-session.job.js';
 import { CleanupJob } from './infrastructure/cleanup-job.js';
 import { LlmGateway } from './infrastructure/llm-gateway.js';
 import { FilesystemPromptTemplateRepository } from './infrastructure/prompt-template-repository.js';
 import { PromptComponentRegistry, PromptComposer, getDefaultComponents } from '@flow-app/domain';
+import { BcryptPasswordHasher } from './infrastructure/bcrypt-hasher.js';
+import { TokenService } from './infrastructure/token-service.js';
+import { AuthService } from './api/auth/auth-service.js';
 
 const config = validateConfig();
 
@@ -25,6 +28,7 @@ const db = createDatabase(config.DATABASE_URL);
 const sessionRepo = new KyselySessionRepository(db);
 const workspaceRepo = new KyselyWorkspaceRepository(db);
 const conversationRepo = new KyselyConversationRepository(db);
+const userRepo = new KyselyUserRepository(db);
 const eventBridge = new JobEventBridge(config.REDIS_URL);
 const queue = getSessionQueue(config.REDIS_URL);
 
@@ -44,6 +48,14 @@ const promptComposer = new PromptComposer(componentRegistry);
 const promptTemplateBasePath = path.resolve(root, 'src', 'prompts');
 const promptTemplateRepo = new FilesystemPromptTemplateRepository(promptTemplateBasePath);
 
+const hasher = new BcryptPasswordHasher();
+const tokenService = new TokenService(
+  config.JWT_SECRET,
+  config.JWT_EXPIRES_IN,
+  config.REFRESH_TOKEN_EXPIRES_IN_SECONDS,
+);
+const authService = new AuthService(userRepo, hasher, tokenService);
+
 const cleanupJob = new CleanupJob(db);
 cleanupJob.start();
 
@@ -57,6 +69,10 @@ const app = createApp({
   promptComposer,
   promptTemplateRepo,
   db,
+  tokenService,
+  authService,
+  authRateLimitWindowMs: config.AUTH_RATE_LIMIT_WINDOW_MS,
+  authRateLimitMaxAttempts: config.AUTH_RATE_LIMIT_MAX_ATTEMPTS,
 });
 
 app.listen(config.PORT, () => {
