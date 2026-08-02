@@ -6,12 +6,13 @@ tags:
   - wiki/remediation
 date_updated: 2026-08-02
 confidence: high
+executed: 2026-08-02
 ---
 
 # Medium-Severity Remediation Plan
 
 **Source**: [[code-review-2026-08-02]] — findings M1–M18
-**Status**: 📋 pianificato
+**Status**: ✅ eseguito (16/16 active findings closed, 1 deferred, 1 already resolved)
 **Estimated effort**: ~4 ore (16 findings attivi, 1 già risolto, 1 rinviato)
 
 ---
@@ -570,21 +571,21 @@ Still incomplete: `paused`, `prioritized`, and `waiting-children` states are not
 
 ## Success Criteria
 
-- [ ] M17: `PromptTemplateId` and `PromptVersion` imported statically in session-worker.ts — no `await import('@flow-app/domain')` in hot path
-- [ ] M18: `identifier.test.ts` passes — cross-type equality returns false
-- [ ] M8: ErrorState renders "Riprova" and "Si è verificato un errore" (Italian) instead of English defaults
-- [ ] M11: DashboardPage tool name heading uses design system typography, not MUI fallback
-- [ ] M6: Both DashboardPage and SessionPage import status colors from shared constant — no duplicated inline logic
-- [ ] M3: Initial load shows `<LoadingSkeleton />` not plain "Loading..." text
-- [ ] M2: sendMessage failure renders error Alert below chat input
-- [ ] M7: Agent message bubbles visible in both light and dark theme
-- [ ] M14: `findByMember()` produces ≤3 queries for a user with 3 workspaces
-- [ ] M15: Membership sync uses `Promise.all` (parallel), not sequential `await` in loop
-- [ ] M13: SSE events arrive reliably — no race window between subscribe and handler registration
-- [ ] M4/M9: Drawer has `role="navigation"` + `aria-label`, Workspace Select has `aria-label`, main content has `role="main"`
-- [ ] M10: After SPA navigation, focus moves to the page's `<h1>` heading
-- [ ] M5: Build produces separate chunks per page, `<Suspense>` wrappers render LoadingSkeleton during chunk load
-- [ ] M12: ✅ Already resolved
+- [x] M17: `PromptTemplateId` and `PromptVersion` imported statically in session-worker.ts — no `await import('@flow-app/domain')` in hot path
+- [x] M18: `identifier.test.ts` passes — cross-type equality returns false
+- [x] M8: ErrorState renders "Riprova" and "Si è verificato un errore" (Italian) instead of English defaults
+- [x] M11: DashboardPage tool name heading uses design system typography, not MUI fallback
+- [x] M6: Both DashboardPage and SessionPage import status colors from shared constant — no duplicated inline logic
+- [x] M3: Initial load shows `<LoadingSkeleton />` not plain "Loading..." text
+- [x] M2: sendMessage failure renders error Alert below chat input
+- [x] M7: Agent message bubbles visible in both light and dark theme
+- [x] M14: `findByMember()` produces ≤3 queries for a user with 3 workspaces
+- [x] M15: Membership sync uses `Promise.all` (parallel), not sequential `await` in loop
+- [x] M13: SSE events arrive reliably — no race window between subscribe and handler registration
+- [x] M4/M9: Drawer has `role="navigation"` + `aria-label`, Workspace Select has `aria-label`, main content has `role="main"`
+- [x] M10: After SPA navigation, focus moves to the page's `<h1>` heading
+- [x] M5: Build produces separate chunks per page, `<Suspense>` wrappers render LoadingSkeleton during chunk load
+- [x] M12: ✅ Already resolved
 
 ---
 

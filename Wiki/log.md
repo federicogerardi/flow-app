@@ -12,6 +12,50 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-02] fix | Wiki lint — 3 broken wikilinks resolved
+
+Created 2 missing entity pages for repository interfaces referenced in [[DDD Domain Design Rules]]:
+- `Wiki/entities/SessionRepository.md` — interface, design decisions, implementation reference
+- `Wiki/entities/WorkspaceRepository.md` — interface, design decisions, implementation reference
+
+Added both to `Wiki/index.md` entities table. All 115 pages validate clean.
+
+---
+
+## [2026-08-02] execute | Medium-severity findings — 16/16 active closed
+
+Executed [[synthesis/medium-fix-plan-2026-08-02]]. 16 active medium-severity findings resolved across 5 phases. M1 deferred (architectural discussion), M12 already resolved (H9 piggyback).
+
+**Phase 1 — Quick Wins (5 files)**:
+- M17: Static import of `PromptTemplateId`/`PromptVersion` in session-worker — removed `await import()` from hot path
+- M18: `Identifier.equals()` checks `this.constructor === other.constructor` — cross-type equality test added
+- M8: ErrorState uses `copy.t()` — Italian strings ("Riprova", "Si è verificato un errore")
+- M11: Added `h4`/`h5`/`h6` typography variants to theme tokens
+- M6: Extracted `statusColorMap` to `shared/statusColors.ts` — both DashboardPage and SessionPage import it
+
+**Phase 2 — Frontend UX (3 files)**:
+- M3: WorkspaceRedirect shows `<LoadingSkeleton />` + `<ErrorState>` instead of plain text
+- M2: `sendMessage` failures render `<Alert>` below chat input with dismiss
+- M7: Agent bubbles use `action.hover` (theme-aware) instead of `grey.100`
+
+**Phase 3 — Backend Data (1 file)**:
+- M14: `findByMember()` and `findPendingInvitations()` — 2 queries instead of 1+2N (batch membership load)
+- M15: Extracted `syncMemberships()` private method with `Promise.all` — used in both `save()` and `saveWithLock()`
+
+**Phase 4 — Real-time (1 file)**:
+- M13: Handler registered before `subscribe()` — no race window. Added try/catch on `JSON.parse`
+
+**Phase 5 — A11y & Performance (2 files)**:
+- M4/M9: ARIA labels on Drawer (`role="navigation"`), Select, IconButtons, `role="main"`, `role="banner"`
+- M10: `useFocusOnNavigate` hook moves focus to `<h1>` on route change
+- M5: All page components lazy-loaded with `<Suspense>` — separate chunks in build output
+
+**Verification**: backend tsc: 0 errors | domain tests: 5/5 | frontend build: success | infra-db tsc: 0 errors
+
+**Files touched**: 11 modified, 1 new (`statusColors.ts`)
+
+---
+
 ## [2026-08-02] enhance | DDD Domain Design Rules — workspace instructions upgraded
 
 Upgraded `CLAUDE.md` Domain Design Rules section from 6 rules to 14 enforceable rules with checklists. Added authoritative reference pointer to [[DDD Domain Design Rules]] (19-rule wiki page) as the full governance document. New rules: Rule 7 (Aggregate Root canonical template — private constructor, _version, DomainEvent|null), Rule 8 (Domain Events as immutable DTOs), Rule 9 (Domain-owned lifecycle — SessionLifecycle as single source, XState imports), Rule 10 (Business rules in domain VOs, never in use cases/guards), Rule 11 (Domain enforces for all callers, middleware is optimization), Rule 12 (Aggregate boundaries by business invariants), Rule 13 (Snapshot-based crash recovery), Rule 14 (IdempotencyKey as domain VO with atomic claim). Header updated: Phase 0–8 → Phase 0–9. CLAUDE.md now has 32 `###` sections total.

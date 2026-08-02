@@ -5,6 +5,37 @@ import { Workspace, WorkspaceMembership, ConcurrencyError, MembershipRole, Membe
 export class KyselyWorkspaceRepository implements WorkspaceRepository {
   constructor(private readonly db: Kysely<DB>) {}
 
+  private async syncMemberships(
+    executor: Kysely<DB> | any,
+    workspaceId: string,
+    memberships: readonly WorkspaceMembership[],
+  ): Promise<void> {
+    if (memberships.length === 0) return;
+
+    await Promise.all(memberships.map(m =>
+      executor
+        .insertInto('workspace_memberships')
+        .values({
+          workspace_id: workspaceId,
+          user_id: m.userId,
+          role: m.role.value,
+          status: m.status.value,
+          invited_by: m.invitedBy,
+          invited_at: m.invitedAt,
+          joined_at: m.joinedAt,
+        })
+        .onConflict((oc: any) =>
+          oc.columns(['workspace_id', 'user_id']).doUpdateSet({
+            role: m.role.value,
+            status: m.status.value,
+            joined_at: m.joinedAt,
+            updated_at: new Date(),
+          }),
+        )
+        .execute(),
+    ));
+  }
+
   async findById(id: string): Promise<Workspace | null> {
     const workspace = await this.db
       .selectFrom('workspaces')
@@ -50,12 +81,46 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
       .selectAll('workspaces')
       .execute();
 
-    const workspaces: Workspace[] = [];
-    for (const row of rows) {
-      const workspace = await this.findById(row.id);
-      if (workspace) workspaces.push(workspace);
+    if (rows.length === 0) return [];
+
+    const workspaceIds = rows.map(r => r.id);
+
+    const allMemberships = await this.db
+      .selectFrom('workspace_memberships')
+      .where('workspace_id', 'in', workspaceIds)
+      .where('status', '=', 'active')
+      .selectAll()
+      .execute();
+
+    const membershipMap = new Map<string, typeof allMemberships>();
+    for (const m of allMemberships) {
+      const list = membershipMap.get(m.workspace_id) ?? [];
+      list.push(m);
+      membershipMap.set(m.workspace_id, list);
     }
-    return workspaces;
+
+    return rows.map(row => {
+      const memberships = membershipMap.get(row.id) ?? [];
+      return Workspace.reconstitute(
+        row.id,
+        row.created_by,
+        row.name,
+        row.created_at,
+        row.updated_at,
+        row.version,
+        memberships.map(m =>
+          WorkspaceMembership.reconstitute(
+            m.user_id,
+            m.workspace_id,
+            MembershipRole.from(m.role),
+            MembershipStatus.from(m.status),
+            m.invited_by ?? '',
+            m.invited_at ?? new Date(),
+            m.joined_at,
+          ),
+        ),
+      );
+    });
   }
 
   async save(workspace: Workspace): Promise<void> {
@@ -76,29 +141,7 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
       )
       .execute();
 
-    // Sync memberships
-    for (const m of workspace.memberships) {
-      await this.db
-        .insertInto('workspace_memberships')
-        .values({
-          workspace_id: m.workspaceId,
-          user_id: m.userId,
-          role: m.role.value,
-          status: m.status.value,
-          invited_by: m.invitedBy,
-          invited_at: m.invitedAt,
-          joined_at: m.joinedAt,
-        })
-        .onConflict((oc) =>
-          oc.columns(['workspace_id', 'user_id']).doUpdateSet({
-            role: m.role.value,
-            status: m.status.value,
-            joined_at: m.joinedAt,
-            updated_at: new Date(),
-          }),
-        )
-        .execute();
-    }
+    await this.syncMemberships(this.db, workspace.workspaceId, workspace.memberships);
   }
 
   async saveWithLock(workspace: Workspace, expectedVersion: number): Promise<void> {
@@ -128,29 +171,7 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
         );
       }
 
-      // Sync memberships
-      for (const m of workspace.memberships) {
-        await trx
-          .insertInto('workspace_memberships')
-          .values({
-            workspace_id: m.workspaceId,
-            user_id: m.userId,
-            role: m.role.value,
-            status: m.status.value,
-            invited_by: m.invitedBy,
-            invited_at: m.invitedAt,
-            joined_at: m.joinedAt,
-          })
-          .onConflict((oc) =>
-            oc.columns(['workspace_id', 'user_id']).doUpdateSet({
-              role: m.role.value,
-              status: m.status.value,
-              joined_at: m.joinedAt,
-              updated_at: new Date(),
-            }),
-          )
-          .execute();
-      }
+      await this.syncMemberships(trx, workspace.workspaceId, workspace.memberships);
     });
   }
 
@@ -184,11 +205,44 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
       .selectAll('workspaces')
       .execute();
 
-    const workspaces: Workspace[] = [];
-    for (const row of rows) {
-      const workspace = await this.findById(row.id);
-      if (workspace) workspaces.push(workspace);
+    if (rows.length === 0) return [];
+
+    const workspaceIds = rows.map(r => r.id);
+
+    const allMemberships = await this.db
+      .selectFrom('workspace_memberships')
+      .where('workspace_id', 'in', workspaceIds)
+      .selectAll()
+      .execute();
+
+    const membershipMap = new Map<string, typeof allMemberships>();
+    for (const m of allMemberships) {
+      const list = membershipMap.get(m.workspace_id) ?? [];
+      list.push(m);
+      membershipMap.set(m.workspace_id, list);
     }
-    return workspaces;
+
+    return rows.map(row => {
+      const memberships = membershipMap.get(row.id) ?? [];
+      return Workspace.reconstitute(
+        row.id,
+        row.created_by,
+        row.name,
+        row.created_at,
+        row.updated_at,
+        row.version,
+        memberships.map(m =>
+          WorkspaceMembership.reconstitute(
+            m.user_id,
+            m.workspace_id,
+            MembershipRole.from(m.role),
+            MembershipStatus.from(m.status),
+            m.invited_by ?? '',
+            m.invited_at ?? new Date(),
+            m.joined_at,
+          ),
+        ),
+      );
+    });
   }
 }

@@ -1,4 +1,4 @@
-import { Box, Button, Card, CardContent, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, TextField, Typography } from '@mui/material';
 import { useState, useRef, useEffect } from 'react';
 import { useParams } from 'react-router';
 import useSWR from 'swr';
@@ -12,6 +12,7 @@ export default function ConversationPage() {
   const { conversationId } = useParams<{ conversationId: string }>();
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -31,12 +32,13 @@ export default function ConversationPage() {
   const handleSend = async () => {
     if (!newMessage.trim() || !conversationId) return;
     setSending(true);
+    setSendError(null);
     try {
       await api.sendMessage(conversationId, newMessage.trim());
       setNewMessage('');
       await mutate();
     } catch (err) {
-      console.error('Failed to send message:', err instanceof Error ? err.message : err);
+      setSendError(err instanceof Error ? err.message : 'Failed to send message');
     } finally {
       setSending(false);
     }
@@ -85,7 +87,7 @@ export default function ConversationPage() {
                   px: 2,
                   py: 1.5,
                   borderRadius: 2,
-                  bgcolor: msg.role === 'user' ? 'primary.main' : 'grey.100',
+                  bgcolor: msg.role === 'user' ? 'primary.main' : 'action.hover',
                   color: msg.role === 'user' ? 'primary.contrastText' : 'text.primary',
                 }}
               >
@@ -101,21 +103,28 @@ export default function ConversationPage() {
           <div ref={messagesEndRef} />
         </CardContent>
 
-        <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider', display: 'flex', gap: 1 }}>
-          <TextField
-            fullWidth
-            placeholder="Type your message..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={sending}
-            size="small"
-            multiline
-            maxRows={4}
-          />
-          <Button variant="contained" onClick={handleSend} disabled={sending || !newMessage.trim()}>
-            {copy.t('shared.actions.send')}
-          </Button>
+        <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+          {sendError && (
+            <Alert severity="error" sx={{ mb: 1 }} onClose={() => setSendError(null)}>
+              {sendError}
+            </Alert>
+          )}
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <TextField
+              fullWidth
+              placeholder="Type your message..."
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={sending}
+              size="small"
+              multiline
+              maxRows={4}
+            />
+            <Button variant="contained" onClick={handleSend} disabled={sending || !newMessage.trim()}>
+              {copy.t('shared.actions.send')}
+            </Button>
+          </Box>
         </Box>
       </Card>
     </Box>

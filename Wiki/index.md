@@ -3,6 +3,7 @@ type: index
 tags:
   - wiki/index
 date_updated: 2026-08-02
+maintenance: 2026-08-02 — medium-severity findings executed: 16/16 active findings (M2–M18, excl. M1 deferred) closed across 5 phases. Phase 1: static import M17, Identifier.equals cross-type M18, copy.t() M8, typography M11, statusColorMap M6. Phase 2: LoadingSkeleton M3, sendMessage error M2, theme-aware bubbles M7. Phase 3: N+1 query fix M14, batch membership sync M15. Phase 4: SSE race fix M13. Phase 5: ARIA labels M4/M9, focus management M10, React.lazy code splitting M5. Typecheck ✅, build ✅, tests 5/5.
 maintenance: 2026-08-02 — high-severity findings executed: all 10 (H1–H10) closed. Medium-severity plan filed: 16 findings, 5 phases. Typecheck ✅, build ✅, tests 8/8.
 maintenance: 2026-08-02 — high-severity findings executed: all 10 findings (H1–H10) closed across 5 phases. H1: Conversation.start→create. H2: User factories→create. H3: ModelTier class VO. H4: saveWithLock transaction. H5: 3 DomainErrors. H6: OAuth token fallback. H7: useSession error state. H8: dynamic tool inputs. H9: countStalled fix. H10: exhaustiveness check. Typecheck ✅, build ✅, tests 8/8.
 maintenance: 2026-08-02 — critical findings executed: all 8 findings (C1–C8) closed across 3 phases. Phase 1: auth error forwarding, WCAG contrast, OS theme reactivity, React render purity. Phase 2: ErrorBoundary + responsive drawer. Phase 3: artifact persistence + VO serialization. Typecheck ✅, build ✅, tests 8/8.
@@ -79,6 +80,8 @@ maintenance: 2026-08-02 — health maintenance: 4 wiki-lint issues fixed (log.md
 | [[PlayerProfile]] | Gamification | Aggregate Root | 4 |
 | [[Achievement]] | Gamification | Entity | 3 |
 | [[Quota]] | Usage & Quota | Aggregate Root | 2 |
+| [[SessionRepository]] | Content Generation | Repository Interface | 3 |
+| [[WorkspaceRepository]] | Workspace & Assets | Repository Interface | 3 |
 
 ## Concepts
 

@@ -2,7 +2,7 @@ import { Worker, type Job } from 'bullmq';
 import { createActor, fromPromise } from 'xstate';
 import { sessionMachine, type SessionContext } from '../machines/session-machine.js';
 import type { SessionRepository, Artifact, PromptComposer, PromptTemplateRepository, Session } from '@flow-app/domain';
-import { getTool, Artifact as ArtifactEntity, ContextEnricher, DEFAULT_COMPONENTS, SessionNotFoundError, ToolNotFoundError } from '@flow-app/domain';
+import { getTool, Artifact as ArtifactEntity, ContextEnricher, DEFAULT_COMPONENTS, SessionNotFoundError, ToolNotFoundError, PromptTemplateId, PromptVersion } from '@flow-app/domain';
 import type { JobEventBridge } from '../../infrastructure/job-event-bridge.js';
 import type { LlmGateway } from '../../infrastructure/llm-gateway.js';
 import { logger } from '../../infrastructure/logger.js';
@@ -78,7 +78,6 @@ async function processSessionJob(
 
           const templateId = step.prompt.templateId ?? step.prompt.template;
           if (templateId) {
-            const { PromptTemplateId, PromptVersion } = await import('@flow-app/domain');
             const templateIdObj = PromptTemplateId.fromString(templateId);
             const versionObj = step.prompt.version
               ? PromptVersion.from(step.prompt.version)

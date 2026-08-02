@@ -2,7 +2,7 @@ export abstract class Identifier<T> {
   constructor(readonly value: T) {}
 
   equals(other: Identifier<T>): boolean {
-    return this.value === other.value;
+    return this.constructor === other.constructor && this.value === other.value;
   }
 
   toString(): string {
