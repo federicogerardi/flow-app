@@ -51,13 +51,11 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 // ── Auth API helpers (direct fetch, no auth required) ───────────────────────
 
-const API_BASE = import.meta.env.VITE_API_URL as string || '';
-
 async function authFetch(
   path: string,
   body?: Record<string, unknown>,
 ): Promise<AuthResponse> {
-  const response = await fetch(`${API_BASE}/api/auth${path}`, {
+  const response = await fetch(`/api/auth${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: body ? JSON.stringify(body) : undefined,
@@ -86,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     async function trySilentRefresh() {
       try {
-const response = await fetch(`${API_BASE}/api/auth/refresh`, {
+const response = await fetch('/api/auth/refresh', {
           method: 'POST',
           credentials: 'include',
         });
@@ -96,7 +94,7 @@ const response = await fetch(`${API_BASE}/api/auth/refresh`, {
           const existingToken = getAccessToken();
           if (existingToken) {
             try {
-              const meResponse = await fetch(`${API_BASE}/api/auth/me`, {
+              const meResponse = await fetch('/api/auth/me', {
                 headers: { Authorization: `Bearer ${existingToken}` },
                 credentials: 'include',
               });
@@ -149,7 +147,7 @@ const response = await fetch(`${API_BASE}/api/auth/refresh`, {
 
   const logout = useCallback(async () => {
     try {
-      await fetch(`${API_BASE}/api/auth/logout`, {
+      await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
       });
@@ -186,7 +184,7 @@ export function useAuth(): AuthContextValue {
 
 export async function attemptTokenRefresh(): Promise<boolean> {
   try {
-    const response = await fetch(`${API_BASE}/api/auth/refresh`, {
+    const response = await fetch('/api/auth/refresh', {
       method: 'POST',
       credentials: 'include',
     });
