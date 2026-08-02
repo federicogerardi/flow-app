@@ -37,12 +37,10 @@ jobs:
           chmod +x /tmp/railway
           echo /tmp >> "$GITHUB_PATH"
       - name: Deploy to Railway
-        run: railway up --ci --environment dev
+        run: railway up --ci --environment dev --project "$RAILWAY_PROJECT_ID"
         env:
-          # Workspace token (Bearer) from https://railway.com/account/tokens
-          # Railway CLI only supports account/workspace tokens, not project tokens
-          # Environment isolation via --environment flag + GitHub Environment gates
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_DEV }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
 
   deploy-staging:
     name: Deploy (staging)
@@ -60,9 +58,10 @@ jobs:
           chmod +x /tmp/railway
           echo /tmp >> "$GITHUB_PATH"
       - name: Deploy to Railway
-        run: railway up --ci --environment staging
+        run: railway up --ci --environment staging --project "$RAILWAY_PROJECT_ID"
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
 
   deploy-production:
     name: Deploy (production)
@@ -80,6 +79,7 @@ jobs:
           chmod +x /tmp/railway
           echo /tmp >> "$GITHUB_PATH"
       - name: Deploy to Railway
-        run: railway up --ci --environment production
+        run: railway up --ci --environment production --project "$RAILWAY_PROJECT_ID"
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_PRODUCTION }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
