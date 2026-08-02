@@ -24,6 +24,24 @@ Extended [[DDD Domain Design Rules]] with 7 architectural patterns discovered fr
 
 Created [[DDD Domain Design Rules]] — authoritative governance reference encoding all DDD tactical patterns from Phase 0–9. 12 rules: 6 core rules from CLAUDE.md (no `as any`, zero external validation, DomainError hierarchy, class VOs, repository purity, canonical factories) + 6 architectural patterns from codebase (aggregate root design, domain events, repository interfaces, cross-context references, barrel exports, domain services). 12 sources cross-referenced. Updated: `Wiki/index.md` (concepts table), `Wiki/concepts/DDD Domain Design Rules.md` (new, 440 lines).
 
+## [2026-08-02] plan | Medium-severity remediation plan filed
+
+Filed [[synthesis/medium-fix-plan-2026-08-02]]. 18 findings (M1–M18), 1 already resolved (M12 via H9), 1 deferred (M1 — architectural discussion needed), 16 active. Organized into 5 phases:
+
+**Phase 1 — Quick Wins (M6, M8, M11, M17, M18)**: Remove dynamic import, fix cross-type equality, copy.t() i18n, h4-h6 typography, extract statusColorMap. 5 files, ~25 min.
+
+**Phase 2 — Frontend UX (M2, M3, M7)**: sendMessage error feedback, WorkspaceRedirect LoadingSkeleton, theme-aware bubble colors. 3 files, ~35 min.
+
+**Phase 3 — Backend Data (M14, M15)**: Fix N+1 query in findByMember (2 queries instead of 2N+1), extract & batch membership sync (M15+M16 consolidation). 1 file, ~55 min.
+
+**Phase 4 — Real-time (M13)**: Fix SSE race condition in job-event-bridge — handler registered before subscribe, add try/catch around JSON.parse. 1 file, ~30 min.
+
+**Phase 5 — Accessibility + Performance (M4, M5, M9, M10)**: ARIA labels on Drawer/Select/nav, focus management hook, React.lazy code splitting. 2 files, ~40 min.
+
+Deferred: M1 (hard redirect requires ADR), M4 full audit (separate task).
+
+---
+
 ## [2026-08-02] execute | High-severity findings — all 10 closed
 
 Executed [[synthesis/high-fix-plan-2026-08-02]]. All 10 high-severity findings (H1–H10) resolved across 5 phases.
