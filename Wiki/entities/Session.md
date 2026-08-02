@@ -3,13 +3,22 @@ type: entity
 tags:
   - wiki/entity
   - wiki/generation
-date_updated: 2026-08-01
-source_count: 4
+date_updated: 2026-08-02
+source_count: 5
 ---
 
 # Session
 
 > Aggregate Root — [[Content Generation]] context
+>
+> **⚠️ Implementation status (2026-08-02):** The code examples on this page represent the **target architecture** (classes, VOs, strongly-typed events). The current implementation is simpler:
+> - IDs are `string`, not `SessionId`/`WorkspaceId`/`UserId` VOs
+> - Timestamps are `Date`, not `DateTime` VO
+> - `SessionStatus` is a `type` alias (`'draft' | 'ready' | ...`), not a class with `SessionStatus.Draft`/`.Ready` instances
+> - `apply()` accepts `{ type: SessionEventType; [key: string]: unknown }` with per-field casts, not the strongly-typed `SessionEvent` union shown below
+> - The `_artifacts` array doesn't exist on the current Session entity (artifacts are tracked via Artifact table)
+>
+> These are tracked as [[rule-4-vo-debt|Rule 4 VO debt]] and [[session-lifecycle|SessionLifecycle integration debt]]. The wiki page retains the target design for reference.
 
 ## Definition
 
@@ -280,3 +289,4 @@ type SessionEvent =
 - [[sources/PRD]] — Functional requirements FR-W01 to FR-W09
 - [[sources/STARTUP]] — Domain definitions, Artifact vs Asset
 - [[sources/USER-STORIES]] — US-T01 to US-T10, US-GF01 to US-GF09
+- [[rule-4-vo-debt]] — Pre-existing VO type alias debt affecting this entity
