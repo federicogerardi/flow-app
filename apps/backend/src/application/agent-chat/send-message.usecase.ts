@@ -35,7 +35,7 @@ export class SendMessageUseCase {
     const recentMessages = conversation.recentMessages(20);
 
     const historyLines = recentMessages.map((m) => {
-      const role = m.role === 'user' ? 'User' : m.role === 'agent' ? agent.name : 'System';
+      const role = m.role.isUser ? 'User' : m.role.isAgent ? agent.name : 'System';
       return `[${role}]: ${m.content}`;
     });
 
