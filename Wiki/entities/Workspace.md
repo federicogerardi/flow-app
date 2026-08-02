@@ -185,7 +185,7 @@ get memberships(): ReadonlyArray<WorkspaceMembership> {
 |-----------|---------|-------------|
 | → [[Content Generation]] | Query (sync) | Generation calls `AssetResolver.resolve()` before starting |
 | ← [[Content Generation]] | Domain Event (async) | `SessionCompleted` → promote final [[Artifact]] to [[Asset]] |
-| → [[Identity & Access]] | Shared ID | References `UserId` |
+| → [[Auth Dependencies]] | Shared ID | References `UserId` |
 | → [[Usage & Quota]] | None (by design) | Credits are consumed by `Session.userId`, not by workspace owner |
 
 ## Sources

@@ -48,7 +48,7 @@ date_updated: 2026-08-01
 | Stack definition | Covered | Versioned dependencies and workspace structure in [[Project Dependencies]]. | Explicit LTS policy and upgrade cadence are not uniformly codified per dependency class. |
 | Architectural patterns | Covered | Bounded contexts in [[overview]], DDD boundaries in [[packages-domain Structure]], orchestration patterns in [[XState Integration]]. | Architecture Decision Record process exists in sources, but no dedicated ADR index page in Wiki for governance continuity. |
 | API design and contracts | Covered | Versioning/deprecation policy in [[API Routes]], schema governance and CI checks in [[API Documentation - OpenAPI]]. | Contract change governance does not yet include explicit consumer-driven contract testing strategy. |
-| Security by design (authn/authz, crypto, secrets, compliance) | Partially covered | OAuth/JWT/RBAC in [[Identity & Access]]; secrets/env model in [[Environment Configuration]]; PII-safe logging in [[Logging Strategy]]. | OIDC/ABAC not formalized; no explicit end-to-end encryption standard document; no GDPR/HIPAA/SOC2 control mapping. |
+| Security by design (authn/authz, crypto, secrets, compliance) | Partially covered | OAuth/JWT/RBAC in [[Auth Dependencies]]; secrets/env model in [[Environment Configuration]]; PII-safe logging in [[Logging Strategy]]. | OIDC/ABAC not formalized; no explicit end-to-end encryption standard document; no GDPR/HIPAA/SOC2 control mapping. |
 
 ### 3) Quality Control & Governance
 
@@ -103,7 +103,7 @@ date_updated: 2026-08-01
 - [[Project Dependencies]]
 - [[API Routes]]
 - [[API Documentation - OpenAPI]]
-- [[Identity & Access]]
+- [[Auth Dependencies]]
 - [[Environment Configuration]]
 - [[Testing Strategy]]
 - [[Logging Strategy]]

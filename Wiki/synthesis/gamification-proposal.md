@@ -191,7 +191,7 @@ MessageAdded (agent) ──────────────▶    onAgentMes
 | [[Agent Chat]] | None | Events already emitted |
 | [[Workspace Sharing]] | None | Events already emitted |
 | [[Usage & Quota]] | Minor | Listens for `AchievementUnlocked` event → adds credits. No direct call from Gamification |
-| [[Identity & Access]] | None | Shared UserId |
+| [[Auth Dependencies]] | None | Shared UserId |
 
 ## Key Properties
 

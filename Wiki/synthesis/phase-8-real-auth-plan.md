@@ -42,7 +42,7 @@ Replace `dev-auth.ts` (hardcoded seed user) with production-grade authentication
 
 - [[Auth Dependencies]] — Passport.js strategies, JWT config, bcrypt setup
 - [[Auth Middleware]] — JWT verification pipeline, role guards, error handling
-- [[Identity & Access]] — User aggregate properties, domain boundaries
+- [[Auth Dependencies]] — User aggregate properties, domain boundaries
 - [[API SLO Catalog]] — Auth endpoints SLOs (availability, latency, consistency)
 
 ---
@@ -880,7 +880,7 @@ Cross-phase DDD audit uncovered 8 violations across the full codebase. 7 fixed:
 
 - [[Auth Dependencies]]
 - [[Auth Middleware]]
-- [[Identity & Access]]
+- [[Auth Dependencies]]
 - [[API SLO Catalog]]
 - [[Workspace Permissions]]
 - [[Database Schema]]

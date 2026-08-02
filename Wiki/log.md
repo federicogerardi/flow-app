@@ -1463,7 +1463,7 @@ Files verified and updated:
   - **Gap #2**: [[Migration Tooling]] — FileMigrationProvider + Kysely, `npm run migrate:up`
   - **Gap #3**: [[Health Check - Deep]] — 5 checks (DB, Redis, Pool, BullMQ, LLM), admin-only
   - **Gap #4**: [[File Upload Security]] — multer memoryStorage, 10MB limit, MIME whitelist, mammoth/pdf-parse
-  - **Gap #5**: Redis degradation — PostgreSQL fallback in [[Idempotency Implementation]]
+  - **Gap #5**: Redis degradation — PostgreSQL fallback in [[Idempotency]]
   - **Gap #6**: DB Pool Monitoring — integrated in [[Health Check - Deep]]
   - **Gap #7**: Artifact Size — 500KB limit + preview in [[Artifact]]
   - **Gap #8**: Session Cleanup — retention policy in [[Database Schema]]

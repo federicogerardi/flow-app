@@ -119,7 +119,7 @@ CREATE INDEX idx_idempotency_keys_expires_at ON idempotency_keys(expires_at);
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `key_hash` | `VARCHAR(64) PK` | SHA-256 of [[IdempotencyKey]] components |
+| `key_hash` | `VARCHAR(64) PK` | SHA-256 of [[Idempotency]] key components |
 | `expires_at` | `TIMESTAMPTZ` | TTL-based cleanup (e.g. 24h) |
 
 **Usage**: `INSERT INTO idempotency_keys ... ON CONFLICT (key_hash) DO NOTHING RETURNING session_id`. If a row is returned, the key already exists → return existing session.

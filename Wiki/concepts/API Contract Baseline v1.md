@@ -117,5 +117,5 @@ Payload must always be emitted in one `data:` JSON object per event and match [[
 - [[Contracts Package]]
 - [[Error Mapping (Domain to HTTP)]]
 - [[Concurrency & Conflict Policy]]
-- [[Idempotency Implementation]]
+- [[Idempotency]]
 - [[CI-CD Promotion Policy]]

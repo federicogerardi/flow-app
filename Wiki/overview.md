@@ -24,7 +24,7 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 | [[Workspace & Assets]] | Supporting | [[Workspace]] | Organization, reusable brand resources |
 | [[Agent Chat]] | Supporting | [[Conversation]] | Conversational, multi-turn guidance with workspace-aware context injection |
 | [[Gamification]] | Supporting | [[PlayerProfile]] | Event-driven XP, levels, badges, streaks, workspace challenges |
-| [[Identity & Access]] | Generic | [[User]] | Auth, roles, sessions |
+| [[Auth Dependencies]] | Generic | [[User]] | Auth, roles, sessions |
 | [[Usage & Quota]] | Supporting | [[Quota]] | 🔴 Planned — DB tables exist (005), domain code not yet implemented |
 
 ## Interaction Models

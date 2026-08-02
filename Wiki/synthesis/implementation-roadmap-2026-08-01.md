@@ -20,7 +20,7 @@ Translate the current documentation baseline into an execution order that minimi
 
 1. **Vertical slice first**: ship one end-to-end generation flow before expanding bounded contexts.
 2. **Contract stability before feature breadth**: keep [[API Contract Baseline v1]] authoritative.
-3. **Operational readiness from day one**: enforce [[Quality Gate Matrix]] and [[Definition of Done]] from the first implementation PR.
+3. **Operational readiness from day one**: enforce [[Quality Gate Matrix]] (incorporates [[Quality Gate Matrix|Definition of Done]]) from the first implementation PR.
 4. **Scoped expansion**: add collaboration and engagement contexts only after core async reliability is stable.
 
 ## Phase Plan
@@ -579,7 +579,7 @@ Implementation (2026-08-02, branch `feature/phase-8-real-auth`):
 
 - [[API Contract Baseline v1]]
 - [[Quality Gate Matrix]]
-- [[Definition of Done]]
+- [[Quality Gate Matrix]]
 - [[CI-CD Promotion Policy]]
 - [[Session Machine (XState v5)]]
 - [[BullMQ Worker Wiring]]

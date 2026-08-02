@@ -127,7 +127,7 @@ Existing routes gain `requireWorkspaceRole()` guard instead of implicit ownershi
 |---------|--------|------------|
 | [[Content Generation]] | None. Session has `userId` (author) + `workspaceId`. | No changes. |
 | [[Usage & Quota]] | Credit consumer = `Session.userId`. Owner does not pay for editors. | No changes. Credit rule documented here. |
-| [[Identity & Access]] | None. `UserId` is already a shared VO. | No changes. |
+| [[Auth Dependencies]] | None. `UserId` is already a shared VO. | No changes. |
 | [[Workspace & Assets]] | Aggregate root modified. Repository extended. New middleware. | See [[workspace-sharing-proposal]]. |
 
 ## Sources

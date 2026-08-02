@@ -90,7 +90,7 @@ maintenance: 2026-08-02 — health maintenance: 4 wiki-lint issues fixed (log.md
 | [[ArtifactContent]] | high | 3 |
 | [[Asset Promotion]] | high | 4 |
 | [[AssetResolver]] | high | 4 |
-| [[Auth Dependencies]] | high | 5 |
+| [[Auth Dependencies]] | high | 6 |
 | [[Auth Middleware]] | high | 4 |
 | [[BullMQ Worker Wiring]] | high | 5 |
 | [[CI-CD Promotion Policy]] | high | 7 |
@@ -101,8 +101,6 @@ maintenance: 2026-08-02 — health maintenance: 4 wiki-lint issues fixed (log.md
 | [[Context Injection]] | high | 6 |
 | [[CrawlData]] | high | 2 |
 | [[Database Schema]] | high | 9 |
-| [[Definition of Done]] | high | 7 |
-| [[Design Tokens]] | high | 6 |
 | [[Dependency Injection Setup]] | high | 4 |
 | [[Docker Compose - Local Dev]] | high | 2 |
 | [[Domain Events]] | high | 4 |
@@ -117,10 +115,7 @@ maintenance: 2026-08-02 — health maintenance: 4 wiki-lint issues fixed (log.md
 | [[Git Governance Policy]] | high | 4 |
 | [[Global Deterministic Model Matrix]] | high | 5 |
 | [[Health Check - Deep]] | high | 4 |
-| [[Identity & Access]] | high | 2 |
-| [[Idempotency Implementation]] | high | 5 |
-| [[IdempotencyKey]] | high | 3 |
-| [[IdempotencyKey + Prompt Version]] | high | 6 |
+| [[Idempotency]] | high | 8 |
 | [[Invitation Notification Delivery]] | high | 4 |
 | [[Job Queue - Monitoring and Stability]] | high | 4 |
 | [[LLM Gateway - OpenRouter]] | high | 4 |

@@ -201,7 +201,7 @@ At server startup, every `ToolDefinition.steps[].prompt.templateId` is validated
 
 ## Impact on Idempotency
 
-An open question (see [[prompting-mechanics-proposal#open-questions|proposal]]): should the `[[IdempotencyKey]]` include the prompt version?
+An open question (see [[prompting-mechanics-proposal#open-questions|proposal]]): should the [[Idempotency]] include the prompt version?
 
 - **Include version**: same inputs + same template version = idempotent replay. Different template version = new session. This is the safer default.
 - **Exclude version**: same inputs always return the cached session regardless of template changes. Useful for development but masks template drift.

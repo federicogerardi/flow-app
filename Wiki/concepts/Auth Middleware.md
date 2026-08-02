@@ -16,7 +16,7 @@ confidence: high
 
 ## Architecture
 
-Authentication is a **cross-cutting concern** — middleware verifies the token and attaches user context to the request. The [[Identity & Access]] bounded context owns the `User` aggregate; the middleware just validates claims.
+Authentication is a **cross-cutting concern** — middleware verifies the token and attaches user context to the request. The [[Auth Dependencies]] bounded context owns the `User` aggregate; the middleware just validates claims.
 
 ## Token Flow
 

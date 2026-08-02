@@ -137,7 +137,7 @@ apps/backend/src/prompts/
 |---------|--------|
 | [[Content Generation]] | **Extended** — new `prompting/` sub-module, `StepDefinition` gains fields |
 | [[Workspace & Assets]] | None — assets are injected via `{{slot:asset:*}}`, already resolved by `AssetResolver` |
-| [[Identity & Access]] | None |
+| [[Auth Dependencies]] | None |
 | [[Usage & Quota]] | None — credit consumption unchanged |
 
 ## Startup Validation
@@ -153,7 +153,7 @@ The server must validate at boot:
 
 ## Open Questions
 
-1. **Idempotency and versions**: should `[[IdempotencyKey]]` include `(templateId, version)`? Including it means same inputs + new template version = new session (deterministic replay). Excluding it means cached session is returned regardless of template changes. Recommendation: include by default, opt-out for dev.
+1. **Idempotency and versions**: should `[[Idempotency]]` include `(templateId, version)`? Including it means same inputs + new template version = new session (deterministic replay). Excluding it means cached session is returned regardless of template changes. Recommendation: include by default, opt-out for dev.
 
 2. **Component hot-reload**: with filesystem storage, component changes require redeploy. For faster iteration, a future phase could add a Redis-backed component registry with admin API for hot-reload. Current proposal keeps it simple: filesystem, git-native.
 

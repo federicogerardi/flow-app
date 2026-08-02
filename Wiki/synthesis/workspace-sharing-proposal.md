@@ -83,7 +83,7 @@ SELECT id, user_id, 'owner', 'active', user_id, created_at, created_at FROM work
 |---------|--------|--------|
 | [[Content Generation]] | None | `Session.userId` (author) + `Session.workspaceId` (context) unchanged |
 | [[Usage & Quota]] | None | Credits consumed by `Session.userId` — no shared billing |
-| [[Identity & Access]] | None | `UserId` already shared across contexts |
+| [[Auth Dependencies]] | None | `UserId` already shared across contexts |
 
 ## Permission Model
 

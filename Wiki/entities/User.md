@@ -9,7 +9,7 @@ source_count: 2
 
 # User
 
-> Aggregate Root — [[Identity & Access]] context
+> Aggregate Root — [[Auth Dependencies]] context
 
 ## Definition
 
