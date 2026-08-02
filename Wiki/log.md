@@ -12,6 +12,47 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-02] implement | Phase 10 — Deployment & CI/CD
+
+Implemented Phase 10 of [[synthesis/implementation-roadmap-2026-08-01]] — production deployment artifacts.
+
+### Files created (8)
+- `Dockerfile` — multi-stage build: builder (node:22-alpine, `tsc --build` + `vite build` + `npm prune --production`) → production (node:22-alpine, non-root user, HEALTHCHECK)
+- `.dockerignore` — excludes node_modules, dist, .git, Wiki, logs, coverage
+- `railway.json` — Railway schema: DOCKERFILE builder, healthcheck `/health`, restart ALWAYS
+- `.github/workflows/_ci-checks.yml` — reusable workflow: lint, typecheck, test (PostgreSQL + Redis services), build
+- `.github/workflows/ci.yml` — calls `_ci-checks.yml` on PR, concurrency group, `permissions: contents: read`
+- `.github/workflows/deploy.yml` — calls `_ci-checks.yml` + 3 conditional deploys (dev/staging/production), Railway CLI pinned to v3.21.0, `--ci` mode (fails on deploy error)
+- `.github/workflows/codeql.yml` — JavaScript/TypeScript security scanning (weekly + on push/PR to main/staging)
+- `.dockerignore` — build context optimization
+
+### CI review fixes applied (github-actions-expert review)
+- **C1**: Added `permissions: contents: read` to all workflows (was missing, defaulted to write-all)
+- **C2**: Replaced `-detach` with `-ci` in Railway deploy (now fails workflow on deploy error)
+- **C3**: Pinned Railway CLI version: `sh -s -- --version 3.21.0`
+- **H1**: Extracted shared checks into reusable `_ci-checks.yml` (zero job duplication)
+- **H2**: Added `-U flow_app` to PostgreSQL health check
+- **H3**: Added concurrency groups (ci → `cancel-in-progress: true`, deploy → `cancel-in-progress: false`)
+- **H4**: Added CodeQL security scanning workflow
+- **M3/M4**: Added `paths-ignore` for `.github/workflows/ci.yml` in deploy; added `--service backend` consideration (deferred — Railway auto-detects)
+
+### Files modified (3)
+- `package.json` — fixed root `build` script: `"tsc --build && npm run build --workspace=apps/frontend"` (was `"npm run build --workspaces"` which failed on packages without build scripts)
+- `.github/workflows/ci.yml` — rewritten: delegates to `_ci-checks.yml`, added permissions + concurrency
+- `Wiki/synthesis/implementation-roadmap-2026-08-01.md` — Phase 10 status: → ✅, frontmatter updated (11/12 complete), backlog order updated
+- `Wiki/overview.md` — phase numbering fixed (9→10→11→12), Phase 10 marked complete, infrastructure section updated
+
+### Verification
+- Typecheck: ✅ (3 pre-existing warnings, no new errors)
+- Lint: ✅ (0 errors, 2 pre-existing warnings)
+- Build: ✅ (tsc --build + vite build, 1.30s)
+- Tests: ✅ 10/10 (2 files)
+
+### Remaining
+- Railway project provisioning (secrets: `RAILWAY_TOKEN` → GitHub)
+- Managed PostgreSQL + Redis services in Railway
+- Environment creation (dev/staging/production)
+
 ## [2026-08-02] maintenance | Wiki content rules enforcement
 
 Enforced Wiki Content Rules #1–#6 based on comprehensive health scan.

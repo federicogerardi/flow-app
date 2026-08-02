@@ -81,7 +81,7 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 
 ## Implementation Status
 
-### Completed (Phase 0–7 + Phase 8 Backend)
+### Completed (Phase 0–10)
 
 | Phase | Status | Scope |
 |-------|--------|-------|
@@ -94,25 +94,28 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 | Phase 6 — Real LLM Integration | ✅ | LlmGateway, ModelRegistry, 4 tiers, worker + chat wiring |
 | Phase 7 — Frontend MVP | ✅ | 4 shared components, 4 pages, 5 routes, MUI + SWR + react-router v7 |
 | Phase 8 — Real Authentication | ✅ | Backend (JWT, bcrypt, Passport, 7 endpoints) + Frontend (AuthContext, AuthGuard, LoginPage, RegisterPage, OAuthCallback, protected routes) |
+| Phase 9 — DDD Architectural Remediation | ✅ | 8 type aliases → classes, 12 DomainError subclasses, discriminated union |
+| Phase 10 — Deployment & CI/CD | ✅ | Dockerfile (multi-stage), railway.json, GitHub Actions CI + Deploy, .dockerignore |
 
-### Planned (Phase 9–11)
+### Planned (Phase 11–12)
 
 | Phase | Priority | Scope |
 |-------|----------|-------|
-| Phase 9 — Deployment & CI/CD | 🟡 High | Dockerfile, Railway config, GitHub Actions pipeline |
-| Phase 10 — Testing & Quality | 🟢 Medium | Domain tests, API tests, worker tests, CI quality gates |
-| Phase 11 — Gamification | 🟢 Medium | Points, achievements, leaderboards, event-driven rewards |
+| Phase 11 — Testing & Quality | 🟡 Medium | Domain tests, API tests, worker tests, CI quality gates |
+| Phase 12 — Gamification | 🟢 Medium | Points, achievements, leaderboards, event-driven rewards |
 
 ### Critical Gaps (remaining)
 
-1. **Zero deployment** — no Dockerfile, no CI/CD, no Railway config, runs only via `npm run dev`. Phase 9 planned.
-2. **Near-zero tests** — 1 test file (Identifier), vitest/supertest/testing-library installed but unused. Phase 10 planned.
+1. **Near-zero tests** — 1 test file (Identifier), vitest/supertest/testing-library installed but unused. Phase 11 planned.
 
-## Infrastructure (Railway dev)
+## Infrastructure (Needs Railway provisioning)
 
 | Resource | Endpoint | Status |
 |----------|----------|--------|
-| PostgreSQL | Railway dev (TCP proxy 5432) | ✅ 19 tables, 7 migrations |
+| PostgreSQL | Railway dev (TCP proxy 5432) | ✅ 19 tables, 8 migrations |
 | Redis | Railway dev (TCP proxy 6379) | ✅ ACTIVE |
-| Backend API | `localhost:3000` | ✅ 17 endpoints verified |
+| Backend API | `localhost:3000` | ✅ 22 endpoints verified |
 | LLM Gateway | OpenRouter (`OPENROUTER_API_KEY`) | ✅ 4 model tiers, fallback chain |
+| Dockerfile | Multi-stage (Node 22-alpine) | ✅ Phase 10 |
+| CI/CD | GitHub Actions (lint, typecheck, test, build, deploy) | ✅ Phase 10 |
+| railway.json | Railway service definition | ✅ Phase 10 |

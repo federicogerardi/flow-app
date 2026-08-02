@@ -1,0 +1,73 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main, staging, dev]
+    paths-ignore:
+      - 'Wiki/**'
+      - '**.md'
+      - '.obsidian/**'
+      - '.github/workflows/ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    name: Checks
+    uses: ./.github/workflows/_ci-checks.yml
+
+  deploy-dev:
+    name: Deploy (dev)
+    if: github.ref == 'refs/heads/dev'
+    needs: [checks]
+    runs-on: ubuntu-latest
+    environment:
+      name: dev
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Railway CLI
+        run: curl -fsSL https://railway.com/install.sh | sh -s -- --version 3.21.0
+      - name: Deploy to Railway
+        run: railway up --ci --environment dev
+        env:
+          # Workspace token (Bearer) from https://railway.com/account/tokens
+          # Railway CLI only supports account/workspace tokens, not project tokens
+          # Environment isolation via --environment flag + GitHub Environment gates
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_DEV }}
+
+  deploy-staging:
+    name: Deploy (staging)
+    if: github.ref == 'refs/heads/staging'
+    needs: [checks]
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Railway CLI
+        run: curl -fsSL https://railway.com/install.sh | sh -s -- --version 3.21.0
+      - name: Deploy to Railway
+        run: railway up --ci --environment staging
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
+
+  deploy-production:
+    name: Deploy (production)
+    if: github.ref == 'refs/heads/main'
+    needs: [checks]
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Railway CLI
+        run: curl -fsSL https://railway.com/install.sh | sh -s -- --version 3.21.0
+      - name: Deploy to Railway
+        run: railway up --ci --environment production
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_PRODUCTION }}

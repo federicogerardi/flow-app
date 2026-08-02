@@ -1,0 +1,63 @@
+# syntax=docker/dockerfile:1
+
+# ── Stage 1: Builder ──────────────────────────────────────────────────────────
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+COPY packages/domain/package.json packages/domain/
+COPY packages/contracts/package.json packages/contracts/
+COPY packages/infra-db/package.json packages/infra-db/
+COPY packages/copy/package.json packages/copy/
+COPY apps/backend/package.json apps/backend/
+COPY apps/frontend/package.json apps/frontend/
+
+RUN npm ci
+
+COPY tsconfig.json ./
+COPY packages/domain/tsconfig.json packages/domain/
+COPY packages/domain/src packages/domain/src
+COPY packages/contracts/tsconfig.json packages/contracts/
+COPY packages/contracts/src packages/contracts/src
+COPY packages/infra-db/tsconfig.json packages/infra-db/
+COPY packages/infra-db/src packages/infra-db/src
+COPY packages/infra-db/migrations packages/infra-db/migrations
+COPY packages/copy/tsconfig.json packages/copy/
+COPY packages/copy/src packages/copy/src
+COPY apps/backend/tsconfig.json apps/backend/
+COPY apps/backend/src apps/backend/src
+COPY apps/frontend/tsconfig.json apps/frontend/
+COPY apps/frontend/vite.config.ts apps/frontend/
+COPY apps/frontend/index.html apps/frontend/
+COPY apps/frontend/src apps/frontend/src
+
+RUN npm run build
+
+RUN npm prune --production
+
+RUN for pkg in packages/domain packages/contracts packages/infra-db packages/copy; do \
+      sed -i 's|\./src/|./dist/|g' "$pkg/package.json"; \
+    done
+
+# ── Stage 2: Production ───────────────────────────────────────────────────────
+FROM node:22-alpine
+
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+WORKDIR /app
+
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nodejs:nodejs /app/package.json ./
+COPY --from=builder --chown=nodejs:nodejs /app/packages ./packages
+COPY --from=builder --chown=nodejs:nodejs /app/apps ./apps
+
+USER nodejs
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost:3000/health || exit 1
+
+CMD ["node", "apps/backend/dist/server.js"]

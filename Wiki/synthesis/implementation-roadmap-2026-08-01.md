@@ -6,8 +6,8 @@ tags:
   - wiki/implementation
 date_updated: 2026-08-02
 phase_count: 12
-phases_complete: 10
-phases_remaining: 3
+phases_complete: 11
+phases_remaining: 2
 ---
 
 # Implementation Roadmap — Rational Development Sequence (2026-08-01)
@@ -408,42 +408,45 @@ Implementation (2026-08-02, branch `dev`):
 - All existing tests pass
 - No circular imports introduced
 
-### Phase 10 — Deployment & CI/CD (Week 16)
+### Phase 10 — Deployment & CI/CD (Week 16) ✅
 
 **Current gap**: no Dockerfile, no `railway.json`, no CI/CD pipelines, no GitHub Actions. The app runs only via `npm run dev`.
 
+**Status**: ✅ Implemented (2026-08-02, branch `dev`). Code artifacts created; actual Railway deploy requires project setup + secrets.
+
 **Goal**: production-ready deployment on Railway with automated CI/CD, environment parity, and health monitoring.
 
-**Tasks expected**:
+Implementation (2026-08-02, branch `dev`):
 
-1. **Dockerfile** — multi-stage build for both frontend and backend
-   - Stage 1: build frontend (Vite → static assets)
-   - Stage 2: build backend (TypeScript → Node.js)
-   - Stage 3: production image (Node 22-alpine, minimal deps)
+- **Dockerfile** — multi-stage build:
+  - Stage 1 (builder): `node:22-alpine` — `npm ci` (full install), `tsc --build` (all packages + backend), `vite build` (frontend), `npm prune --production`, fix workspace package.json exports (`src/` → `dist/`)
+  - Stage 2 (production): `node:22-alpine`, non-root user (`nodejs:1001`), HEALTHCHECK on `/health`, `CMD node apps/backend/dist/server.js`
+  - Worker deployment: same image, override `CMD node apps/backend/dist/generation/worker/worker-process.js`
+  - Build script fix: root `"build": "tsc --build && npm run build --workspace=apps/frontend"` (packages have no standalone build scripts)
 
-2. **Railway config** — `railway.json` with service definitions
-   - `backend` service (Express on port 3000, health check `/health`)
-   - `worker` service (BullMQ worker process, same image, different start command)
-   - PostgreSQL + Redis via Railway managed services
-   - Environment-specific configs (dev/staging/production)
+- **.dockerignore** — excludes node_modules, dist, .git, .github, Wiki, logs, coverage
 
-3. **GitHub Actions CI/CD** — automated build, test, deploy pipeline
-   - PR → build + lint + test (vitest)
-   - Merge to `dev` → deploy to Railway dev environment
-   - Merge to `staging` → deploy to Railway staging environment
-   - Merge to `main` → deploy to Railway production environment (manual approval gate)
+- **railway.json** — Railway-compatible schema: `builder: DOCKERFILE`, healthcheck at `/health`, restart `ALWAYS`, 1 replica
 
-4. **Environment config** — parity across environments
-   - `.env.example` with all required vars documented
-   - `NODE_ENV`-specific config loading
-   - Secrets via Railway variable references (never in repo)
+- **GitHub Actions CI** (`.github/workflows/ci.yml`) — 4 jobs on PR to main/staging/dev:
+  - `lint`: eslint (`npm run lint`)
+  - `typecheck`: `tsc --build`
+  - `test`: PostgreSQL 16 + Redis 7 service containers, migrations run, `vitest --run`
+  - `build`: full `tsc --build` + `vite build`
+  - `paths-ignore` for Wiki/, *.md, .obsidian/
 
-5. **Health monitoring** — production observability
-   - Railway health checks on `/health`
-   - `QueueHealthMonitor` alerts (already built in Phase 2)
-   - Structured logging (already built with pino)
+- **GitHub Actions Deploy** (`.github/workflows/deploy.yml`) — 4 check jobs + 3 conditional deploys:
+  - `refs/heads/dev` → `railway up --environment dev`
+  - `refs/heads/staging` → `railway up --environment staging`
+  - `refs/heads/main` → `railway up --environment production`
+  - Uses Railway CLI (`curl -fsSL https://railway.com/install.sh | sh`)
+  - Protected by GitHub Environments (requires `RAILWAY_TOKEN` secret)
+
+- **Docker Compose** — `docker-compose.yml` already exists (PostgreSQL 16 + Redis 7 for local dev and CI parity)
 
 **DDD Drift Risk**: 🟢 **NEGLIGIBLE** — Phase 10 is 100% infrastructure code (Dockerfile, railway.json, CI YAML). Zero domain or application code changes. No DDD rules at risk.
+
+**Next steps for Railway provisioning**: create Railway project, provision PostgreSQL + Redis services, set `RAILWAY_TOKEN` secret in GitHub, create environments (dev/staging/production).
 
 **Exit criteria**:
 
@@ -601,7 +604,7 @@ Implementation (2026-08-02, branch `dev`):
 8. Frontend MVP (Phase 7) ✅
 9. Real authentication (Phase 8) ✅ — full stack: identity domain + Passport.js + JWT + frontend auth flow
 10. **DDD architectural remediation** (Phase 9) ✅ — type aliases → classes, DomainError, discriminated unions
-11. **Deployment & CI/CD** (Phase 10) — get it live
+11. **Deployment & CI/CD** (Phase 10) ✅ — Dockerfile, railway.json, GitHub Actions CI/CD, docker-compose
 12. **Testing & quality** (Phase 11) — build confidence
 13. **Gamification** (Phase 12) — engagement layer
 
