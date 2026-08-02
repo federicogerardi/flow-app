@@ -7,6 +7,7 @@ tags:
 date_updated: 2026-08-02
 source_count: 1
 confidence: high
+status: complete
 ---
 
 # Implementation Plan: Phase 9 — Validation + Structural Gaps
@@ -19,32 +20,35 @@ This plan addresses the 11 VALIDATION and 2 quick-win STRUCTURAL gaps documented
 (Rule 3), types session events as a discriminated union, adds artifact lifecycle guards,
 and fixes temporal invariants on Session `_startedAt`.
 
-**Total estimated effort: ~12h 40m** across four phases (9a–9d).
+**Status**: ✅ **COMPLETE** (2026-08-02). All VALIDATION gaps (V1–V11) closed across 4 phases.
+Structural gaps S4 (temporal invariants) and S5 (tool stubs) deferred to Phase 10+.
+
+**Total actual effort**: ~4 sessions across Phase 9a–9d. ~70 files modified.
 
 ## Requirements
 
-- Every `throw new Error(...)` in domain code becomes a `DomainError` subclass with `code` and `retryable`
-- 8 type-alias value objects converted to the canonical class pattern: `private constructor`, `static readonly` instances, `static from()` with validation, `equals()`, `toString()`
-- `Session.apply()` uses a discriminated union instead of `{ type: SessionEventType; [key: string]: unknown }`
-- `Artifact` gains lifecycle guard methods (`startGeneration`, `complete`, `fail`)
-- `CONFIGURE` no longer sets `_startedAt`; `WORKER_PICKUP` does
-- All 11 tool keys get real definitions instead of the `blogPostTool` stub
+- ✅ Every `throw new Error(...)` in domain code becomes a `DomainError` subclass with `code` and `retryable`
+- ✅ 8 type-alias value objects converted to the canonical class pattern: `private constructor`, `static readonly` instances, `static from()` with validation, `equals()`, `toString()`
+- ✅ `Session.apply()` uses a discriminated union instead of `{ type: SessionEventType; [key: string]: unknown }`
+- ✅ `Artifact` gains lifecycle guard methods (`canTransitionTo()`, `apply()`) — implemented on ArtifactStatus class
+- ⏳ `CONFIGURE` no longer sets `_startedAt`; `WORKER_PICKUP` does — deferred to Phase 10 (S4)
+- ⏳ All 11 tool keys get real definitions instead of the `blogPostTool` stub — deferred to Phase 10 (S5)
 - Structural gaps S1, S2, S3 require RFCs first and are deferred to Phase 10+
 
 ## Architecture Changes
 
-- **24 new `DomainError` subclasses** — one per validation failure point across 8 files
-- **8 new class-based value objects** — replacing type aliases across 4 bounded contexts
-- **`SessionEvent` discriminated union** — replacing `{ type: SessionEventType; [key: string]: unknown }`
-- **`artifact-lifecycle.ts`** — new file to centralize lifecycle types and guards (avoids circular deps)
-- **`ToolKey` class** — becomes a class with 11 static instances, replacing `as ToolKey` casts
-- **11 new tool definitions** — real `ToolDefinition` objects for each tool key
+- ✅ **12 new `DomainError` subclasses** — one per validation failure point across 8 files
+- ✅ **10 class-based value objects** — replacing type aliases across 4 bounded contexts (SessionStatus, MembershipRole, ToolKey, AgentKey, ConversationStatus, MessageRole, ArtifactStatus, MembershipStatus, PromptComponentType, UserStatus fix)
+- ✅ **`SessionEvent` discriminated union** — replacing `{ type: SessionEventType; [key: string]: unknown }`
+- ✅ **`ArtifactStatus` lifecycle guards** — `canTransitionTo()` and `apply()` on the class itself (no separate file needed)
+- ✅ **`ToolKey` class** — 11 static instances, zero `as ToolKey` casts
+- ⏳ **11 new tool definitions** — deferred to Phase 10 (S5)
 
 ## Implementation Steps
 
 ---
 
-### Phase 9a — Foundation (P0, ~1h 40m)
+### Phase 9a — Foundation (P0, ~1h 40m) ✅ COMPLETE
 
 #### GAP V10 — `throw new Error()` → `DomainError` (30 min)
 
@@ -307,7 +311,7 @@ redundancy, and prevents DB corruption from silently accepted invalid status val
 
 ---
 
-### Phase 9b — Core (P0/P1, ~4h)
+### Phase 9b — Core (P0/P1, ~4h) ✅ COMPLETE
 
 #### GAP V2 — `MembershipRole` type alias → class (40 min)
 
@@ -686,7 +690,7 @@ redundancy, and prevents DB corruption from silently accepted invalid status val
 
 ---
 
-### Phase 9c — Remaining VOs + Artifact Lifecycle (P2, ~3h)
+### Phase 9c — Remaining VOs + Artifact Lifecycle (P2, ~3h) ✅ COMPLETE
 
 #### GAP V5 — `ConversationStatus` type alias → class (25 min)
 
@@ -933,7 +937,7 @@ redundancy, and prevents DB corruption from silently accepted invalid status val
 
 ---
 
-### Phase 9d — Structural Quick Wins (P1, ~5h)
+### Phase 9d — Structural Quick Wins (P1, ~5h) ⏳ PARTIAL — S4+S5 deferred to Phase 10
 
 #### GAP S4 — Session temporal invariants (30 min)
 
@@ -1163,29 +1167,31 @@ The following gaps require design decisions documented in RFCs before implementa
 
 ## Success Criteria
 
-- [ ] Zero `throw new Error(...)` in `packages/domain/src/` (except in `DomainError` constructors themselves)
-- [ ] All 11 `DomainError` subclass violations replaced (7 files)
-- [ ] `PromptComponentNotFoundError` extends `DomainError`
-- [ ] All 8 type-alias VOs converted to classes with `private constructor`, `static readonly` instances, `static from()`, `equals()`, `toString()`
-- [ ] Zero `as ToolKey`, `as AgentKey`, `as SessionStatus`, `as MembershipRole`, `as MembershipStatus`, `as ConversationStatus`, `as MessageRole` casts in repository files
-- [ ] `Session.apply()` uses `SessionEvent` discriminated union (no `[key: string]: unknown`)
-- [ ] `CONFIGURE` does NOT set `_startedAt`
-- [ ] `WORKER_PICKUP` sets `_startedAt`
-- [ ] `Artifact` has `startGeneration()`, `complete()`, `fail()` lifecycle methods
-- [ ] All 11 tool keys have distinct `ToolDefinition` objects (not all pointing to `blogPostTool`)
-- [ ] All existing tests pass
-- [ ] No circular imports introduced
+- [x] Zero `throw new Error(...)` in `packages/domain/src/` (except in `DomainError` constructors themselves)
+- [x] All 11 `DomainError` subclass violations replaced (7 files)
+- [x] `PromptComponentNotFoundError` extends `DomainError`
+- [x] All 8 type-alias VOs converted to classes with `private constructor`, `static readonly` instances, `static from()`, `equals()`, `toString()`
+- [x] Zero `as ToolKey`, `as AgentKey`, `as SessionStatus`, `as MembershipRole`, `as MembershipStatus`, `as ConversationStatus`, `as MessageRole` casts in repository files
+- [x] `Session.apply()` uses `SessionEvent` discriminated union (no `[key: string]: unknown`)
+- [ ] `CONFIGURE` does NOT set `_startedAt` — deferred to Phase 10 (S4)
+- [ ] `WORKER_PICKUP` sets `_startedAt` — deferred to Phase 10 (S4)
+- [x] `ArtifactStatus` has `canTransitionTo()` and `apply()` lifecycle guards
+- [ ] All 11 tool keys have distinct `ToolDefinition` objects (not all pointing to `blogPostTool`) — deferred to Phase 10 (S5)
+- [x] All existing tests pass
+- [x] No circular imports introduced
 - [ ] RFC documents created for S1, S2, S3 (deferred to Phase 10+)
 
 ## Summary
 
-| Phase | Gaps | Files Changed | Effort | Gate Criteria |
-|-------|------|:---:|:---:|---|
-| 9a | V10, V1 | 10 | 1h 40m | Zero `throw new Error`; `SessionStatus` class; `SessionLifecycle` uses class |
-| 9b | V2, V9, V3, V4 | 12 | 3h 45m | `MembershipRole`/`ToolKey`/`AgentKey` classes; `SessionEvent` discriminated union |
-| 9c | V5-V8, V11 | 9 | 2h 20m | Remaining VO classes; `Artifact` lifecycle methods |
-| 9d | S4, S5 | 3 | 4h 30m | Temporal invariants fixed; 11 distinct tool definitions |
-| **Total** | **11 gaps** | **24+** | **~12h 15m** | |
+| Phase | Gaps | Files Changed | Effort | Status | Gate Criteria |
+|-------|------|:---:|:---:|:---:|---|
+| 9a | V10, V1 | 18 | ~1h 40m | ✅ | Zero `throw new Error`; `SessionStatus` class; `SessionLifecycle` uses class |
+| 9b | V2, V9, V3, V4 | 20 | ~3h 45m | ✅ | `MembershipRole`/`ToolKey`/`AgentKey` classes; `SessionEvent` discriminated union |
+| 9c | V5-V8, V11 | 14 | ~2h 20m | ✅ | Remaining VO classes; `ArtifactStatus` lifecycle guards |
+| 9d | PromptComponentType, UserStatus fix | 6 | ~1h | ✅ | `PromptComponentType` class; `UserStatus` getter fix |
+| 9d (S4) | Session temporal invariants | — | 30m | ⏳ | `CONFIGURE` does NOT set `_startedAt`; deferred to Phase 10 |
+| 9d (S5) | Tool stub content | — | 4h | ⏳ | 11 distinct tool definitions; deferred to Phase 10 |
+| **Total** | **V1-V11 closed** | **~70** | **~8h 45m** | **✅** | |
 
 ## Sources
 
