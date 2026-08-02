@@ -13,7 +13,7 @@ const tokens = {
     },
     text: {
       primary: '#0f172a',
-      secondary: '#64748b',
+      secondary: '#334155',
     },
     divider: '#e2e8f0',
   },

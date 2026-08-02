@@ -1,4 +1,5 @@
-import { AppBar, Box, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, Divider, Button, Select, MenuItem, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Avatar, Menu } from '@mui/material';
+import { AppBar, Box, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, Divider, Button, Select, MenuItem, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Avatar, Menu, useMediaQuery } from '@mui/material';
+import type { Theme } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import BuildIcon from '@mui/icons-material/Build';
 import PlayCircleIcon from '@mui/icons-material/PlayCircle';
@@ -7,6 +8,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import DescriptionIcon from '@mui/icons-material/Description';
 import HistoryIcon from '@mui/icons-material/History';
 import AddIcon from '@mui/icons-material/Add';
+import MenuIcon from '@mui/icons-material/Menu';
 import { Outlet, useNavigate, useParams } from 'react-router';
 import useSWR, { mutate } from 'swr';
 import { api } from '../api/client';
@@ -34,11 +36,13 @@ export function AppShell() {
   const { data: workspaces } = useSWR('workspaces', () => api.listWorkspaces());
   const accent = useWorkspaceAccent();
   const { user, logout } = useAuth();
+  const isDesktop = useMediaQuery((t: Theme) => t.breakpoints.up('md'));
 
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [creating, setCreating] = useState(false);
   const [userMenuAnchor, setUserMenuAnchor] = useState<HTMLElement | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleWorkspaceChange = (newId: string) => {
     navigate(`/workspaces/${newId}`);
@@ -77,6 +81,16 @@ export function AppShell() {
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       <AppBar position="fixed" sx={{ zIndex: (t) => t.zIndex.drawer + 1, bgcolor: 'background.paper', color: 'text.primary', boxShadow: 1 }}>
         <Toolbar>
+          {!isDesktop && (
+            <IconButton
+              color="inherit"
+              edge="start"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              sx={{ mr: 1 }}
+            >
+              <MenuIcon />
+            </IconButton>
+          )}
           <Typography variant="h6" noWrap sx={{ cursor: 'pointer', fontWeight: 700 }} onClick={() => navigate('/dashboard')}>
             flow app
           </Typography>
@@ -133,7 +147,10 @@ export function AppShell() {
       </AppBar>
 
       <Drawer
-        variant="permanent"
+        variant={isDesktop ? 'permanent' : 'temporary'}
+        open={isDesktop || mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        ModalProps={{ keepMounted: true }}
         sx={{
           width: DRAWER_WIDTH,
           flexShrink: 0,

@@ -8,6 +8,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import { AuthGuard } from './auth/AuthGuard';
 import { OAuthCallback } from './auth/OAuthCallback';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import useSWR from 'swr';
 import { api } from './api/client';
 
@@ -30,12 +31,12 @@ function App() {
         {/* Protected routes */}
         <Route element={<AuthGuard />}>
           <Route element={<AppShell />}>
-            <Route path="/" element={<WorkspaceRedirect />} />
-            <Route path="/dashboard" element={<WorkspaceRedirect />} />
-            <Route path="/workspaces/:workspaceId" element={<DashboardPage />} />
-            <Route path="/workspaces/:workspaceId/tools/:toolKey" element={<ToolPage />} />
-            <Route path="/workspaces/:workspaceId/sessions/:sessionId" element={<SessionPage />} />
-            <Route path="/workspaces/:workspaceId/conversations/:conversationId" element={<ConversationPage />} />
+            <Route path="/" element={<ErrorBoundary><WorkspaceRedirect /></ErrorBoundary>} />
+            <Route path="/dashboard" element={<ErrorBoundary><WorkspaceRedirect /></ErrorBoundary>} />
+            <Route path="/workspaces/:workspaceId" element={<ErrorBoundary><DashboardPage /></ErrorBoundary>} />
+            <Route path="/workspaces/:workspaceId/tools/:toolKey" element={<ErrorBoundary><ToolPage /></ErrorBoundary>} />
+            <Route path="/workspaces/:workspaceId/sessions/:sessionId" element={<ErrorBoundary><SessionPage /></ErrorBoundary>} />
+            <Route path="/workspaces/:workspaceId/conversations/:conversationId" element={<ErrorBoundary><ConversationPage /></ErrorBoundary>} />
           </Route>
         </Route>
 

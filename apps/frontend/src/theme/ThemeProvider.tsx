@@ -1,4 +1,4 @@
-import { ThemeProvider as MuiThemeProvider, CssBaseline } from '@mui/material';
+import { ThemeProvider as MuiThemeProvider, CssBaseline, useMediaQuery } from '@mui/material';
 import type { ReactNode } from 'react';
 import { theme, darkTheme } from './tokens';
 
@@ -7,8 +7,7 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const prefersDark = typeof window !== 'undefined'
-    && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const prefersDark = useMediaQuery('(prefers-color-scheme: dark)');
   const currentTheme = prefersDark ? darkTheme : theme;
 
   return (

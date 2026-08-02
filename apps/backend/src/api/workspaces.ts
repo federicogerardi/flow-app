@@ -45,7 +45,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository) {
           workspaces: workspaces.map((w) => ({
             id: w.workspaceId,
             name: w.name,
-            role: w.getMemberRole(userId),
+            role: w.getMemberRole(userId)?.toString(),
             createdAt: w.createdAt.toISOString(),
           })),
         });
@@ -65,8 +65,8 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository) {
           updatedAt: workspace.updatedAt.toISOString(),
           members: workspace.memberships.map((m) => ({
             userId: m.userId,
-            role: m.role,
-            status: m.status,
+            role: m.role.toString(),
+            status: m.status.toString(),
             joinedAt: m.joinedAt?.toISOString() ?? null,
           })),
         });
@@ -133,8 +133,8 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository) {
         res.json({
           members: workspace.memberships.map((m) => ({
             userId: m.userId,
-            role: m.role,
-            status: m.status,
+            role: m.role.toString(),
+            status: m.status.toString(),
             invitedAt: m.invitedAt?.toISOString() ?? null,
             joinedAt: m.joinedAt?.toISOString() ?? null,
           })),
@@ -215,7 +215,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository) {
           invitations: workspaces.map((w) => ({
             workspaceId: w.workspaceId,
             workspaceName: w.name,
-            role: w.memberships.find((m) => m.userId === userId)?.role,
+            role: w.memberships.find((m) => m.userId === userId)?.role?.toString(),
             invitedAt: w.memberships.find((m) => m.userId === userId)?.invitedAt?.toISOString(),
           })),
         });

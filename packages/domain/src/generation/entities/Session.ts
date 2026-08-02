@@ -4,6 +4,7 @@ import type { ToolKey } from '../value-objects/ToolKey';
 import { SessionLifecycle, type SessionEventType, type SessionEvent } from '../session-lifecycle';
 import type { DomainEvent } from '../../shared/domain-event';
 import { DomainError } from '../../shared/domain-error';
+import type { Artifact } from './Artifact';
 
 export class Session {
   private _status: SessionStatus;
@@ -13,6 +14,7 @@ export class Session {
   private _errorCode: string | null;
   private _errorMessage: string | null;
   private _version: number;
+  private _artifacts: Artifact[];
 
   private constructor(
     readonly sessionId: string,
@@ -27,6 +29,7 @@ export class Session {
     errorCode: string | null,
     errorMessage: string | null,
     version: number,
+    artifacts: Artifact[] = [],
   ) {
     this._status = status;
     this._currentStepIndex = currentStepIndex;
@@ -35,6 +38,7 @@ export class Session {
     this._errorCode = errorCode;
     this._errorMessage = errorMessage;
     this._version = version;
+    this._artifacts = artifacts;
   }
 
   static create(
@@ -72,6 +76,7 @@ export class Session {
     errorCode: string | null,
     errorMessage: string | null,
     version: number,
+    artifacts: Artifact[] = [],
   ): Session {
     return new Session(
       sessionId,
@@ -86,6 +91,7 @@ export class Session {
       errorCode,
       errorMessage,
       version,
+      artifacts,
     );
   }
 
@@ -117,6 +123,10 @@ export class Session {
     return this._version;
   }
 
+  get artifacts(): readonly Artifact[] {
+    return this._artifacts;
+  }
+
   apply(event: SessionEvent): DomainEvent | null {
     const nextState = SessionLifecycle.getValidTransition(this._status, event.type);
     if (!nextState) {
@@ -139,6 +149,7 @@ export class Session {
 
       case 'ADD_ARTIFACT':
         this._currentStepIndex++;
+        this._artifacts.push(event.artifact);
         return null;
 
       case 'COMPLETE':

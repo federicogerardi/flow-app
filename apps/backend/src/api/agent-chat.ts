@@ -35,7 +35,7 @@ export function createAgentChatRoutes(conversationRepo: ConversationRepository, 
             agentKey: c.agentKey,
             agentName: getAgent(c.agentKey).name,
             title: c.title,
-            status: c.status,
+            status: c.status.toString(),
             messageCount: c.messages.length,
             lastMessage: c.messages.length > 0
               ? {

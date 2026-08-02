@@ -12,6 +12,78 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-02] execute | Critical findings — all 8 closed
+
+Executed [[synthesis/critical-fix-plan-2026-08-02]]. All 8 critical findings (C1–C8) from [[synthesis/code-review-2026-08-02]] resolved across 3 phases.
+
+**Phase 1 — Quick Wins (4 files)**:
+- C1: `auth-routes.ts` — added `NextFunction` import + `next` param to 4 handlers, `throw err` → `next(err)`
+- C4: `tokens.ts` — `text.secondary` `#64748b` → `#334155` (WCAG AA 7.8:1)
+- C5: `ThemeProvider.tsx` — static `matchMedia` → MUI `useMediaQuery` hook
+- C8: `LoginPage.tsx` — `navigate()` moved from render body to `useEffect`
+
+**Phase 2 — Frontend Architecture (3 files)**:
+- C7: New `ErrorBoundary.tsx` class component + wrapped 6 protected routes in `App.tsx`
+- C3: `AppShell.tsx` — `useMediaQuery` desktop breakpoint, `mobileOpen` state, hamburger `IconButton`, `Drawer` permanent/temporary switch
+
+**Phase 3 — Data Integrity (4 files)**:
+- C2a: `Session.ts` — `_artifacts: Artifact[]` field, `artifacts` param in constructor + `reconstitute()`, getter, `ADD_ARTIFACT` pushes to array
+- C2b: `session-repository.ts` — `saveWithLock()` upserts artifacts after session update
+- C2c: `session-repository.ts` — `findById()` loads artifacts, passes to `reconstitute()`
+- C6: `generation.ts`, `workspaces.ts`, `agent-chat.ts` — `.toString()` on all VO fields in response mapping
+
+**Verification**: typecheck 0 errors, backend build ✅, frontend build ✅, domain tests 8/8.
+
+Files touched: 10 modified, 1 new (`ErrorBoundary.tsx`). Wiki: critical-fix-plan success criteria updated, index.md + log.md + overview.md updated.
+
+---
+
+## [2026-08-02] plan | Critical findings fix plan filed
+
+Filed as [[synthesis/critical-fix-plan-2026-08-02]]. Implementation plan to close all 8 critical findings from the multi-agent code review.
+
+**3 phases, 27 files, estimated 4-5 hours:**
+
+**Phase 1 — Quick Wins (~30 min, low risk)**:
+- C1: `throw err` → `next(err)` in `auth-routes.ts` (4 lines, prevents process crash)
+- C4: `text.secondary` contrast `#64748b` → `#334155` in `tokens.ts` (WCAG AA)
+- C5: Static `matchMedia` → `useMediaQuery` hook in `ThemeProvider.tsx` (OS theme reactivity)
+- C8: `navigate()` moved from render body to `useEffect` in `LoginPage.tsx` (React purity)
+
+**Phase 2 — Frontend Architecture (~1 h, medium risk)**:
+- C7: New `ErrorBoundary.tsx` class component + route wrapping in `App.tsx` (prevents white-screen crashes)
+- C3: Responsive drawer in `AppShell.tsx` — `useMediaQuery` + `variant` switch + hamburger toggle
+
+**Phase 3 — Data Integrity (~2 h, high risk)**:
+- C2a: `_artifacts` field on `Session` aggregate + `ADD_ARTIFACT` case
+- C2b: Artifact upsert in `saveWithLock()`
+- C2c: Artifact load in `findById()`
+- C6a-c: `.toString()` on VOs in API responses (generation.ts, workspaces.ts, agent-chat.ts)
+
+**Verification checklist**: 12 criteria across all fixes. Typecheck, backend build, frontend build, domain tests.
+
+Files touched: 1 new synthesis page (`synthesis/critical-fix-plan-2026-08-02`), index.md and log.md updated.
+
+## [2026-08-02] review | Multi-agent code review — phases 0–9
+
+Filed as [[synthesis/code-review-2026-08-02]]. 6 specialized agents reviewed the entire monorepo against the implemented roadmap (phases 0–9):
+
+**Agents deployed**: DDD Expert, Backend Architect, React Frontend Engineer, Code Simplifier, Type Design Analyzer, UI Designer.
+
+**Findings summary** (41 total):
+- 🔴 Critical (8): C1 — `throw err` in async handlers crashes Express 4. C2 — artifacts never persisted to DB (all generated content discarded). C3 — permanent drawer breaks tablet/mobile. C4 — `text.secondary` fails WCAG AA contrast. C5 — theme static, never reacts to OS preference change. C6 — Value Objects serialized directly in JSON → `{"_value": "..."}` leaked to API. C7 — zero Error Boundaries (entire React tree can white-screen). C8 — `navigate()` called during render phase.
+- 🟠 High (10): H1 — `Conversation.start()` violates Rule 6. H2 — `User.register()`/`fromOAuth()` instead of `create()`. H3 — `ModelTier` type alias (Rule 4). H4 — `saveWithLock()` senza transazione. H5 — `throw new Error()` in worker. H6 — OAuth token valido scartato dopo login. H7 — `useSession()` senza error state. H8 — ToolPage input hardcoded. H9 — `countStalled()` conta job sbagliati. H10 — `default: return null` sopprime exhaustiveness check.
+- 🟡 Medium (18): M1-M18 su UX, performance, ARIA, DRY violations, race conditions, N+1 queries.
+- 🟢 Low (5): L1-L5 su consistenza, dead code, divergenza DTO.
+
+**Positive findings**: optimistic locking pattern correct, token rotation correct, module-level token store (no localStorage), SSE client lifecycle correct, structured logging (Pino child loggers), MUI v6 Grid2 `size` prop correct, Phase 9 remediation verified clean (8 type aliases → classes, zero `throw new Error` in domain, zero `as any`).
+
+**Recommended fix order**: C1 (4-line fix) → C2 (artifact persistence) → C6 (VO serialization) → C3-C5 (responsive layout + contrast + theme) → C7-C8 (Error Boundaries + useEffect) → H1-H3 (DDD factory naming) → H4-H5 (transaction + DomainError) → H6 (OAuth flow) → M1-M18 (schedulable tech debt).
+
+Files touched: 1 new synthesis page (`synthesis/code-review-2026-08-02`), index.md and log.md updated.
+
+---
+
 ## [2026-08-02] implementation | Phase 8 — Real Authentication (Workstream D) complete
 
 Phase 8 Real Authentication is now fully complete. Workstream D (Frontend Auth Flow) implemented on branch `feature/phase-8-real-auth`:

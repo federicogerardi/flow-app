@@ -21,9 +21,9 @@ export function createGenerationRoutes(sessionRepo: SessionRepository, db: Kysel
           return res.json({
             data: sessions.map((s) => ({
               id: s.sessionId,
-              toolKey: s.toolKey,
+              toolKey: s.toolKey.toString(),
               workspaceId: s.workspaceId,
-              status: s.status,
+              status: s.status.toString(),
               createdAt: s.startedAt?.toISOString() ?? new Date().toISOString(),
             })),
             total: sessions.length,
@@ -122,9 +122,9 @@ export function createGenerationRoutes(sessionRepo: SessionRepository, db: Kysel
         }
         res.json({
           id: session.sessionId,
-          toolKey: session.toolKey,
+          toolKey: session.toolKey.toString(),
           workspaceId: session.workspaceId,
-          status: session.status,
+          status: session.status.toString(),
           currentStepIndex: session.currentStepIndex,
           startedAt: session.startedAt?.toISOString() ?? null,
           completedAt: session.completedAt?.toISOString() ?? null,

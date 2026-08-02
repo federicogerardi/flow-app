@@ -1,4 +1,4 @@
-import { Router, type Request, type Response } from 'express';
+import { Router, type Request, type Response, type NextFunction } from 'express';
 import { z } from 'zod';
 import passport from 'passport';
 import type { AuthService, AuthResult } from './auth-service.js';
@@ -35,7 +35,7 @@ export function createAuthRoutes(
   const loginRateLimiter = createAuthRateLimiter(authRateLimitWindowMs, authRateLimitMaxAttempts);
 
   // POST /api/auth/register
-  router.post('/register', async (req: Request, res: Response) => {
+  router.post('/register', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const body = registerSchema.safeParse(req.body);
       if (!body.success) {
@@ -59,12 +59,12 @@ export function createAuthRoutes(
         expiresIn: result.expiresIn,
       });
     } catch (err) {
-      throw err; // Let error handler map domain errors
+      return next(err);
     }
   });
 
   // POST /api/auth/login
-  router.post('/login', loginRateLimiter, async (req: Request, res: Response) => {
+  router.post('/login', loginRateLimiter, async (req: Request, res: Response, next: NextFunction) => {
     try {
       const body = loginSchema.safeParse(req.body);
       if (!body.success) {
@@ -88,12 +88,12 @@ export function createAuthRoutes(
         expiresIn: result.expiresIn,
       });
     } catch (err) {
-      throw err;
+      return next(err);
     }
   });
 
   // POST /api/auth/refresh
-  router.post('/refresh', async (req: Request, res: Response) => {
+  router.post('/refresh', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const refreshToken = req.cookies?.[REFRESH_COOKIE];
       if (!refreshToken) {
@@ -116,12 +116,12 @@ export function createAuthRoutes(
         expiresIn: result.expiresIn,
       });
     } catch (err) {
-      throw err;
+      return next(err);
     }
   });
 
   // POST /api/auth/logout
-  router.post('/logout', async (req: Request, res: Response) => {
+  router.post('/logout', async (req: Request, res: Response, next: NextFunction) => {
     try {
       const refreshToken = req.cookies?.[REFRESH_COOKIE];
       if (refreshToken) {
@@ -131,7 +131,7 @@ export function createAuthRoutes(
       res.clearCookie(REFRESH_COOKIE, { path: '/api/auth' });
       res.json({ message: 'Logged out' });
     } catch (err) {
-      throw err;
+      return next(err);
     }
   });
 

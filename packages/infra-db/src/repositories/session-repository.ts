@@ -1,6 +1,6 @@
 import type { Kysely } from 'kysely';
-import type { DB, SessionStatus as DBSessionStatus } from '../types';
-import { Session, ConcurrencyError, SessionStatus, ToolKey, type SessionRepository, type SessionFilters } from '@flow-app/domain';
+import type { DB, SessionStatus as DBSessionStatus, ArtifactStatus as DBArtifactStatus } from '../types';
+import { Session, ConcurrencyError, SessionStatus, ToolKey, Artifact, ArtifactStatus, type SessionRepository, type SessionFilters } from '@flow-app/domain';
 
 export class KyselySessionRepository implements SessionRepository {
   constructor(private readonly db: Kysely<DB>) {}
@@ -13,6 +13,17 @@ export class KyselySessionRepository implements SessionRepository {
       .executeTakeFirst();
 
     if (!row) return null;
+
+    const artifactRows = await this.db
+      .selectFrom('artifacts')
+      .where('session_id', '=', id)
+      .selectAll()
+      .orderBy('step_number', 'asc')
+      .execute();
+
+    const artifacts = artifactRows.map((r) =>
+      Artifact.reconstitute(r.id, r.session_id, r.step_number, r.content, ArtifactStatus.from(r.status), r.created_at),
+    );
 
     return Session.reconstitute(
       row.id,
@@ -27,6 +38,7 @@ export class KyselySessionRepository implements SessionRepository {
       row.error_code,
       row.error_message,
       row.version,
+      artifacts,
     );
   }
 
@@ -152,6 +164,27 @@ export class KyselySessionRepository implements SessionRepository {
         expectedVersion,
         current?.version ?? -1,
       );
+    }
+
+    if (session.artifacts.length > 0) {
+      for (const artifact of session.artifacts) {
+        await this.db
+          .insertInto('artifacts')
+          .values({
+            id: artifact.artifactId,
+            session_id: artifact.sessionId,
+            step_number: artifact.stepNumber,
+            content: artifact.content,
+            status: artifact.status.value as DBArtifactStatus,
+          })
+          .onConflict((oc) =>
+            oc.column('id').doUpdateSet({
+              content: artifact.content,
+              status: artifact.status.value as DBArtifactStatus,
+            }),
+          )
+          .execute();
+      }
     }
   }
 

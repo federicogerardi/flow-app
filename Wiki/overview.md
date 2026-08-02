@@ -93,7 +93,7 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 | Phase 5 — Expansion Tracks | ✅ | Agent Chat (Conversation, Message, 7 agents) |
 | Phase 6 — Real LLM Integration | ✅ | LlmGateway, ModelRegistry, 4 tiers, worker + chat wiring |
 | Phase 7 — Frontend MVP | ✅ | 4 shared components, 4 pages, 5 routes, MUI + SWR + react-router v7 |
-| Phase 8 — Real Authentication | 🟡 | Backend complete (JWT, bcrypt, Passport, 7 auth endpoints). Frontend auth flow remaining. [[synthesis/phase-8-real-auth-plan|Plan →]] |
+| Phase 8 — Real Authentication | ✅ | Backend (JWT, bcrypt, Passport, 7 endpoints) + Frontend (AuthContext, AuthGuard, LoginPage, RegisterPage, OAuthCallback, protected routes) |
 
 ### Planned (Phase 9–11)
 
@@ -105,9 +105,8 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 
 ### Critical Gaps (remaining)
 
-1. **Frontend auth flow** — backend auth is complete (JWT, bcrypt, Passport, 7 endpoints), but frontend has no login/register pages, no AuthContext, no protected routes. Workstream D of Phase 8.
-2. **Zero deployment** — no Dockerfile, no CI/CD, no Railway config, runs only via `npm run dev`. Phase 9 planned.
-3. **Near-zero tests** — 1 test file (Identifier), vitest/supertest/testing-library installed but unused. Phase 10 planned.
+1. **Zero deployment** — no Dockerfile, no CI/CD, no Railway config, runs only via `npm run dev`. Phase 9 planned.
+2. **Near-zero tests** — 1 test file (Identifier), vitest/supertest/testing-library installed but unused. Phase 10 planned.
 
 ## Infrastructure (Railway dev)
 

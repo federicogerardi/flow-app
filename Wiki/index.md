@@ -3,6 +3,10 @@ type: index
 tags:
   - wiki/index
 date_updated: 2026-08-02
+maintenance: 2026-08-02 — critical findings executed: all 8 findings (C1–C8) closed. Typecheck ✅, build ✅, tests 8/8.
+maintenance: 2026-08-02 — critical findings executed: all 8 findings (C1–C8) closed across 3 phases. Phase 1: auth error forwarding, WCAG contrast, OS theme reactivity, React render purity. Phase 2: ErrorBoundary + responsive drawer. Phase 3: artifact persistence + VO serialization. Typecheck ✅, build ✅, tests 8/8.
+maintenance: 2026-08-02 — critical fix plan filed: 8 fixes across 3 phases (Quick Wins → Frontend Architecture → Data Integrity), 27 files, 4-5 hours. Plan: [[synthesis/critical-fix-plan-2026-08-02]].
+maintenance: 2026-08-02 — multi-agent code review filed: 41 findings across 6 domains (DDD, backend, frontend, types, code quality, UI/UX). 8 critical, 10 high, 18 medium, 5 low. Synthesis: [[synthesis/code-review-2026-08-02]].
 maintenance: 2026-08-02 — Phase 8 frontend implemented (Workstream D): AuthContext, AuthGuard, OAuthCallback, AuthLayout, LoginPage, RegisterPage, API client token injection + 401 interceptor, AppShell user menu, protected routes. Build ✅, typecheck ✅, lint ✅, tests 8/8.
 maintenance: 2026-08-02 — health maintenance: 4 wiki-lint issues fixed (log.md frontmatter, overview.md escaped pipe, 2 missing concept stubs), 5 Italian prose violations translated, 6 env reference leaks sanitized.
 ---
@@ -174,4 +178,6 @@ maintenance: 2026-08-02 — health maintenance: 4 wiki-lint issues fixed (log.md
 | [[synthesis/rule-4-vo-debt]] | 8 type-alias VOs catalogued with conversion roadmap | 2026-08-02 |
 | [[synthesis/phase-9-architectural-targets]] | 11 VALIDATION + 5 STRUCTURAL gaps for Phase 9+ | 2026-08-02 |
 | [[synthesis/phase-9-implementation-plan]] | Phase 9 implementation plan — 11 gaps across 4 phases, ~12h | 2026-08-02 |
+| [[synthesis/code-review-2026-08-02]] | Multi-agent code review — phases 0–9, 41 findings (8 critical, 10 high, 18 medium, 5 low) | 2026-08-02 |
+| [[synthesis/critical-fix-plan-2026-08-02]] | Critical findings implementation plan — 8 fixes across 3 phases, 27 files | 2026-08-02 |
 | [[overview]] | High-level synthesis (v3) | 2026-07-31 |
