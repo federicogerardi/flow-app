@@ -12,6 +12,8 @@ export interface SessionDTO {
   completedAt?: string | null;
   stepCount?: number;
   createdAt: string;
+  /** Populated via SSE updates after session completion */
+  artifacts?: ArtifactDTO[];
 }
 
 export interface SessionListResponse {
@@ -21,6 +23,8 @@ export interface SessionListResponse {
 
 export interface ArtifactDTO {
   id: string;
+  /** Alias for id — used as React key in SessionPage */
+  artifactId?: string;
   sessionId: string;
   stepNumber: number;
   content: string;

@@ -1,7 +1,7 @@
 import { Worker, type Job } from 'bullmq';
 import { createActor, fromPromise } from 'xstate';
 import { sessionMachine, type SessionContext } from '../machines/session-machine.js';
-import type { SessionRepository, ToolKey, Artifact, PromptComposer, PromptTemplateRepository } from '@flow-app/domain';
+import type { SessionRepository, ToolKey, Artifact, PromptComposer, PromptTemplateRepository, Session } from '@flow-app/domain';
 import { getTool, Artifact as ArtifactEntity, ContextEnricher, DEFAULT_COMPONENTS } from '@flow-app/domain';
 import type { JobEventBridge } from '../../infrastructure/job-event-bridge.js';
 import type { LlmGateway } from '../../infrastructure/llm-gateway.js';
@@ -119,7 +119,7 @@ async function processSessionJob(
           }, 'step_llm_call_complete');
 
           return ArtifactEntity.create(
-            input.session.conversationId ?? sessionId,
+            sessionId,
             stepIndex + 1,
             result.content,
           );
