@@ -92,7 +92,7 @@ export class ApiClientError extends Error {
 class ApiClient {
   private baseUrl: string;
 
-  constructor(baseUrl: string = '') {
+  constructor(baseUrl: string = (import.meta.env.VITE_API_URL as string | undefined) ?? '') {
     this.baseUrl = baseUrl;
   }
 

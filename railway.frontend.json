@@ -1,10 +1,11 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
-    "builder": "DOCKERFILE",
-    "dockerfilePath": "Dockerfile.frontend"
+    "builder": "RAILPACK",
+    "buildCommand": "npm run build --workspace=apps/frontend"
   },
   "deploy": {
+    "startCommand": "npm run preview --workspace=apps/frontend -- --host 0.0.0.0 --port $PORT",
     "numReplicas": 1,
     "healthcheckPath": "/health",
     "healthcheckTimeout": 15,
