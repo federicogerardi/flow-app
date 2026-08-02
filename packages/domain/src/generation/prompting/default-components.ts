@@ -1,10 +1,10 @@
 import { PromptComponent } from './PromptComponent';
 import { PromptVersion } from './PromptVersion';
-import type { PromptComponentType } from './PromptComponent';
+import type { PromptComponentTypeValue } from './PromptComponent';
 
 interface ComponentDefinition {
   key: string;
-  type: PromptComponentType;
+  type: PromptComponentTypeValue;
   description: string;
   content: string;
 }

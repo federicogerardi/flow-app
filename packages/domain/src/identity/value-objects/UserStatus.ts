@@ -19,8 +19,12 @@ export class UserStatus {
     }
   }
 
-  isActive(): boolean {
+  get isActive(): boolean {
     return this._value === 'active';
+  }
+
+  get isDisabled(): boolean {
+    return this._value === 'disabled';
   }
 
   equals(other: UserStatus): boolean {

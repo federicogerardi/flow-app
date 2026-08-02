@@ -71,7 +71,7 @@ export class User {
   }
 
   get isActive(): boolean {
-    return this._status.isActive();
+    return this._status.isActive;
   }
 
   get status(): UserStatus {

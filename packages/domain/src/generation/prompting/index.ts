@@ -6,5 +6,6 @@ export { PromptComponentRegistry, PromptComponentNotFoundError } from './PromptC
 export { PromptComposer } from './PromptComposer';
 export type { ComposedPrompt } from './PromptComposer';
 export type { PromptTemplateRepository } from './PromptTemplateRepository';
-export type { PromptComponentType } from './PromptComponent';
+export { PromptComponentType, InvalidPromptComponentTypeError } from './PromptComponent';
+export type { PromptComponentTypeValue } from './PromptComponent';
 export { getDefaultComponents, DEFAULT_COMPONENTS } from './default-components';

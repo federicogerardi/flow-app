@@ -52,4 +52,6 @@ export {
   InvalidPromptVersionError,
   EmptyComponentContentError,
 } from './prompting';
-export type { PromptTemplateContent, PromptTemplateRepository, ComposedPrompt, PromptComponentType } from './prompting';
+export type { PromptTemplateContent, PromptTemplateRepository, ComposedPrompt } from './prompting';
+export { PromptComponentType, InvalidPromptComponentTypeError } from './prompting';
+export type { PromptComponentTypeValue } from './prompting';
