@@ -16,36 +16,19 @@ export function createGenerationRoutes(sessionRepo: SessionRepository, db: Kysel
         const status = req.query.status as string | undefined;
         const limit = Number(req.query.limit) || 50;
 
-        if (workspaceId) {
-          const sessions = await sessionRepo.findByWorkspace(workspaceId, { status, limit });
-          return res.json({
-            data: sessions.map((s) => ({
-              id: s.sessionId,
-              toolKey: s.toolKey.toString(),
-              workspaceId: s.workspaceId,
-              status: s.status.toString(),
-              createdAt: s.startedAt?.toISOString() ?? new Date().toISOString(),
-            })),
-            total: sessions.length,
-          });
-        }
-
-        const rows = await db
-          .selectFrom('sessions')
-          .selectAll()
-          .orderBy('created_at', 'desc')
-          .limit(limit)
-          .execute();
+        const sessions = workspaceId
+          ? await sessionRepo.findByWorkspace(workspaceId, { status, limit })
+          : await sessionRepo.findAll({ status, limit });
 
         return res.json({
-          data: rows.map((r) => ({
-            id: r.id,
-            toolKey: r.tool_key,
-            workspaceId: r.workspace_id,
-            status: r.status,
-            createdAt: r.created_at?.toISOString?.() ?? new Date().toISOString(),
+          data: sessions.map((s) => ({
+            id: s.sessionId,
+            toolKey: s.toolKey.toString(),
+            workspaceId: s.workspaceId,
+            status: s.status.toString(),
+            createdAt: s.startedAt?.toISOString() ?? new Date().toISOString(),
           })),
-          total: rows.length,
+          total: sessions.length,
         });
       } catch (error) {
         next(error);

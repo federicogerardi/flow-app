@@ -11,6 +11,10 @@ export function OAuthCallback() {
     const token = params.get('token');
     const error = params.get('error');
 
+    // Strip token from browser history immediately to prevent credential
+    // leakage via proxy logs, back-button navigation, or referrer headers.
+    window.history.replaceState({}, '', window.location.pathname);
+
     if (error) {
       navigate('/login?error=oauth_failed', { replace: true });
       return;

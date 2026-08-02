@@ -4,6 +4,7 @@ tags:
   - wiki/index
 date_updated: 2026-08-02
 maintenance: 2026-08-02 — medium-severity findings executed: 16/16 active findings (M2–M18, excl. M1 deferred) closed across 5 phases. Phase 1: static import M17, Identifier.equals cross-type M18, copy.t() M8, typography M11, statusColorMap M6. Phase 2: LoadingSkeleton M3, sendMessage error M2, theme-aware bubbles M7. Phase 3: N+1 query fix M14, batch membership sync M15. Phase 4: SSE race fix M13. Phase 5: ARIA labels M4/M9, focus management M10, React.lazy code splitting M5. Typecheck ✅, build ✅, tests 5/5.
+maintenance: 2026-08-02 — low-severity remediation executed: 5 findings (L1–L5) across 2 phases. L1: OAuth headers + history cleanup. L2: admin error routing. L3: unified listSessions query. L4: dead file deleted. L5: DTOs aligned with contracts. Typecheck ✅ (0 new errors).
 maintenance: 2026-08-02 — high-severity findings executed: all 10 (H1–H10) closed. Medium-severity plan filed: 16 findings, 5 phases. Typecheck ✅, build ✅, tests 8/8.
 maintenance: 2026-08-02 — high-severity findings executed: all 10 findings (H1–H10) closed across 5 phases. H1: Conversation.start→create. H2: User factories→create. H3: ModelTier class VO. H4: saveWithLock transaction. H5: 3 DomainErrors. H6: OAuth token fallback. H7: useSession error state. H8: dynamic tool inputs. H9: countStalled fix. H10: exhaustiveness check. Typecheck ✅, build ✅, tests 8/8.
 maintenance: 2026-08-02 — critical findings executed: all 8 findings (C1–C8) closed across 3 phases. Phase 1: auth error forwarding, WCAG contrast, OS theme reactivity, React render purity. Phase 2: ErrorBoundary + responsive drawer. Phase 3: artifact persistence + VO serialization. Typecheck ✅, build ✅, tests 8/8.
@@ -163,8 +164,6 @@ maintenance: 2026-08-02 — health maintenance: 4 wiki-lint issues fixed (log.md
 | [[XState Integration]] | high | 4 |
 | [[packages-domain Structure]] | high | 5 |
 
-| [[synthesis/medium-fix-plan-2026-08-02]] | Medium-severity remediation plan — 16 findings (M1–M18), 5 phases, 1 deferred, 1 already resolved | 2026-08-02 |
-
 ## Synthesis
 
 | Page | Description | Date Filed |
@@ -186,6 +185,8 @@ maintenance: 2026-08-02 — health maintenance: 4 wiki-lint issues fixed (log.md
 | [[synthesis/phase-9-architectural-targets]] | 11 VALIDATION + 5 STRUCTURAL gaps for Phase 9+ | 2026-08-02 |
 | [[synthesis/phase-9-implementation-plan]] | Phase 9 implementation plan — 11 gaps across 4 phases, ~12h | 2026-08-02 |
 | [[synthesis/code-review-2026-08-02]] | Multi-agent code review — phases 0–9, 41 findings (8 critical, 10 high, 18 medium, 5 low) | 2026-08-02 |
-| [[synthesis/critical-fix-plan-2026-08-02]] | Critical findings implementation plan — 8 fixes across 3 phases, 27 files | 2026-08-02 |
-| [[synthesis/high-fix-plan-2026-08-02]] | High-severity remediation plan — 10 findings (H1–H10), 5 phases, 19 files | 2026-08-02 |
+| [[synthesis/critical-fix-plan-2026-08-02]] | Critical findings implementation plan — 8 fixes, 3 phases, 27 files ✅ | 2026-08-02 |
+| [[synthesis/high-fix-plan-2026-08-02]] | High-severity remediation plan — 10 findings (H1–H10), 5 phases, 19 files ✅ | 2026-08-02 |
+| [[synthesis/medium-fix-plan-2026-08-02]] | Medium-severity remediation plan — 16 findings (M2–M18), 5 phases, M1 deferred ✅ | 2026-08-02 |
+| [[synthesis/low-fix-plan-2026-08-02]] | Low-severity remediation plan — 5 findings (L1–L5), 2 phases, 8 files ✅ | 2026-08-02 |
 | [[overview]] | High-level synthesis (v3) | 2026-07-31 |

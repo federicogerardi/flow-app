@@ -70,10 +70,15 @@ export class KyselySessionRepository implements SessionRepository {
   }
 
   async findByWorkspace(workspaceId: string, filters?: SessionFilters): Promise<Session[]> {
-    let query = this.db
-      .selectFrom('sessions')
-      .where('workspace_id', '=', workspaceId);
+    return this.findAll({ ...filters, workspaceId });
+  }
 
+  async findAll(filters?: SessionFilters): Promise<Session[]> {
+    let query = this.db.selectFrom('sessions');
+
+    if (filters?.workspaceId) {
+      query = query.where('workspace_id', '=', filters.workspaceId);
+    }
     if (filters?.status) {
       query = query.where('status', '=', filters.status as DBSessionStatus);
     }

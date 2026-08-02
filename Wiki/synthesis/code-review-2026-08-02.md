@@ -367,7 +367,8 @@ switch (event.type) {
 
 - **Critici**: [[critical-fix-plan-2026-08-02]] — tutti e 8 eseguiti ✅
 - **Alta severità**: [[high-fix-plan-2026-08-02]] — tutti e 10 eseguiti ✅
-- **Media severità**: [[medium-fix-plan-2026-08-02]] — 16 finding (M2–M11, M13–M18), 5 fasi, M1 rinviato, M12 già risolto, 📋 pianificato
+- **Media severità**: [[medium-fix-plan-2026-08-02]] — 16 finding (M2–M11, M13–M18), 5 fasi, M1 rinviato, M12 già risolto, ✅ eseguito
+- **Bassa severità**: [[low-fix-plan-2026-08-02]] — 5 finding (L1–L5), 2 fasi, ✅ eseguito
 
 ---
 

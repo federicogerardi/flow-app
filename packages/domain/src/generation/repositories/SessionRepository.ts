@@ -11,6 +11,7 @@ export interface SessionRepository {
   findById(id: string): Promise<Session | null>;
   findByIdempotencyKeyHash(hash: string): Promise<Session | null>;
   findByWorkspace(workspaceId: string, filters?: SessionFilters): Promise<Session[]>;
+  findAll(filters?: SessionFilters): Promise<Session[]>;
   save(session: Session): Promise<void>;
   /**
    * Save with optimistic locking. Throws ConcurrencyError if version doesn't match.

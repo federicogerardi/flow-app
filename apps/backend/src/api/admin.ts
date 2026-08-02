@@ -1,15 +1,13 @@
-import type { Request, Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import type { Queue } from 'bullmq';
 import { QueueHealthMonitor } from '../generation/worker/health-monitor.js';
-import { logger } from '../infrastructure/logger.js';
 
 export function createAdminRoutes(queue: Queue) {
   const healthMonitor = new QueueHealthMonitor(queue);
-  const log = logger.child({ component: 'admin-routes' });
   let workerStartTime = Date.now();
 
   return {
-    getJobs: async (_req: Request, res: Response) => {
+    getJobs: async (_req: Request, res: Response, next: NextFunction) => {
       try {
         const [waiting, active, completed, failed, delayed] = await Promise.all([
           queue.getWaitingCount(),
@@ -48,12 +46,11 @@ export function createAdminRoutes(queue: Queue) {
           },
         });
       } catch (err) {
-        log.error({ err }, 'admin_jobs_error');
-        res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch queue stats' } });
+        next(err);
       }
     },
 
-    getHealth: async (_req: Request, res: Response) => {
+    getHealth: async (_req: Request, res: Response, next: NextFunction) => {
       try {
         const alerts = await healthMonitor.checkHealth();
         const criticals = alerts.filter((a) => a.level === 'critical');
@@ -68,8 +65,7 @@ export function createAdminRoutes(queue: Queue) {
           })),
         });
       } catch (err) {
-        log.error({ err }, 'admin_health_error');
-        res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to check health' } });
+        next(err);
       }
     },
 

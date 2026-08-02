@@ -287,12 +287,12 @@ export interface SessionRepository {
 | `WorkspaceMembership` | `static invite(userId, workspaceId, role, invitedBy)` | all fields verbatim (7 params) |
 | `Conversation` | `workspaceId, userId, agentKey` | all fields verbatim (9 params) |
 
-**Known violations** (logged in [[synthesis/code-review-2026-08-02]] — H1, H2):
+**Known violations** (logged in [[synthesis/code-review-2026-08-02]] — H1, H2, resolved in [[synthesis/high-fix-plan-2026-08-02]]):
 
 | File | Current | Should be | Status |
 |------|---------|-----------|--------|
-| `Conversation.ts:63` | `static start(...)` | `static create(...)` | 📋 Planned (H1) |
-| `User.ts:32,37` | `static register(...)` + `static fromOAuth(...)` | `static create(...)` | 📋 Planned (H2) |
+| `Conversation.ts:63` | `static start(...)` | `static create(...)` | ✅ Resolved (H1) |
+| `User.ts:32,37` | `static register(...)` + `static fromOAuth(...)` | `static create(...)` | ✅ Resolved (H2) |
 
 **Checklist before writing domain code:**
 - [ ] Every aggregate root has exactly one `static create()` and one `static reconstitute()`
@@ -994,7 +994,7 @@ Drift between domain and infrastructure is the most common source of production 
 
 These rules are enforced by:
 1. **CLAUDE.md** — agent system prompt includes all 6 core rules as mandatory checks
-2. **Code review** — [[synthesis/code-review-2026-08-02]] identified 4 DDD violations (H1–H3, H10) and tracked remediation in [[synthesis/high-fix-plan-2026-08-02]]
+2. **Code review** — [[synthesis/code-review-2026-08-02]] identified 4 DDD violations (H1–H3, H10). All resolved via [[synthesis/high-fix-plan-2026-08-02]] (✅).
 3. **Phase 9 remediation** — [[synthesis/rule-4-vo-debt|8 type-alias VOs]] converted to classes, zero `throw new Error` in domain, zero `as any` in domain files
 4. **CI** — typecheck (`tsc --noEmit`) runs on every PR; domain errors without proper `DomainError` extension cause compile failures
 

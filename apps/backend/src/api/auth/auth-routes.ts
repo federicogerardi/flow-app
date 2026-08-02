@@ -194,6 +194,8 @@ export function createAuthRoutes(
       }
 
       res.cookie(REFRESH_COOKIE, authResult.refreshToken, REFRESH_COOKIE_OPTIONS);
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('Referrer-Policy', 'no-referrer');
       const frontendUrl = process.env.CORS_ORIGIN ?? 'http://localhost:5173';
       res.redirect(
         `${frontendUrl}/auth/callback?token=${authResult.accessToken}&expiresIn=${authResult.expiresIn}`,

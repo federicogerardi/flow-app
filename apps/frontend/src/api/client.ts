@@ -1,20 +1,18 @@
-import type { ApiError } from '@flow-app/contracts';
+import type { ApiError, SessionDetailDTO, SessionStatusDTO, ArtifactDTO as ContractArtifactDTO } from '@flow-app/contracts';
 import { getAccessToken, attemptTokenRefresh } from '../auth/AuthContext';
 
 // ── DTOs (match API response shapes) ─────────────────────────────────────────
+//
+// Session & Artifact DTOs derive from @flow-app/contracts (canonical source)
+// with local extensions where the API response shape diverges from the contract.
 
-export interface SessionDTO {
-  id: string;
-  toolKey: string;
-  workspaceId: string;
-  status: string;
-  currentStepIndex?: number;
-  startedAt?: string | null;
-  completedAt?: string | null;
-  stepCount?: number;
-  createdAt: string;
-  /** Populated via SSE updates after session completion */
+export interface SessionDTO extends Omit<SessionDetailDTO, 'status' | 'artifacts'> {
+  status: SessionStatusDTO;
   artifacts?: ArtifactDTO[];
+}
+
+export interface ArtifactDTO extends ContractArtifactDTO {
+  artifactId?: string;
 }
 
 export interface SessionListResponse {
@@ -22,17 +20,7 @@ export interface SessionListResponse {
   total: number;
 }
 
-export interface ArtifactDTO {
-  id: string;
-  /** Alias for id — used as React key in SessionPage */
-  artifactId?: string;
-  sessionId: string;
-  stepNumber: number;
-  content: string;
-  status: string;
-  createdAt: string | null;
-}
-
+// TODO: migrate to @flow-app/contracts once WorkspaceDTO is defined there
 export interface WorkspaceDTO {
   id: string;
   name: string;
@@ -42,6 +30,7 @@ export interface WorkspaceDTO {
   updatedAt?: string;
 }
 
+// TODO: migrate to @flow-app/contracts once MessageDTO is defined there
 export interface MessageDTO {
   id: string;
   role: string;
@@ -51,6 +40,7 @@ export interface MessageDTO {
   createdAt: string;
 }
 
+// TODO: migrate to @flow-app/contracts once ConversationDTO is defined there
 export interface ConversationDTO {
   id: string;
   workspaceId: string;
@@ -63,6 +53,7 @@ export interface ConversationDTO {
   updatedAt: string;
 }
 
+// TODO: migrate to @flow-app/contracts once ConversationListItemDTO is defined there
 export interface ConversationListItemDTO {
   id: string;
   agentKey: string;
@@ -75,6 +66,7 @@ export interface ConversationListItemDTO {
   updatedAt: string;
 }
 
+// TODO: migrate to @flow-app/contracts once AgentDTO is defined there
 export interface AgentDTO {
   key: string;
   name: string;

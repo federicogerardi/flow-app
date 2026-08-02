@@ -12,6 +12,38 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-02] execute | Low-severity remediation executed
+
+Executed [[synthesis/low-fix-plan-2026-08-02]]. All 5 low-severity findings (L1–L5) from [[synthesis/code-review-2026-08-02]] resolved across 2 phases.
+
+**Phase 1 — Quick Wins** (~40 min):
+- L4: Deleted `packages/contracts/src/shared.ts` (dead byte-for-byte duplicate of `shared/index.ts`)
+- L2: Replaced `res.status(500).json()` with `next(err)` in admin routes (`admin.ts:50,70`), removed unused `logger` import + `log` variable
+- L5: Aligned frontend DTOs with `@flow-app/contracts` — `SessionDTO extends SessionDetailDTO` with `artifacts` override, `ArtifactDTO extends ContractArtifactDTO` with `artifactId` field, TODO annotations on remaining local DTOs
+
+**Phase 2 — Architectural Cleanup** (~90 min):
+- L1: OAuth token hygiene — added `Cache-Control: no-store` + `Referrer-Policy: no-referrer` on redirect (`auth-routes.ts:196-197`), `window.history.replaceState()` to strip token from browser history (`OAuthCallback.tsx:14`)
+- L3: Unified `listSessions` query paths — added `findAll()` to `SessionRepository` interface + `KyselySessionRepository` implementation, refactored `findByWorkspace` to delegate, single consistent mapping in `generation.ts`
+
+Files touched: 8 (6 modified, 1 new interface method, 1 deleted). Typecheck: 0 new errors.
+Wiki: index.md, code-review-2026-08-02.md, log.md updated.
+
+## [2026-08-02] plan | Low-severity remediation plan filed
+
+Filed [[synthesis/low-fix-plan-2026-08-02]]. 5 findings (L1–L5) from [[synthesis/code-review-2026-08-02]] organized into 2 phases, touching 8 files:
+
+**Phase 1 — Quick Wins** (L2, L4, L5, ~40 min):
+- L4: Delete dead `packages/contracts/src/shared.ts` (byte-for-byte duplicate of `shared/index.ts`, zero imports)
+- L2: Replace `res.status(500).json()` with `next(err)` in admin routes (2 catch blocks in `admin.ts:50,70`)
+- L5: Align frontend DTOs with `@flow-app/contracts` — import `SessionDetailDTO` and `ArtifactDTO`, annotate remaining local DTOs with TODO
+
+**Phase 2 — Architectural Cleanup** (L1, L3, ~90 min):
+- L1: OAuth token hygiene — add `Cache-Control: no-store` + `Referrer-Policy: no-referrer` on redirect, strip token from browser history in `OAuthCallback.tsx`
+- L3: Unify `listSessions` query paths — add `findAll` to `SessionRepository` interface + implementation, refactor `findByWorkspace` to delegate, single mapping in `generation.ts`
+
+Files touched: 8 (6 modified, 1 new interface method, 1 deleted).
+Wiki: index.md, code-review-2026-08-02.md, log.md updated.
+
 ## [2026-08-02] fix | Wiki lint — 3 broken wikilinks resolved
 
 Created 2 missing entity pages for repository interfaces referenced in [[DDD Domain Design Rules]]:
