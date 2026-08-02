@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { ArtifactStatus } from '../value-objects/ArtifactStatus';
+import { ArtifactStatus } from '../value-objects/ArtifactStatus';
 
 export class Artifact {
   private _status: ArtifactStatus;
@@ -25,7 +25,7 @@ export class Artifact {
       sessionId,
       stepNumber,
       content,
-      'completed',
+      ArtifactStatus.Completed,
       new Date(),
     );
   }

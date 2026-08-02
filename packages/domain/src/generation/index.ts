@@ -11,7 +11,8 @@ export { ArtifactId } from './value-objects/ArtifactId';
 export { ArtifactContent } from './value-objects/ArtifactContent';
 export { SessionStatus, InvalidSessionStatusError } from './value-objects/SessionStatus';
 export type { SessionStatusValue } from './value-objects/SessionStatus';
-export type { ArtifactStatus } from './value-objects/ArtifactStatus';
+export { ArtifactStatus, InvalidArtifactStatusError, InvalidArtifactTransitionError } from './value-objects/ArtifactStatus';
+export type { ArtifactStatusValue } from './value-objects/ArtifactStatus';
 export { ReadinessPolicy } from './value-objects/ReadinessPolicy';
 export type { AcquisitionData } from './value-objects/ReadinessPolicy';
 

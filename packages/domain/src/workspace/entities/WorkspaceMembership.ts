@@ -1,5 +1,5 @@
 import { MembershipRole } from '../value-objects/MembershipRole';
-import type { MembershipStatus } from '../value-objects/MembershipStatus';
+import { MembershipStatus } from '../value-objects/MembershipStatus';
 import { DomainError } from '../../shared/domain-error';
 
 export class WorkspaceMembership {
@@ -26,7 +26,7 @@ export class WorkspaceMembership {
       userId,
       workspaceId,
       role,
-      'invited',
+      MembershipStatus.Invited,
       invitedBy,
       new Date(),
       null,
@@ -46,14 +46,14 @@ export class WorkspaceMembership {
   }
 
   accept(): WorkspaceMembership {
-    if (this._status !== 'invited') {
-      throw new InvalidMembershipAcceptError(this._status);
+    if (!this._status.isPending) {
+      throw new InvalidMembershipAcceptError(this._status.value);
     }
     return new WorkspaceMembership(
       this.userId,
       this.workspaceId,
       this._role,
-      'active',
+      MembershipStatus.Active,
       this.invitedBy,
       this.invitedAt,
       new Date(),
@@ -84,7 +84,7 @@ export class WorkspaceMembership {
   }
 
   get isActive(): boolean {
-    return this._status === 'active';
+    return this._status.isActive;
   }
 
   get isOwner(): boolean {

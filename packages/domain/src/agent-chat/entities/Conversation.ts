@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { AgentKey } from '../value-objects/AgentKey';
-import type { ConversationStatus } from '../value-objects/ConversationStatus';
+import { ConversationStatus } from '../value-objects/ConversationStatus';
 import type { DomainEvent } from '../../shared/domain-event';
 import { DomainError } from '../../shared/domain-error';
 import { Message } from './Message';
@@ -69,7 +69,7 @@ export class Conversation {
       agentKey,
       now,
       now,
-      'active',
+      ConversationStatus.Active,
       null,
       [],
     );
@@ -100,14 +100,14 @@ export class Conversation {
   }
 
   addMessage(message: Message): DomainEvent {
-    if (this._status !== 'active') {
+    if (this._status.isArchived) {
       throw new ConversationArchivedError(this.conversationId);
     }
     this._messages.push(message);
     this._updatedAt = new Date();
 
     // Auto-title from first user message
-    if (!this._title && message.role === 'user') {
+    if (!this._title && message.role.isUser) {
       this._title = message.content.slice(0, 80) + (message.content.length > 80 ? '...' : '');
     }
 
@@ -119,10 +119,10 @@ export class Conversation {
   }
 
   archive(): DomainEvent {
-    if (this._status !== 'active') {
+    if (!this._status.isActive) {
       throw new ConversationAlreadyArchivedError(this.conversationId);
     }
-    this._status = 'archived';
+    this._status = ConversationStatus.Archived;
     this._updatedAt = new Date();
 
     return {
@@ -153,6 +153,6 @@ export class Conversation {
   }
 
   get isActive(): boolean {
-    return this._status === 'active';
+    return this._status.isActive;
   }
 }

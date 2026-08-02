@@ -1,6 +1,6 @@
 import type { Kysely } from 'kysely';
 import type { DB } from '../types';
-import { Workspace, WorkspaceMembership, ConcurrencyError, MembershipRole, type WorkspaceRepository, type MembershipStatus } from '@flow-app/domain';
+import { Workspace, WorkspaceMembership, ConcurrencyError, MembershipRole, MembershipStatus, type WorkspaceRepository } from '@flow-app/domain';
 
 export class KyselyWorkspaceRepository implements WorkspaceRepository {
   constructor(private readonly db: Kysely<DB>) {}
@@ -32,7 +32,7 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
           m.user_id,
           m.workspace_id,
           MembershipRole.from(m.role),
-          m.status as MembershipStatus,
+          MembershipStatus.from(m.status),
           m.invited_by ?? '',
           m.invited_at ?? new Date(),
           m.joined_at,
@@ -84,7 +84,7 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
           workspace_id: m.workspaceId,
           user_id: m.userId,
           role: m.role.value,
-          status: m.status,
+          status: m.status.value,
           invited_by: m.invitedBy,
           invited_at: m.invitedAt,
           joined_at: m.joinedAt,
@@ -92,7 +92,7 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
         .onConflict((oc) =>
           oc.columns(['workspace_id', 'user_id']).doUpdateSet({
             role: m.role.value,
-            status: m.status,
+            status: m.status.value,
             joined_at: m.joinedAt,
             updated_at: new Date(),
           }),
@@ -135,7 +135,7 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
           workspace_id: m.workspaceId,
           user_id: m.userId,
           role: m.role.value,
-          status: m.status,
+          status: m.status.value,
           invited_by: m.invitedBy,
           invited_at: m.invitedAt,
           joined_at: m.joinedAt,
@@ -143,7 +143,7 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
         .onConflict((oc) =>
           oc.columns(['workspace_id', 'user_id']).doUpdateSet({
             role: m.role.value,
-            status: m.status,
+            status: m.status.value,
             joined_at: m.joinedAt,
             updated_at: new Date(),
           }),
@@ -166,7 +166,7 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
       row.user_id,
       row.workspace_id,
       MembershipRole.from(row.role),
-      row.status as MembershipStatus,
+      MembershipStatus.from(row.status),
       row.invited_by ?? '',
       row.invited_at ?? new Date(),
       row.joined_at,

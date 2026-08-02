@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { DomainEvent } from '../../shared/domain-event';
 import { MembershipRole } from '../value-objects/MembershipRole';
+import { MembershipStatus } from '../value-objects/MembershipStatus';
 import { WorkspaceMembership } from './WorkspaceMembership';
 import {
   NotWorkspaceOwnerError,
@@ -34,7 +35,7 @@ export class Workspace {
       createdBy,
       workspaceId,
       MembershipRole.Owner,
-      'active',
+      MembershipStatus.Active,
       createdBy,
       now,
       now,
@@ -71,7 +72,7 @@ export class Workspace {
 
   acceptInvitation(userId: string): DomainEvent {
     const idx = this._memberships.findIndex(
-      (m) => m.userId === userId && m.status === 'invited',
+      (m) => m.userId === userId && m.status.isPending,
     );
     if (idx === -1) throw new NotAWorkspaceMemberError(userId, this.workspaceId);
     this._memberships[idx] = this._memberships[idx].accept();

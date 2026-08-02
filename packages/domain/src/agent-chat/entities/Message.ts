@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { MessageRole } from '../value-objects/MessageRole';
+import { MessageRole } from '../value-objects/MessageRole';
 
 export class Message {
   private constructor(
@@ -16,7 +16,7 @@ export class Message {
     return new Message(
       randomUUID(),
       conversationId,
-      'user',
+      MessageRole.User,
       content,
       null,
       null,
@@ -33,7 +33,7 @@ export class Message {
     return new Message(
       randomUUID(),
       conversationId,
-      'agent',
+      MessageRole.Agent,
       content,
       tokensUsed,
       modelUsed,
@@ -45,7 +45,7 @@ export class Message {
     return new Message(
       randomUUID(),
       conversationId,
-      'system',
+      MessageRole.System,
       content,
       null,
       null,

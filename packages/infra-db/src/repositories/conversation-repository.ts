@@ -1,6 +1,6 @@
 import type { Kysely } from 'kysely';
 import type { DB } from '../types';
-import { Conversation, Message, AgentKey, type ConversationRepository, type Pagination, type ConversationStatus, type MessageRole } from '@flow-app/domain';
+import { Conversation, Message, AgentKey, ConversationStatus, MessageRole, type ConversationRepository, type Pagination } from '@flow-app/domain';
 
 export class KyselyConversationRepository implements ConversationRepository {
   constructor(private readonly db: Kysely<DB>) {}
@@ -28,13 +28,13 @@ export class KyselyConversationRepository implements ConversationRepository {
       AgentKey.from(row.agent_key),
       row.created_at,
       row.updated_at ?? row.created_at,
-      row.status as ConversationStatus,
+      ConversationStatus.from(row.status),
       row.title,
       messages.map((m) =>
         Message.reconstitute(
           m.id,
           m.conversation_id,
-          m.role as MessageRole,
+          MessageRole.from(m.role),
           m.content,
           m.tokens_used,
           m.model_used,
@@ -82,13 +82,13 @@ export class KyselyConversationRepository implements ConversationRepository {
           AgentKey.from(row.agent_key),
           row.created_at,
           row.updated_at ?? row.created_at,
-          row.status as ConversationStatus,
+          ConversationStatus.from(row.status),
           row.title,
           messages.map((m) =>
             Message.reconstitute(
               m.id,
               m.conversation_id,
-              m.role as MessageRole,
+              MessageRole.from(m.role),
               m.content,
               m.tokens_used,
               m.model_used,
@@ -111,12 +111,12 @@ export class KyselyConversationRepository implements ConversationRepository {
         user_id: conversation.userId,
         agent_key: conversation.agentKey.value,
         title: conversation.title,
-        status: conversation.status,
+        status: conversation.status.value,
       })
       .onConflict((oc) =>
         oc.column('id').doUpdateSet({
           title: conversation.title,
-          status: conversation.status,
+          status: conversation.status.value,
           updated_at: new Date(),
         }),
       )
@@ -129,7 +129,7 @@ export class KyselyConversationRepository implements ConversationRepository {
         .values({
           id: message.messageId,
           conversation_id: message.conversationId,
-          role: message.role,
+          role: message.role.value,
           content: message.content,
           tokens_used: message.tokensUsed,
           model_used: message.modelUsed,
