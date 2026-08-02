@@ -5,7 +5,7 @@ tags:
   - wiki/agent-chat
   - wiki/workspace
 date_updated: 2026-08-01
-source_count: 7
+source_count: 8
 confidence: high
 ---
 
@@ -167,3 +167,4 @@ Agent Chat **never writes** to Workspace or Generation. It is a read-only consum
 - [[PromptComposer]] — Assembly of agent system prompt + context
 - [[LLM Gateway - OpenRouter]] — Streaming LLM calls
 - [[Workspace Sharing]] — Permission model for workspace-scoped agents
+- [[synthesis/agent-chat-proposal]] — Full architecture proposal and design decisions

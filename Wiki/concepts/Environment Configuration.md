@@ -3,8 +3,8 @@ type: concept
 tags:
   - wiki/concept
   - wiki/infrastructure
-date_updated: 2026-07-30
-source_count: 6
+date_updated: 2026-08-02
+source_count: 8
 confidence: high
 ---
 
@@ -177,6 +177,18 @@ validateConfig();
 
 **Fail-closed**: the server refuses to start if any required variable is missing. No silent misconfiguration in production.
 
+## Railway Deployment
+
+Production deployment configuration for the Flow App on Railway:
+
+- `backend` service — Express API on port 3000 with `/health` endpoint
+- `worker` service — BullMQ worker process, same Docker image, different start command
+- PostgreSQL + Redis via Railway managed services
+- Environment-specific configs: dev, staging, production
+- Secrets via Railway variable references (never in repo)
+
+Referenced in [[implementation-roadmap-2026-08-01]] Phase 9.
+
 ## Sources
 
 - [[Database Schema]] — DATABASE_URL
@@ -185,3 +197,5 @@ validateConfig();
 - [[Auth Middleware]] — JWT_SECRET, CSRF_SECRET
 - [[API Routes]] — PORT, CORS_ORIGIN
 - [[Logging Strategy]] — LOG_LEVEL, LOG_PRETTY
+- [[Docker Compose - Local Dev]]
+- [[implementation-roadmap-2026-08-01]]

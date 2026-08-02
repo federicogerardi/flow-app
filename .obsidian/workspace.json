@@ -4,21 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "3b4bc59219255fb2",
+        "id": "df86a95ed4edd8af",
         "type": "tabs",
         "children": [
           {
-            "id": "278473b8b390cf25",
+            "id": "23889eaa27ad3006",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Wiki/log.md",
-                "mode": "preview",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "log"
+              "title": "New tab"
             }
           }
         ]
@@ -196,8 +192,9 @@
       "karpathywiki:Query wiki": false
     }
   },
-  "active": "278473b8b390cf25",
+  "active": "23889eaa27ad3006",
   "lastOpenFiles": [
+    "Wiki/log.md",
     "Wiki/synthesis/low-fix-plan-2026-08-02.md",
     "apps/frontend/dist/auth/OAuthCallback.js.map",
     "apps/frontend/dist/auth/OAuthCallback.js",
@@ -220,7 +217,6 @@
     "Wiki/synthesis/critical-fix-plan-2026-08-02.md",
     "Wiki/synthesis/phase-8-real-auth-plan.md",
     "Wiki/synthesis/implementation-roadmap-2026-08-01.md",
-    "Wiki/log.md",
     "Wiki/synthesis/rule-4-vo-debt.md",
     "Wiki/synthesis/phase-9-implementation-plan.md",
     "Wiki/sources/USER-STORIES.md",

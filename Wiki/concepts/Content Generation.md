@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/generation
 date_updated: 2026-08-01
-source_count: 4
+source_count: 5
 confidence: high
 ---
 
@@ -115,3 +115,4 @@ interface SessionRepository {
 - [[sources/PRD]] — FR-W01 to FR-W09
 - [[sources/STARTUP]] — Domain rules
 - [[sources/USER-STORIES]] — All tool epics
+- [[Global Deterministic Model Matrix]] — Per-step model assignment contract

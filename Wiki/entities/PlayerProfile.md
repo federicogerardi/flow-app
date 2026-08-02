@@ -9,6 +9,8 @@ source_count: 4
 
 # PlayerProfile
 
+> **Planned** — not yet implemented. Gamification bounded context code does not exist yet. See [[implementation-roadmap-2026-08-01]] Phase 11.
+>
 > Aggregate Root — [[Gamification]] context
 
 ## Definition
@@ -230,5 +232,5 @@ interface PlayerProfileRepository {
 
 - [[Gamification]] — Parent bounded context
 - [[Achievements & Badges]] — Badge catalog reference
-- [[Workspace Gamification]] — Leaderboard consumes seasonal XP
+- [[Gamification#Workspace Gamification]] — Leaderboard consumes seasonal XP
 - [[Auth Dependencies]] — Shared UserId

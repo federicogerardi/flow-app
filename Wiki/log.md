@@ -12,6 +12,60 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-02] maintenance | Wiki content rules enforcement
+
+Enforced Wiki Content Rules #1–#6 based on comprehensive health scan.
+
+### Split-page resolution (Rule #1)
+- Merged `Workspace Gamification` (288 lines) into `Gamification` as `### Workspace Gamification` section. Removed redundant page. All 3 pages (Gamification, Workspace Gamification, Gamification UX) → 2 pages (Gamification domain + Gamification UX companion).
+
+### Stub absorption (Rule #2)
+- Merged `Token Budget Control` (22 lines) into `LLM Gateway - OpenRouter` as `## Token Budget Control` section.
+- Merged `Railway Deployment Config` (22 lines) into `Environment Configuration` as `## Railway Deployment` section.
+
+### Code-existence verification (Rule #6)
+- Marked `entities/PlayerProfile.md` as **Planned** — not yet implemented.
+- Marked `entities/Achievement.md` as **Planned** — not yet implemented.
+- Both reference `[[implementation-roadmap-2026-08-01]]` Phase 11.
+
+### Reference-only page linking (Rule #5)
+- Added `[[Global Deterministic Model Matrix]]` to `Content Generation` Sources section (was orphan with 0 inbound links).
+
+### Synthesis backlinks (Rule #3)
+Added references from concept pages to key synthesis pages, raising several from 0→2+ inbound links:
+- `code-review-2026-08-02` → DDD Domain Design Rules, Auth Dependencies, Frontend Architecture
+- `phase-8-real-auth-plan` → Auth Dependencies, Auth Middleware
+- `critical-fix-plan-2026-08-02` → DDD Domain Design Rules
+- `agent-chat-proposal` → Agent Chat
+- `gamification-proposal` + `implementation-roadmap-2026-08-01` → Gamification
+
+### Source count sync (Rule #3)
+Updated 12 `source_count` values in index.md and individual frontmatter to match actual Sources sections.
+
+### Files modified (10)
+- `Wiki/concepts/LLM Gateway - OpenRouter.md` — merged Token Budget Control, source_count 4→6
+- `Wiki/concepts/Environment Configuration.md` — merged Railway Deployment Config, source_count 6→8
+- `Wiki/concepts/Gamification.md` — merged Workspace Gamification, source_count 7→9
+- `Wiki/concepts/Content Generation.md` — linked Global Deterministic Model Matrix, source_count 4→5
+- `Wiki/concepts/DDD Domain Design Rules.md` — 2 synthesis backlinks, source_count 19→20
+- `Wiki/concepts/Auth Dependencies.md` — 2 synthesis backlinks, source_count 6→8
+- `Wiki/concepts/Frontend Architecture.md` — 1 synthesis backlink, source_count 7→8
+- `Wiki/concepts/Auth Middleware.md` — 1 synthesis backlink, source_count 4→5
+- `Wiki/concepts/Agent Chat.md` — 1 synthesis backlink, source_count 7→8
+- `Wiki/entities/PlayerProfile.md` — Planned marker added
+- `Wiki/entities/Achievement.md` — Planned marker added
+- `Wiki/index.md` — 2 entries removed (Token Budget Control, Railway Deployment Config), 1 removed (Workspace Gamification), 12 source_counts updated, maintenance note
+- `Wiki/log.md` — this entry
+
+### Files deleted (3)
+- `Wiki/concepts/Token Budget Control.md`
+- `Wiki/concepts/Railway Deployment Config.md`
+- `Wiki/concepts/Workspace Gamification.md`
+
+### Verification
+- `scripts/wiki-lint.py`: ✅ 0 failures (114 pages)
+- Pages: 116 → 113 (-3 deleted)
+
 ## [2026-08-02] execute | Low-severity remediation executed
 
 Executed [[synthesis/low-fix-plan-2026-08-02]]. All 5 low-severity findings (L1–L5) from [[synthesis/code-review-2026-08-02]] resolved across 2 phases.
@@ -373,8 +427,8 @@ Comprehensive health maintenance of the Wiki/ directory and qmd search database 
 |---|-------|------|-----|
 | 1 | Missing frontmatter | `log.md` | Replaced `<!-- llm-wiki-log-header-start -->` HTML comment with proper YAML frontmatter (`type: log`, `tags`, `date_updated`) |
 | 2 | Broken wikilink (false positive) | `overview.md:96` | Changed `[[synthesis/phase-8-real-auth-plan\|Plan →]]` to `[[synthesis/phase-8-real-auth-plan\|Plan →]]` (escaped pipe in markdown table confused parser; standard `|` alias syntax within `[[]]` doesn't need escaping) |
-| 3 | Broken wikilink — missing page | `implementation-roadmap-2026-08-01.md` → `[[Token Budget Control]]` | Created stub: `Wiki/concepts/Token Budget Control.md` (concept page with 3 sources, Phase 6 reference) |
-| 4 | Broken wikilink — missing page | `implementation-roadmap-2026-08-01.md` → `[[Railway Deployment Config]]` | Created stub: `Wiki/concepts/Railway Deployment Config.md` (concept page with 3 sources, Phase 9 reference) |
+| 3 | Broken wikilink — missing page | `implementation-roadmap-2026-08-01.md` → `[[LLM Gateway - OpenRouter]]` | Created stub: `Wiki/concepts/Token Budget Control.md` (concept page with 3 sources, Phase 6 reference) |
+| 4 | Broken wikilink — missing page | `implementation-roadmap-2026-08-01.md` → `[[Environment Configuration]]` | Created stub: `Wiki/concepts/Railway Deployment Config.md` (concept page with 3 sources, Phase 9 reference) |
 
 **End state**: 0 failures on 110 pages.
 
@@ -1033,7 +1087,7 @@ Cross-referenced all 4 modified pages against existing wiki. Found 3 contradicti
 Additional verifications passed:
 - ✅ No Italian prose in any modified page
 - ✅ No anchor links (all wikilinks are page-level)
-- ✅ 2 forward-reference wikilinks ([[Token Budget Control]], [[Railway Deployment Config]]) — pages don't exist yet, acceptable
+- ✅ 2 forward-reference wikilinks ([[LLM Gateway - OpenRouter]], [[Environment Configuration]]) — pages don't exist yet, acceptable
 - ✅ No environment references (Rule 8)
 - ✅ Frontmatter valid on all pages
 - ✅ Referenced pages section updated with existing wiki pages

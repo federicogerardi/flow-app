@@ -5,7 +5,7 @@ tags:
   - wiki/infrastructure
   - wiki/backend
 date_updated: 2026-07-30
-source_count: 4
+source_count: 5
 confidence: high
 ---
 
@@ -191,3 +191,4 @@ router.get('/admin/models', listModels);
 - [[User]] — aggregate root in Identity & Access
 - [[API Routes]] — route protection
 - [[sources/PRD]] — FR-S01 to FR-S06
+- [[synthesis/phase-8-real-auth-plan]] — Implementation plan for Phase 8 auth middleware

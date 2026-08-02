@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-07-31
-source_count: 4
+date_updated: 2026-08-02
+source_count: 6
 confidence: high
 ---
 
@@ -336,12 +336,25 @@ Rules:
 
 This does not make model output mathematically deterministic, but it makes execution **operationally deterministic** for development, replay, and incident analysis.
 
+## Token Budget Control
+
+Controls per-session and per-conversation token consumption to prevent run-away LLM costs. Enforces hard caps with warning thresholds.
+
+- `TOKEN_BUDGET_MAX_TOTAL` — hard cap on total tokens per entity (default: 100K)
+- `TOKEN_BUDGET_WARNING_THRESHOLD` — percentage of cap that triggers a warning (default: 80%)
+- Budgets are enforced at the application layer before each LLM call
+- Exceeding the hard cap stops generation and returns a controlled error
+
+Referenced in [[implementation-roadmap-2026-08-01]] Phase 6 task 4.
+
 ## Sources
 
 - [[Tool as Static Configuration]] — `prompt.model: ModelTier` on each step
 - [[Application Services]] — `ProcessStepUseCase` integration point
 - [[BullMQ Worker Wiring]] — worker invokes ProcessStepUseCase
 - [[Usage & Quota]] — credit tracking from token usage
+- [[API Contract Baseline v1]]
+- [[implementation-roadmap-2026-08-01]]
 
 ---
 

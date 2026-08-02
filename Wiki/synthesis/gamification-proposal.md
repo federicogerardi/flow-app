@@ -239,7 +239,7 @@ Checklist per ogni nuovo file `packages/domain/src/gamification/`:
 
 - [[Gamification]] — Feature overview
 - [[Achievements & Badges]] — Badge catalog + credit rewards
-- [[Workspace Gamification]] — Team-level features
+- [[Gamification#Workspace Gamification]] — Team-level features
 - [[PlayerProfile]] — Aggregate root
 - [[Achievement]] — Entity
 - [[Content Generation]] — SessionCompleted event source

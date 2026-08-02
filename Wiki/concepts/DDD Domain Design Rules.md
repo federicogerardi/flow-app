@@ -5,7 +5,7 @@ tags:
   - wiki/architecture
   - wiki/governance
 date_updated: 2026-08-02
-source_count: 19
+source_count: 20
 confidence: high
 ---
 
@@ -1023,6 +1023,7 @@ These rules are enforced by:
 - [[Application Services]] — Use case patterns, orchestration flow
 - [[synthesis/code-review-2026-08-02]] — 41 findings including 4 DDD violations (H1–H3, H10)
 - [[synthesis/high-fix-plan-2026-08-02]] — Remediation plan for H1–H10
+- [[synthesis/critical-fix-plan-2026-08-02]] — Critical findings remediation (C1–C8)
 - [[synthesis/rule-4-vo-debt]] — 8 type-alias VOs catalogued with conversion roadmap
 - [[synthesis/phase-9-implementation-plan]] — Phase 9 DDD remediation targets
 - [[Session Machine (XState v5)]] — Domain-owned state machine, startup validation (Pattern 13, 19)

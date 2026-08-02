@@ -3,8 +3,8 @@ type: concept
 tags:
   - wiki/concept
   - wiki/gamification
-date_updated: 2026-08-01
-source_count: 7
+date_updated: 2026-08-02
+source_count: 9
 confidence: high
 ---
 
@@ -94,12 +94,111 @@ Credits are awarded once — when the badge is first unlocked.
 
 ### Workspace Gamification
 
-See [[Workspace Gamification]] for full details. Key features:
+#### Aggregate: WorkspaceChallenge
 
-- **Workspace Level**: progresses with team activity. Higher level = cosmetic prestige.
-- **Workspace Health Score**: composite 0-100 metric (asset coverage, success rate, promotion rate, team activity, agent engagement).
-- **Team Challenges**: weekly challenges per workspace (e.g., "Complete 5 sessions this week").
-- **Workspace Leaderboard**: internal ranking of members by weekly XP.
+A `WorkspaceChallenge` is a team goal scoped to one workspace and one week. It has identity, lifecycle, and invariants.
+
+```typescript
+// packages/domain/src/gamification/entities/WorkspaceChallenge.ts
+
+class WorkspaceChallenge {
+  private constructor(
+    readonly challengeId: ChallengeId,
+    readonly workspaceId: WorkspaceId,
+    readonly challengeKey: string,
+    private _progress: number,
+    readonly target: number,
+    private _status: ChallengeStatus,    // 'active' | 'completed'
+    readonly weekStart: Date,
+    readonly createdAt: DateTime,
+    private _completedAt: DateTime | null,
+  ) {}
+
+  static start(workspaceId, challengeKey, target, weekStart): WorkspaceChallenge { ... }
+
+  contribute(amount: number = 1): ChallengeCompleted | null {
+    if (this._status !== ChallengeStatus.Active) return null;
+    this._progress = Math.min(this._progress + amount, this.target);
+    if (this._progress >= this.target) {
+      this._status = ChallengeStatus.Completed;
+      this._completedAt = DateTime.now();
+      return new ChallengeCompleted(this.challengeId, this.workspaceId, this.challengeKey);
+    }
+    return null;
+  }
+}
+```
+
+**Challenge Catalog:**
+
+| Challenge | Key | Metric | Target | XP Reward | Badge |
+|-----------|-----|--------|--------|-----------|-------|
+| Content Sprint | `content-sprint` | sessions | 5 | 200 XP | Sprint Master |
+| Asset Builder | `asset-builder` | promotions | 3 | 150 XP | — |
+| AI Dialogue | `ai-dialogue` | agent_messages | 20 | 200 XP | AI Team Sync |
+| Full Coverage | `full-coverage` | assets (all types) | 5 | 300 XP | Full House |
+| Power Week | `power-week` | sessions | 10 | 400 XP | Marathon |
+
+When a challenge completes, XP is distributed to all contributors and badges are awarded.
+
+#### Workspace Level
+
+The workspace itself has a level, progressing through team activity:
+
+```
+Workspace XP sources (aggregated from all members):
+├── Session completed by any member:       +50 XP
+├── Artifact promoted by any member:       +100 XP
+├── Asset created by any member:           +30 XP
+├── Agent message exchanged by any member: +10 XP
+└── New member joined:                     +75 XP
+
+Workspace Levels:
+├── L1 — Startup         0 XP
+├── L2 — Growing       500 XP
+├── L3 — Established  2000 XP
+├── L4 — Thriving     5000 XP
+└── L5 — Powerhouse  10000 XP
+```
+
+Workspace level is **cosmetic prestige** — it appears in the workspace header and sidebar. It does not affect credits, XP multipliers, or tool behavior.
+
+#### Workspace Health Score
+
+A composite 0-100 metric computed on-read from existing data (read model, no dedicated aggregate):
+
+```
+WorkspaceHealth =
+  (AssetCoverage × 0.30) +
+  (SessionSuccessRate × 0.25) +
+  (PromotionRate × 0.20) +
+  (TeamActivity × 0.15) +
+  (AgentEngagement × 0.10)
+```
+
+| Component | Formula | Weight |
+|-----------|---------|--------|
+| **Asset Coverage** | `(filledAssetTypes / 5) × 100` | 30% |
+| **Session Success Rate** | `(completed / (completed + failed)) × 100` (last 30 days) | 25% |
+| **Promotion Rate** | `(promoted / completed) × 100` (last 30 days) | 20% |
+| **Team Activity** | `min(activeMembersThisWeek / 3, 1.0) × 100` | 15% |
+| **Agent Engagement** | `min(totalConversations / 10, 1.0) × 100` | 10% |
+
+| Score Range | Color | Label |
+|-------------|-------|-------|
+| 70-100 | Green | Healthy |
+| 40-69 | Yellow | Needs Attention |
+| 0-39 | Red | At Risk |
+
+#### Read Model: Workspace Leaderboard
+
+The leaderboard is a **read model** — a projection computed from the `workspace_leaderboard` table, not a domain aggregate. Because **XP is private**, it shows relative position without revealing absolute XP of others:
+
+- Rank number visible to all members
+- Progress bar proportional to XP relative to #1
+- Movement indicator since last update
+- Season name + reset date in footer
+- Updated asynchronously by `LeaderboardProjector` in the application layer
 
 ### Seasons
 
@@ -245,8 +344,10 @@ async processEvent(event: SessionCompleted): Promise<void> {
 
 - [[PlayerProfile]] — Aggregate root
 - [[Achievements & Badges]] — Badge catalog + credit rewards
-- [[Workspace Gamification]] — Team challenges, leaderboard, health score
 - [[Content Generation]] — SessionCompleted event source
 - [[Agent Chat]] — MessageAdded event source
 - [[Workspace Sharing]] — MemberJoined event source
 - [[Gamification UX]] — Psychological triggers, sidebar integration, notification cadence
+- [[UX Wireframes]] — Workspace Dashboard where health + challenges display
+- [[synthesis/gamification-proposal]] — Full gamification architecture proposal
+- [[synthesis/implementation-roadmap-2026-08-01]] — Phase 11 implementation roadmap

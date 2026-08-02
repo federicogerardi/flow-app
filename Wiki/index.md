@@ -3,6 +3,7 @@ type: index
 tags:
   - wiki/index
 date_updated: 2026-08-02
+maintenance: 2026-08-02 — wiki maintenance: 2 stubs merged (Token Budget Control → LLM Gateway, Railway Deployment Config → Environment Configuration), split-page resolved (Workspace Gamification → Gamification), Planned markers added to PlayerProfile + Achievement, 7 synthesis backlinks added, Global Deterministic Model Matrix linked from Content Generation, 12 source_counts updated. Wiki-lint ✅ 114 pages.
 maintenance: 2026-08-02 — medium-severity findings executed: 16/16 active findings (M2–M18, excl. M1 deferred) closed across 5 phases. Phase 1: static import M17, Identifier.equals cross-type M18, copy.t() M8, typography M11, statusColorMap M6. Phase 2: LoadingSkeleton M3, sendMessage error M2, theme-aware bubbles M7. Phase 3: N+1 query fix M14, batch membership sync M15. Phase 4: SSE race fix M13. Phase 5: ARIA labels M4/M9, focus management M10, React.lazy code splitting M5. Typecheck ✅, build ✅, tests 5/5.
 maintenance: 2026-08-02 — low-severity remediation executed: 5 findings (L1–L5) across 2 phases. L1: OAuth headers + history cleanup. L2: admin error routing. L3: unified listSessions query. L4: dead file deleted. L5: DTOs aligned with contracts. Typecheck ✅ (0 new errors).
 maintenance: 2026-08-02 — high-severity findings executed: all 10 (H1–H10) closed. Medium-severity plan filed: 16 findings, 5 phases. Typecheck ✅, build ✅, tests 8/8.
@@ -93,7 +94,7 @@ maintenance: 2026-08-02 — health maintenance: 4 wiki-lint issues fixed (log.md
 | [[API Documentation - OpenAPI]] | high | 3 |
 | [[API Routes]] | high | 4 |
 | [[API SLO Catalog]] | high | 5 |
-| [[Agent Chat]] | high | 7 |
+| [[Agent Chat]] | high | 8 |
 | [[Agent Chat UX]] | high | 8 |
 | [[Agent Personas]] | high | 4 |
 | [[Application Services]] | high | 4 |
@@ -101,28 +102,28 @@ maintenance: 2026-08-02 — health maintenance: 4 wiki-lint issues fixed (log.md
 | [[ArtifactContent]] | high | 3 |
 | [[Asset Promotion]] | high | 4 |
 | [[AssetResolver]] | high | 4 |
-| [[Auth Dependencies]] | high | 6 |
-| [[Auth Middleware]] | high | 4 |
+| [[Auth Dependencies]] | high | 8 |
+| [[Auth Middleware]] | high | 5 |
 | [[BullMQ Worker Wiring]] | high | 5 |
 | [[CI-CD Promotion Policy]] | high | 7 |
 | [[Centralized Copy Modules]] | high | 3 |
 | [[Concurrency & Conflict Policy]] | high | 8 |
-| [[Content Generation]] | high | 4 |
+| [[Content Generation]] | high | 5 |
 | [[Contracts Package]] | high | 5 |
 | [[Context Injection]] | high | 6 |
 | [[CrawlData]] | high | 2 |
 | [[Database Schema]] | high | 9 |
-| [[DDD Domain Design Rules]] | high | 19 |
+| [[DDD Domain Design Rules]] | high | 20 |
 | [[Dependency Injection Setup]] | high | 4 |
 | [[Docker Compose - Local Dev]] | high | 2 |
 | [[Domain Events]] | high | 4 |
 | [[Domain Events Catalog]] | high | 4 |
-| [[Environment Configuration]] | high | 6 |
+| [[Environment Configuration]] | high | 8 |
 | [[Error Mapping (Domain to HTTP)]] | high | 3 |
 | [[File Upload Security]] | high | 3 |
-| [[Frontend Architecture]] | high | 7 |
+| [[Frontend Architecture]] | high | 8 |
 | [[Frontend Error Observability]] | high | 7 |
-| [[Gamification]] | high | 6 |
+| [[Gamification]] | high | 9 |
 | [[Gamification UX]] | high | 6 |
 | [[Git Governance Policy]] | high | 4 |
 | [[Global Deterministic Model Matrix]] | high | 5 |
@@ -130,13 +131,12 @@ maintenance: 2026-08-02 — health maintenance: 4 wiki-lint issues fixed (log.md
 | [[Idempotency]] | high | 8 |
 | [[Invitation Notification Delivery]] | high | 4 |
 | [[Job Queue - Monitoring and Stability]] | high | 4 |
-| [[LLM Gateway - OpenRouter]] | high | 4 |
+| [[LLM Gateway - OpenRouter]] | high | 6 |
 | [[Logging Strategy]] | high | 4 |
 | [[Migration Tooling]] | high | 2 |
 | [[Progressive Context Enrichment]] | high | 2 |
 | [[Project Dependencies]] | high | 4 |
 | [[Project Brand Persona]] | high | 5 |
-| [[Railway Deployment Config]] | high | 3 |
 | [[Prompt Admin API]] | high | 5 |
 | [[Prompt Caching Strategy]] | high | 6 |
 | [[Prompt Components]] | high | 6 |
@@ -150,7 +150,6 @@ maintenance: 2026-08-02 — health maintenance: 4 wiki-lint issues fixed (log.md
 | [[Session Machine (XState v5)]] | high | 4 |
 | [[Secure SDLC Controls]] | high | 7 |
 | [[Testing Strategy]] | high | 3 |
-| [[Token Budget Control]] | high | 3 |
 | [[Tool as Static Configuration]] | high | 4 |
 | [[Tool UX Architecture]] | high | 7 |
 | [[ToolPage Machine (XState v5)]] | high | 5 |
@@ -158,7 +157,6 @@ maintenance: 2026-08-02 — health maintenance: 4 wiki-lint issues fixed (log.md
 | [[Usage & Quota]] | high | 2 |
 | [[UX Wireframes]] | high | 6 |
 | [[Workspace & Assets]] | high | 5 |
-| [[Workspace Gamification]] | high | 6 |
 | [[Workspace Sharing]] | high | 5 |
 | [[Workspace Permissions]] | high | 5 |
 | [[XState Integration]] | high | 4 |

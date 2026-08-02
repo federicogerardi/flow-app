@@ -5,7 +5,7 @@ tags:
   - wiki/frontend
   - wiki/architecture
 date_updated: 2026-08-02
-source_count: 7
+source_count: 8
 confidence: high
 maintenance: 2026-08-02 — drift remediation: route count corrected (5→7), documented missing hooks (useWorkspace, listTools), API client methods updated.
 ---
@@ -295,3 +295,4 @@ function WorkspaceDashboard() {
 - [[ReadinessSnapshot UI]] — Readiness display component
 - [[Tool UX Architecture]] — Generic SetupPanel, always-on information, 4-phase lifecycle
 - [[Session List - Live Status]] — Cross-tab SSE, live session cards
+- [[synthesis/code-review-2026-08-02]] — Multi-agent review including frontend findings (C3, C4, C5, C7, C8)

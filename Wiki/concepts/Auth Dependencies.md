@@ -5,7 +5,7 @@ tags:
   - wiki/infrastructure
   - wiki/backend
 date_updated: 2026-08-02
-source_count: 6
+source_count: 8
 confidence: high
 ---
 
@@ -414,3 +414,5 @@ The identity bounded context (`packages/domain/src/identity/`) provides user ide
 - [[Environment Configuration]] — OAuth env vars
 - [[sources/PRD]] — FR-S01 to FR-S06
 - [[sources/USER-STORIES]] — US-A01 to US-A07
+- [[synthesis/phase-8-real-auth-plan]] — Implementation plan for Phase 8 authentication
+- [[synthesis/code-review-2026-08-02]] — Multi-agent review including auth findings (H6, C1)

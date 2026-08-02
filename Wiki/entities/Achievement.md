@@ -9,6 +9,8 @@ source_count: 3
 
 # Achievement
 
+> **Planned** — not yet implemented. Gamification bounded context code does not exist yet. See [[implementation-roadmap-2026-08-01]] Phase 11.
+>
 > Entity — owned by [[PlayerProfile]] aggregate in [[Gamification]] context
 
 ## Definition

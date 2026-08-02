@@ -163,4 +163,4 @@ Credits are added as `CreditTransaction` with `reason = 'achievement_reward'` an
 - [[Gamification]] — Parent bounded context
 - [[PlayerProfile]] — Aggregate root tracking unlocked badges
 - [[Achievement]] — Entity
-- [[Workspace Gamification]] — Workspace-level achievements
+- [[Gamification#Workspace Gamification]] — Workspace-level achievements
