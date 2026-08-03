@@ -17,6 +17,8 @@ import { createSessionWorker } from './session-worker.js';
 import { LlmGateway } from '../../infrastructure/llm-gateway.js';
 import { FilesystemPromptTemplateRepository } from '../../infrastructure/prompt-template-repository.js';
 import { PromptComponentRegistry, PromptComposer, getDefaultComponents } from '@flow-app/domain';
+import { GamificationEventPublisher } from '../../application/gamification/gamification-event-publisher.js';
+import { getGamificationQueue } from '../jobs/gamification-queue.js';
 
 const config = validateConfig();
 const log = logger.child({ component: 'worker-process' });
@@ -41,7 +43,9 @@ const promptComposer = new PromptComposer(componentRegistry);
 const promptTemplateBasePath = path.resolve(root, 'src', 'prompts');
 const promptTemplateRepo = new FilesystemPromptTemplateRepository(promptTemplateBasePath);
 
-const worker = createSessionWorker({ sessionRepo, eventBridge, llmGateway, promptComposer, promptTemplateRepo });
+const gamificationQueue = getGamificationQueue(config.REDIS_URL);
+const gamificationEventPublisher = new GamificationEventPublisher(gamificationQueue);
+const worker = createSessionWorker({ sessionRepo, eventBridge, llmGateway, promptComposer, promptTemplateRepo, gamificationEventPublisher });
 
 log.info('Worker started');
 

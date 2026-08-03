@@ -3,13 +3,13 @@ type: entity
 tags:
   - wiki/entity
   - wiki/gamification
-date_updated: 2026-08-01
-source_count: 4
+date_updated: 2026-08-04
+source_count: 5
 ---
 
 # PlayerProfile
 
-> **Planned** — not yet implemented. Gamification bounded context code does not exist yet. See [[implementation-roadmap-2026-08-01]] Phase 11.
+> **🟢 Implemented** (2026-08-04). Gamification bounded context: `packages/domain/src/gamification/entities/PlayerProfile.ts`
 >
 > Aggregate Root — [[Gamification]] context
 
@@ -90,13 +90,6 @@ class PlayerProfile {
       this._currentStreak++;
     } else {
       this._currentStreak = 1; // streak broken or first activity
-    }
-    }
-
-    if (this._lastActiveAt && this._lastActiveAt.isSameDay(yesterday)) {
-      this._currentStreak++;
-    } else {
-      this._currentStreak = 1;
     }
 
     if (this._currentStreak > this._longestStreak) {

@@ -4,10 +4,19 @@ import { listAgents, getAgent } from '@flow-app/domain';
 import { StartConversationUseCase } from '../application/agent-chat/start-conversation.usecase.js';
 import { SendMessageUseCase } from '../application/agent-chat/send-message.usecase.js';
 import type { LlmGateway } from '../infrastructure/llm-gateway.js';
+import { GamificationEventPublisher } from '../application/gamification/gamification-event-publisher.js';
+import { getGamificationQueue } from '../generation/jobs/gamification-queue.js';
 
-export function createAgentChatRoutes(conversationRepo: ConversationRepository, llmGateway: LlmGateway) {
+export function createAgentChatRoutes(
+  conversationRepo: ConversationRepository,
+  llmGateway: LlmGateway,
+  redisUrl: string,
+) {
+  const gamificationQueue = getGamificationQueue(redisUrl);
+  const gamificationEventPublisher = new GamificationEventPublisher(gamificationQueue);
+
   const startConversationUC = new StartConversationUseCase(conversationRepo);
-  const sendMessageUC = new SendMessageUseCase(conversationRepo, llmGateway);
+  const sendMessageUC = new SendMessageUseCase(conversationRepo, llmGateway, gamificationEventPublisher);
 
   return {
     listAgents: async (_req: Request, res: Response) => {

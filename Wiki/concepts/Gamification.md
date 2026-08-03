@@ -3,14 +3,14 @@ type: concept
 tags:
   - wiki/concept
   - wiki/gamification
-date_updated: 2026-08-02
-source_count: 9
+date_updated: 2026-08-04
+source_count: 10
 confidence: high
 ---
 
 # Gamification
 
-> New Supporting Bounded Context — overlay on the operational layer. `packages/domain/src/gamification/`
+> 🟢 **Implemented** (2026-08-04). New Supporting Bounded Context — overlay on the operational layer. `packages/domain/src/gamification/`
 
 ## Definition
 

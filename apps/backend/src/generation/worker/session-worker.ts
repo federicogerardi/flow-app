@@ -5,6 +5,7 @@ import type { SessionRepository, Artifact, PromptComposer, PromptTemplateReposit
 import { getTool, Artifact as ArtifactEntity, ContextEnricher, DEFAULT_COMPONENTS, SessionNotFoundError, ToolNotFoundError, PromptTemplateId, PromptVersion } from '@flow-app/domain';
 import type { JobEventBridge } from '../../infrastructure/job-event-bridge.js';
 import type { LlmGateway } from '../../infrastructure/llm-gateway.js';
+import type { GamificationEventPublisher } from '../../application/gamification/gamification-event-publisher.js';
 import { logger } from '../../infrastructure/logger.js';
 
 export interface SessionJobData {
@@ -17,6 +18,7 @@ export interface SessionWorkerDeps {
   llmGateway: LlmGateway;
   promptComposer: PromptComposer;
   promptTemplateRepo: PromptTemplateRepository;
+  gamificationEventPublisher: GamificationEventPublisher;
 }
 
 export function createSessionWorker(deps: SessionWorkerDeps): Worker<SessionJobData> {
@@ -154,6 +156,17 @@ async function processSessionJob(
         if (state.status === 'done') resolve();
       });
     });
+
+    // Gamification: award XP on successful session completion
+    const snapshot = actor.getSnapshot();
+    if (snapshot.status === 'done') {
+      deps.gamificationEventPublisher.publishSessionCompleted(
+        sessionId,
+        session.workspaceId,
+        session.userId,
+        session.toolKey.value,
+      ).catch(() => { /* fire-and-forget */ });
+    }
 
     log.info(
       {

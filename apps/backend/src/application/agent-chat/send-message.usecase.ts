@@ -1,5 +1,6 @@
 import { Message, ConversationNotFoundError, NotConversationParticipantError, ModelTier, type ConversationRepository, getAgent } from '@flow-app/domain';
 import type { LlmGateway } from '../../infrastructure/llm-gateway.js';
+import type { GamificationEventPublisher } from '../gamification/gamification-event-publisher.js';
 import { logger } from '../../infrastructure/logger.js';
 
 export interface SendMessageCommand {
@@ -18,6 +19,7 @@ export class SendMessageUseCase {
   constructor(
     private readonly conversationRepo: ConversationRepository,
     private readonly llmGateway: LlmGateway,
+    private readonly gamificationEventPublisher: GamificationEventPublisher,
   ) {}
 
   async execute(cmd: SendMessageCommand): Promise<SendMessageResult> {
@@ -87,6 +89,16 @@ export class SendMessageUseCase {
     }
 
     await this.conversationRepo.save(conversation);
+
+    // Gamification: award XP for agent message exchange (async — don't block response)
+    if (agentMessage) {
+      this.gamificationEventPublisher.publishMessageAdded(
+        agentMessage.messageId,
+        conversation.workspaceId,
+        cmd.userId,
+        cmd.conversationId,
+      ).catch(() => { /* fire-and-forget */ });
+    }
 
     return {
       userMessageId: userMessage.messageId,

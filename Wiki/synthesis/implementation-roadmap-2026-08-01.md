@@ -6,8 +6,8 @@ tags:
   - wiki/implementation
 date_updated: 2026-08-04
 phase_count: 13
-phases_complete: 12
-phases_remaining: 1
+phases_complete: 13
+phases_remaining: 0
 ---
 
 # Implementation Roadmap — Rational Development Sequence (2026-08-01)
@@ -509,65 +509,34 @@ Implementation (2026-08-04, branch `dev`):
 | EventBridge wiring | Publish CreditConsumed to EventBridge |
 | Frontend UI | Quota counter + "Crediti esauriti" blocking message |
 
-### Phase 13 — Gamification (Week 18+)
+### Phase 13 — Gamification (Week 18+) ✅ — [Implementation Plan](phase-13-implementation-plan.md)
 
-**Current gap**: gamification was deferred from Phase 5. It's the engagement layer — points, achievements, leaderboards — that makes the platform sticky for teams.
+**Plan**: [[phase-13-implementation-plan]] — detailed scope (29 steps, 40+ files, 8 sub-phases), DDD risk register, pre-commit checklist.
 
-**Goal**: add a cross-context gamification system that rewards productive usage patterns without creating perverse incentives.
+**Status**: ✅ Complete (2026-08-04). [[synthesis/phase-13-implementation-plan|Implementation plan]] executed — 27 domain files, 9 backend files, DB migration 010, wiring into session worker + send-message + accept-invitation use cases:
 
-**Tasks expected**:
+| Layer | Files | Key Deliverables |
+|-------|-------|-----------------|
+| Domain | 27 | 2 aggregate roots (PlayerProfile, WorkspaceChallenge), Achievement entity, 9 class VOs, 3 domain services, 5 domain events, 22-badge catalog, 5-challenge catalog, 2 repository interfaces |
+| Infra-DB | 5 | Migration 010 (7 tables: player_profiles, achievements, xp_transactions, gamification_processed_events, workspace_leaderboard, workspace_challenges, challenge_contributions), 7 Kysely table types, 2 Kysely repo implementations |
+| Backend infra | 4 | ProcessedEventRepository (atomic tryClaim), XPTransactionRepository, LeaderboardProjectionRepository, GamificationStatsRepository |
+| Application | 3 | GamificationEventPublisher (BullMQ), gamification-worker.ts (dedup + optimistic retry + 5-step pipeline), GetPlayerProfileUseCase |
+| API | 1 | 5 endpoints (/api/me/profile, leaderboard, health, challenges, seasons) |
+| Wiring | 9 | session-worker.ts, worker-process.ts, send-message/accept-invitation use cases, agent-chat.ts, workspaces.ts, app.ts, 2 barrel exports |
 
-1. **Points system** — `GamificationEvent` domain events
-   - Session completed → +10 pts
-   - Artifact approved → +5 pts
-   - Workspace invite accepted → +3 pts
-   - Agent chat interaction → +1 pt
-   - Configurable point values per action type
+**DDD compliance**: All 14 CLAUDE.md rules verified — zero violations. 8 DomainError subclasses (Rule 3), 9 class VOs (Rule 4), save() scope clean (Rule 5), canonical factories (Rule 6), aggregate template (Rule 7).
 
-2. **Achievements & badges** — milestone-based unlocks
-   - "First Session" → complete 1 session
-   - "Power User" → complete 50 sessions
-   - "Team Player" → join 3 workspaces
-   - "Prompt Master" → use all 7 agent personas
-   - Badge display in user profile
+**Verification**: `tsc --build` clean (0 domain/backend errors), `eslint` clean (0 errors, 0 warnings).
 
-3. **Leaderboards** — workspace-scoped and global
-   - Weekly/monthly points ranking
-   - Opt-in visibility (privacy-first)
-   - Avoid gamification pressure (no negative consequences)
+**Implementation fixes applied** (from pre-exec validation):
+- **F1**: `saveWithLock` captures `expectedVersion` BEFORE mutations (canonical SessionWorker pattern line 127)
+- **F2**: `MemberJoined` 75 XP awarded to inviter (`membership.invitedBy`), not joiner
+- **F3**: `AllTimeStats` type defined (6 counters for cross-time badges like `sessions-100`)
+- **F4**: Atomic `tryClaim` with `INSERT ON CONFLICT DO NOTHING` for event dedup
+- **F5**: `ArtifactPromoted` event deferred (not yet emitted by generation context)
+- **F6**: Seasonal badges (6) added to catalog — total 22 badges across 4 tiers + seasonal
 
-4. **Gamification repository** — `GamificationRepository` interface + Kysely impl
-   - Points ledger (append-only, auditable)
-   - Achievements table
-   - Leaderboard queries
-
-5. **Event-driven wiring** — consume domain events from Phase 1-5
-   - `SessionCompleted` → award points
-   - `MembershipAccepted` → award points
-   - `MessageAdded` → award points
-   - Use BullMQ for async gamification processing (don't block main flow)
-
-**DDD Drift Risk**: 🔴 **HIGH** — Phase 12 is a full new bounded context (~25 domain files, 2 aggregates, 9 VOs, 2 domain services, event-driven cross-context wiring). 8 specific risks, 3 at high probability:
-
-| # | Risk | CLAUDE.md Rule | Prevention |
-|---|------|---------------|------------|
-| 1 | 9 Value Objects created as `type` aliases instead of classes | Rule 4 | Every VO (ChallengeStatus, SeasonId, BadgeKey, XP, Level, Streak) must be a class with `private constructor`, `static from()`, `equals()`. No exception — identity context already demonstrates this pattern. |
-| 2 | `XPCalculator`/`AchievementEvaluator` throwing `new Error()` | Rule 3 | All game logic errors must extend `DomainError`: `MaxLevelReachedError`, `BadgeAlreadyUnlockedError`, `InvalidXPValueError`, etc. |
-| 3 | Event handler bypassing aggregate: `playerProfile.xp += 50` directly in worker | Rule 1 | Mutations must go through `playerProfile.addXP(50, 'SessionCompleted')` — the aggregate handles level-up, streak update, badge check internally |
-| 4 | `PlayerProfileRepository.save()` with leaderboard/notification side-effects | Rule 5 | `save()` persists only `player_profiles` + `achievements` tables. Leaderboard projections and notifications are separate methods or separate workers |
-| 5 | `PlayerProfile.init()` or `Achievement.unlock()` instead of `create()` | Rule 6 | Aggregate roots: `PlayerProfile.create(userId)`, `WorkspaceChallenge.create(workspaceId, seasonId)`. Child entity: `Achievement.create(badgeKey, playerId)` |
-| 6 | Bare `Error` for game rules: "Already max level", "Streak already claimed" | Rule 3 | Dedicated error classes: `MaxLevelReachedError`, `StreakAlreadyClaimedError`, `InsufficientXPError` |
-| 7 | `AchievementEvaluator` reading `(session as any)._status` for cross-context checks | Rule 1 | Cross-context access uses only public API: `sessionRepository.findById()` → `session.status` (getter). Never access private fields of other aggregates |
-| 8 | Event types as string literals without importing from source context | — | `PlayerProfile` should reference `SessionCompleted` event type from `packages/domain/src/generation/domain-events/` — not redefine `eventType: 'SessionCompleted'` as a bare string |
-
-**Recommended guardrail**: pre-commit checklist for every new file under `packages/domain/src/gamification/` — verify against all 6 CLAUDE.md Domain Design Rules before merge.
-
-**Exit criteria**:
-
-- Points awarded on key actions
-- Achievements unlock and display
-- Leaderboards update daily
-- Gamification events are async (don't slow down core workflows)
+**Base branch**: `dev`
 
 ## Cross-Phase Non-Negotiables
 
@@ -609,7 +578,7 @@ Implementation (2026-08-04, branch `dev`):
 12. **Testing & quality** (Phase 11) ✅ — 66 files, ~634 tests, vitest production configs
 12.5. **Usage & Quota domain** (Phase 11.5) ✅ — 10 files, 40 tests, Kysely repository
 13. **Usage & Quota wiring** (Phase 12) — use cases, API routes, event subscriptions, frontend quota UI
-14. **Gamification** (Phase 13) — engagement layer
+14. **Gamification** (Phase 13) ✅ — [plan](phase-13-implementation-plan.md) — engagement layer: 50 files, 2 aggregates, 22 badges, BullMQ event pipeline
 
 ## Referenced Pages
 
@@ -635,4 +604,5 @@ Implementation (2026-08-04, branch `dev`):
 - [[Environment Configuration]]
 - [[phase-9-implementation-plan]]
 - [[phase-9-architectural-targets]]
+- [[phase-13-implementation-plan]]
 - [[rule-4-vo-debt]]

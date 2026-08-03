@@ -135,6 +135,69 @@ export interface CreditTransactionsTable {
   created_at: Generated<Date>;
 }
 
+// ── Gamification tables ──
+
+export interface PlayerProfilesTable {
+  user_id: string;
+  version: Generated<number>;
+  xp_total: Generated<number>;
+  current_streak: Generated<number>;
+  longest_streak: Generated<number>;
+  last_active_date: string | null;
+  created_at: Generated<Date>;
+  updated_at: ColumnType<Date, Date | null, Date>;
+}
+
+export interface AchievementsTable {
+  id: Generated<string>;
+  user_id: string;
+  badge_key: string;
+  awarded_at: Generated<Date>;
+}
+
+export interface XPTransactionsTable {
+  id: Generated<string>;
+  user_id: string;
+  amount: number;
+  source: string;
+  source_id: string | null;
+  workspace_id: string | null;
+  season_id: string;
+  created_at: Generated<Date>;
+}
+
+export interface GamificationProcessedEventsTable {
+  event_id: string;
+  processed_at: Generated<Date>;
+  expires_at: ColumnType<Date, Date, never>;
+}
+
+export interface WorkspaceLeaderboardTable {
+  user_id: string;
+  workspace_id: string;
+  xp: Generated<number>;
+  season_id: string;
+  updated_at: Generated<Date>;
+}
+
+export interface WorkspaceChallengesTable {
+  id: Generated<string>;
+  workspace_id: string;
+  challenge_key: string;
+  progress: Generated<number>;
+  target: number;
+  status: Generated<string>;
+  week_start: string;
+  created_at: Generated<Date>;
+  completed_at: Date | null;
+}
+
+export interface ChallengeContributionsTable {
+  challenge_id: string;
+  user_id: string;
+  amount: Generated<number>;
+}
+
 export interface DB {
   sessions: SessionsTable;
   artifacts: ArtifactsTable;
@@ -149,4 +212,11 @@ export interface DB {
   messages: MessagesTable;
   quotas: QuotasTable;
   credit_transactions: CreditTransactionsTable;
+  player_profiles: PlayerProfilesTable;
+  achievements: AchievementsTable;
+  xp_transactions: XPTransactionsTable;
+  gamification_processed_events: GamificationProcessedEventsTable;
+  workspace_leaderboard: WorkspaceLeaderboardTable;
+  workspace_challenges: WorkspaceChallengesTable;
+  challenge_contributions: ChallengeContributionsTable;
 }

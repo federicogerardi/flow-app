@@ -91,7 +91,7 @@ export function createApp(deps: AppDeps) {
   app.get('/api/artifacts/:id', generationRoutes.getArtifact);
 
   // Workspace routes
-  const workspaceRoutes = createWorkspaceRoutes(deps.workspaceRepo);
+  const workspaceRoutes = createWorkspaceRoutes(deps.workspaceRepo, process.env.REDIS_URL!);
   app.post('/api/workspaces', workspaceRoutes.createWorkspace);
   app.get('/api/workspaces', workspaceRoutes.listWorkspaces);
   app.get('/api/workspaces/:id', requireWorkspaceRole(deps.workspaceRepo, MembershipRole.Owner, MembershipRole.Editor, MembershipRole.Viewer), workspaceRoutes.getWorkspace);
@@ -105,7 +105,7 @@ export function createApp(deps: AppDeps) {
   app.post('/api/invitations/:id/decline', workspaceRoutes.declineInvitation);
 
   // Agent Chat routes
-  const agentChatRoutes = createAgentChatRoutes(deps.conversationRepo, deps.llmGateway);
+  const agentChatRoutes = createAgentChatRoutes(deps.conversationRepo, deps.llmGateway, process.env.REDIS_URL!);
   app.get('/api/workspaces/:workspaceId/agents', requireWorkspaceRole(deps.workspaceRepo, MembershipRole.Owner, MembershipRole.Editor, MembershipRole.Viewer), agentChatRoutes.listAgents);
   app.get('/api/workspaces/:workspaceId/conversations', requireWorkspaceRole(deps.workspaceRepo, MembershipRole.Owner, MembershipRole.Editor, MembershipRole.Viewer), agentChatRoutes.listConversations);
   app.post('/api/workspaces/:workspaceId/conversations', requireWorkspaceRole(deps.workspaceRepo, MembershipRole.Owner, MembershipRole.Editor), agentChatRoutes.startConversation);

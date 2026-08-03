@@ -4,10 +4,14 @@ import { Workspace } from '@flow-app/domain';
 import { InviteMemberUseCase } from '../application/workspace/invite-member.usecase.js';
 import { AcceptInvitationUseCase } from '../application/workspace/accept-invitation.usecase.js';
 import { TransferOwnershipUseCase } from '../application/workspace/transfer-ownership.usecase.js';
+import { GamificationEventPublisher } from '../application/gamification/gamification-event-publisher.js';
+import { getGamificationQueue } from '../generation/jobs/gamification-queue.js';
 
-export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository) {
+export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository, redisUrl: string) {
+  const gamificationQueue = getGamificationQueue(redisUrl);
+  const gamificationEventPublisher = new GamificationEventPublisher(gamificationQueue);
   const inviteMemberUC = new InviteMemberUseCase(workspaceRepo);
-  const acceptInvitationUC = new AcceptInvitationUseCase(workspaceRepo);
+  const acceptInvitationUC = new AcceptInvitationUseCase(workspaceRepo, gamificationEventPublisher);
   const transferOwnershipUC = new TransferOwnershipUseCase(workspaceRepo);
 
   return {

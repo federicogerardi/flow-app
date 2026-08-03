@@ -18,3 +18,6 @@ export * from './identity';
 
 // Re-export usage
 export * from './usage';
+
+// Re-export gamification
+export * from './gamification';

@@ -2661,3 +2661,66 @@ Filed [[synthesis/usage-quota-implementation-plan]] — 13 new files + 7 modifie
 - **Out of scope**: EnsureQuotaUseCase, ConsumeCreditsUseCase (SessionCompleted handler), API routes, EventBridge publishing — deferred to follow-up wiring phase.
 
 3 wiki files updated: `Wiki/synthesis/usage-quota-implementation-plan.md` (new), `Wiki/index.md` (+1 synthesis entry), `Wiki/log.md` (this entry).
+
+## 2026-08-04 | implement — Phase 13 Gamification
+
+Created the gamification bounded context as an event-driven overlay on the operational layer. Implementation executed from [[phase-13-implementation-plan]] — 8 sub-phases, 50 files created or modified.
+
+**Phase 13a — Domain Foundation (7 files)**:
+- `errors.ts` — 8 DomainError subclasses (MaxLevelReachedError, BadgeAlreadyUnlockedError, InvalidXPValueError, ChallengeAlreadyActiveError, ChallengeNotActiveError, InvalidSeasonError, InvalidBadgeTierError, InvalidChallengeKeyError). All extend DomainError with `code` + `retryable`.
+- 9 class VOs (XP, Level, Streak, BadgeKey, BadgeTier, ChallengeStatus, ChallengeKey, SeasonId, AchievementId) — all with `private constructor`, `static from()`/`of()`/`current()`, `equals()`. Rule 4 compliant.
+- `Achievement` — child entity owned by PlayerProfile, `static create()` + `static reconstitute()`.
+- `PlayerProfile` — aggregate root, canonical Pattern 7: `private constructor`, `_version`, `ReadonlyArray<Achievement>`, business methods return `DomainEvent[]`/`DomainEvent|null`. Methods: `addXP()`, `recordActivity(todayUTC)`, `getStreakBonus()`, `unlockBadge()`, `hasBadge()`.
+- Badge catalog: 22 badges (16 permanent + 6 seasonal), 4 tiers, credit rewards (10/25/50/100).
+
+**Phase 13b — Domain Services & Events (8 files)**:
+- `XPCalculator` — stateless pure function mapping event types to XP (SessionCompleted: 50, MessageAdded: 10, MemberJoined: 75, ArtifactPromoted: 100 deferred).
+- `AchievementEvaluator` — pure function evaluating 22 badges against player + event + AllTimeStats.
+- `SeasonService` — current season detection, quarter matching.
+- 5 domain events: XPEarned, LevelUp, StreakUpdated, AchievementUnlocked (carries creditReward for Quota context), ChallengeCompleted.
+
+**Phase 13c — WorkspaceChallenge Aggregate (2 files)**:
+- `WorkspaceChallenge` — second aggregate root, workspace-scoped, weekly lifecycle: active → completed. `contribute(amount)` method.
+- Challenge catalog: 5 challenges (ContentSprint, AssetBuilder, AiDialogue, FullCoverage, PowerWeek) with XP rewards.
+
+**Phase 13d — Repositories & DB Schema (5 files)**:
+- Migration 010: 7 tables (player_profiles, achievements, xp_transactions, gamification_processed_events, workspace_leaderboard, workspace_challenges, challenge_contributions). Optimistic locking via `version` column. UNIQUE constraints for dedup.
+- 7 Kysely table types added to `packages/infra-db/src/types.ts`.
+- `PlayerProfileRepository` + `WorkspaceChallengeRepository` interfaces (domain layer).
+- `KyselyPlayerProfileRepository` — `saveWithLock()` with `WHERE version = expectedVersion`, throws `ConcurrencyError` on 0 rows. Achievement sync inside `save()` per Rule 5.
+- `KyselyWorkspaceChallengeRepository` — UPSERT pattern with `ON CONFLICT DO UPDATE`.
+
+**Phase 13e — Event Pipeline (6 files)**:
+- `GamificationEventPublisher` — BullMQ queue adapter for `SessionCompleted`, `MessageAdded`, `MemberJoined`.
+- `gamification-worker.ts` — 5-step pipeline: (1) atomic dedup via `tryClaim`, (2) XP calculation, (3) profile load with `withOptimisticRetry(3)`, (4) achievement evaluation + persist, (5) leaderboard update. All steps separated per Rule 5.
+- Sub-repositories: `ProcessedEventRepository` (atomic `INSERT ON CONFLICT DO NOTHING`), `XPTransactionRepository`, `LeaderboardProjectionRepository`, `GamificationStatsRepository` (6-stat query for all-time badges).
+- `GetPlayerProfileUseCase`.
+- `gamification-queue.ts` — BullMQ Queue factory.
+
+**Phase 13f — Wiring & Integration (4 files)**:
+- `session-worker.ts`: `SessionWorkerDeps` extended with `gamificationEventPublisher`. On completion, `publishSessionCompleted(sessionId, workspaceId, userId, toolKey)`.
+- `send-message.usecase.ts`: `SendMessageUseCase` constructor extended. After conversation save, `publishMessageAdded()` fire-and-forget.
+- `accept-invitation.usecase.ts`: `AcceptInvitationUseCase` constructor extended. After accept, extracts `membership.invitedBy` and publishes `MemberJoined` with inviter's ID (not joiner).
+- `app.ts`: `createWorkspaceRoutes` and `createAgentChatRoutes` updated with `redisUrl` parameter.
+
+**Phase 13g — API Routes (1 file)**:
+- 5 endpoints: `GET /api/me/profile`, `/api/workspaces/:id/leaderboard` (XP-private, relative ranking), `/api/workspaces/:id/health` (stub), `/api/workspaces/:id/challenges`, `/api/seasons/current`. All routes use `authenticate` + `requireWorkspaceRole` middleware.
+
+**Phase 13h — Barrel Exports (1 file)**:
+- `packages/domain/src/gamification/index.ts` — exports all entities, VOs, domain services, domain events, badges, repositories, errors.
+- `packages/domain/src/index.ts` — added `export * from './gamification'`.
+- `packages/infra-db/src/index.ts` — added `KyselyPlayerProfileRepository` + `KyselyWorkspaceChallengeRepository`.
+
+**Pre-execution validation fixes applied**:
+- F1: `saveWithLock` captures `expectedVersion` BEFORE mutations (canonical SessionWorker line 127 pattern)
+- F2: `MemberJoined` 75 XP awarded to inviter (`membership.invitedBy`), not joiner
+- F3: `AllTimeStats` type defined (6 counters for cross-time badges)
+- F4: Atomic `tryClaim` with `INSERT ON CONFLICT DO NOTHING` for dedup
+- F5: `ArtifactPromoted` event deferred (not yet emitted by generation context)
+- F6: Seasonal badges (6) added to catalog — total 22 badges
+
+**DDD compliance**: All 14 CLAUDE.md rules verified. Zero `as any` in domain code. Zero `throw new Error()` in domain code. Zero bare type aliases for domain VOs. All 9 VOs are classes per Rule 4.
+
+**Verification**: `tsc --build` clean (domain + backend, 0 errors), `eslint` clean (0 errors, 0 warnings).
+
+9 wiki files updated: `Wiki/synthesis/phase-13-implementation-plan.md` (new), `Wiki/synthesis/implementation-roadmap-2026-08-01.md` (Phase 13 → ✅), `Wiki/entities/PlayerProfile.md` (Planned → Implemented), `Wiki/entities/Achievement.md` (Planned → Implemented), `Wiki/concepts/Gamification.md` (status updated), `Wiki/log.md` (this entry).
