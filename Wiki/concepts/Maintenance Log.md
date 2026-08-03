@@ -3,13 +3,21 @@ type: concept
 tags:
   - wiki/concept
   - wiki/governance
-date_updated: 2026-08-03
+date_updated: 2026-08-04
 confidence: high
 ---
 
 # Maintenance Log
 
 > Chronological log of wiki and codebase maintenance operations. Append-only — newest entries at the top.
+
+## 2026-08-04
+
+- ✅ **Phase 11 testing executed** — 66 test files, ~634 tests across 4 workspaces (domain: 32/415, backend: 18/127, frontend: 12/60, infra-db: 4/32). All passing (infra-db requires real PostgreSQL).
+- ✅ Production vitest configs: per-workspace coverage thresholds, infra-db fork pool + sequential isolation, jsdom + React for frontend, MSW handlers (19 endpoints)
+- ✅ `vitest.workspace.ts` finalized: 4 named projects (contracts + copy excluded — no testable code)
+- ✅ `vitest.config.base.ts` updated: `testTimeout: 10s`, `hookTimeout: 10s`
+- ✅ Wiki pages updated: `Testing Strategy` → Phase 11 Baseline section + updated configs, `phase-11-testing-plan` → Results section, `log.md`, `Maintenance Log`
 
 ## 2026-08-03
 

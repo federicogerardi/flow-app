@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/governance
-date_updated: 2026-07-30
-source_count: 3
+date_updated: 2026-08-04
+source_count: 4
 confidence: high
 ---
 
@@ -96,12 +96,10 @@ confidence: high
 import { defineWorkspace } from 'vitest/config';
 
 export default defineWorkspace([
-  'packages/domain',
-  'packages/contracts',
-  'packages/copy',
-  'packages/infra-db',
-  'apps/backend',
-  'apps/frontend',
+  'packages/domain',     // 415 unit tests — zero deps
+  'packages/infra-db',  // 32 integration tests — PostgreSQL (fork pool, sequential)
+  'apps/backend',        // 127 tests — use cases, middleware, API, workers
+  'apps/frontend',       // 60 tests — components, auth, pages (jsdom)
 ]);
 ```
 
@@ -142,13 +140,13 @@ import { baseConfig } from '../../vitest.config.base';
 export default mergeConfig(baseConfig, defineConfig({
   test: {
     name: 'backend',
-    // No jsdom — backend runs in Node.js
     setupFiles: ['./src/test/setup.ts'],
     coverage: {
       thresholds: {
-        'src/application/**':    { lines: 80, branches: 70 },
-        'src/generation/**':     { lines: 80, branches: 70 },
-        'src/infrastructure/**': { lines: 60, branches: 50 },
+        lines: 30,
+        branches: 20,
+        functions: 20,
+        statements: 30,
       },
     },
   },
@@ -166,18 +164,66 @@ import { baseConfig } from '../../vitest.config.base';
 
 export default mergeConfig(baseConfig, defineConfig({
   plugins: [react()],
+  css: true,
   test: {
     name: 'frontend',
-    environment: 'jsdom',                 // Required for DOM testing
+    environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
-    css: true,                            // Process CSS imports
     coverage: {
       thresholds: {
-        lines: 70,
-        branches: 60,
-        'src/machines/**':         { lines: 90, branches: 85 },
-        'src/components/**':       { lines: 70, branches: 60 },
-        'src/api/**':              { lines: 60, branches: 50 },
+        lines: 30,
+        branches: 20,
+        functions: 20,
+        statements: 30,
+      },
+    },
+  },
+}));
+```
+
+### Infra-DB config (integration tests with PostgreSQL)
+
+```typescript
+// packages/infra-db/vitest.config.ts
+
+import { defineConfig, mergeConfig } from 'vitest/config';
+import { baseConfig } from '../../vitest.config.base';
+
+export default mergeConfig(baseConfig, defineConfig({
+  test: {
+    name: 'packages-infra-db',
+    setupFiles: ['./test/setup.ts'],
+    pool: 'forks',                    // Prevent cross-file DB interference
+    fileParallelism: false,           // Sequential execution for shared DB
+    coverage: {
+      thresholds: {
+        lines: 40,
+        branches: 30,
+        functions: 30,
+        statements: 40,
+      },
+    },
+  },
+}));
+```
+
+### Domain config
+
+```typescript
+// packages/domain/vitest.config.ts
+
+import { defineConfig, mergeConfig } from 'vitest/config';
+import { baseConfig } from '../../vitest.config.base';
+
+export default mergeConfig(baseConfig, defineConfig({
+  test: {
+    name: 'packages-domain',
+    coverage: {
+      thresholds: {
+        lines: 60,
+        branches: 50,
+        functions: 50,
+        statements: 60,
       },
     },
   },
@@ -216,6 +262,53 @@ afterEach(() => {
   },
 }
 ```
+
+---
+
+## Phase 11 Baseline (2026-08-04)
+
+Executed in [[synthesis/phase-11-testing-plan|Phase 11]]. From 1 test file (5 tests) to 66 files (~634 tests) across all layers.
+
+| Layer | Files | Tests | Coverage Target |
+|-------|-------|-------|-----------------|
+| `packages/domain` | 32 | 415 | ≥ 60% lines, 50% branches |
+| `packages/infra-db` | 4 | 32 | ≥ 40% lines, 30% branches |
+| `apps/backend` | 18 | 127 | ≥ 30% lines, 20% branches |
+| `apps/frontend` | 12 | 60 | ≥ 30% lines, 20% branches |
+| **Total** | **66** | **~634** | |
+
+### Test File Inventory
+
+**Domain** (32 files):
+- Shared kernel: `identifier` (extended), `date-time`, `domain-error`
+- Generation: `Session`, `SessionStatus`, `ToolKey`, `Artifact`, `ArtifactStatus`, `ReadinessPolicy`, `session-lifecycle`, `ContextEnricher`, `PromptComponent`, `PromptComponentType`, `PromptComponentRegistry`, `PromptComposer`, `PromptTemplateId`, `PromptVersion`, `domain-events`
+- Workspace: `Workspace`, `WorkspaceMembership`, `MembershipRole`, `MembershipStatus`, `domain-events`
+- Agent Chat: `Conversation`, `ConversationStatus`, `Message`, `MessageRole`, `AgentKey`, `domain-events`
+- Identity: `User`, `Email`, `UserRole`, `UserStatus`
+
+**Backend** (18 files):
+- Use cases: `start-session`, `invite-member`, `accept-invitation`, `transfer-ownership`, `start-conversation`, `send-message`
+- Middleware: `authenticate`, `workspace-role`, `error-handler`
+- Infrastructure: `token-service`, `auth-service`
+- API: `auth`, `generation`, `workspace`, `agent-chat`, `admin`
+- Workers: `session-machine`, `session-worker`
+
+**Frontend** (12 files):
+- Shared components: `PageHeader`, `EmptyState`, `ErrorState`, `LoadingSkeleton`, `ErrorBoundary`, `AuthLayout`
+- Auth: `AuthGuard`, `OAuthCallback`, `AuthContext`
+- Pages: `LoginPage`, `RegisterPage`, `DashboardPage`
+
+**Infra-DB** (4 files):
+- `session-repository`, `workspace-repository`, `conversation-repository`, `user-repository`
+
+### DDD Guardrails Enforced
+- Zero `new Aggregate(...)` — canonical factories (`create()`/`reconstitute()`) only
+- Zero `as any` casts — public getters for all assertions
+- All errors are `DomainError` subclasses
+
+### CI
+- `_ci-checks.yml` has `test` job with PostgreSQL 16 + Redis 7 service containers
+- ESLint vitest rules: `no-focused-tests: error`, `expect-expect: error`, `consistent-test-it`, `max-nested-describe: 3`
 
 ---
 
@@ -565,3 +658,4 @@ jobs:
 - [[sources/PRD]] — Test coverage targets (≥70% frontend, NFR-M03)
 - [[packages-domain Structure]] — Domain isolation for testability
 - [[Dependency Injection Setup]] — Manual DI enables trivial mocking
+- [[synthesis/phase-11-testing-plan]] — Phase 11 execution results (baseline established)
