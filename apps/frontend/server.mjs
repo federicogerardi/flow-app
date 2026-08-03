@@ -9,9 +9,25 @@ const PORT = process.env.PORT || 3000;
 
 const app = express();
 
-app.use('/api', createProxyMiddleware({ target: BACKEND_URL, changeOrigin: true }));
-app.use('/health', createProxyMiddleware({ target: BACKEND_URL, changeOrigin: true }));
+const apiProxy = createProxyMiddleware({
+  target: BACKEND_URL,
+  changeOrigin: true,
+  on: {
+    error: (err, _req, res) => {
+      console.error(`Proxy error (${BACKEND_URL}):`, err.message);
+      if (!res.headersSent) {
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Backend unreachable', status: 502 }));
+      }
+    },
+  },
+});
+
+app.use('/api', apiProxy);
+app.use('/health', apiProxy);
 app.use(express.static(resolve(__dirname, 'dist')));
 app.get('*', (_, res) => res.sendFile(resolve(__dirname, 'dist', 'index.html')));
 
-app.listen(PORT, () => console.log(`Frontend proxy listening on :${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Frontend proxy listening on :${PORT}, backend → ${BACKEND_URL}`);
+});
