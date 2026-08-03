@@ -189,4 +189,6 @@ maintenance: 2026-08-02 — health maintenance: 4 wiki-lint issues fixed (log.md
 | [[synthesis/high-fix-plan-2026-08-02]] | High-severity remediation plan — 10 findings (H1–H10), 5 phases, 19 files ✅ | 2026-08-02 |
 | [[synthesis/medium-fix-plan-2026-08-02]] | Medium-severity remediation plan — 16 findings (M2–M18), 5 phases, M1 deferred ✅ | 2026-08-02 |
 | [[synthesis/low-fix-plan-2026-08-02]] | Low-severity remediation plan — 5 findings (L1–L5), 2 phases, 8 files ✅ | 2026-08-02 |
+| [[synthesis/nodejs-thin-reverse-proxy-proposal]] | Node.js thin reverse proxy — frontend-backend internal DNS, eliminates public backend URL | 2026-08-03 |
+| [[synthesis/nodejs-thin-reverse-proxy-plan]] | Implementation plan for the thin reverse proxy — 8 steps, 6 files, ~1h | 2026-08-03 |
 | [[overview]] | High-level synthesis (v3) | 2026-07-31 |

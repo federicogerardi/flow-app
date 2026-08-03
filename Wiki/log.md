@@ -2,7 +2,7 @@
 type: log
 tags:
   - wiki/log
-date_updated: 2026-08-02
+date_updated: 2026-08-03
 ---
 
 # Wiki Operation Log
@@ -11,6 +11,16 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Cmd+P → "View operation history"
 - Or open from Settings → Auto Maintenance → Operation History
 ---
+
+## [2026-08-03] synthesis | Node.js thin reverse proxy plan filed
+
+Filed [[synthesis/nodejs-thin-reverse-proxy-plan]] — implementation plan derived from the proxy proposal:
+- 8 steps, ~1h estimated
+- 6 files changed, 1 new file (`apps/frontend/server.mjs`)
+- Key design decision: make backend `CORS_ORIGIN` optional (empty = no CORS) since the backend has no public URL — all traffic goes through the frontend proxy on the private Railway network
+- Backend `config.ts`: relax `CORS_ORIGIN` from `z.string().url()` to `z.string()`
+- Backend `app.ts`: conditional `cors()` middleware (skip when `CORS_ORIGIN=""`)
+- `railway.frontend.json`: switch from RAILPACK to DOCKERFILE builder
 
 ## [2026-08-02] synthesis | Deployment patterns filed
 
@@ -2489,3 +2499,14 @@ Only `ModelTier` remains as a type alias in domain (`'premium' | 'balanced' | 'l
 - `npm test`: 8/8 pass
 
 6 files modified. Phase 9 (DDD type alias → class remediation) complete.
+
+## [2026-08-03] synthesis | Node.js thin reverse proxy proposal filed
+
+Filed [[synthesis/nodejs-thin-reverse-proxy-proposal]] — structural solution to eliminate backend public URL:
+
+- **Problem**: current architecture exposes backend on public Railway URL with CORS. 10+ nginx reverse proxy attempts failed (documented in [[synthesis/deployment-patterns-phase-10]]).
+- **4 architectures evaluated**: nginx (tried, fragile), Node.js thin proxy (recommended), monolith (rejected — coupling), dedicated nginx service (rejected — 3 services).
+- **Solution B**: thin Node.js Express server (~30 lines) on frontend service — serves SPA + proxies `/api/*` → `http://backend.railway.internal:3000`. Same stack (Node.js), runtime config via `BACKEND_INTERNAL_URL` env var, `VITE_API_URL=""` (same-origin), backend fully private.
+- **Changes**: new `apps/frontend/server.mjs`, update `Dockerfile.frontend` Stage 2, add `express` + `http-proxy-middleware` to frontend deps, switch `railway.frontend.json` builder to DOCKERFILE.
+- **Zero changes**: frontend source (client.ts, sse-client.ts, AuthContext.tsx), Vite dev proxy, backend CORS config.
+- **Estimated**: ~1 hour implementation. Fixes all 10 nginx failure modes at once.
