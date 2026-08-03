@@ -24,7 +24,12 @@ const apiProxy = createProxyMiddleware({
 });
 
 app.use('/api', apiProxy);
-app.use('/health', apiProxy);
+// Direct health endpoint — returns 200 even if backend is unreachable.
+// Docker HEALTHCHECK must be independent of backend DNS resolution
+// which can take several seconds on Railway's private network.
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok', proxy: BACKEND_URL });
+});
 app.use(express.static(resolve(__dirname, 'dist')));
 // Express 5 uses path-to-regexp v8 — bare '*' is not valid. Use named wildcard /*splat
 app.get('/{*splat}', (_, res) => res.sendFile(resolve(__dirname, 'dist', 'index.html')));
