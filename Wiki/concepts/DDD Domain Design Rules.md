@@ -53,7 +53,7 @@ import { z } from 'zod';
 const schema = z.string().email();
 static create(raw: string): Email { ... schema.safeParse(raw) ... }
 
-// ✅ CORRECT — Inline validation (from [[Email]])
+// ✅ CORRECT — Inline validation (from [[Auth Dependencies#Value Objects\|Email]])
 static create(raw: string): Email {
   const normalized = raw.trim().toLowerCase();
   if (!normalized.includes('@') || normalized.length > 255) {
@@ -149,7 +149,7 @@ export abstract class DomainError extends Error {
 // ❌ VIOLATION — bare type alias
 export type MembershipRole = 'owner' | 'editor' | 'viewer';
 
-// ✅ CORRECT — class value object (from [[MembershipRole]])
+// ✅ CORRECT — class value object (from [[WorkspaceMembership#Value Objects\|MembershipRole]])
 export type MembershipRoleValue = 'owner' | 'editor' | 'viewer';
 
 export class MembershipRole {

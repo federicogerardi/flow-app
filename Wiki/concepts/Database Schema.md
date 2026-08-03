@@ -593,8 +593,6 @@ CREATE TABLE messages (...);
 - [[packages-domain Structure]] — domain directory tree
 - [[WorkspaceMembership]] — membership entity
 
----
-
 ## Data Retention Policy
 
 | Data | Retention | Cleanup |

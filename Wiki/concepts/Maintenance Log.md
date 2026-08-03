@@ -14,7 +14,14 @@ confidence: high
 ## 2026-08-03
 
 - ✅ Node.js thin reverse proxy deployed and verified on Railway dev. 9 attempts, 6 root causes resolved. Backend public domain removed, CORS disabled. Proxy serving SPA + /api/* via backend.railway.internal. Deploy log: [[synthesis/reverse-proxy-deploy-log]].
+- Wiki health check executed — 113 pages analyzed. 3 high-severity fixes applied:
+  - Added [[Design Tokens]] to index.md Concepts table (was orphan from catalog)
+  - Fixed 2 broken wikilinks in [[DDD Domain Design Rules]]: `[[Email]]` → `[[Auth Dependencies]]`, `[[MembershipRole]]` → `[[WorkspaceMembership]]`
+  - Removed duplicate `synthesis/lint-report-2026-08-01-coherence` from index.md Synthesis table
+  - Fixed `---` separator line in Database Schema.md Sources section
+  - Converted plain text to wikilink in Quality Gate Matrix Sources section
 - Removed `maintenance:` from index.md frontmatter (YAML duplicate key issue). Created dedicated [[Maintenance Log]] page.
+- Added Rule 9 to CLAUDE.md: maintenance entries → [[Maintenance Log]], never index.md
 
 ## 2026-08-02
 

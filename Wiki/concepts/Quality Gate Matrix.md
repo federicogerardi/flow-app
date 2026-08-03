@@ -102,7 +102,7 @@ This aligns feature completion with the promotion gates in [[CI-CD Promotion Pol
 
 ## Sources
 
-- Quality Gate Matrix (incorporates Definition of Done)
+- Quality Gate Matrix (incorporates [[Definition of Done]])
 - [[Testing Strategy]]
 - [[Secure SDLC Controls]]
 - [[API Documentation - OpenAPI]]
