@@ -19,6 +19,8 @@
     "@flow-app/copy": "*",
     "@mui/icons-material": "^6.5.0",
     "@mui/material": "^6.4.0",
+    "express": "^5.2.1",
+    "http-proxy-middleware": "^3.0.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
