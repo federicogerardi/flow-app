@@ -39,10 +39,14 @@ RUN addgroup -g 1001 -S nodejs && \
 
 WORKDIR /app
 
-COPY --from=builder --chown=nodejs:nodejs /app/apps/frontend/package.json ./
-RUN npm install --omit=dev --ignore-scripts
 COPY --from=builder --chown=nodejs:nodejs /app/apps/frontend/dist ./dist
 COPY --from=builder --chown=nodejs:nodejs /app/apps/frontend/server.mjs ./server.mjs
+
+# Install only the 2 production dependencies needed by server.mjs.
+# DO NOT use package.json — it references private @flow-app/* workspace
+# packages which would fail npm install from the public registry.
+RUN npm install express http-proxy-middleware \
+  && npm cache clean --force
 
 USER nodejs
 
