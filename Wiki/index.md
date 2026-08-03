@@ -3,20 +3,13 @@ type: index
 tags:
   - wiki/index
 date_updated: 2026-08-03
-maintenance: 2026-08-02 — wiki maintenance: 2 stubs merged (Token Budget Control → LLM Gateway, Railway Deployment Config → Environment Configuration), split-page resolved (Workspace Gamification → Gamification), Planned markers added to PlayerProfile + Achievement, 7 synthesis backlinks added, Global Deterministic Model Matrix linked from Content Generation, 12 source_counts updated. Wiki-lint ✅ 114 pages.
-maintenance: 2026-08-02 — medium-severity findings executed: 16/16 active findings (M2–M18, excl. M1 deferred) closed across 5 phases. Phase 1: static import M17, Identifier.equals cross-type M18, copy.t() M8, typography M11, statusColorMap M6. Phase 2: LoadingSkeleton M3, sendMessage error M2, theme-aware bubbles M7. Phase 3: N+1 query fix M14, batch membership sync M15. Phase 4: SSE race fix M13. Phase 5: ARIA labels M4/M9, focus management M10, React.lazy code splitting M5. Typecheck ✅, build ✅, tests 5/5.
-maintenance: 2026-08-02 — low-severity remediation executed: 5 findings (L1–L5) across 2 phases. L1: OAuth headers + history cleanup. L2: admin error routing. L3: unified listSessions query. L4: dead file deleted. L5: DTOs aligned with contracts. Typecheck ✅ (0 new errors).
-maintenance: 2026-08-02 — high-severity findings executed: all 10 (H1–H10) closed. Medium-severity plan filed: 16 findings, 5 phases. Typecheck ✅, build ✅, tests 8/8.
-maintenance: 2026-08-02 — high-severity findings executed: all 10 findings (H1–H10) closed across 5 phases. H1: Conversation.start→create. H2: User factories→create. H3: ModelTier class VO. H4: saveWithLock transaction. H5: 3 DomainErrors. H6: OAuth token fallback. H7: useSession error state. H8: dynamic tool inputs. H9: countStalled fix. H10: exhaustiveness check. Typecheck ✅, build ✅, tests 8/8.
-maintenance: 2026-08-02 — critical findings executed: all 8 findings (C1–C8) closed across 3 phases. Phase 1: auth error forwarding, WCAG contrast, OS theme reactivity, React render purity. Phase 2: ErrorBoundary + responsive drawer. Phase 3: artifact persistence + VO serialization. Typecheck ✅, build ✅, tests 8/8.
-maintenance: 2026-08-02 — critical fix plan filed: 8 fixes across 3 phases (Quick Wins → Frontend Architecture → Data Integrity), 27 files, 4-5 hours. Plan: [[synthesis/critical-fix-plan-2026-08-02]].
-maintenance: 2026-08-02 — multi-agent code review filed: 41 findings across 6 domains (DDD, backend, frontend, types, code quality, UI/UX). 8 critical, 10 high, 18 medium, 5 low. Synthesis: [[synthesis/code-review-2026-08-02]].
-maintenance: 2026-08-02 — Phase 8 frontend implemented (Workstream D): AuthContext, AuthGuard, OAuthCallback, AuthLayout, LoginPage, RegisterPage, API client token injection + 401 interceptor, AppShell user menu, protected routes. Build ✅, typecheck ✅, lint ✅, tests 8/8.
-maintenance: 2026-08-02 — health maintenance: 4 wiki-lint issues fixed (log.md frontmatter, overview.md escaped pipe, 2 missing concept stubs), 5 Italian prose violations translated, 6 env reference leaks sanitized.
-maintenance: 2026-08-03 — ✅ Node.js thin reverse proxy deployed and verified on Railway dev. 9 attempts, 6 root causes resolved. Backend public domain removed, CORS disabled. Proxy serving SPA + /api/* via backend.railway.internal. Deploy log: [[synthesis/reverse-proxy-deploy-log]].
 ---
 
 # Wiki Index — Flow App
+
+> **Maintenance note (2026-08-03)**: ✅ Node.js thin reverse proxy deployed and verified on Railway dev. 9 attempts, 6 root causes resolved. Backend public domain removed, CORS disabled. Proxy serving SPA + /api/* via backend.railway.internal. Deploy log: [[synthesis/reverse-proxy-deploy-log]].
+
+## Maintenance Log
 
 > Maintenance note (2026-08-02): Phase 8 fully complete — Real Authentication frontend implemented (Workstream D: 6 new files, 4 modified — AuthContext, AuthGuard, OAuthCallback, AuthLayout, LoginPage, RegisterPage, API client token injection + 401 interceptor, AppShell user menu, protected routes). Build ✅, typecheck ✅, lint ✅, tests 8/8. Phase 8 now marked ✅ in roadmap.
 > Maintenance note (2026-08-02): Wiki drift remediation — 8 runtime gaps + 13 documentation gaps resolved. `packages-domain Structure.md` rewritten to match code (agent-chat added, usage/ removed, 11 tool files → 1 index.ts, Asset subsystem marked as planned). `API Routes.md`: status fixes + typos. `Database Schema.md`: conversations + messages added, Kysely types corrected. `Frontend Architecture.md`: route count corrected (5→7), hooks/API methods updated. `overview.md`: usage/ context marked 🔴 planned.
