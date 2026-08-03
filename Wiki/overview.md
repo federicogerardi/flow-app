@@ -3,7 +3,7 @@ type: synthesis
 tags:
   - wiki/synthesis
   - wiki/overview
-date_updated: 2026-08-02
+date_updated: 2026-08-04
 ---
 
 # Overview — Flow App
@@ -25,7 +25,7 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 | [[Agent Chat]] | Supporting | [[Conversation]] | Conversational, multi-turn guidance with workspace-aware context injection |
 | [[Gamification]] | Supporting | [[PlayerProfile]] | Event-driven XP, levels, badges, streaks, workspace challenges |
 | [[Auth Dependencies]] | Generic | [[User]] | Auth, roles, sessions |
-| [[Usage & Quota]] | Supporting | [[Quota]] | 🟡 In Progress — domain code + repository implemented (Phase 11.5), wiring (use cases + API) pending |
+| [[Usage & Quota]] | Supporting | [[Quota]] | ✅ Domain complete (10 files, 40 tests). Repository with optimistic locking. Wiring (use cases + API) pending. |
 
 ## Interaction Models
 
@@ -81,7 +81,7 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 
 ## Implementation Status
 
-### Completed (Phase 0–10)
+### Completed (Phase 0–11.5)
 
 | Phase | Status | Scope |
 |-------|--------|-------|
@@ -96,13 +96,13 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 | Phase 8 — Real Authentication | ✅ | Backend (JWT, bcrypt, Passport, 7 endpoints) + Frontend (AuthContext, AuthGuard, LoginPage, RegisterPage, OAuthCallback, protected routes) |
 | Phase 9 — DDD Architectural Remediation | ✅ | 8 type aliases → classes, 12 DomainError subclasses, discriminated union |
 | Phase 10 — Deployment & CI/CD | ✅ | Dockerfile (multi-stage), railway.json, GitHub Actions CI + Deploy, .dockerignore |
+| Phase 11 — Testing & Quality | ✅ | 66 test files, ~634 tests, vitest production configs, CI quality gates |
+| Phase 11.5 — Usage & Quota Domain | ✅ | Bounded context: 10 files, 40 tests, Kysely repository, optimistic locking, backend wiring |
 
-### Planned (Phase 11–12)
+### Planned (Phase 12)
 
 | Phase | Priority | Scope |
 |-------|----------|-------|
-| Phase 11 — Testing & Quality | ✅ | Domain tests, API tests, worker tests, CI quality gates |
-| Phase 11.5 — Usage & Quota Domain | 🟡 | Domain: aggregate, VOs, events, errors, repository, tests. Wiring pending. |
 | Phase 12 — Gamification | 🟢 Medium | Points, achievements, leaderboards, event-driven rewards |
 
 ### Critical Gaps (remaining)

@@ -4,10 +4,10 @@ tags:
   - wiki/synthesis
   - wiki/roadmap
   - wiki/implementation
-date_updated: 2026-08-02
-phase_count: 12
-phases_complete: 11
-phases_remaining: 2
+date_updated: 2026-08-04
+phase_count: 13
+phases_complete: 12
+phases_remaining: 1
 ---
 
 # Implementation Roadmap — Rational Development Sequence (2026-08-01)
@@ -457,60 +457,59 @@ Implementation (2026-08-02, branch `dev`):
 - Staging and production environments exist on Railway
 - Health checks pass in all environments
 
-### Phase 11 — Testing & Quality (Week 17)
+### Phase 11 — Testing & Quality (Week 17) ✅
 
 **Current gap**: 1 test file (`Identifier` value object). `supertest`, `@testing-library/react`, and `msw` are installed as devDependencies but unused. The entire domain model, API layer, and worker logic is untested.
 
-**Goal**: achieve meaningful test coverage across the stack, focusing on domain logic, API contracts, and critical paths. Not aiming for 100% — targeting confidence in the areas that matter most.
+**Status**: ✅ Complete (2026-08-04). [[synthesis/phase-11-testing-plan|Implementation plan]] executed across 4 layers — 66 test files, ~634 tests:
 
-**Tasks expected**:
+| Layer | Files | Tests |
+|-------|-------|-------|
+| Domain | 32 | 415 |
+| Backend | 18 | 127 |
+| Frontend | 12 | 60 |
+| Infra-db | 4 | 32 |
 
-1. **Domain entity tests** — unit tests for all aggregates and value objects
-   - `Session`, `Workspace`, `Conversation`, `Message`, `Artifact`
-   - State transitions, invariants, error conditions
-   - Idempotency key behavior, optimistic locking
+Production vitest configs with per-workspace coverage thresholds (domain 60/50, infra-db 40/30, backend 30/20, frontend 30/20). CI blocks merge on test failure.
 
-2. **Repository integration tests** — test Kysely repositories against real PostgreSQL
-   - Test container or `docker-compose` DB
-   - CRUD operations, optimistic locking conflicts, transaction rollback
-   - Row-level privacy (conversations scoped to user)
+### Phase 11.5 — Usage & Quota Bounded Context (Week 17, 2026-08-04) ✅
 
-3. **API endpoint tests** — supertest against Express app
-   - All endpoints: generation, workspaces, agent chat, admin
-   - Idempotency replay, error responses, SSE events
-   - Auth middleware behavior (dev + real)
+**Current gap**: DB migration `005_quotas.sql` created the `quotas` and `credit_transactions` tables, and `ErrorMapper` mapped `QUOTA_EXCEEDED → 429`. But zero domain code existed — `packages/domain/src/usage/` was missing entirely.
 
-4. **Worker tests** — BullMQ job processing
-   - Job completion, retry, failure paths
-   - Stalled job detection
-   - Graceful shutdown behavior
+**Status**: ✅ Domain complete (2026-08-04). [[synthesis/usage-quota-implementation-plan|Implementation plan]] executed — 10 domain files, Kysely repository, backend wiring, 40 tests.
 
-5. **Critical path E2E** — one happy-path test per bounded context
-   - Session creation → polling → artifact retrieval
-   - Workspace creation → invite → accept → role check
-   - Agent chat: start conversation → send message → receive reply
+**Two-track enforcement per user per billing period (YYYY-MM)**:
+- Artifact Gate (1000/month, invisible) — blocks ALL generations
+- Credit Quota (250/month, visible) — blocks submit with "Crediti esauriti"
 
-6. **CI enforcement** — quality gates
-   - Tests must pass for PR merge
-   - Coverage threshold: 60% domain, 40% infra, 30% API (minimums)
+Implementation (2026-08-04, branch `dev`):
 
-**DDD Drift Risk**: 🟡 **MODERATE** — 4 specific risks introduced by test code:
+- **Value Objects** — PlanType, Plan, CreditAmount, QuotaPeriod, TransactionReason (all classes per Rule 4)
+- **Child entity** — CreditTransaction (immutable, create/reconstitute factories per Rule 6)
+- **Aggregate root** — Quota (canonical template per Rule 7: private constructor, _version, ReadonlyArray, DomainEvent return)
+- **Events** — CreditConsumedEvent, QuotaExceededEvent, ArtifactGateExceededEvent (interface-based)
+- **Errors** — QuotaExceededError, ArtifactGateExceededError, QuotaNotFoundError (all extend DomainError per Rule 3)
+- **Repository** — QuotaRepository interface + KyselyQuotaRepository with saveWithLock() optimistic locking
+- **DB migration** — 009_quotas_version.sql (version column on quotas table for optimistic locking)
+- **Backend wiring** — error-handler (+ARTIFACT_GATE_EXCEEDED → 429), AppDeps (+quotaRepo), server.ts wiring
+- **Tests** — 3 test files, 40 tests (Plan, QuotaPeriod, Quota aggregate)
+- **Lint** — zero errors, zero warnings (18 pre-existing errors + 18 warnings fixed in same commit)
 
-| # | Risk | CLAUDE.md Rule | Prevention |
-|---|------|---------------|------------|
-| 1 | `new Session(...)` instead of `Session.create()/reconstitute()` | Rule 6 | Acceptation criteria: every test that creates an aggregate MUST use the canonical factory |
-| 2 | `(session as any)._status` in test assertions | Rule 1 | Use public getters (`session.status`, `session.version`); never cast to access private fields |
-| 3 | `throw new Error()` in test fixtures | Rule 3 | Test fixtures that create domain objects must use DomainError subclasses for validation failures |
-| 4 | Asserting invariants via DB query instead of aggregate API | — | `expect(row.status).toBe('completed')` → `expect(session.status).toBe('completed')`; tests verify domain behavior, not database state |
+**Verification**: `tsc --build` clean, `npm run lint` clean, 80 domain tests passing (40 usage + 40 from Phase 11 expansion).
 
-**Exit criteria**:
+**Out of scope** (follow-up): EnsureQuotaUseCase, ConsumeCreditsUseCase, API routes, event subscriptions, frontend UI.
 
-- All domain entity tests pass
-- API smoke tests for all route groups
-- Worker job lifecycle tests
-- CI blocks merge on test failure
+### Phase 12 — Usage & Quota Wiring (Planned)
 
-### Phase 12 — Gamification (Week 18+)
+| Task | Description |
+|------|-------------|
+| `EnsureQuotaUseCase` | Auto-create quota on first access (needs UserRepository) |
+| `ConsumeCreditsUseCase` | SessionCompleted event handler → credit deduction |
+| `GET /api/usage/credits` | Frontend quota counter API |
+| EventBridge wiring | Publish CreditConsumed to EventBridge |
+| Frontend UI | Quota counter + "Crediti esauriti" blocking message |
+
+### Phase 13 — Gamification (Week 18+)
 
 **Current gap**: gamification was deferred from Phase 5. It's the engagement layer — points, achievements, leaderboards — that makes the platform sticky for teams.
 
@@ -607,8 +606,10 @@ Implementation (2026-08-02, branch `dev`):
 9. Real authentication (Phase 8) ✅ — full stack: identity domain + Passport.js + JWT + frontend auth flow
 10. **DDD architectural remediation** (Phase 9) ✅ — type aliases → classes, DomainError, discriminated unions
 11. **Deployment & CI/CD** (Phase 10) ✅ — Dockerfile, railway.json, GitHub Actions CI/CD, docker-compose
-12. **Testing & quality** (Phase 11) — build confidence
-13. **Gamification** (Phase 12) — engagement layer
+12. **Testing & quality** (Phase 11) ✅ — 66 files, ~634 tests, vitest production configs
+12.5. **Usage & Quota domain** (Phase 11.5) ✅ — 10 files, 40 tests, Kysely repository
+13. **Usage & Quota wiring** (Phase 12) — use cases, API routes, event subscriptions, frontend quota UI
+14. **Gamification** (Phase 13) — engagement layer
 
 ## Referenced Pages
 

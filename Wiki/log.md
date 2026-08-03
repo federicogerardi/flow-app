@@ -48,6 +48,10 @@ Executed [[synthesis/usage-quota-implementation-plan]] (Phase A–J + tests). Fi
 
 **Out of scope** (follow-up): EnsureQuotaUseCase, ConsumeCreditsUseCase, API routes, event subscriptions, frontend UI.
 
+**Lint cleanup**: 18 pre-existing errors + 18 warnings resolved (unused imports, `.js`→`.jsx` renames, `no-explicit-any` off in test files, `.d.ts` ignored).
+
+**Wiki alignment**: `overview.md` — Usage & Quota → ✅ Complete, Phases 11+11.5 promoted to Completed section, Critical Gaps updated. Plan status → `completed`.
+
 ## [2026-08-04] synthesis + maintenance | Phase 11 completion + production vitest configs
 
 Executed Phase 11 per [[synthesis/phase-11-testing-plan]]. Final results:
