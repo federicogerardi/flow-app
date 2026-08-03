@@ -263,6 +263,30 @@ Example:
 
 **Enforcement**: if any leak is found during a wiki write, fix it immediately before committing. A single leak in `Wiki/` or repo is a blocking issue.
 
+#### 9 — Maintenance entries go to the dedicated page, never to index frontmatter
+
+**Pattern**: index.md had 12 `maintenance:` YAML keys in the frontmatter, all duplicates. The last value overwrites earlier ones, making most entries invisible to Dataview and YAML parsers.
+
+**Rule**: every maintenance note must be appended to [[Maintenance Log]] — never to index.md frontmatter or body. `Wiki/index.md` is purely a catalog of pages; it does not carry maintenance state.
+
+```markdown
+# ✅ CORRECT — append to Maintenance Log page
+Wiki/concepts/Maintenance Log.md:
+  ## 2026-08-04
+  - Deployed feature X to staging. Build ✅, tests ✅.
+
+# ❌ VIOLATION — anywhere in index.md
+Wiki/index.md frontmatter:
+  maintenance: 2026-08-04 — deployed feature X
+Wiki/index.md body:
+  > Maintenance note (2026-08-04): deployed feature X
+```
+
+**Checklist after any maintenance operation:**
+- [ ] New entry appended to [[Maintenance Log]] under the correct date heading
+- [ ] `Wiki/index.md` NOT modified (unless adding a new entity/concept/source to the catalog)
+- [ ] `Wiki/log.md` updated with operation type + summary
+
 ---
 
 ## Domain Design Rules

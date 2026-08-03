@@ -7,50 +7,7 @@ date_updated: 2026-08-03
 
 # Wiki Index — Flow App
 
-> **Maintenance note (2026-08-03)**: ✅ Node.js thin reverse proxy deployed and verified on Railway dev. 9 attempts, 6 root causes resolved. Backend public domain removed, CORS disabled. Proxy serving SPA + /api/* via backend.railway.internal. Deploy log: [[synthesis/reverse-proxy-deploy-log]].
-
-## Maintenance Log
-
-> Maintenance note (2026-08-02): Phase 8 fully complete — Real Authentication frontend implemented (Workstream D: 6 new files, 4 modified — AuthContext, AuthGuard, OAuthCallback, AuthLayout, LoginPage, RegisterPage, API client token injection + 401 interceptor, AppShell user menu, protected routes). Build ✅, typecheck ✅, lint ✅, tests 8/8. Phase 8 now marked ✅ in roadmap.
-> Maintenance note (2026-08-02): Wiki drift remediation — 8 runtime gaps + 13 documentation gaps resolved. `packages-domain Structure.md` rewritten to match code (agent-chat added, usage/ removed, 11 tool files → 1 index.ts, Asset subsystem marked as planned). `API Routes.md`: status fixes + typos. `Database Schema.md`: conversations + messages added, Kysely types corrected. `Frontend Architecture.md`: route count corrected (5→7), hooks/API methods updated. `overview.md`: usage/ context marked 🔴 planned.
-> Maintenance note (2026-08-02): DDD governance audit completed — 58 files across 4 bounded contexts. 8 findings: 2 critical (encapsulation + zod in domain), 5 important (Error hierarchy + use case errors), 1 minor (repository side-effect). 6 pattern-based rules added to schema.
-> Maintenance note (2026-08-02): Phase 8 backend implemented — Real Authentication (Workstreams A+B+C+E): identity domain (User, Email, UserRole, UserStatus), KyselyUserRepository, BcryptPasswordHasher, TokenService, AuthService, Passport.js, 7 auth endpoints, authenticate middleware, rate limiter. Lint warnings resolved (7→0). Branch: `feature/phase-8-real-auth`.
-> Maintenance note (2026-08-02): Phase 8 implementation plan created — Real Authentication (5 workstreams, 35 files, 8-10 days). Plan: [[synthesis/phase-8-real-auth-plan]].
-> Maintenance note (2026-08-02): ESM hoisting bug fixed — `process.env.SEED_USER_ID` was evaluated at module load time (before `dotenv.config()`), so dev-auth always used the fallback UUID. Moved read to request time inside middleware function.
-> Maintenance note (2026-08-01): Phase 7 implemented — Frontend MVP (4 shared + 4 page components, 5 routes, react-router v7, MUI v6 Grid2, SWR). Backend: `GET /api/sessions`, `GET /api/artifacts/:id`, `SessionRepository.findByWorkspace()`. Build ✅, tests ✅ (8/8).
-> Maintenance note (2026-08-01): Phase 5 implemented — Agent Chat bounded context (Conversation, Message, 7 agents, 6 API routes, privacy invariant). Build ✅, tests ✅ (8/8).
-> Maintenance note (2026-08-01): Phase 4 implemented — Prompt Governance Runtime (PromptTemplateId, PromptVersion, PromptComponent, PromptComposer, filesystem repository, 12 default components). Build ✅, tests ✅ (8/8).
-> Maintenance note (2026-08-01): Phase 3 implemented — workspace collaboration (membership entity, aggregate, domain events, repository, middleware, 10 API routes, 3 use cases). Build ✅, tests ✅ (8/8).
-> Maintenance note (2026-08-01): API verification completed — managed PostgreSQL + Redis provisioned, 6 migrations executed, all endpoints green, idempotency replay verified.
-> Maintenance note (2026-08-01): Phase 2 implemented — reliability and ops hardening (optimistic locking, health monitor, graceful shutdown, cleanup job). Build ✅, tests ✅ (8/8).
-> Maintenance note (2026-08-01): branch sync policy documented — permanent branches (main/staging/dev), auto-sync workflow, promotion flow updated in Git Governance Policy and CI-CD Promotion Policy.
-> Maintenance note (2026-08-01): Phase 0-1 implemented — monorepo bootstrap + core async generation vertical slice. PR #1 open. Code verified (typecheck 0 errors, 8 tests pass, lint 0 errors).
-> Maintenance note (2026-08-01): implementation roadmap filed — phased development sequence added in synthesis (bootstrap -> core async slice -> hardening -> collaboration -> expansion).
-> Maintenance note (2026-08-01): ultra-strict naming pass completed — canonical guard naming standardized to `canQueue` with legacy alias note for `canStart`.
-> Maintenance note (2026-08-01): lexical hardening pass completed — residual `START` transition references removed from canonical architecture pages; naming unified on `QUEUE`/`WORKER_PICKUP`.
-> Maintenance note (2026-08-01): mini-remediation cleanup completed — `draft` vs `queued` lifecycle semantics aligned across session/domain/application/frontend docs.
-> Maintenance note (2026-08-01): queued-state drift closed — `queued` is now canonical across baseline, OpenAPI, contracts, schema, and route governance.
-> Maintenance note (2026-08-01): coherence lint executed — structural wiki lint passed after 2 source_count fixes; queued-state drift subsequently closed.
-> Maintenance note (2026-08-01): final-gate remediation applied — contract freeze and enforcement artifacts added (API Contract Baseline v1, Quality Gate Matrix) and related concept pages aligned.
-> Maintenance note (2026-08-01): execution follow-up completed — 3 governance concept pages added (Definition of Done, Frontend Error Observability, Concurrency & Conflict Policy).
-> Maintenance note (2026-08-01): model alignment for PM review — overview updated to 6 bounded contexts (Agent Chat + Gamification), and broken wikilinks fixed (`LlmGateway` and `Prompting Mechanics` references).
-> Maintenance note (2026-08-01): governance audit persisted — multi-dimension project model audit filed in synthesis with maturity scoring and prioritized gap list.
-> Maintenance note (2026-08-01): fast-close governance gaps — 3 concept pages added (Git Governance Policy, Secure SDLC Controls, API SLO Catalog).
-> Maintenance note (2026-08-01): CI/CD governance completed — CI-CD Promotion Policy added (Dev -> Staging -> Prod gates, artifact integrity, rollback policy).
-> Maintenance note (2026-08-01): Output Personalization deprecated — concept page removed and source items marked as deprecated in the current model baseline.
-> Maintenance note (2026-08-01): critical-gap remediation for PM review — 4 concept pages added (Global Deterministic Model Matrix, Output Personalization, Project Brand Persona, Invitation Notification Delivery); workspace invitation notification decision closed.
-> Maintenance note (2026-08-01): gamification UI Designer review — 3 pages updated (Design Tokens: rarity + sparkle; Gamification UX: ARIA, toast priority, rarity labels; UX Wireframes: Player Profile template; UI Component Map: 29→37).
-> Maintenance note (2026-08-01): agent chat UX extended — Agent Chat UX concept page added (23→29 components, templates 9–10, sidebar Team nav); UI Component Map and UX Wireframes updated.
-> Maintenance note (2026-08-01): agent chat exploration — 2 new concept pages + 2 new entities + 1 synthesis added (Agent Chat, Agent Personas, Conversation, Message, agent-chat-proposal).
-> Maintenance note (2026-08-01): workspace sharing exploration — 2 new concept pages + 1 new entity + 1 synthesis + Workspace entity updated (Workspace Sharing, Workspace Permissions, WorkspaceMembership, workspace-sharing-proposal).
-> Maintenance note (2026-08-01): prompting mechanics deep-dive — 3 additional concept pages added (Prompt Caching Strategy, Prompt Admin API, IdempotencyKey + Prompt Version).
-> Maintenance note (2026-08-01): prompting mechanics exploration completed — 4 new concept pages + 1 synthesis added (Prompt Versioning, Prompt Components, Context Injection, PromptComposer, prompting-mechanics-proposal).
-> Maintenance note (2026-07-31): post-remediation language normalization completed on source/concept pages.
-> Maintenance note (2026-07-31): backend architecture consistency remediation applied (idempotency contract, retention policy, queue topology, event delivery semantics).
-> Maintenance note (2026-07-31): second remediation applied (API contract governance, CI contract checks, LLM reliability policy, worker scaling policy).
-> Maintenance note (2026-07-31): phase 3 remediation applied (DR runbook targets, outbox/inbox delivery contract, API deprecation timeline policy).
-> Maintenance note (2026-07-31): phase 4 frontend remediation applied (readiness determinism, SSE multi-session client contract, queue-position semantics).
-> Maintenance note (2026-07-31): UX/GUI design session completed — 3 new concept pages added (UX Wireframes, Design Tokens, UI Component Map).
+> **Maintenance log**: see [[Maintenance Log]] for chronological history of wiki and codebase operations.
 
 ## Processed Sources
 
@@ -127,6 +84,7 @@ date_updated: 2026-08-03
 | [[Job Queue - Monitoring and Stability]] | high | 4 |
 | [[LLM Gateway - OpenRouter]] | high | 6 |
 | [[Logging Strategy]] | high | 4 |
+| [[Maintenance Log]] | high | 2 |
 | [[Migration Tooling]] | high | 2 |
 | [[Progressive Context Enrichment]] | high | 2 |
 | [[Project Dependencies]] | high | 4 |
