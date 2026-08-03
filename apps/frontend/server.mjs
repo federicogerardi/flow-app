@@ -12,6 +12,7 @@ const app = express();
 const apiProxy = createProxyMiddleware({
   target: BACKEND_URL,
   changeOrigin: true,
+  pathFilter: '/api',
   on: {
     error: (err, _req, res) => {
       console.error(`Proxy error (${BACKEND_URL}):`, err.message);
@@ -23,7 +24,10 @@ const apiProxy = createProxyMiddleware({
   },
 });
 
-app.use('/api', apiProxy);
+// Use pathFilter (not app.use('/api', ...)) so Express doesn't strip the prefix.
+// With app.use('/api', proxy), Express sets req.url to /sessions instead of
+// /api/sessions, and the backend returns 404.
+app.use(apiProxy);
 // Direct health endpoint — returns 200 even if backend is unreachable.
 // Docker HEALTHCHECK must be independent of backend DNS resolution
 // which can take several seconds on Railway's private network.
