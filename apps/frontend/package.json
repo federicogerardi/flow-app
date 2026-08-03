@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "start": "serve -s dist -l $PORT",
+    "start": "node server.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
