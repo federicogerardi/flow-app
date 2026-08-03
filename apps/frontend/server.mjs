@@ -26,7 +26,8 @@ const apiProxy = createProxyMiddleware({
 app.use('/api', apiProxy);
 app.use('/health', apiProxy);
 app.use(express.static(resolve(__dirname, 'dist')));
-app.get('*', (_, res) => res.sendFile(resolve(__dirname, 'dist', 'index.html')));
+// Express 5 uses path-to-regexp v8 — bare '*' is not valid. Use named wildcard /*splat
+app.get('/{*splat}', (_, res) => res.sendFile(resolve(__dirname, 'dist', 'index.html')));
 
 app.listen(PORT, () => {
   console.log(`Frontend proxy listening on :${PORT}, backend → ${BACKEND_URL}`);
