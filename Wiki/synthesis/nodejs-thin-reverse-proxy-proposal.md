@@ -241,6 +241,7 @@ CMD ["node", "server.mjs"]
 
 - [[synthesis/deployment-patterns-phase-10]] — Context: current architecture + 10 nginx failures
 - [[synthesis/nodejs-thin-reverse-proxy-plan]] — Implementation plan (8 steps, 6 files, ~1h)
+- [[synthesis/reverse-proxy-deploy-log]] — Deployment attempts, 4 root causes
 - [[Environment Configuration]] — Railway env vars
 - [[API Client + SSE Client]] — Frontend API communication
 - [[Docker Compose - Local Dev]] — Local dev setup (unchanged)

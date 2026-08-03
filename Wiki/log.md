@@ -12,6 +12,40 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-03] deploy | ✅ Node.js thin reverse proxy — deployed and verified
+
+Deploy completed after 9 attempts across 6 root causes. All wiki pages updated to final status.
+
+**Deployed**: `https://frontend-dev-b363.up.railway.app`
+- `GET /` → 200 (SPA)
+- `GET /health` → 200 (direct frontend endpoint)
+- `GET /api` → 200 (proxied via backend.railway.internal)
+- `GET /api/sessions` → 200 (backend API, auth works)
+- Backend public URL → 404 (removed ✅)
+
+**Root causes resolved**:
+1. `import.meta.env` BuildKit cache staleness — resolved by fresh SHA
+2. Railway same-SHA skip — resolved by committing code changes
+3. `express` not hoisted in npm workspaces — resolved by `npm install express http-proxy-middleware` directly
+4. `@flow-app/*` workspace deps break `npm install --omit=dev` — resolved by skipping package.json
+5. Express 5 `app.get('*')` wildcard invalid — resolved by `app.get('/{*splat}', ...)`
+6. `app.use('/api', proxy)` strips prefix — resolved by `pathFilter: '/api'`
+
+**Railway config**:
+- Frontend: DOCKERFILE builder, `/health` healthcheck, watch patterns, `VITE_API_URL=""`, `BACKEND_INTERNAL_URL=http://backend.railway.internal:3000`
+- Backend: `CORS_ORIGIN=""`, public domain removed
+
+**Files updated**: `reverse-proxy-deploy-log.md`, `deployment-patterns-phase-10.md`, `nodejs-thin-reverse-proxy-plan.md`, `index.md`, `log.md`
+
+## [2026-08-03] synthesis | Reverse proxy deployment log filed
+
+Filed [[synthesis/reverse-proxy-deploy-log]] — field notes from 6 Railway deploy attempts:
+- 4 root causes identified: `import.meta.env` BuildKit cache, same-SHA skip, `express` not hoisted, `@flow-app/*` workspace registry 404
+- Fix: `npm install express http-proxy-middleware` (direct, sans `package.json`) in Stage 2
+- Railway config applied: DOCKERFILE builder, `/health` healthcheck, watch patterns, `VITE_API_URL=""`, `BACKEND_INTERNAL_URL`
+- Backend CORS + public domain removal pending proxy verification
+- Files updated: `reverse-proxy-deploy-log.md` (NEW), `deployment-patterns-phase-10.md` (+Node.js proxy notes), `nodejs-thin-reverse-proxy-plan.md` (+current status), `index.md`
+
 ## [2026-08-03] synthesis | Node.js thin reverse proxy plan filed
 
 Filed [[synthesis/nodejs-thin-reverse-proxy-plan]] — implementation plan derived from the proxy proposal:

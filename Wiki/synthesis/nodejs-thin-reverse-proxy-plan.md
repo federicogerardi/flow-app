@@ -5,7 +5,7 @@ tags:
   - wiki/deployment
   - wiki/reverse-proxy
 date_updated: 2026-08-03
-source_count: 1
+source_count: 2
 confidence: high
 ---
 
@@ -13,13 +13,21 @@ confidence: high
 
 > Execution plan derived from [[nodejs-thin-reverse-proxy-proposal]]. 8 steps, ~1h estimated.
 
+## Status (2026-08-03)
+
+✅ **Complete** — All 8 steps executed. Proxy verified on Railway dev.
+
+Backend public domain removed, CORS disabled. SPA + `/api/*` routed through frontend proxy via `backend.railway.internal`.
+
+Deploy log with 9 attempts and 6 root causes: [[reverse-proxy-deploy-log]].
+
 ## Prerequisites
 
-- [ ] Branch: `feature/thin-reverse-proxy` from `dev`
-- [ ] Backend Railway service has `backend.railway.internal:3000` reachable from frontend service
-- [ ] Backend public domain noted (to be removed in step 7)
+- [x] Branch: `feature/thin-reverse-proxy` → committed directly to `dev`
+- [x] Backend Railway service has `backend.railway.internal:3000` reachable from frontend service
+- [x] Backend public domain ~~noted~~ **removed** (step 8)
 
-## Step 1 — Install proxy dependencies in frontend
+## Step 1 — Install proxy dependencies in frontend ✅
 
 **File**: `apps/frontend/package.json`
 
@@ -37,7 +45,7 @@ npm install --workspace=apps/frontend express http-proxy-middleware
 
 > `express` is already a transitive dep via the backend workspace. Explicit install ensures it's available when the frontend Docker image copies root `node_modules`.
 
-## Step 2 — Create the thin proxy server
+## Step 2 — Create the thin proxy server ✅
 
 **File**: `apps/frontend/server.mjs` (NEW)
 
@@ -69,7 +77,7 @@ app.listen(PORT, () => console.log(`Frontend proxy listening on :${PORT}`));
 - `/health` proxied to backend (frontend has no health endpoint of its own; Railway healthcheck pings the backend via the proxy).
 - SPA fallback (`get '*'`) catches all non-API routes for client-side routing.
 
-## Step 3 — Update Dockerfile.frontend
+## Step 3 — Update Dockerfile.frontend ✅
 
 **File**: `Dockerfile.frontend`
 
@@ -134,7 +142,7 @@ CMD ["node", "server.mjs"]
 
 > `node_modules` from builder contains `express` and `http-proxy-middleware` (installed at monorepo root via `npm ci` in Stage 1).
 
-## Step 4 — Update railway.frontend.json
+## Step 4 — Update railway.frontend.json ✅
 
 **File**: `railway.frontend.json`
 
@@ -170,7 +178,7 @@ BACKEND_INTERNAL_URL=http://backend.railway.internal:3000
 VITE_API_URL=           (empty — same-origin relative paths)
 ```
 
-## Step 5 — Make backend CORS optional
+## Step 5 — Make backend CORS optional ✅
 
 **Files**: `apps/backend/src/config.ts`, `apps/backend/src/app.ts`
 
@@ -195,7 +203,7 @@ if (corsOrigin) {
 
 > When `CORS_ORIGIN=""` (Railway behind proxy), the `cors` middleware is skipped entirely. Local dev (`CORS_ORIGIN=http://localhost:5173`) keeps existing behavior.
 
-## Step 6 — Local verification
+## Step 6 — Local verification ✅ (tsc + vite build passes)
 
 ```bash
 # Build the Docker image
@@ -214,7 +222,7 @@ curl http://localhost:3000/api/sessions  # → proxied to backend
 curl http://localhost:3000/nonexistent   # → index.html (SPA fallback)
 ```
 
-## Step 7 — Deploy to Railway
+## Step 7 — Deploy to Railway ✅
 
 1. Push branch `feature/thin-reverse-proxy` to GitHub
 2. Railway auto-deploys the frontend service (GitHub integration)
@@ -226,7 +234,7 @@ curl http://localhost:3000/nonexistent   # → index.html (SPA fallback)
    - Login: OAuth flow works (httpOnly cookies, same-origin)
 4. Check Railway frontend logs: `Frontend proxy listening on :3000`
 
-## Step 8 — Remove backend public domain
+## Step 8 — Remove backend public domain ✅
 
 Once verified:
 
@@ -265,6 +273,7 @@ No frontend source code changes — rollback is purely infrastructure.
 ## Related
 
 - [[nodejs-thin-reverse-proxy-proposal]] — Architecture rationale and trade-offs
+- [[reverse-proxy-deploy-log]] — Deployment attempts, root causes, fixes
 - [[synthesis/deployment-patterns-phase-10]] — 10 failed nginx attempts (context)
 - [[Environment Configuration]] — Railway env var patterns
 - [[Docker Compose - Local Dev]] — Unchanged local dev setup

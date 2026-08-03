@@ -102,6 +102,27 @@ Provato ma fallito per problemi analoghi a nginx (config non applicata, builder 
 | Dev veloce, backend pubblico ok | ✅ Pattern 1 (URL pubblico + CORS) |
 | Produzione, backend privato | Pattern 2 (nginx) con le fix documentate sopra |
 | Multi-env con URL dinamici | Pattern 3 (runtime URL) |
+| Produzione, backend privato, stack Node | Pattern 5 (Node.js thin proxy) — vedi [[reverse-proxy-deploy-log]] |
+
+## Pattern 5 — Node.js Thin Reverse Proxy ✅ (deployed 2026-08-03)
+
+```
+Browser → frontend (Node.js express on :3000)
+           ├─ GET /*        → express.static(dist/) + SPA fallback
+           ├─ GET /api/*    → http-proxy → http://backend.railway.internal:3000
+           └─ GET /health   → http-proxy → http://backend.railway.internal:3000/health
+```
+
+Attempted on Railway dev with 6 deploys as of 2026-08-03. See [[reverse-proxy-deploy-log]] for full details. Key learnings:
+
+| # | Problem | Root cause |
+|---|---------|------------|
+| 1 | `npm install --omit=dev` fails | Package.json refs `@flow-app/*` workspace packages — not resolvable from npm registry |
+| 2 | `express` not found at runtime | npm hoisting doesn't put workspace deps in root `node_modules` |
+| 3 | Railway skips deploy on same SHA | Commit code change (any file) for new SHA |
+| 4 | BuildKit `import.meta.env` TS errors | Intermittent — fresh cache works, likely layer staleness |
+
+**Fix**: `npm install express http-proxy-middleware` directly (not via `package.json`).
 
 ## Related
 
