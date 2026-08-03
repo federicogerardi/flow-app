@@ -39,10 +39,10 @@ RUN addgroup -g 1001 -S nodejs && \
 
 WORKDIR /app
 
+COPY --from=builder --chown=nodejs:nodejs /app/apps/frontend/package.json ./
+RUN npm install --omit=dev --ignore-scripts
 COPY --from=builder --chown=nodejs:nodejs /app/apps/frontend/dist ./dist
 COPY --from=builder --chown=nodejs:nodejs /app/apps/frontend/server.mjs ./server.mjs
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/apps/frontend/node_modules ./apps/frontend/node_modules
 
 USER nodejs
 
