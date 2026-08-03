@@ -10,7 +10,6 @@ import {
   CannotRemoveOwnerError,
   NotAnActiveMemberError,
 } from '../errors';
-import { DomainError } from '../../shared/domain-error';
 
 describe('Workspace', () => {
   const ownerId = 'owner-1';

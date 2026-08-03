@@ -12,6 +12,42 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-04] implementation | Usage & Quota domain + repository
+
+Executed [[synthesis/usage-quota-implementation-plan]] (Phase A–J + tests). Final results:
+
+| Layer | Files | Tests | Status |
+|-------|-------|-------|--------|
+| Domain | 10 (9 new + 1 wired) | 40 | ✅ |
+| Infra-db | 3 (1 new + 2 wired) | 0 | ✅ |
+| Backend | 3 (wired) | 0 | ✅ |
+| DB migration | 1 (009_quotas_version) | — | ✅ |
+
+**New files (10)**:
+- `packages/domain/src/usage/value-objects/Plan.ts` — PlanType, Plan, CreditAmount
+- `packages/domain/src/usage/value-objects/QuotaPeriod.ts` — YYYY-MM period validation
+- `packages/domain/src/usage/value-objects/TransactionReason.ts` — generation, admin_grant, purchase, plan_upgrade
+- `packages/domain/src/usage/entities/CreditTransaction.ts` — Owned child entity
+- `packages/domain/src/usage/entities/Quota.ts` — Aggregate root (artifact gate + credit quota)
+- `packages/domain/src/usage/errors.ts` — QuotaExceededError, ArtifactGateExceededError, QuotaNotFoundError
+- `packages/domain/src/usage/domain-events/index.ts` — CreditConsumed, QuotaExceeded, ArtifactGateExceeded interfaces
+- `packages/domain/src/usage/repositories/QuotaRepository.ts` — Repository interface with saveWithLock()
+- `packages/domain/src/usage/index.ts` — Barrel export
+- `packages/infra-db/src/repositories/quota-repository.ts` — KyselyQuotaRepository
+
+**Modified files (7)**:
+- `packages/domain/src/index.ts` — `+ export * from './usage'`
+- `packages/infra-db/src/types.ts` — `+ QuotasTable, CreditTransactionsTable`
+- `packages/infra-db/src/index.ts` — `+ KyselyQuotaRepository export`
+- `apps/backend/src/infrastructure/error-handler.ts` — `+ ARTIFACT_GATE_EXCEEDED → 429`
+- `apps/backend/src/app.ts` — `+ quotaRepo to AppDeps`
+- `apps/backend/src/server.ts` — `+ quotaRepo instantiation + wiring`
+- `packages/infra-db/migrations/009_quotas_version.sql` — `+ version column on quotas`
+
+**Verification**: `tsc --build` (zero new errors), `npm run lint` (zero new errors), 40 domain tests passing.
+
+**Out of scope** (follow-up): EnsureQuotaUseCase, ConsumeCreditsUseCase, API routes, event subscriptions, frontend UI.
+
 ## [2026-08-04] synthesis + maintenance | Phase 11 completion + production vitest configs
 
 Executed Phase 11 per [[synthesis/phase-11-testing-plan]]. Final results:
@@ -2605,3 +2641,19 @@ Filed [[synthesis/nodejs-thin-reverse-proxy-proposal]] — structural solution t
 - **Changes**: new `apps/frontend/server.mjs`, update `Dockerfile.frontend` Stage 2, add `express` + `http-proxy-middleware` to frontend deps, switch `railway.frontend.json` builder to DOCKERFILE.
 - **Zero changes**: frontend source (client.ts, sse-client.ts, AuthContext.tsx), Vite dev proxy, backend CORS config.
 - **Estimated**: ~1 hour implementation. Fixes all 10 nginx failure modes at once.
+
+## [2026-08-04] synthesis | Usage & Quota implementation plan filed
+
+Filed [[synthesis/usage-quota-implementation-plan]] — 13 new files + 7 modified, implementing the [[Usage & Quota]] bounded context:
+
+- **Status**: DB migration (005) exists, zero domain code. Wiki fully specified in [[Quota]] entity page (244 lines) and [[Usage & Quota]] concept page.
+- **Phase A–C — Domain**: 3 VO files (Plan + PlanType + CreditAmount, QuotaPeriod, TransactionReason), 1 child entity (CreditTransaction), 1 aggregate root (Quota with `consumeCredits()`, `consumeArtifact()`, `addCredits()`, `upgradePlan()`)
+- **Phase D–E — Errors + Events**: 3 DomainError subclasses (QuotaExceededError code `QUOTA_EXCEEDED` → 429, ArtifactGateExceededError, QuotaNotFoundError), 3 domain event interfaces (CreditConsumed, QuotaExceeded, ArtifactGateExceeded)
+- **Phase F — Wiring**: usage barrel export + `packages/domain/src/index.ts` wire-in
+- **Phase G–I — Infra**: Kysely table types for `quotas` + `credit_transactions` tables, `KyselyQuotaRepository` with `saveWithLock()` optimistic locking, infra barrel export
+- **Phase J — Backend**: ErrorMapper `ARTIFACT_GATE_EXCEEDED` → 429, `quotaRepo` in AppDeps + server.ts instantiation
+- **Phase K — Wiki**: overview.md Phase 11 status correction (completed, not planned)
+- **DDD compliance**: Rules 1–7 verified — zero violations. Two intentional deviations from wiki entity design: `saveWithLock()` (concurrent credit consumption safety) and `findCurrent()` returns `Promise<Quota | null>` (repository finds, doesn't create).
+- **Out of scope**: EnsureQuotaUseCase, ConsumeCreditsUseCase (SessionCompleted handler), API routes, EventBridge publishing — deferred to follow-up wiring phase.
+
+3 wiki files updated: `Wiki/synthesis/usage-quota-implementation-plan.md` (new), `Wiki/index.md` (+1 synthesis entry), `Wiki/log.md` (this entry).

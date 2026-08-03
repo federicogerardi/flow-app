@@ -111,6 +111,30 @@ export interface OAuthAccountsTable {
   created_at: ColumnType<Date, never, never>;
 }
 
+export type TransactionReason = 'generation' | 'admin_grant' | 'purchase' | 'plan_upgrade';
+
+export interface QuotasTable {
+  id: string;
+  user_id: string;
+  period: string;
+  plan_type: Generated<string>;
+  artifact_limit: number;
+  artifact_count: Generated<number>;
+  credit_limit: number;
+  credit_consumed: Generated<number>;
+  created_at: Generated<Date>;
+  version: Generated<number>;
+}
+
+export interface CreditTransactionsTable {
+  id: string;
+  quota_id: string;
+  amount: number;
+  reason: TransactionReason;
+  session_id: string | null;
+  created_at: Generated<Date>;
+}
+
 export interface DB {
   sessions: SessionsTable;
   artifacts: ArtifactsTable;
@@ -123,4 +147,6 @@ export interface DB {
   oauth_accounts: OAuthAccountsTable;
   conversations: ConversationsTable;
   messages: MessagesTable;
+  quotas: QuotasTable;
+  credit_transactions: CreditTransactionsTable;
 }

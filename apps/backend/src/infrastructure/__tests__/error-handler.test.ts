@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { DomainError, ConcurrencyError } from '@flow-app/domain';
 import { ErrorMapper } from '../error-handler.js';
 

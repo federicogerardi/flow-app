@@ -25,7 +25,7 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 | [[Agent Chat]] | Supporting | [[Conversation]] | Conversational, multi-turn guidance with workspace-aware context injection |
 | [[Gamification]] | Supporting | [[PlayerProfile]] | Event-driven XP, levels, badges, streaks, workspace challenges |
 | [[Auth Dependencies]] | Generic | [[User]] | Auth, roles, sessions |
-| [[Usage & Quota]] | Supporting | [[Quota]] | 🔴 Planned — DB tables exist (005), domain code not yet implemented |
+| [[Usage & Quota]] | Supporting | [[Quota]] | 🟡 In Progress — domain code + repository implemented (Phase 11.5), wiring (use cases + API) pending |
 
 ## Interaction Models
 
@@ -101,12 +101,13 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 
 | Phase | Priority | Scope |
 |-------|----------|-------|
-| Phase 11 — Testing & Quality | 🟡 Medium | Domain tests, API tests, worker tests, CI quality gates |
+| Phase 11 — Testing & Quality | ✅ | Domain tests, API tests, worker tests, CI quality gates |
+| Phase 11.5 — Usage & Quota Domain | 🟡 | Domain: aggregate, VOs, events, errors, repository, tests. Wiring pending. |
 | Phase 12 — Gamification | 🟢 Medium | Points, achievements, leaderboards, event-driven rewards |
 
 ### Critical Gaps (remaining)
 
-1. **Near-zero tests** — 1 test file (Identifier), vitest/supertest/testing-library installed but unused. Phase 11 planned.
+1. **Usage & Quota wiring** — Domain and persistence layer complete. Use cases (`EnsureQuotaUseCase`, `ConsumeCreditsUseCase`), event subscriptions, and API routes still pending.
 
 ## Infrastructure (Needs Railway provisioning)
 

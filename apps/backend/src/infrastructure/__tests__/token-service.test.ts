@@ -1,7 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import jwt from 'jsonwebtoken';
 import { TokenService } from '../token-service.js';
-import { UserRole } from '@flow-app/domain';
 import type { User } from '@flow-app/domain';
 
 function createUser(overrides: Partial<{ id: string; email: string; role: string }> = {}): User {

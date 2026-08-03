@@ -4,7 +4,7 @@ import vitestPlugin from 'eslint-plugin-vitest';
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**'],
+    ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', '**/*.d.ts'],
   },
   {
     files: ['**/*.{ts,tsx}'],
@@ -39,6 +39,7 @@ export default tseslint.config(
     },
     rules: {
       ...vitestPlugin.configs.recommended.rules,
+      '@typescript-eslint/no-explicit-any': 'off',
       'vitest/no-disabled-tests': 'warn',
       'vitest/no-focused-tests': 'error',
       'vitest/expect-expect': 'error',

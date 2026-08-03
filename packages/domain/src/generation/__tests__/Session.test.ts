@@ -3,7 +3,6 @@ import { Session, InvalidSessionStateError } from '../entities/Session';
 import { Artifact } from '../entities/Artifact';
 import { SessionStatus } from '../value-objects/SessionStatus';
 import { ToolKey } from '../value-objects/ToolKey';
-import type { SessionEvent } from '../session-lifecycle';
 
 const makeSession = () =>
   Session.create(ToolKey.BlogPost, 'ws-1', 'user-1', 'idem-hash-1');

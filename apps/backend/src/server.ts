@@ -11,7 +11,7 @@ import { validateConfig } from './config.js';
 import { createApp } from './app.js';
 import { logger } from './infrastructure/logger.js';
 import { createDatabase } from '@flow-app/infra-db';
-import { KyselySessionRepository, KyselyWorkspaceRepository, KyselyConversationRepository, KyselyUserRepository } from '@flow-app/infra-db';
+import { KyselySessionRepository, KyselyWorkspaceRepository, KyselyConversationRepository, KyselyUserRepository, KyselyQuotaRepository } from '@flow-app/infra-db';
 import { JobEventBridge } from './infrastructure/job-event-bridge.js';
 import { getSessionQueue } from './generation/jobs/enqueue-session.job.js';
 import { CleanupJob } from './infrastructure/cleanup-job.js';
@@ -29,6 +29,7 @@ const sessionRepo = new KyselySessionRepository(db);
 const workspaceRepo = new KyselyWorkspaceRepository(db);
 const conversationRepo = new KyselyConversationRepository(db);
 const userRepo = new KyselyUserRepository(db);
+const quotaRepo = new KyselyQuotaRepository(db);
 const eventBridge = new JobEventBridge(config.REDIS_URL);
 const queue = getSessionQueue(config.REDIS_URL);
 
@@ -63,6 +64,7 @@ const app = createApp({
   sessionRepo,
   workspaceRepo,
   conversationRepo,
+  quotaRepo,
   eventBridge,
   queue,
   llmGateway,

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createGenerationRoutes } from '../generation.js';
-import type { Request, Response, NextFunction } from 'express';
+import type { Request, Response } from 'express';
 
 function mockReq(overrides: Record<string, unknown> = {}) {
   return {

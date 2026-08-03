@@ -15,3 +15,6 @@ export * from './agent-chat';
 
 // Re-export identity
 export * from './identity';
+
+// Re-export usage
+export * from './usage';

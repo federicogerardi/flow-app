@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { KyselyConversationRepository } from '../repositories/conversation-repository.js';
 import { Conversation, Message, AgentKey, ConversationStatus } from '@flow-app/domain';
 import { createTestDb } from '../../test/setup.js';

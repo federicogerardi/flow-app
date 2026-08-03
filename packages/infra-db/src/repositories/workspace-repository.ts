@@ -6,6 +6,7 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
   constructor(private readonly db: Kysely<DB>) {}
 
   private async syncMemberships(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     executor: Kysely<DB> | any,
     workspaceId: string,
     memberships: readonly WorkspaceMembership[],
@@ -24,6 +25,7 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
           invited_at: m.invitedAt,
           joined_at: m.joinedAt,
         })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .onConflict((oc: any) =>
           oc.columns(['workspace_id', 'user_id']).doUpdateSet({
             role: m.role.value,

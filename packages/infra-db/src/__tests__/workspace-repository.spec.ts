@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { KyselyWorkspaceRepository } from '../repositories/workspace-repository.js';
 import { Workspace, MembershipRole, MembershipStatus, ConcurrencyError } from '@flow-app/domain';
 import { createTestDb } from '../../test/setup.js';

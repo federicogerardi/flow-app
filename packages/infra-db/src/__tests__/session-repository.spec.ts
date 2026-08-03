@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { KyselySessionRepository } from '../repositories/session-repository.js';
 import { Session, ToolKey, SessionStatus, ConcurrencyError } from '@flow-app/domain';
 import { createTestDb } from '../../test/setup.js';

@@ -7,7 +7,6 @@ import {
 } from '../entities/WorkspaceMembership';
 import { MembershipRole } from '../value-objects/MembershipRole';
 import { MembershipStatus } from '../value-objects/MembershipStatus';
-import { DomainError } from '../../shared/domain-error';
 
 describe('WorkspaceMembership', () => {
   const userId = 'user-1';

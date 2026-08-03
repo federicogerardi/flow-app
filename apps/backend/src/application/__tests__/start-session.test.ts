@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ToolKey, InvalidToolKeyError, type SessionRepository } from '@flow-app/domain';
-import { StartSessionUseCase, ReadinessError, ToolNotFoundError } from '../generation/start-session.usecase';
+import { StartSessionUseCase, ReadinessError } from '../generation/start-session.usecase';
 
 function createSessionRepo() {
   return {

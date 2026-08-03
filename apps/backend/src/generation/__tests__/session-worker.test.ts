@@ -1,8 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { SessionWorkerDeps } from '../worker/session-worker.js';
 
-const mockProcessSessionJob = vi.fn();
-
 vi.mock('bullmq', () => ({
   Worker: vi.fn(function (
     _queueName: string,

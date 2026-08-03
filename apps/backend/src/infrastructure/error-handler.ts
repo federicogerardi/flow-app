@@ -33,6 +33,7 @@ export class ErrorMapper {
         case 'INVALID_STATE':
         case 'CONFLICT':
           return 409;
+        case 'ARTIFACT_GATE_EXCEEDED':
         case 'QUOTA_EXCEEDED':
         case 'RATE_LIMITED':
           return 429;
