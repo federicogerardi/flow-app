@@ -52,7 +52,7 @@ parent: synthesis/implementation-roadmap-2026-08-01
 
 | Page | File | Embedded logic that should be components |
 |------|------|------------------------------------------|
-| `DashboardPage` | `src/pages/DashboardPage.tsx` | Tool grid (`ToolCard`), session list (`SessionList`), hardcoded `TOOLS` array |
+| `DashboardPage` | `src/pages/DashboardPage.tsx` | Now uses `ToolCard` + `SessionList` components; hardcoded `TOOLS` array remains |
 | `ToolPage` | `src/pages/ToolPage.tsx` | Dynamic form (`SetupPanel`), hardcoded `getToolInputs()` |
 | `SessionPage` | `src/pages/SessionPage.tsx` | Progress bar (`FeedbackPanel`), artifact rendering (`SessionSummary`), raw `<pre>` text |
 | `ConversationPage` | `src/pages/ConversationPage.tsx` | Message bubbles (`ChatMessageBubble`), input area (`ChatInput`), no agent selector |
@@ -67,24 +67,24 @@ Each entry maps to a wiki design authority page, a specific file path, and the A
 |-----------|-------------|-----------------|----------------|--------|--------|
 | `WorkspaceCard` | `src/components/workspace/WorkspaceCard.tsx` | [[UI Component Map#WorkspaceCard.tsx]] | `GET /api/workspaces` ✅ | 0.5d | 🟡 Pending |
 | `WorkspaceForm` | `src/components/workspace/WorkspaceForm.tsx` | [[UI Component Map#WorkspaceForm.tsx]] | `PUT /api/workspaces/:id` ⬜ | 0.5d | 🟡 Blocked |
-| `SessionList` | `src/components/workspace/SessionList.tsx` | [[Session List - Live Status]] | `GET /api/sessions` ✅ | 1d | 🟡 Pending |
+| `SessionList` | `src/components/workspace/SessionList.tsx` | [[Session List - Live Status]] | `GET /api/sessions` ✅ | 1d | ✅ |
 | `AssetList` | `src/components/workspace/AssetList.tsx` | [[UI Component Map#AssetList.tsx]] | `GET /api/workspaces/:id/assets` ✅ | 1d | ✅ |
 | `AssetCoverageBar` | `src/components/workspace/AssetCoverageBar.tsx` | [[UI Component Map#AssetCoverageBar.tsx]] | `GET /api/workspaces/:id/assets` ✅ | 0.5d | ✅ |
 
 **Blocker**: Asset CRUD endpoints are now ✅ implemented (Sprint 4). AssetList and AssetCoverageBar are built and functional.
 
-#### Tool Components (3/6 built — FeedbackPanel, ReadinessSnapshot, SessionSummary done)
+#### Tool Components (6/6 built ✅)
 
 | Component | File target | Design authority | API dependency | Effort | Status |
 |-----------|-------------|-----------------|----------------|--------|--------|
-| `SetupPanel` | `src/components/tool/SetupPanel.tsx` | [[Tool UX Architecture#The SetupPanel — Generic Input Renderer]] | ToolDefinition from `GET /api/agents` ✅ | 1.5d | 🟡 Pending |
-| `KnowledgePanel` | `src/components/tool/KnowledgePanel.tsx` | [[Tool UX Architecture]] | `GET /api/workspaces/:id/assets` ✅ | 1d | 🟡 Pending |
+| `SetupPanel` | `src/components/tool/SetupPanel.tsx` | [[Tool UX Architecture#The SetupPanel — Generic Input Renderer]] | `GET /api/tools` ✅ | 1.5d | ✅ |
+| `KnowledgePanel` | `src/components/tool/KnowledgePanel.tsx` | [[Tool UX Architecture]] | `GET /api/workspaces/:id/assets` ✅ | 1d | ✅ |
 | `ReadinessSnapshot` | `src/components/tool/ReadinessSnapshot.tsx` | [[ReadinessSnapshot UI]] | Readiness from `POST /api/tools/:toolKey/sessions` 422 response ✅ | 0.5d | ✅ |
 | `FeedbackPanel` | `src/components/tool/FeedbackPanel.tsx` | [[Tool UX Architecture#Always-On Information — State Transparency]] | SSE `step_completed` events ✅ | 1d | ✅ |
 | `SessionSummary` | `src/components/tool/SessionSummary.tsx` | [[UI Component Map#SessionSummary.tsx]] | `GET /api/sessions/:id` ✅, `GET /api/artifacts/:id` ✅ | 1d | ✅ |
-| `ToolCard` | `src/components/tool/ToolCard.tsx` | [[UI Component Map#ToolCard.tsx]] | ToolDefinition from tool registry | 0.5d | 🟡 Pending |
+| `ToolCard` | `src/components/tool/ToolCard.tsx` | [[UI Component Map#ToolCard.tsx]] | ToolDefinition from tool registry | 0.5d | ✅ |
 
-**Key technical shift**: `SetupPanel` must read `ToolDefinition.acquisition` dynamically from the backend, replacing the current hardcoded `tool-inputs.ts` (11 static tool definitions). This requires either a tool registry API or a shared `ToolDefinition` import from `packages/domain`.
+**Key technical shift**: ✅ `SetupPanel` now reads tool definitions dynamically from `GET /api/tools` (implemented). The hardcoded `tool-inputs.ts` remains as a fallback for the `TextInput` type definition. The backend `GET /api/tools` endpoint exposes the full `ToolDefinition.acquisition` per tool.
 
 #### Agent Chat Components (4/6 built)
 
@@ -125,32 +125,28 @@ Backend has 5 gamification API endpoints from Phase 13 — all 8 frontend compon
 
 ## Part 2 — Feature and Technical Debt Gaps
 
-### 🔴 P0 — Phase 12 Usage & Quota (Backend ✅, Frontend 🟡)
+### 🔴 P0 — Phase 12 Usage & Quota ✅
 
-**Backend**: Complete (2026-08-04). See [[implementation-roadmap-2026-08-01#Phase 12 — Usage & Quota Wiring|Phase 12 roadmap]] for details. `ConsumeCreditsUseCase` with auto-create + optimistic retry, `GET /api/usage/credits` returning full quota state, wired into session worker via `SessionCompleted` event.
+**Backend**: Complete. `ConsumeCreditsUseCase` with auto-create + optimistic retry, `GET /api/usage/credits`, wired into session worker.
 
-**Frontend remaining**:
+**Frontend**: ✅ Complete. `QuotaCounter` in sidebar with LinearProgress + artifact gate warning. `ToolPage` catches `QUOTA_EXCEEDED` / `ARTIFACT_GATE_EXCEEDED` and shows blocking Alert.
 
-| Gap | Layer | Description |
-|-----|-------|-------------|
-| Quota counter in sidebar | Frontend | `Credits: 245/250` with `PlanType` indicator, per [[Frontend Architecture]] sidebar spec |
-| "Crediti esauriti" block | Frontend | Must intercept `429 QUOTA_EXCEEDED` from `POST /api/tools/:toolKey/sessions` and show hard stop message |
-| Artifact gate warning | Frontend | 1000/month limit — user needs awareness before hitting it |
+### 🟠 P1 — Backend Blockers — ALL RESOLVED ✅
 
-**Estimated effort**: 1–2 days (3 React components + sidebar integration)
+All previously blocking backend endpoints are now implemented:
 
-### 🟠 P1 — Blocked Frontend by Missing Backend APIs
+| Backend gap | Frontend impact | Status |
+|-------------|----------------|--------|
+| `GET /api/workspaces/:id/assets` | AssetList, AssetCoverageBar, KnowledgePanel | ✅ |
+| `POST /api/workspaces/:id/assets` | Asset creation | ✅ |
+| `DELETE /api/workspaces/:id/assets` | Asset deletion | ✅ |
+| `PUT /api/workspaces/:id/assets` | Asset update | ✅ |
+| `PUT /api/workspaces/:id` | Workspace rename | ✅ |
+| `DELETE /api/workspaces/:id` | Workspace delete | ✅ |
+| `GET /api/artifacts/:id/download` | Download button | ✅ |
+| `POST /api/sessions/:id/cancel` | Cancel button | ✅ |
 
-| Backend gap | Frontend impact | API Routes status |
-|-------------|----------------|-------------------|
-| `GET /api/workspaces/:id/assets` | ✅ AssetList, AssetCoverageBar unblocked | ✅ Implemented (Sprint 4) |
-| `POST /api/workspaces/:id/assets` | ✅ Asset creation unblocked | ✅ Implemented (Sprint 4) |
-| `DELETE /api/workspaces/:id/assets` | ✅ Asset deletion unblocked | ✅ Implemented (Sprint 4) |
-| `PUT /api/workspaces/:id/assets` | ✅ Asset update unblocked | ✅ Implemented (Sprint 4) |
-| `PUT /api/workspaces/:id` | Blocks `WorkspaceForm` edit mode | ⬜ Planned, not built |
-| `DELETE /api/workspaces/:id` | Blocks workspace delete UI | ⬜ Planned, not built |
-| `GET /api/artifacts/:id/download` | Blocks download button | ⬜ Planned, not built |
-| `POST /api/sessions/:id/cancel` | Blocks cancel button | ⬜ Planned, not built |
+Only remaining ⬜: GitHub OAuth + admin CRUD (deferred — never scoped for MVP).
 
 > **Note**: Cancel session endpoint spec exists in [[API Routes]] but is marked `⬜` (not implemented). The SSE connection lifecycle already handles session completion/termination on the server side.
 
@@ -277,7 +273,7 @@ Frontend: AssetList + AssetCoverageBar + KnowledgePanel
 | E — Gamification | 3–4 | APIs ✅ | ✅ Done (2026-08-04) |
 | F — Assets | 1.5 (+ backend 2–3) | ⬜ | ✅ Done (2026-08-04) |
 | G — Tech Debt + Polish | 4–5 | None | ✅ Done (2026-08-04) |
-| **Remaining** | **Workspace edit/delete** (backend) + **XState migration** (deferred) | | |
+| **Remaining** | **WorkspaceCard + AgentContextDrawer** (component extraction) + **XState + DTO + SSE + fonts** (deferred tech debt) | | |
 
 ### Recommended Sprint Sequence
 
