@@ -27,5 +27,5 @@
     { "path": "apps/backend" },
     { "path": "apps/frontend" }
   ],
-  "exclude": ["node_modules", "dist", "coverage", "vitest.workspace.ts", "vitest.config.base.ts", "eslint.config.js"]
+  "exclude": ["node_modules", "dist", "coverage", "**/__tests__/**", "**/*.test.ts", "**/*.spec.ts", "**/*.test.d.ts", "**/*.spec.d.ts", "vitest.workspace.ts", "vitest.config.base.ts", "eslint.config.js"]
 }
