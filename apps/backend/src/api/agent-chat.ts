@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { ConversationRepository } from '@flow-app/domain';
-import { listAgents, getAgent } from '@flow-app/domain';
+import { AgentKey, listAgents, getAgent } from '@flow-app/domain';
 import { StartConversationUseCase } from '../application/agent-chat/start-conversation.usecase.js';
 import { SendMessageUseCase } from '../application/agent-chat/send-message.usecase.js';
 import type { LlmGateway } from '../infrastructure/llm-gateway.js';
@@ -72,7 +72,7 @@ export function createAgentChatRoutes(
         const result = await startConversationUC.execute({
           workspaceId,
           userId,
-          agentKey,
+          agentKey: AgentKey.from(agentKey),
         });
 
         res.status(201).json(result);
