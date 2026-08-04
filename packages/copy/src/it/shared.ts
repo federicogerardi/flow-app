@@ -6,6 +6,7 @@ export const shared = {
     confirm:  'Conferma',
     retry:    'Riprova',
     download: 'Scarica',
+    promote:  'Promuovi ad asset',
     close:    'Chiudi',
     send:     'Invia',
   },

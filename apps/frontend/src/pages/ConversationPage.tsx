@@ -1,18 +1,17 @@
-import { Alert, Box, Button, Card, CardContent, TextField, Typography } from '@mui/material';
-import { useState, useRef, useEffect } from 'react';
+import { Box, Card, CardContent, Typography } from '@mui/material';
+import { useRef, useEffect } from 'react';
 import { useParams } from 'react-router';
 import useSWR from 'swr';
 import { api } from '../api/client';
 import { PageHeader } from '../components/PageHeader';
 import { LoadingSkeleton } from '../components/LoadingSkeleton';
 import { ErrorState } from '../components/ErrorState';
+import { ChatMessageBubble } from '../components/agent-chat/ChatMessageBubble';
+import { ChatInput } from '../components/agent-chat/ChatInput';
 import { copy } from '@flow-app/copy';
 
 export default function ConversationPage() {
   const { conversationId } = useParams<{ conversationId: string }>();
-  const [newMessage, setNewMessage] = useState('');
-  const [sending, setSending] = useState(false);
-  const [sendError, setSendError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -29,26 +28,10 @@ export default function ConversationPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [conversation?.messages?.length]);
 
-  const handleSend = async () => {
-    if (!newMessage.trim() || !conversationId) return;
-    setSending(true);
-    setSendError(null);
-    try {
-      await api.sendMessage(conversationId, newMessage.trim());
-      setNewMessage('');
-      await mutate();
-    } catch (err) {
-      setSendError(err instanceof Error ? err.message : 'Failed to send message');
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+  const handleSend = async (message: string) => {
+    if (!conversationId) return;
+    await api.sendMessage(conversationId, message);
+    await mutate();
   };
 
   if (isLoading) return <LoadingSkeleton />;
@@ -74,58 +57,19 @@ export default function ConversationPage() {
           )}
 
           {conversation.messages.map((msg) => (
-            <Box
+            <ChatMessageBubble
               key={msg.id}
-              sx={{
-                display: 'flex',
-                justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
-              }}
-            >
-              <Box
-                sx={{
-                  maxWidth: '70%',
-                  px: 2,
-                  py: 1.5,
-                  borderRadius: 2,
-                  bgcolor: msg.role === 'user' ? 'primary.main' : 'action.hover',
-                  color: msg.role === 'user' ? 'primary.contrastText' : 'text.primary',
-                }}
-              >
-                <Typography variant="body2">{msg.content}</Typography>
-                {msg.tokensUsed > 0 && (
-                  <Typography variant="caption" sx={{ opacity: 0.6, mt: 0.5, display: 'block' }}>
-                    {msg.modelUsed} — {msg.tokensUsed} tokens
-                  </Typography>
-                )}
-              </Box>
-            </Box>
+              role={msg.role as 'user' | 'agent' | 'system'}
+              content={msg.content}
+              tokensUsed={msg.tokensUsed}
+              modelUsed={msg.modelUsed}
+              createdAt={msg.createdAt}
+            />
           ))}
           <div ref={messagesEndRef} />
         </CardContent>
 
-        <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
-          {sendError && (
-            <Alert severity="error" sx={{ mb: 1 }} onClose={() => setSendError(null)}>
-              {sendError}
-            </Alert>
-          )}
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <TextField
-              fullWidth
-              placeholder="Type your message..."
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={sending}
-              size="small"
-              multiline
-              maxRows={4}
-            />
-            <Button variant="contained" onClick={handleSend} disabled={sending || !newMessage.trim()}>
-              {copy.t('shared.actions.send')}
-            </Button>
-          </Box>
-        </Box>
+        <ChatInput onSend={handleSend} />
       </Card>
     </Box>
   );

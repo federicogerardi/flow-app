@@ -1,9 +1,10 @@
-import { Box, Button, Card, CardContent, MenuItem, TextField, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, MenuItem, TextField, Typography, Alert } from '@mui/material';
 import { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { api } from '../api/client';
+import { api, ApiClientError } from '../api/client';
 import { PageHeader } from '../components/PageHeader';
 import { ErrorState } from '../components/ErrorState';
+import { ReadinessSnapshot } from '../components/tool/ReadinessSnapshot';
 import { getToolInputs, type TextInput } from '../tool-inputs';
 import { copy } from '@flow-app/copy';
 
@@ -13,6 +14,7 @@ export default function ToolPage() {
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
 
   const toolDef = toolKey ? getToolInputs(toolKey) : [];
   const userInputs: TextInput[] = toolDef;
@@ -30,11 +32,23 @@ export default function ToolPage() {
     if (!toolKey) return;
     setSubmitting(true);
     setError(null);
+    setErrorCode(null);
     try {
       const result = await api.startSession(toolKey, { workspaceId: workspaceId!, inputs });
       navigate(`/workspaces/${workspaceId}/sessions/${result.session.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : copy.t('errors.generation.failedToStart'));
+      if (err instanceof ApiClientError) {
+        setErrorCode(err.code);
+        if (err.code === 'QUOTA_EXCEEDED') {
+          setError(copy.t('usage.quota.exhausted'));
+        } else if (err.code === 'ARTIFACT_GATE_EXCEEDED') {
+          setError(copy.t('usage.quota.artifactGateExceeded'));
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError(err instanceof Error ? err.message : copy.t('errors.generation.failedToStart'));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -50,7 +64,11 @@ export default function ToolPage() {
         ]}
       />
 
-      {error && <ErrorState message={error} />}
+      {error && (errorCode === 'QUOTA_EXCEEDED' || errorCode === 'ARTIFACT_GATE_EXCEEDED' ? (
+        <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
+      ) : (
+        <ErrorState message={error} />
+      ))}
 
       <Card>
         <CardContent>
@@ -79,6 +97,8 @@ export default function ToolPage() {
               </TextField>
             ))}
           </Box>
+
+          <ReadinessSnapshot inputs={inputs} toolDef={userInputs} />
 
           <Button
             variant="contained"

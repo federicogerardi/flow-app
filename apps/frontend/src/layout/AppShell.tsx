@@ -16,6 +16,7 @@ import { useWorkspaceAccent } from '../theme/WorkspaceAccentProvider';
 import { copy } from '@flow-app/copy';
 import { useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
+import { QuotaCounter } from '../components/usage/QuotaCounter';
 
 const DRAWER_WIDTH = 280;
 
@@ -69,7 +70,7 @@ export function AppShell() {
     { label: copy.t('workspace.nav.tools'), icon: <BuildIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/tools/blog-post` : '/dashboard' },
     { label: copy.t('workspace.nav.sessions'), icon: <PlayCircleIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}` : '/dashboard' },
     { label: copy.t('workspace.nav.assets'), icon: <InventoryIcon />, path: '#', disabled: true },
-    { label: copy.t('workspace.nav.team'), icon: <PeopleIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/conversations` : '/dashboard' },
+    { label: copy.t('workspace.nav.team'), icon: <PeopleIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/team` : '/dashboard' },
   ];
 
   const secondaryItems = [
@@ -202,6 +203,11 @@ export function AppShell() {
             <AddIcon fontSize="small" />
           </IconButton>
         </Box>
+
+        <Divider sx={{ mx: 2 }} />
+
+        {/* Quota counter */}
+        <QuotaCounter />
 
         <Divider sx={{ mx: 2 }} />
 

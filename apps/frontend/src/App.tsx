@@ -6,6 +6,7 @@ import { OAuthCallback } from './auth/OAuthCallback';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ErrorState } from './components/ErrorState';
 import { LoadingSkeleton } from './components/LoadingSkeleton';
+import { TeamHub } from './components/agent-chat/TeamHub';
 import useSWR from 'swr';
 import { api } from './api/client';
 
@@ -55,6 +56,7 @@ function AppRoutes() {
           <Route path="/workspaces/:workspaceId/tools/:toolKey" element={<ErrorBoundary><Suspense fallback={<LoadingSkeleton />}><ToolPage /></Suspense></ErrorBoundary>} />
           <Route path="/workspaces/:workspaceId/sessions/:sessionId" element={<ErrorBoundary><Suspense fallback={<LoadingSkeleton />}><SessionPage /></Suspense></ErrorBoundary>} />
           <Route path="/workspaces/:workspaceId/conversations/:conversationId" element={<ErrorBoundary><Suspense fallback={<LoadingSkeleton />}><ConversationPage /></Suspense></ErrorBoundary>} />
+          <Route path="/workspaces/:workspaceId/team" element={<ErrorBoundary><Suspense fallback={<LoadingSkeleton />}><TeamHub /></Suspense></ErrorBoundary>} />
         </Route>
       </Route>
 

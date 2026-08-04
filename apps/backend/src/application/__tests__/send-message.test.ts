@@ -22,6 +22,14 @@ function createLlmGateway() {
   } as unknown as LlmGateway;
 }
 
+function createGamificationEventPublisher() {
+  return {
+    publishMessageAdded: vi.fn().mockResolvedValue(undefined),
+    publishSessionCompleted: vi.fn().mockResolvedValue(undefined),
+    publishMemberJoined: vi.fn().mockResolvedValue(undefined),
+  };
+}
+
 function createConversation(overrides: Record<string, unknown> = {}) {
   return {
     conversationId: 'conv-1',
@@ -37,12 +45,14 @@ function createConversation(overrides: Record<string, unknown> = {}) {
 describe('SendMessageUseCase', () => {
   let conversationRepo: ConversationRepository;
   let llmGateway: LlmGateway;
+  let gamificationEventPublisher: ReturnType<typeof createGamificationEventPublisher>;
   let useCase: SendMessageUseCase;
 
   beforeEach(() => {
     conversationRepo = createConversationRepo();
     llmGateway = createLlmGateway();
-    useCase = new SendMessageUseCase(conversationRepo, llmGateway);
+    gamificationEventPublisher = createGamificationEventPublisher();
+    useCase = new SendMessageUseCase(conversationRepo, llmGateway, gamificationEventPublisher as any);
   });
 
   const validCmd = {

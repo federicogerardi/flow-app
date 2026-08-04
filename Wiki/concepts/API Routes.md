@@ -51,9 +51,9 @@ Compatibility rule: no breaking response-schema change inside the same API major
 
 ## Route Index
 
-> **Last synced**: 2026-08-02 against `apps/backend/src/app.ts` and `apps/backend/src/api/*.ts`.
+> **Last synced**: 2026-08-04 against `apps/backend/src/app.ts` and `apps/backend/src/api/*.ts`.
 > ✅ = implemented, 🟡 = partial, ⬜ = planned (not built), 🔜 = deferred to future phase.
-> Post-drift remediation: `POST /api/workspaces` corrected from ⬜ to ✅. Agent chat route params aligned to `:workspaceId`. Doubled `/api/api/` typos fixed.
+> Phase 12 drift closure: `GET /api/usage/credits` added (was implemented but not documented).
 
 | Method | Path | Auth | Status | Notes |
 |--------|------|------|--------|-------|
@@ -103,6 +103,7 @@ Compatibility rule: no breaking response-schema change inside the same API major
 | `GET` | `/admin/users` | 🔒 | ⬜ | List users (planned) |
 | `POST` | `/admin/users` | 🔒 | ⬜ | Create user (planned) |
 | `PUT` | `/admin/users/:id` | 🔒 | ⬜ | Update user (planned) |
+| `GET` | `/api/usage/credits` | ✅ | ✅ | Quota + credits + artifacts status |
 
 🔓 = public, ✅ = authenticated, 🔒 = admin only, `owner`/`member` = workspace role required
 
@@ -370,6 +371,41 @@ Returns artifact content by ID.
 ### `GET /api/artifacts/:id/download` ⬜
 
 Download in `md`/`txt`/`docx`/`pdf` format. Planned — not yet implemented.
+
+---
+
+## Usage & Quota ✅
+
+### `GET /api/usage/credits`
+
+Returns current quota state for the authenticated user. Auto-creates a default free-plan quota if none exists for the current billing period.
+
+**Auth**: authenticated user (JWT required).
+
+**Response** `200`:
+```json
+{
+  "credits": {
+    "used": 5,
+    "limit": 250,
+    "remaining": 245,
+    "percent": 2
+  },
+  "artifacts": {
+    "used": 12,
+    "limit": 1000,
+    "remaining": 988
+  },
+  "plan": "free",
+  "period": "2026-08"
+}
+```
+
+**Implementation**:
+- Route: `apps/backend/src/api/usage/usage-routes.ts` (42 lines)
+- Repository: `KyselyQuotaRepository.findCurrent(userId)` with auto-initialization fallback
+- Consumed synchronously by session worker on `SessionCompleted` via `ConsumeCreditsUseCase`
+- Optimistic locking with 3 retry attempts on concurrent credit consumption
 
 ---
 

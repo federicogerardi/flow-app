@@ -4,10 +4,9 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/architecture
-date_updated: 2026-08-02
-source_count: 8
+date_updated: 2026-08-04
+source_count: 9
 confidence: high
-maintenance: 2026-08-02 — drift remediation: route count corrected (5→7), documented missing hooks (useWorkspace, listTools), API client methods updated.
 ---
 
 # Frontend Architecture
@@ -15,17 +14,17 @@ maintenance: 2026-08-02 — drift remediation: route count corrected (5→7), do
 > Unification, reusability, minimal surface area — workspace-centric UI  
 > `apps/frontend/src/`
 
-## Implementation Status (2026-08-02)
+## Implementation Status (2026-08-04)
 
-> 🟡 **Partial — 8/17 components built**. Core workflow functional (dashboard → tool → session → agent chat) but workspace-centric routing, asset management, and many component abstractions are not yet implemented. See gap analysis in [[synthesis/implementation-roadmap-2026-08-01|Phase 7 status]] and `Wiki/log.md`.
+> 🟡 **Partial — 13/17 components built**. Core workflow functional (dashboard → tool → session → agent chat) but workspace-centric routing, asset management, and many component abstractions are not yet implemented. Auth layer (Phase 8) complete. See gap analysis in [[synthesis/frontend-gap-analysis-2026-08-04]].
 
 | Layer | Spec | Built | Gap |
 |-------|------|-------|-----|
 | Layout | 3 | 1 (AppShell base) | WorkspaceDashboard, ToolPageLayout missing |
 | Workspace | 4 | 0 | WorkspaceCard, WorkspaceForm, SessionList, AssetList |
 | Tool | 5 | 0 | SetupPanel, KnowledgePanel, ReadinessSnapshot, FeedbackPanel, SessionSummary |
-| Shared | 5 | 4 | PageHeader, EmptyState, ErrorState, LoadingSkeleton ✅ — missing ConfirmDialog |
-| Auth | — | 0 | No login/register pages, no AuthContext, no guards |
+| Shared | 5 | 5 | PageHeader, EmptyState, ErrorState, LoadingSkeleton, ErrorBoundary ✅ |
+| Auth | 5 | 5 | AuthContext, AuthGuard, OAuthCallback ✅, AuthLayout, LoginPage, RegisterPage ✅ |
 
 **Routes implemented** (7): `/` → redirect to first workspace, `/dashboard`, `/workspaces/:workspaceId` (DashboardPage), `/workspaces/:workspaceId/tools/:toolKey`, `/workspaces/:workspaceId/sessions/:sessionId`, `/workspaces/:workspaceId/conversations/:conversationId`, `* → /dashboard`.
 
@@ -296,3 +295,4 @@ function WorkspaceDashboard() {
 - [[Tool UX Architecture]] — Generic SetupPanel, always-on information, 4-phase lifecycle
 - [[Session List - Live Status]] — Cross-tab SSE, live session cards
 - [[synthesis/code-review-2026-08-02]] — Multi-agent review including frontend findings (C3, C4, C5, C7, C8)
+- [[synthesis/frontend-gap-analysis-2026-08-04]] — Operational gap analysis: 28 missing components, 7 execution tracks

@@ -13,21 +13,32 @@ function createWorkspaceRepo() {
   } as unknown as WorkspaceRepository;
 }
 
+function createGamificationEventPublisher() {
+  return {
+    publishMessageAdded: vi.fn().mockResolvedValue(undefined),
+    publishSessionCompleted: vi.fn().mockResolvedValue(undefined),
+    publishMemberJoined: vi.fn().mockResolvedValue(undefined),
+  };
+}
+
 function createWorkspace(overrides: Record<string, unknown> = {}) {
   return {
     workspaceId: 'ws-1',
     acceptInvitation: vi.fn(),
+    memberships: [],
     ...overrides,
   };
 }
 
 describe('AcceptInvitationUseCase', () => {
   let workspaceRepo: WorkspaceRepository;
+  let gamificationEventPublisher: ReturnType<typeof createGamificationEventPublisher>;
   let useCase: AcceptInvitationUseCase;
 
   beforeEach(() => {
     workspaceRepo = createWorkspaceRepo();
-    useCase = new AcceptInvitationUseCase(workspaceRepo);
+    gamificationEventPublisher = createGamificationEventPublisher();
+    useCase = new AcceptInvitationUseCase(workspaceRepo, gamificationEventPublisher as any);
   });
 
   const validCmd = {

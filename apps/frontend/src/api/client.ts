@@ -96,7 +96,7 @@ class ApiClient {
     this.baseUrl = baseUrl;
   }
 
-  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -198,6 +198,18 @@ class ApiClient {
       'GET',
       `/api/workspaces/${workspaceId}/members`,
     );
+  }
+
+  async inviteMember(workspaceId: string, email: string, role: string) {
+    return this.request<{ invitationId: string }>('POST', `/api/workspaces/${workspaceId}/invitations`, { email, role });
+  }
+
+  async removeMember(workspaceId: string, userId: string) {
+    return this.request<void>('DELETE', `/api/workspaces/${workspaceId}/members/${userId}`);
+  }
+
+  async changeMemberRole(workspaceId: string, userId: string, role: string) {
+    return this.request<void>('PUT', `/api/workspaces/${workspaceId}/members/${userId}/role`, { role });
   }
 
   // ── Agent Chat ───────────────────────────────────────────────────────────────

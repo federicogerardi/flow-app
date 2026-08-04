@@ -8,6 +8,8 @@ date_updated: 2026-08-04
 phase_count: 13
 phases_complete: 13
 phases_remaining: 0
+phase_12_backend: complete
+phase_12_frontend: pending
 ---
 
 # Implementation Roadmap — Rational Development Sequence (2026-08-01)
@@ -499,15 +501,24 @@ Implementation (2026-08-04, branch `dev`):
 
 **Out of scope** (follow-up): EnsureQuotaUseCase, ConsumeCreditsUseCase, API routes, event subscriptions, frontend UI.
 
-### Phase 12 — Usage & Quota Wiring (Planned)
+### Phase 12 — Usage & Quota Wiring ✅ (Backend) / 🟡 (Frontend)
 
-| Task | Description |
-|------|-------------|
-| `EnsureQuotaUseCase` | Auto-create quota on first access (needs UserRepository) |
-| `ConsumeCreditsUseCase` | SessionCompleted event handler → credit deduction |
-| `GET /api/usage/credits` | Frontend quota counter API |
-| EventBridge wiring | Publish CreditConsumed to EventBridge |
-| Frontend UI | Quota counter + "Crediti esauriti" blocking message |
+**Status**: ✅ Backend complete (2026-08-04), 🟡 Frontend pending.
+
+**Discovery**: Phase 12 backend was implemented silently during Phases 11.5 and 13 — `ConsumeCreditsUseCase`, `GET /api/usage/credits`, and session worker wiring were all in place but never marked as complete in the roadmap. Audit on 2026-08-04 confirmed all 3 backend tasks done:
+
+| Task | Status | File |
+|------|--------|------|
+| `ConsumeCreditsUseCase` | ✅ | `apps/backend/src/application/usage/consume-credits.usecase.ts` — auto-creates quota on first use, optimistic retry (3 attempts), deducts `tool.creditCost` credits |
+| `GET /api/usage/credits` | ✅ | `apps/backend/src/api/usage/usage-routes.ts` — returns `{ credits: { used, limit, remaining, percent }, artifacts: { used, limit, remaining }, plan, period }` |
+| Session worker wiring | ✅ | `apps/backend/src/generation/worker/session-worker.ts:166-175` — `consumeCreditsUC.execute()` after every `SessionCompleted`, with structured error logging |
+| Worker process wiring | ✅ | `apps/backend/src/generation/worker/worker-process.ts:50-51` — `KyselyQuotaRepository` → `ConsumeCreditsUseCase` → injected into `SessionWorkerDeps` |
+| EventBridge wiring | Deferred | Out of scope — credit consumption is synchronous (reliable) |
+| Frontend UI | 🟡 Pending | Quota counter + "Crediti esauriti" blocking message — see [[frontend-gap-analysis-2026-08-04|Track A]] |
+
+**Verification**: `tsc --build` clean, `eslint` 0/0, 80 usage domain tests passing.
+
+**Remaining**: only frontend — quota counter in sidebar, 429 QUOTA_EXCEEDED blocking UI, artifact gate warning. Track A of [[frontend-gap-analysis-2026-08-04]].
 
 ### Phase 13 — Gamification (Week 18+) ✅ — [Implementation Plan](phase-13-implementation-plan.md)
 
@@ -577,8 +588,9 @@ Implementation (2026-08-04, branch `dev`):
 11. **Deployment & CI/CD** (Phase 10) ✅ — Dockerfile, railway.json, GitHub Actions CI/CD, docker-compose
 12. **Testing & quality** (Phase 11) ✅ — 66 files, ~634 tests, vitest production configs
 12.5. **Usage & Quota domain** (Phase 11.5) ✅ — 10 files, 40 tests, Kysely repository
-13. **Usage & Quota wiring** (Phase 12) — use cases, API routes, event subscriptions, frontend quota UI
-14. **Gamification** (Phase 13) ✅ — [plan](phase-13-implementation-plan.md) — engagement layer: 50 files, 2 aggregates, 22 badges, BullMQ event pipeline
+13. **Usage & Quota wiring — backend** (Phase 12) ✅ — `ConsumeCreditsUseCase`, `GET /api/usage/credits`, session worker wiring
+14. **Usage & Quota wiring — frontend** (Phase 12) 🟡 — quota counter, "Crediti esauriti" block, artifact gate warning
+15. **Gamification** (Phase 13) ✅ — [plan](phase-13-implementation-plan.md) — engagement layer: 50 files, 2 aggregates, 22 badges, BullMQ event pipeline
 
 ## Referenced Pages
 

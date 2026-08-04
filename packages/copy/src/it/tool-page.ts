@@ -8,6 +8,7 @@ export const toolPage = {
   },
   readiness: {
     title:        'Pronto per generare?',
+    allReady:     'Tutti i campi pronti',
     allSet:       'Tutti i requisiti soddisfatti. Pronto per generare.',
     missingFile:  'Carica un file',
     missingText:  'Inserisci un valore',
@@ -17,7 +18,9 @@ export const toolPage = {
     statusOptional:'Opzionale',
   },
   progress: {
+    title:        'Avanzamento',
     stepLabel:    'Step {current} di {total}',
+    starting:     'Preparazione in corso...',
     completed:    'Generazione completata',
     failed:       'Generazione fallita',
     cancelled:    'Generazione annullata',

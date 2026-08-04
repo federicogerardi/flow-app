@@ -12,6 +12,115 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-04] implementation | Sprint 2 — PromoteButton + Agent Chat + Workspace Members
+
+Executed Sprint 2 — 4 phases, ~6h:
+
+**Phase 6 — PromoteButton** (Track B item 5):
+- NEW: `src/components/shared/PromoteButton.tsx` — promote artifact to asset (disabled, API pending)
+- MOD: `src/components/tool/SessionSummary.tsx` — integrated PromoteButton
+- MOD: `src/pages/SessionPage.tsx` — passes workspaceId to SessionSummary
+
+**Phase 7 — ChatMessageBubble + ChatInput** (Track C items 1-2):
+- NEW: `src/components/agent-chat/ChatMessageBubble.tsx` — user/agent variants, token info, timestamps
+- NEW: `src/components/agent-chat/ChatInput.tsx` — managed input with send error handling
+- MOD: `src/pages/ConversationPage.tsx` — -50 lines, extracted to components
+
+**Phase 8 — TeamHub + AgentCard** (Track C items 3-4):
+- NEW: `src/components/agent-chat/TeamHub.tsx` — agent grid + recent conversations, SWR-powered
+- NEW: `src/components/agent-chat/AgentCard.tsx` — name, role, capability chips
+- MOD: `src/App.tsx` — new route `/workspaces/:workspaceId/team`
+- MOD: `src/layout/AppShell.tsx` — Team nav → `/team` (was `/conversations`)
+
+**Phase 9 — Workspace Members** (Track D items 1-3):
+- MOD: `src/pages/DashboardPage.tsx` — +`WorkspaceMembers` section with MUI List + invite dialog (email + role selector)
+- MOD: `src/api/client.ts` — +`inviteMember`, `removeMember`, `changeMemberRole`
+
+**Verification**: `tsc --noEmit` 0, `vite build` ✅ 2.71s, `eslint` 0/0, `vitest run` 69 files/674 tests ALL PASSED.
+
+**Baseline fix** (pre-existing, fixed during sprint):
+- Replaced `vitest.workspace.ts` → root `vitest.config.ts` with `test.projects` (Vitest 4 syntax)
+- Deleted `vitest.config.base.ts` + all stale compiled artifacts (`.jsx` tests, `.js`, `.d.ts`, `.map`, `dist/`)
+- Fixed backend send-message/accept-invitation tests: added `gamificationEventPublisher` mock
+- `npx tsc --build` → 0 errors (was 27 errors)
+
+**Updated**: [[frontend-gap-analysis-2026-08-04|gap analysis]] (Sprint 2 ✅, 2/4 sprints done), [[log]] (this entry), [[Maintenance Log]].
+
+---
+
+## [2026-08-04] implementation | Sprint 1 — Track A (Quota UI) + Track B (Tool Workflow 1-4)
+
+Executed [[synthesis/frontend-gap-analysis-2026-08-04|Sprint 1]] — 5 phases, ~7h, all green:
+
+**Phase 1 — QuotaCounter** (Track A):
+- NEW: `src/components/usage/QuotaCounter.tsx` — SWR fetch `GET /api/usage/credits`, MUI LinearProgress, artifact gate warning badge
+- MOD: `src/layout/AppShell.tsx` — QuotaCounter in sidebar between workspace switcher and nav
+- MOD: `src/pages/ToolPage.tsx` — catch `ApiClientError` QUOTA_EXCEEDED/ARTIFACT_GATE_EXCEEDED, show Alert (non-retryable) vs ErrorState
+- MOD: `src/api/client.ts` — `request()` method public for generic API calls
+
+**Phase 2 — Markdown rendering** (Track B item 1):
+- MOD: `src/pages/SessionPage.tsx` — replaced `<pre>` with `<ReactMarkdown remarkPlugins={[remarkGfm]}>`, full CSS for headings/tables/code/blockquote
+
+**Phase 3 — FeedbackPanel** (Track B item 3):
+- NEW: `src/components/tool/FeedbackPanel.tsx` — SSE-driven step cards: completed ✅/active ◐/pending ○, progress bar + step list
+- MOD: `src/pages/SessionPage.tsx` — replaced inline LinearProgress with FeedbackPanel
+
+**Phase 4 — SessionSummary** (Track B item 4):
+- NEW: `src/components/tool/SessionSummary.tsx` — artifact list + ReactMarkdown + Download/Promote placeholder buttons
+- MOD: `src/pages/SessionPage.tsx` — extracted artifact section into SessionSummary
+
+**Phase 5 — ReadinessSnapshot** (Track B item 6):
+- NEW: `src/components/tool/ReadinessSnapshot.tsx` — pre-flight checklist: ✓/✗ per required field, "Tutti i campi pronti" summary
+- MOD: `src/pages/ToolPage.tsx` — integrated before Submit button
+- MOD: `src/shared/statusColors.ts` — added `cancelled`, `ready`
+
+**Copy package**:
+- NEW: `packages/copy/src/it/usage.ts` — credits, artifacts, quota labels
+- MOD: `packages/copy/src/it/tool-page.ts` — `allReady`, `title`, `starting`
+- MOD: `packages/copy/src/it/shared.ts` — `promote`
+- MOD: `packages/copy/src/it/index.ts` — registered usage module
+
+**Verification**: `tsc --noEmit` 0 errors, `vite build` ✓ 1.65s, `eslint` 0/0.
+
+**Bundle**: SessionPage 9.56→163.68 KB (react-markdown+remark-gfm), ToolPage 2.76→4.14 KB, index 524→565 KB.
+
+**Updated**: [[frontend-gap-analysis-2026-08-04|gap analysis]] (Sprint 1 ✅, remaining 13–19 days), [[log]] (this entry), [[Maintenance Log]].
+
+---
+
+## [2026-08-04] audit | Phase 12 backend drift closure
+
+Audit confirmed Phase 12 backend already implemented — zero code needed. Wiki pages updated to close documentation drift:
+
+**Backend already done** (discovered, not built today):
+- `ConsumeCreditsUseCase` (`apps/backend/src/application/usage/consume-credits.usecase.ts`) — auto-create quota + optimistic retry (3 attempts) + `tool.creditCost` deduction
+- `GET /api/usage/credits` (`apps/backend/src/api/usage/usage-routes.ts`) — returns `{ credits, artifacts, plan, period }`
+- Session worker wiring (`apps/backend/src/generation/worker/session-worker.ts:166-175`) — `consumeCreditsUC.execute()` after `SessionCompleted`
+- Worker process wiring (`apps/backend/src/generation/worker/worker-process.ts:50-51`) — `KyselyQuotaRepository` → `ConsumeCreditsUseCase` injection
+
+**Wiki pages updated** (6 files):
+- `implementation-roadmap-2026-08-01.md` — Phase 12 marked ✅ backend / 🟡 frontend, backlog reordered
+- `frontend-gap-analysis-2026-08-04.md` — Track A reduced to frontend-only (1-2 days), P0 section updated, Phase 11.5 domain ✅
+- `API Routes.md` — `GET /api/usage/credits` added to route index + full response documentation, sync date updated
+- `Frontend Architecture.md` — Auth status fixed (was stale: 0 → 5 built), updated to 2026-08-04
+- `log.md` — this entry
+- `Maintenance Log.md` — appended
+
+**Verification**: `tsc --build` clean, `eslint` 0/0, 80 domain usage tests passing.
+
+---
+
+## [2026-08-04] synthesis | Frontend gap analysis filed
+
+Created [[synthesis/frontend-gap-analysis-2026-08-04]] — two-part operational dashboard:
+- **Part 1**: 28 missing components across 6 layers (Workspace 5, Tool 6, Agent Chat 6, Gamification 8, Shared 4). Every component mapped to wiki design authority page, target file path, API endpoint, and estimated effort.
+- **Part 2**: 3 priority tiers — 🔴 Phase 12 Usage & Quota wiring (not built), 🟠 backend API blockers (7 ⬜ endpoints blocking 7 frontend components), 🟡 technical debt (XState deferred, DTO cleanup, markdown rendering, tool definitions).
+- **Execution roadmap**: 7 tracks (A–G) across 4 sprints, ~17–23 days total. Critical path: Track A (quota safety) + Track B (tool workflow).
+- **Wiki drift found**: `Frontend Architecture.md` Auth status is stale — says 0 built but Phase 8 completed AuthContext/AuthGuard/OAuthCallback/LoginPage/RegisterPage. Flagged for reconciliation.
+- Updated: [[index]] Synthesis table, [[log]] (this entry), [[Maintenance Log]].
+
+---
+
 ## [2026-08-04] implementation | Usage & Quota domain + repository
 
 Executed [[synthesis/usage-quota-implementation-plan]] (Phase A–J + tests). Final results:

@@ -5,3 +5,4 @@ export { workspace } from './workspace';
 export { auth } from './auth';
 export { notifications } from './notifications';
 export { admin } from './admin';
+export { usage } from './usage';
