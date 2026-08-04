@@ -1,6 +1,5 @@
-import { Box, Typography, LinearProgress, Chip, Stack, Tooltip } from '@mui/material';
+import { Box, Typography, LinearProgress, Chip, Tooltip } from '@mui/material';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import { useNavigate } from 'react-router';
 import useSWR from 'swr';
 import { api, type PlayerProfileDTO } from '../../api/client';
@@ -54,31 +53,6 @@ function StreakBadge({ currentStreak, longestStreak }: { currentStreak: number; 
   );
 }
 
-function BadgeList({ badges }: { badges: PlayerProfileDTO['badges'] }) {
-  if (badges.length === 0) return null;
-  const latest = badges.slice(-3).reverse();
-  return (
-    <Box sx={{ mt: 1 }}>
-      <Typography variant="caption" color="text.secondary" fontWeight={500}>
-        Recent Badges
-      </Typography>
-      <Stack direction="row" gap={0.5} flexWrap="wrap" sx={{ mt: 0.5 }}>
-        {latest.map((b) => (
-          <Tooltip key={b.badgeKey} title={b.badgeKey.replace(/-/g, ' ')}>
-            <Chip
-              icon={<EmojiEventsIcon sx={{ fontSize: 14 }} />}
-              label={b.badgeKey.split('-').pop()}
-              size="small"
-              variant="outlined"
-              sx={{ fontSize: '0.65rem', height: 22 }}
-            />
-          </Tooltip>
-        ))}
-      </Stack>
-    </Box>
-  );
-}
-
 export function GamificationZone() {
   const navigate = useNavigate();
   const { data: profile, isLoading } = useSWR<PlayerProfileDTO>('player-profile', () =>
@@ -121,7 +95,6 @@ export function GamificationZone() {
           {profile.badges.length} badges
         </Typography>
       </Box>
-      <BadgeList badges={profile.badges} />
     </Box>
   );
 }

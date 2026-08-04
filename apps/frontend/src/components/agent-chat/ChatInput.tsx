@@ -1,6 +1,9 @@
-import { Box, TextField, Button, Alert } from '@mui/material';
+import { Box, TextField, Button, Alert, Typography } from '@mui/material';
 import { useState } from 'react';
 import { copy } from '@flow-app/copy';
+
+const MAX_LENGTH = 4000;
+const WARNING_THRESHOLD = 0.9; // 90% → 3600 chars
 
 interface ChatInputProps {
   onSend: (message: string) => Promise<void>;
@@ -12,8 +15,11 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
 
+  const charCount = newMessage.length;
+  const isOverLimit = charCount > MAX_LENGTH;
+
   const handleSend = async () => {
-    if (!newMessage.trim() || sending) return;
+    if (!newMessage.trim() || sending || isOverLimit) return;
     setSending(true);
     setSendError(null);
     try {
@@ -33,6 +39,8 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
     }
   };
 
+  const placeholder = disabled ? 'Risposta in arrivo...' : 'Type your message...';
+
   return (
     <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
       {sendError && (
@@ -41,21 +49,44 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
         </Alert>
       )}
       <Box sx={{ display: 'flex', gap: 1 }}>
-        <TextField
-          fullWidth
-          placeholder="Type your message..."
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={disabled || sending}
-          size="small"
-          multiline
-          maxRows={4}
-        />
+        <Box sx={{ flex: 1 }}>
+          <TextField
+            fullWidth
+            placeholder={placeholder}
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={disabled || sending}
+            size="small"
+            multiline
+            maxRows={4}
+            inputProps={{ maxLength: MAX_LENGTH }}
+            error={isOverLimit}
+          />
+          {/* Character counter (M8): warning at 90%, error at 100% */}
+          {charCount > 0 && (
+            <Typography
+              variant="caption"
+              sx={{
+                display: 'block',
+                textAlign: 'right',
+                mt: 0.25,
+                color:
+                  isOverLimit
+                    ? 'error.main'
+                    : charCount >= MAX_LENGTH * WARNING_THRESHOLD
+                      ? 'warning.main'
+                      : 'text.secondary',
+              }}
+            >
+              {charCount}/{MAX_LENGTH}
+            </Typography>
+          )}
+        </Box>
         <Button
           variant="contained"
           onClick={handleSend}
-          disabled={disabled || sending || !newMessage.trim()}
+          disabled={disabled || sending || !newMessage.trim() || isOverLimit}
         >
           {sending ? '...' : copy.t('shared.actions.send')}
         </Button>

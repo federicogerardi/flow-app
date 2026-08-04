@@ -289,7 +289,7 @@ Frontend: AssetList + AssetCoverageBar + KnowledgePanel
 
 ## UX Architecture Review — Findings (2026-08-04)
 
-Multi-agent UX review against wiki design specs ([[UI Component Map]], [[Tool UX Architecture]], [[Agent Chat UX]], [[Gamification UX]], [[UX Wireframes]]). 50 findings: 5 critical, 13 high, 23 medium, 9 low.
+Multi-agent UX review against wiki design specs ([[UI Component Map]], [[Tool UX Architecture]], [[Agent Chat UX]], [[Gamification UX]], [[UX Wireframes]]). 50 findings: 5 critical, 13 high, 23 medium, 9 low. **All critical (5/5) and all high (12/13) fixed. 9/23 medium fixed (2026-08-04).**
 
 ### 🔴 Critical (5/5 Fixed)
 
@@ -318,6 +318,50 @@ Multi-agent UX review against wiki design specs ([[UI Component Map]], [[Tool UX
 | H11 | Route `/profile` gamification mancante | ✅ Fixed | `ProfilePage` con stats, badge progress, season |
 | H12 | GamificationZone non cliccabile | ✅ Fixed | `onClick→/profile`, `role="button"`, `tabIndex={0}` |
 | H13 | SessionPage/SessionSummary no step timeline | ⬜ Deferred | Richiede dati step dall'API session detail |
+
+### 🟡 Medium (23 — 9 fixed, 14 open)
+
+Generated from systematic comparison of wiki design authorities vs. actual `apps/frontend/` code (2026-08-04).
+
+| ID | Issue | Wiki Spec Reference | Status |
+|----|-------|---------------------|--------|
+| M1 | FeedbackPanel: elapsed time timer missing | [[Tool UX Architecture#FeedbackPanel]]: "Elapsed time displayed" | ✅ Fixed |
+| M2 | ConversationPage: empty state senza suggested question chips | [[Agent Chat UX#Template 10]]: "large agent avatar + greeting + 3 suggested question chips" | ✅ Fixed |
+| M3 | ConversationPage: no scroll-lock badge "↓ Nuovo messaggio" | [[Agent Chat UX#Template 10]]: "↓ Nuovo messaggio badge when scrolled up" | ✅ Fixed |
+| M4 | ConversationPage: no agent typing indicator (pulsing 3-dot) | [[Agent Chat UX#Interaction Patterns]]: "pulsing 3-dot bubble while sending" | ✅ Fixed |
+| M5 | ConversationPage: message list missing `role="log" aria-live="polite"` | [[Agent Chat UX#Accessibility]]: `role="log" aria-live="polite"` | ✅ Fixed |
+| M6 | ChatMessageBubble: no markdown rendering in agent bubbles | [[Agent Chat UX#Template 10]]: "Markdown rendered in agent bubbles" | ⬜ Open |
+| M7 | ChatMessageBubble: no streaming cursor (blinking `▌`) | [[Agent Chat UX#Interaction Patterns]]: "blinking cursor in in-progress agent message" | ✅ Fixed |
+| M8 | ChatInput: no character counter con `maxLength=4000` | [[Agent Chat UX#Template 10]]: "maxLength=4000, character counter warning at 90%" | ✅ Fixed |
+| M9 | TeamHub: no hero banner | [[Agent Chat UX#Template 9]]: "Il tuo team marketing virtuale" banner | ⬜ Open |
+| M10 | AgentContextDrawer: assets bare chips, missing content preview + deeplinks | [[Agent Chat UX#Template 10b]]: "first 100 chars + Vedi → + Genera →" | ⬜ Open |
+| M11 | GamificationZone: include badge chips individuali (contro spec) | [[Gamification UX#Sidebar]]: "Does NOT include: individual badge icons" | ✅ Fixed |
+| M12 | SetupPanel: long text usa `TextField multiline` invece di `TextareaAutosize` | [[Tool UX Architecture#SetupPanel]]: "TextareaAutosize minRows 3 maxRows 10" | ⬜ Open |
+| M13 | SetupPanel: missing `FileUpload` component per input type `files` | [[Tool UX Architecture#SetupPanel]]: "FileUpload (custom) + LinearProgress" | ⬜ Open |
+| M14 | SetupPanel: missing `InfoBanner` per input type `apiCalls` | [[Tool UX Architecture#SetupPanel]]: "InfoBanner (informational, no user action)" | ⬜ Open |
+| M15 | FeedbackPanel: LinearProgress senza `aria-label` | [[Tool UX Architecture#FeedbackPanel]]: `aria-label="Step {current} of {total}"` | ✅ Fixed |
+| M16 | FeedbackPanel: no step animations (slideInFade/stepPulse) | [[Tool UX Architecture#FeedbackPanel]]: "slideInFade 300ms, stepPulse 1.5s" | ⬜ Open |
+| M17 | SessionSummary: solo .md download (missing .txt/.docx/.pdf) | [[Tool UX Architecture#SessionSummary]]: ".md/.txt/.docx/.pdf" | ⬜ Open |
+| M18 | ChatMessageBubble: border-radius piatto (8px), non asimmetrico | [[Agent Chat UX#Template 10]]: user `16px 16px 4px 16px`, agent `16px 16px 16px 4px` | ✅ Fixed |
+| M19 | ConversationPage: no date separator su multi-day conversations | [[Agent Chat UX#Template 10]]: "Date separator" | ⬜ Open |
+| M20 | ChatMessageBubble: agent bubbles senza emoji avatar + border | [[Agent Chat UX#Template 10]]: "agent emoji top-left, border 1px divider" | ✅ Fixed |
+| M21 | DashboardPage: QuickGenerateBar/AssetCoverageBar placement non allineato a WorkspaceDashboard spec | [[UI Component Map#WorkspaceDashboard]]: "5-section order" | ⬜ Open |
+| M22 | AppShell: sidebar non collapsible | [[UI Component Map#AppShell]]: "280px collapsible sidebar" | ⬜ Open |
+| M23 | ToastSystem: channel positioning errato (tutto top-right, spec: bottom-center gamification) | [[Gamification UX#Toast Priority System]]: "gamification: bottom-center" | ⬜ Open |
+
+### 🟢 Low (9 — 0 fixed, 9 open)
+
+| ID | Issue | Wiki Spec Reference | Status |
+|----|-------|---------------------|--------|
+| L1 | `useBreadcrumbs()` hook mai usato dalle pagine — usano ancora `breadcrumbs` prop su PageHeader | [[UI Component Map#PageHeader]] | ⬜ Open |
+| L2 | Sidebar usa `Drawer` non `<nav>` semantico (role esplicito ma non elemento) | [[UI Component Map#AppShell]]: "permanent/temporary Drawer" | ⬜ Open |
+| L3 | Agent emoji in ChatMessageBubble senza `aria-hidden` | [[Agent Chat UX#Accessibility]]: "All agent emoji: aria-hidden=true" | ⬜ Open |
+| L4 | CompletionBanner integrato in ToolPageLayout ma non in SessionPage standalone | [[UI Component Map#CompletionBanner]] | ⬜ Open |
+| L5 | FeedbackPanel mancano animazioni `slideInFade` spec (solo transizione base) | [[Tool UX Architecture#FeedbackPanel]]: "slideInFade 300ms" | ⬜ Open |
+| L6 | WorkspaceCard non integrato in AppShell workspace switcher (usa Select inline) | [[UI Component Map#WorkspaceCard]] | ⬜ Open |
+| L7 | SessionSummary manca docx/pdf download format | [[Tool UX Architecture#SessionSummary]]: ".md/.txt/.docx/.pdf" | ⬜ Open |
+| L8 | `prefers-reduced-motion` mancante in FeedbackPanel step transitions | [[Tool UX Architecture#FeedbackPanel]]: "respects prefers-reduced-motion" | ⬜ Open |
+| L9 | AssetCoverageBar: pulsante "+" per asset mancanti non funzionale | [[UI Component Map#AssetCoverageBar]]: "Genera -> CTA for missing types" | ⬜ Open |
 
 ---
 

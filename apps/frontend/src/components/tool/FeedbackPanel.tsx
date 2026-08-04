@@ -2,6 +2,7 @@ import { Box, Typography, LinearProgress, Stack } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import { copy } from '@flow-app/copy';
+import { useEffect, useState, useRef } from 'react';
 
 interface StepProgressData {
   current: number;
@@ -11,6 +12,30 @@ interface StepProgressData {
 interface FeedbackPanelProps {
   progress: StepProgressData | null;
   status: string;
+}
+
+function ElapsedTimer({ startedAt }: { startedAt: number }) {
+  const [elapsed, setElapsed] = useState(0);
+  const rafRef = useRef<number>(null);
+
+  useEffect(() => {
+    const tick = () => {
+      setElapsed(Math.floor((Date.now() - startedAt) / 1000));
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    };
+  }, [startedAt]);
+
+  const mins = Math.floor(elapsed / 60);
+  const secs = elapsed % 60;
+  return (
+    <Typography variant="body2" color="text.secondary">
+      {mins}:{secs.toString().padStart(2, '0')}
+    </Typography>
+  );
 }
 
 function StepIndicator({ index, isCompleted, isActive }: { index: number; isCompleted: boolean; isActive: boolean }) {
@@ -58,6 +83,8 @@ function StepIndicator({ index, isCompleted, isActive }: { index: number; isComp
 }
 
 export function FeedbackPanel({ progress, status }: FeedbackPanelProps) {
+  const [startedAt] = useState(() => Date.now());
+
   if (status === 'completed' || status === 'failed') {
     return null; // SessionSummary handles final state
   }
@@ -76,13 +103,16 @@ export function FeedbackPanel({ progress, status }: FeedbackPanelProps) {
   return (
     <Box role="status" aria-live="polite">
       <Box sx={{ mb: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
           <Typography variant="body2" fontWeight={600}>
             {copy.t('toolPage.progress.title')}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {progress.current}/{progress.total}
-          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <Typography variant="body2" color="text.secondary">
+              {progress.current}/{progress.total}
+            </Typography>
+            <ElapsedTimer startedAt={startedAt} />
+          </Box>
         </Box>
         <LinearProgress
           variant="determinate"
@@ -92,6 +122,7 @@ export function FeedbackPanel({ progress, status }: FeedbackPanelProps) {
             borderRadius: 4,
             bgcolor: 'action.hover',
           }}
+          aria-label={`Step ${progress.current} of ${progress.total}`}
         />
       </Box>
 
