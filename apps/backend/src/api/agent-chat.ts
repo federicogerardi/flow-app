@@ -75,7 +75,11 @@ export function createAgentChatRoutes(
           agentKey: AgentKey.from(agentKey),
         });
 
-        res.status(201).json(result);
+        res.status(201).json({
+          id: result.conversationId,
+          agentKey: result.agentKey.toString(),
+          agentName: result.agentName,
+        });
       } catch (error) {
         next(error);
       }
