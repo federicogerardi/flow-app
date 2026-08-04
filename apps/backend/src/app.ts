@@ -13,10 +13,11 @@ import { createWorkspaceRoutes } from './api/workspaces.js';
 import { createAgentChatRoutes } from './api/agent-chat.js';
 import { createAuthRoutes } from './api/auth/auth-routes.js';
 import { createUsageRoutes } from './api/usage/usage-routes.js';
+import { createGamificationRoutes } from './api/gamification/gamification-routes.js';
 import { devAuthMiddleware } from './middleware/dev-auth.js';
 import { authenticate, authenticateOrDev } from './middleware/authenticate.js';
 import { requireWorkspaceRole } from './middleware/workspace-role.js';
-import { type SessionRepository, type WorkspaceRepository, type ConversationRepository, type QuotaRepository, type PromptComposer, type PromptTemplateRepository, MembershipRole } from '@flow-app/domain';
+import { type SessionRepository, type WorkspaceRepository, type ConversationRepository, type QuotaRepository, type PromptComposer, type PromptTemplateRepository, MembershipRole, type PlayerProfileRepository, type WorkspaceChallengeRepository } from '@flow-app/domain';
 import type { JobEventBridge } from './infrastructure/job-event-bridge.js';
 import type { LlmGateway } from './infrastructure/llm-gateway.js';
 import type { TokenService } from './infrastructure/token-service.js';
@@ -28,6 +29,8 @@ export interface AppDeps {
   workspaceRepo: WorkspaceRepository;
   conversationRepo: ConversationRepository;
   quotaRepo: QuotaRepository;
+  playerProfileRepo: PlayerProfileRepository;
+  workspaceChallengeRepo: WorkspaceChallengeRepository;
   eventBridge: JobEventBridge;
   queue: Queue;
   llmGateway: LlmGateway;
@@ -122,6 +125,16 @@ export function createApp(deps: AppDeps) {
   // Usage routes (quota + credits)
   const usageRoutes = createUsageRoutes(deps.quotaRepo);
   app.use('/api/usage', usageRoutes);
+
+  // Gamification routes
+  const gamificationRoutes = createGamificationRoutes(
+    deps.db,
+    deps.playerProfileRepo,
+    deps.workspaceChallengeRepo,
+    deps.workspaceRepo,
+    deps.tokenService,
+  );
+  app.use(gamificationRoutes);
 
   app.use(errorHandler);
 
