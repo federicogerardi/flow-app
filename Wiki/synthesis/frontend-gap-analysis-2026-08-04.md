@@ -283,6 +283,78 @@ Frontend: AssetList + AssetCoverageBar + KnowledgePanel
 | Sprint 2 | B (items 5–6) + C + D (items 1–3) | ~6h | ✅ | PromoteButton, ChatMessageBubble, ChatInput, TeamHub, AgentCard, WorkspaceMembers + invite dialog |
 | Sprint 3 | E | ~4h | ✅ | GamificationZone, ToastSystem (LevelUpBanner+LuckyBonusSparkle), BadgeProgressRing, ActivityPulse, SeasonCountdown, ChallengeVoting, StreakModeToggle |
 | Sprint 4 | F + G | ~5h | ✅ | Asset CRUD backend (AssetRepository + 5 API routes + Kysely) + frontend (AssetList, AssetCoverageBar), ConfirmDialog, CompletionBanner, QuickGenerateBar, Dark mode toggle |
+| Sprint 5 | Remaining components + tech debt | ~5d | 🟡 | WorkspaceCard, AgentContextDrawer, XState, DTO cleanup, SSE reconnect, breadcrumb, fonts |
+
+---
+
+## Sprint 5 — Implementation Plan (Remaining Non-Blocking)
+
+### Overview
+
+7 items remain — 2 components + 5 tech debt. None block the core workflow. Estimated ~5 days.
+
+### Phase 1 — Component Extraction (1.5h)
+
+| Step | File | Action |
+|------|------|--------|
+| 1a | `src/components/workspace/WorkspaceCard.tsx` | **New** — Extract from inline workspace selecor in AppShell. Props: `{ workspace, isActive, onClick }`. MUI Card + accent dot + name + member count. |
+| 1b | `src/layout/AppShell.tsx` | **Mod** — Replace inline workspace MenuItem with `<WorkspaceCard>` |
+| 1c | `src/components/agent-chat/AgentContextDrawer.tsx` | **New** — MUI Drawer (right). Two sections: "Workspace Assets" (SWR from `listAssets`) + "Recent Sessions" (SWR from `listSessions`). Open/close via `useState` in ConversationPage. |
+| 1d | `src/pages/ConversationPage.tsx` | **Mod** — Add IconButton in header to toggle AgentContextDrawer |
+
+### Phase 2 — DTO Cleanup (1h)
+
+| Step | File | Action |
+|------|------|--------|
+| 2a | `packages/contracts/src/` | **Mod** — Add DTO interfaces: `WorkspaceDTO`, `MessageDTO`, `ConversationDTO`, `ConversationListItemDTO`, `AgentDTO` |
+| 2b | `packages/contracts/src/index.ts` | **Mod** — Re-export new DTOs |
+| 2c | `apps/frontend/src/api/client.ts` | **Mod** — Replace 7 inline interfaces with `import type { ... } from '@flow-app/contracts'`. Remove `// TODO` comments. |
+
+### Phase 3 — Breadcrumb Centralization (0.5h)
+
+| Step | File | Action |
+|------|------|--------|
+| 3a | `src/layout/AppShell.tsx` | **Mod** — Add `BreadcrumbContext` with `useBreadcrumbs()` hook. Each page calls `setBreadcrumbs([...])` in useEffect. |
+| 3b | All pages | **Mod** — Replace inline `<Breadcrumbs>` prop in `PageHeader` with `useBreadcrumbs()` hook call. Remove `breadcrumbs` prop from PageHeader. |
+
+### Phase 4 — SSE Reconnect (1h)
+
+| Step | File | Action |
+|------|------|--------|
+| 4a | `src/api/sse-client.ts` | **Mod** — `connect()` retries dropped connections: exponential backoff (1s, 2s, 4s, 8s, max 30s). Max 5 retries. `onError` handler calls `reconnect()` internally. Reconnect resubscribes all handlers. |
+
+### Phase 5 — Fonts + Polish (0.5h)
+
+| Step | File | Action |
+|------|------|--------|
+| 5a | `index.html` | **Mod** — Add `<link>` for Google Fonts: Plus Jakarta Sans + JetBrains Mono |
+| 5b | `src/theme/tokens.ts` | **Mod** — Update `fontFamily: '"Plus Jakarta Sans", ...'` for headings, `fontFamily: '"JetBrains Mono", monospace'` for code |
+
+### Phase 6 — XState toolPageMachine (3h)
+
+| Step | File | Action |
+|------|------|--------|
+| 6a | `packages/domain/src/generation/` | **Verify** — `ToolPageMachine` already exists in [[ToolPage Machine (XState v5)]] wiki spec. Check if it's implemented in code or only in wiki. |
+| 6b | `apps/frontend/src/machines/tool-page-machine.ts` | **New** (or import from domain) — 8-state machine: `draftEmpty → configuring → ready → submitting → running → completed|failed|cancelled` |
+| 6c | `apps/frontend/src/components/layout/ToolPageLayout.tsx` | **New** — Wraps ToolPage with `useActor(toolPageMachine)`. Derives phase from state value. Renders SetupPanel (configuring) → FeedbackPanel (running) → SessionSummary (completed). |
+| 6d | `apps/frontend/src/pages/ToolPage.tsx` | **Mod** — Replace `useState` (inputs, submitting, error) with `ToolPageLayout` which owns the machine. |
+| 6e | Terminal | `npm install xstate @xstate/react` |
+
+### Execution Order
+
+```
+Phase 1 (1.5h) → Phase 2 (1h) → Phase 3 (0.5h) → Phase 4 (1h) → Phase 5 (0.5h) → Phase 6 (3h)
+```
+
+No dependencies between phases — can be done in any order. Phase 6 is the heaviest (XState).
+
+### Verification
+
+```bash
+tsc --noEmit -p apps/frontend/tsconfig.json
+npm run build --workspace=apps/frontend
+npx vitest run
+```
 
 ---
 
