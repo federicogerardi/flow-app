@@ -200,6 +200,7 @@
   },
   "active": "23889eaa27ad3006",
   "lastOpenFiles": [
+    "packages/domain/src/shared/random-uuid.ts",
     "node_modules/@types/node/compatibility/iterators.d.ts",
     "node_modules/@types/node/compatibility/indexable.d.ts",
     "node_modules/@types/node/compatibility/index.d.ts",
@@ -210,7 +211,6 @@
     "apps/backend/dist/application/usage/consume-credits.usecase.js.map",
     "apps/backend/dist/application/usage/consume-credits.usecase.js",
     "apps/backend/dist/application/usage/consume-credits.usecase.d.ts.map",
-    "apps/backend/dist/application/usage/consume-credits.usecase.d.ts",
     "Wiki/synthesis/phase-13-implementation-plan.md",
     "Wiki/synthesis/phase-12-implementation-plan.md",
     "Wiki/synthesis/phase-11-testing-plan.md",

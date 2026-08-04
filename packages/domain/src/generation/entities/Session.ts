@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from '../../shared/random-uuid';
 import { SessionStatus } from '../value-objects/SessionStatus';
 import type { ToolKey } from '../value-objects/ToolKey';
 import { SessionLifecycle, type SessionEventType, type SessionEvent } from '../session-lifecycle';

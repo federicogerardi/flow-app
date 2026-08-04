@@ -1,5 +1,5 @@
 import { Identifier } from '../../shared/identifier';
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from '../../shared/random-uuid';
 
 export class ArtifactId extends Identifier<string> {
   private constructor(value: string) {

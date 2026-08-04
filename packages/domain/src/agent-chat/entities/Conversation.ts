@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from '../../shared/random-uuid';
 import { AgentKey } from '../value-objects/AgentKey';
 import { ConversationStatus } from '../value-objects/ConversationStatus';
 import type { DomainEvent } from '../../shared/domain-event';

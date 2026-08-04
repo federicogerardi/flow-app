@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from '../../shared/random-uuid';
 import { TransactionReason } from '../value-objects/TransactionReason';
 
 export class CreditTransaction {

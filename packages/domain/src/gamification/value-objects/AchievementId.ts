@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from '../../shared/random-uuid';
 
 export class AchievementId {
   private constructor(private readonly _value: string) {}

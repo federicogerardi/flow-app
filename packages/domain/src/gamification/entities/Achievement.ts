@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from '../../shared/random-uuid';
 import type { BadgeKey } from '../value-objects/BadgeKey';
 
 export class Achievement {

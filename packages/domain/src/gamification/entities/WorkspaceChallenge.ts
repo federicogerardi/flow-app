@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from '../../shared/random-uuid';
 import type { DomainEvent } from '../../shared/domain-event';
 import type { ChallengeKey } from '../value-objects/ChallengeKey';
 import { ChallengeStatus } from '../value-objects/ChallengeStatus';

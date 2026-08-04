@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from '../../shared/random-uuid';
 import { ArtifactStatus } from '../value-objects/ArtifactStatus';
 
 export class Artifact {

@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from '../../shared/random-uuid';
 import type { DomainEvent } from '../../shared/domain-event';
 import { Plan } from '../value-objects/Plan';
 import type { CreditAmount } from '../value-objects/Plan';

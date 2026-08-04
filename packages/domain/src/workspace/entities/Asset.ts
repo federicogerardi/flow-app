@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from '../../shared/random-uuid';
 import { AssetType, type AssetTypeValue } from '../value-objects/AssetType';
 import { AssetSource, type AssetSourceValue } from '../value-objects/AssetSource';
 

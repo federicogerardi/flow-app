@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from '../shared/random-uuid';
 import type { Email } from './value-objects/Email';
 import { UserRole } from './value-objects/UserRole';
 import { UserStatus } from './value-objects/UserStatus';

@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from '../../shared/random-uuid';
 import { MessageRole } from '../value-objects/MessageRole';
 
 export class Message {
