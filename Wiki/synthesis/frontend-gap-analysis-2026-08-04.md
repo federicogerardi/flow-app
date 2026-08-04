@@ -273,7 +273,7 @@ Frontend: AssetList + AssetCoverageBar + KnowledgePanel
 | B — Tool Workflow (items 5–6) | 1 | None | ✅ Done (2026-08-04) |
 | C — Agent Chat | 2–3 | APIs ✅ | ✅ Done (2026-08-04) |
 | D — Workspace Mgmt | 2 (+ backend 1) | Partial ⬜ | 🟡 Members done, edit/delete blocked by backend |
-| E — Gamification | 3–4 | APIs ✅ | 🟡 Pending |
+| E — Gamification | 3–4 | APIs ✅ | ✅ Done (2026-08-04) |
 | F — Assets | 1.5 (+ backend 2–3) | ⬜ | 🟡 Pending |
 | G — Tech Debt + Polish | 4–5 | None | 🟡 Pending |
 | **Remaining** | **~13–19 days** | | |
@@ -284,8 +284,8 @@ Frontend: AssetList + AssetCoverageBar + KnowledgePanel
 |--------|--------|------|--------|---------|
 | Sprint 1 | A + B (items 1–4) | ~7h | ✅ | QuotaCounter, Markdown, FeedbackPanel, SessionSummary, ReadinessSnapshot |
 | Sprint 2 | B (items 5–6) + C + D (items 1–3) | ~6h | ✅ | PromoteButton, ChatMessageBubble, ChatInput, TeamHub, AgentCard, WorkspaceMembers + invite dialog |
-| Sprint 3 | E + G (items 1–2) | 5–6 | 🟡 | Gamification sidebar + XState migration |
-| Sprint 4 | F (backend + frontend) + G (items 3–5) | 5–6 | 🟡 | Asset management + dark mode + polish |
+| Sprint 3 | E | ~4h | ✅ | GamificationZone, ToastSystem (LevelUpBanner+LuckyBonusSparkle), BadgeProgressRing, ActivityPulse, SeasonCountdown, ChallengeVoting, StreakModeToggle |
+| Sprint 4 | F (backend + frontend) + G | 3–5 | 🟡 | Asset management + dark mode + polish |
 
 ---
 

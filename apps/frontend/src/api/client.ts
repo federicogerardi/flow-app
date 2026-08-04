@@ -75,6 +75,53 @@ export interface AgentDTO {
   capabilities: string[];
 }
 
+// ── Gamification DTOs ─────────────────────────────────────────────────────────
+
+export interface PlayerProfileDTO {
+  xpTotal: number;
+  level: number;
+  levelLabel: string;
+  levelProgress: number;
+  nextLevelXP: number;
+  currentStreak: number;
+  longestStreak: number;
+  badges: { badgeKey: string; awardedAt: string }[];
+  season: string;
+}
+
+export interface LeaderboardEntryDTO {
+  rank: number;
+  userId: string;
+  xp?: number;
+  xpPercent: number;
+  isSelf: boolean;
+}
+
+export interface WorkspaceHealthDTO {
+  score: number;
+  label: string;
+  color: string;
+}
+
+export interface ChallengeDTO {
+  id: string;
+  key: string;
+  progress: number;
+  target: number;
+  status: string;
+  weekStart: string;
+  completedAt: string | null;
+}
+
+export interface SeasonDTO {
+  seasonId: string;
+  label: string;
+  quarter: number;
+  year: number;
+  startDate: string;
+  endDate: string;
+}
+
 // ── API Client ────────────────────────────────────────────────────────────────
 
 export class ApiClientError extends Error {
@@ -239,6 +286,28 @@ class ApiClient {
 
   async archiveConversation(conversationId: string) {
     return this.request<void>('POST', `/api/conversations/${conversationId}/archive`);
+  }
+
+  // ── Gamification ─────────────────────────────────────────────────────────────
+
+  async getPlayerProfile() {
+    return this.request<PlayerProfileDTO>('GET', '/api/me/profile');
+  }
+
+  async getLeaderboard(workspaceId: string) {
+    return this.request<{ leaderboard: LeaderboardEntryDTO[]; season: string }>('GET', `/api/workspaces/${workspaceId}/leaderboard`);
+  }
+
+  async getWorkspaceHealth(workspaceId: string) {
+    return this.request<WorkspaceHealthDTO>('GET', `/api/workspaces/${workspaceId}/health`);
+  }
+
+  async getChallenges(workspaceId: string) {
+    return this.request<{ challenges: ChallengeDTO[] }>('GET', `/api/workspaces/${workspaceId}/challenges`);
+  }
+
+  async getCurrentSeason() {
+    return this.request<SeasonDTO>('GET', '/api/seasons/current');
   }
 }
 

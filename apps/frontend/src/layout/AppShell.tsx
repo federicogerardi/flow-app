@@ -17,6 +17,7 @@ import { copy } from '@flow-app/copy';
 import { useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { QuotaCounter } from '../components/usage/QuotaCounter';
+import { GamificationZone } from '../components/gamification/GamificationZone';
 
 const DRAWER_WIDTH = 280;
 
@@ -208,6 +209,9 @@ export function AppShell() {
 
         {/* Quota counter */}
         <QuotaCounter />
+
+        {/* Gamification */}
+        <GamificationZone />
 
         <Divider sx={{ mx: 2 }} />
 
