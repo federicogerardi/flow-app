@@ -74,7 +74,7 @@ export function FeedbackPanel({ progress, status }: FeedbackPanelProps) {
   }
 
   return (
-    <Box>
+    <Box role="status" aria-live="polite">
       <Box sx={{ mb: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
           <Typography variant="body2" fontWeight={600}>

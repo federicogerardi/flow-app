@@ -1,5 +1,5 @@
 import { Box, Card, CardContent, Chip, Typography } from '@mui/material';
-import { useParams } from 'react-router';
+import { useParams, useNavigate } from 'react-router';
 import { useSession } from '../api/hooks';
 import { PageHeader } from '../components/PageHeader';
 import { FeedbackPanel } from '../components/tool/FeedbackPanel';
@@ -11,6 +11,7 @@ import { statusColorMap } from '../shared/statusColors';
 
 export default function SessionPage() {
   const { sessionId, workspaceId } = useParams<{ sessionId: string; workspaceId: string }>();
+  const navigate = useNavigate();
   const { session, progress, loading, error } = useSession(sessionId ?? null);
 
   if (loading) return <LoadingSkeleton />;
@@ -22,7 +23,7 @@ export default function SessionPage() {
       <PageHeader
         title={`Session: ${session.toolKey}`}
         breadcrumbs={[
-          { label: copy.t('workspace.nav.home'), path: '/dashboard' },
+          { label: copy.t('workspace.nav.home'), path: workspaceId ? `/workspaces/${workspaceId}` : '/dashboard' },
           { label: 'Session' },
         ]}
       />
@@ -36,6 +37,12 @@ export default function SessionPage() {
 
           {session.status === 'running' && (
             <FeedbackPanel progress={progress} status={session.status} />
+          )}
+
+          {session.status === 'failed' && (
+            <Box sx={{ mt: 2 }}>
+              <ErrorState message="Session failed" onRetry={() => navigate(`/workspaces/${workspaceId}/tools/${session.toolKey}`)} />
+            </Box>
           )}
 
           <Typography variant="body2" color="text.secondary">

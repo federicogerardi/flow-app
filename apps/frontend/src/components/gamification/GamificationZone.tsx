@@ -1,6 +1,7 @@
 import { Box, Typography, LinearProgress, Chip, Stack, Tooltip } from '@mui/material';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import { useNavigate } from 'react-router';
 import useSWR from 'swr';
 import { api, type PlayerProfileDTO } from '../../api/client';
 
@@ -79,6 +80,7 @@ function BadgeList({ badges }: { badges: PlayerProfileDTO['badges'] }) {
 }
 
 export function GamificationZone() {
+  const navigate = useNavigate();
   const { data: profile, isLoading } = useSWR<PlayerProfileDTO>('player-profile', () =>
     api.getPlayerProfile(),
   );
@@ -101,7 +103,15 @@ export function GamificationZone() {
         borderRadius: 1,
         mx: 1,
         bgcolor: 'action.hover',
+        cursor: 'pointer',
+        transition: 'bgcolor 150ms ease',
+        '&:hover': { bgcolor: 'action.selected' },
       }}
+      onClick={() => navigate('/profile')}
+      role="button"
+      tabIndex={0}
+      aria-label="View player profile"
+      onKeyDown={(e) => { if (e.key === 'Enter') navigate('/profile'); }}
     >
       <LevelBadge profile={profile} />
       <XPBar profile={profile} />

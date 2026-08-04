@@ -94,7 +94,7 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Test Workspace')).toBeDefined();
     expect(screen.getByText('workspace.dashboard.subtitle')).toBeDefined();
     expect(screen.getByText('workspace.dashboard.tools')).toBeDefined();
-    expect(screen.getByText(/Blog Post/)).toBeDefined();
+    expect(screen.getAllByText(/Blog Post/).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/Landing Funnel/)).toBeDefined();
   });
 
@@ -151,7 +151,7 @@ describe('DashboardPage', () => {
     renderDashboard('ws-1');
 
     expect(screen.getByText('workspace.dashboard.recentSessions')).toBeDefined();
-    expect(screen.getByText('Blog Post')).toBeDefined();
+    expect(screen.getAllByText('Blog Post').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Landing Page')).toBeDefined();
     expect(screen.getByText('completed')).toBeDefined();
     expect(screen.getByText('failed')).toBeDefined();

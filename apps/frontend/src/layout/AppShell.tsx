@@ -95,7 +95,7 @@ export function AppShell() {
     { label: copy.t('workspace.nav.home'), icon: <DashboardIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}` : '/dashboard' },
     { label: copy.t('workspace.nav.tools'), icon: <BuildIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/tools/blog-post` : '/dashboard' },
     { label: copy.t('workspace.nav.sessions'), icon: <PlayCircleIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}` : '/dashboard' },
-    { label: copy.t('workspace.nav.assets'), icon: <InventoryIcon />, path: '#', disabled: true },
+    { label: copy.t('workspace.nav.assets'), icon: <InventoryIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/assets` : '/dashboard' },
     { label: copy.t('workspace.nav.team'), icon: <PeopleIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/team` : '/dashboard' },
   ];
 
@@ -106,6 +106,27 @@ export function AppShell() {
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+      {/* Skip to content — WCAG 2.1 AA */}
+      <Box
+        component="a"
+        href="#main-content"
+        sx={{
+          position: 'absolute',
+          left: -9999,
+          top: 8,
+          zIndex: 9999,
+          px: 2,
+          py: 1,
+          bgcolor: 'primary.main',
+          color: 'primary.contrastText',
+          borderRadius: 1,
+          textDecoration: 'none',
+          fontWeight: 600,
+          '&:focus': { left: 8 },
+        }}
+      >
+        Skip to content
+      </Box>
       <AppBar position="fixed" role="banner" sx={{ zIndex: (t) => t.zIndex.drawer + 1, bgcolor: 'background.paper', color: 'text.primary', boxShadow: 1 }}>
         <Toolbar>
           {!isDesktop && (
@@ -287,7 +308,7 @@ export function AppShell() {
         </Box>
       </Drawer>
 
-      <Box component="main" role="main" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
+      <Box component="main" role="main" id="main-content" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
         <BreadcrumbContext.Provider value={{ crumbs, setBreadcrumbs: setCrumbs }}>
           <Outlet />
         </BreadcrumbContext.Provider>

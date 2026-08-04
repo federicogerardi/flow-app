@@ -12,6 +12,8 @@ import { ErrorState } from '../components/ErrorState';
 import { LoadingSkeleton } from '../components/LoadingSkeleton';
 import { ToolCard } from '../components/tool/ToolCard';
 import { SessionList } from '../components/workspace/SessionList';
+import { QuickGenerateBar } from '../components/shared/QuickGenerateBar';
+import { AssetCoverageBar } from '../components/workspace/AssetCoverageBar';
 import { copy } from '@flow-app/copy';
 
 const TOOLS = [
@@ -159,7 +161,13 @@ export default function DashboardPage() {
       </Grid>
 
       <Box sx={{ mt: 4 }}>
-        <Typography variant="h3" sx={{ mb: 2 }}>
+      <QuickGenerateBar workspaceId={workspaceId!} />
+
+      <Box sx={{ mb: 4 }}>
+        <AssetCoverageBar workspaceId={workspaceId!} />
+      </Box>
+
+      <Typography variant="h3" sx={{ mb: 2 }}>
           {copy.t('workspace.dashboard.recentSessions')}
         </Typography>
         <SessionList workspaceId={workspaceId!} />

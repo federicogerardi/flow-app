@@ -138,6 +138,36 @@ export const handlers = [
   http.post(`${API_BASE}/api/conversations/:id/archive`, () => {
     return HttpResponse.json({ success: true });
   }),
+
+  // Usage / Quota
+  http.get(`${API_BASE}/api/usage/credits`, () => {
+    return HttpResponse.json({
+      credits: { used: 0, limit: 250, remaining: 250, percent: 0 },
+      artifacts: { used: 0, limit: 1000, remaining: 1000 },
+      plan: 'free',
+      period: '2026-08',
+    });
+  }),
+
+  // Gamification
+  http.get(`${API_BASE}/api/me/profile`, () => {
+    return HttpResponse.json({
+      xpTotal: 150,
+      level: 1,
+      levelLabel: 'Novice',
+      levelProgress: 75,
+      nextLevelXP: 200,
+      currentStreak: 3,
+      longestStreak: 5,
+      badges: [],
+      season: '2026-Q3',
+    });
+  }),
+
+  // Assets
+  http.get(`${API_BASE}/api/workspaces/:id/assets`, () => {
+    return HttpResponse.json({ assets: [] });
+  }),
 ];
 
 export const server = setupServer(...handlers);
