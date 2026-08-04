@@ -12,6 +12,39 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-04] implementation | Sprint 4 — Asset CRUD + Dark Mode + Polish
+
+Executed Sprint 4 — all remaining tracks, ~5h. All 4 sprints complete: ~22h total, 4 commits, 69/674 tests.
+
+**Backend Asset CRUD** (Track F): `AssetRepository` interface + `KyselyAssetRepository`, `AssetsTable` in DB types, 5 API routes (GET/POST workspace assets, GET/PUT/DELETE by id), wired in app.ts + server.ts.
+
+**Frontend** (Tracks F+G): `AssetList` (list + delete), `AssetCoverageBar` (5-type progress), `ConfirmDialog`, `CompletionBanner`, `QuickGenerateBar`. Dark mode: light/dark/system toggle in AppShell header, persisted via ThemeProvider context.
+
+**Wiki updated**: [[frontend-gap-analysis-2026-08-04|gap analysis]] (all tracks ✅, component inventory refreshed, P1 blockers resolved), [[log]] (this entry), [[Maintenance Log]].
+
+**Verification**: `tsc --build` clean, `vite build` 2.51s, `eslint` 0/0, `vitest` 69/674.
+
+---
+
+## [2026-08-04] implementation | Sprint 3 — Gamification UI — 8 components + toast system
+
+Executed Sprint 3 — 8 gamification components, ~4h:
+
+- `GamificationZone` — sidebar: level badge, XP bar, streak, recent badges (SWR from `/api/me/profile`)
+- `ToastSystem` — `ToastProvider` context: `LevelUpBanner` (gradient, slide-in) + `LuckyBonusSparkle` (sparkle animation)
+- `BadgeProgressRing` — circular progress (MUI CircularProgress)
+- `ActivityPulse` — ambient pulse indicator in header
+- `SeasonCountdown` — chip with days-left tooltip
+- `ChallengeVoting` — active/completed challenge cards with progress bars
+- `StreakModeToggle` — daily vs business days
+- API client: +`getPlayerProfile`, `getLeaderboard`, `getWorkspaceHealth`, `getChallenges`, `getCurrentSeason` + 6 DTOs
+
+**Verification**: `tsc --noEmit` 0, `vite build` 2.03s, `eslint` 0/0, `vitest` 69/674.
+
+**Updated**: [[frontend-gap-analysis-2026-08-04|gap analysis]] (Sprint 3 ✅), [[log]] (this entry), [[Maintenance Log]].
+
+---
+
 ## [2026-08-04] implementation | Sprint 2 — PromoteButton + Agent Chat + Workspace Members
 
 Executed Sprint 2 — 4 phases, ~6h:

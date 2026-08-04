@@ -61,65 +61,65 @@ parent: synthesis/implementation-roadmap-2026-08-01
 
 Each entry maps to a wiki design authority page, a specific file path, and the API endpoint it consumes.
 
-#### Workspace Components (0/5 built)
+#### Workspace Components (2/5 built — AssetList, AssetCoverageBar done; backend asset CRUD complete)
 
-| Component | File target | Design authority | API dependency | Effort |
-|-----------|-------------|-----------------|----------------|--------|
-| `WorkspaceCard` | `src/components/workspace/WorkspaceCard.tsx` | [[UI Component Map#WorkspaceCard.tsx]] | `GET /api/workspaces` | 0.5d |
-| `WorkspaceForm` | `src/components/workspace/WorkspaceForm.tsx` | [[UI Component Map#WorkspaceForm.tsx]] | `PUT /api/workspaces/:id` ⬜ (not built) | 0.5d |
-| `SessionList` | `src/components/workspace/SessionList.tsx` | [[Session List - Live Status]] | `GET /api/sessions` ✅ | 1d |
-| `AssetList` | `src/components/workspace/AssetList.tsx` | [[UI Component Map#AssetList.tsx]] | `GET /api/workspaces/:id/assets` ⬜ (not built) | 1d |
-| `AssetCoverageBar` | `src/components/workspace/AssetCoverageBar.tsx` | [[UI Component Map#AssetCoverageBar.tsx]] | `GET /api/workspaces/:id/assets` ⬜ | 0.5d |
+| Component | File target | Design authority | API dependency | Effort | Status |
+|-----------|-------------|-----------------|----------------|--------|--------|
+| `WorkspaceCard` | `src/components/workspace/WorkspaceCard.tsx` | [[UI Component Map#WorkspaceCard.tsx]] | `GET /api/workspaces` ✅ | 0.5d | 🟡 Pending |
+| `WorkspaceForm` | `src/components/workspace/WorkspaceForm.tsx` | [[UI Component Map#WorkspaceForm.tsx]] | `PUT /api/workspaces/:id` ⬜ | 0.5d | 🟡 Blocked |
+| `SessionList` | `src/components/workspace/SessionList.tsx` | [[Session List - Live Status]] | `GET /api/sessions` ✅ | 1d | 🟡 Pending |
+| `AssetList` | `src/components/workspace/AssetList.tsx` | [[UI Component Map#AssetList.tsx]] | `GET /api/workspaces/:id/assets` ✅ | 1d | ✅ |
+| `AssetCoverageBar` | `src/components/workspace/AssetCoverageBar.tsx` | [[UI Component Map#AssetCoverageBar.tsx]] | `GET /api/workspaces/:id/assets` ✅ | 0.5d | ✅ |
 
-**Blocker**: Asset CRUD endpoints (`GET/POST/PUT/DELETE /api/workspaces/:id/assets`) are planned (⬜) but not implemented. AssetList and AssetCoverageBar are blocked until backend asset routes exist.
+**Blocker**: Asset CRUD endpoints are now ✅ implemented (Sprint 4). AssetList and AssetCoverageBar are built and functional.
 
-#### Tool Components (0/6 built — all embedded in pages)
+#### Tool Components (3/6 built — FeedbackPanel, ReadinessSnapshot, SessionSummary done)
 
-| Component | File target | Design authority | API dependency | Effort |
-|-----------|-------------|-----------------|----------------|--------|
-| `SetupPanel` | `src/components/tool/SetupPanel.tsx` | [[Tool UX Architecture#The SetupPanel — Generic Input Renderer]] | ToolDefinition from `GET /api/agents` ✅ | 1.5d |
-| `KnowledgePanel` | `src/components/tool/KnowledgePanel.tsx` | [[Tool UX Architecture]] | `GET /api/workspaces/:id/assets` ⬜ | 1d |
-| `ReadinessSnapshot` | `src/components/tool/ReadinessSnapshot.tsx` | [[ReadinessSnapshot UI]] | Readiness from `POST /api/tools/:toolKey/sessions` 422 response ✅ | 0.5d |
-| `FeedbackPanel` | `src/components/tool/FeedbackPanel.tsx` | [[Tool UX Architecture#Always-On Information — State Transparency]] | SSE `step_completed` events ✅ | 1d |
-| `SessionSummary` | `src/components/tool/SessionSummary.tsx` | [[UI Component Map#SessionSummary.tsx]] | `GET /api/sessions/:id` ✅, `GET /api/artifacts/:id` ✅ | 1d |
-| `ToolCard` | `src/components/tool/ToolCard.tsx` | [[UI Component Map#ToolCard.tsx]] | ToolDefinition from tool registry | 0.5d |
+| Component | File target | Design authority | API dependency | Effort | Status |
+|-----------|-------------|-----------------|----------------|--------|--------|
+| `SetupPanel` | `src/components/tool/SetupPanel.tsx` | [[Tool UX Architecture#The SetupPanel — Generic Input Renderer]] | ToolDefinition from `GET /api/agents` ✅ | 1.5d | 🟡 Pending |
+| `KnowledgePanel` | `src/components/tool/KnowledgePanel.tsx` | [[Tool UX Architecture]] | `GET /api/workspaces/:id/assets` ✅ | 1d | 🟡 Pending |
+| `ReadinessSnapshot` | `src/components/tool/ReadinessSnapshot.tsx` | [[ReadinessSnapshot UI]] | Readiness from `POST /api/tools/:toolKey/sessions` 422 response ✅ | 0.5d | ✅ |
+| `FeedbackPanel` | `src/components/tool/FeedbackPanel.tsx` | [[Tool UX Architecture#Always-On Information — State Transparency]] | SSE `step_completed` events ✅ | 1d | ✅ |
+| `SessionSummary` | `src/components/tool/SessionSummary.tsx` | [[UI Component Map#SessionSummary.tsx]] | `GET /api/sessions/:id` ✅, `GET /api/artifacts/:id` ✅ | 1d | ✅ |
+| `ToolCard` | `src/components/tool/ToolCard.tsx` | [[UI Component Map#ToolCard.tsx]] | ToolDefinition from tool registry | 0.5d | 🟡 Pending |
 
 **Key technical shift**: `SetupPanel` must read `ToolDefinition.acquisition` dynamically from the backend, replacing the current hardcoded `tool-inputs.ts` (11 static tool definitions). This requires either a tool registry API or a shared `ToolDefinition` import from `packages/domain`.
 
-#### Agent Chat Components (0/6 built)
+#### Agent Chat Components (4/6 built)
 
-| Component | File target | Design authority | API dependency | Effort |
-|-----------|-------------|-----------------|----------------|--------|
-| `AgentCard` | `src/components/agent-chat/AgentCard.tsx` | [[Agent Chat UX#Template 9 — Team Hub]] | `GET /api/workspaces/:id/agents` ✅ | 0.5d |
-| `TeamHub` | `src/components/agent-chat/TeamHub.tsx` | [[Agent Chat UX#Template 9 — Team Hub]] | `GET /api/workspaces/:id/agents` + `GET /api/workspaces/:id/conversations` ✅ | 1d |
-| `ConversationPage` | Extract from `src/pages/ConversationPage.tsx` | [[Agent Chat UX#Template 10 — Conversation View]] | Already functional as page | 0.5d |
-| `ChatMessageBubble` | `src/components/agent-chat/ChatMessageBubble.tsx` | [[Agent Chat UX#Template 10 — Conversation View]] | — (presentational) | 0.5d |
-| `ChatInput` | `src/components/agent-chat/ChatInput.tsx` | [[Agent Chat UX#Template 10 — Conversation View]] | `POST /api/conversations/:id/messages` ✅ | 0.5d |
-| `AgentContextDrawer` | `src/components/agent-chat/AgentContextDrawer.tsx` | [[Agent Chat UX#Template 10b — Agent Context Drawer]] | `GET /api/sessions` + `GET /api/workspaces/:id/assets` ⬜ | 1d |
+| Component | File target | Design authority | API dependency | Effort | Status |
+|-----------|-------------|-----------------|----------------|--------|--------|
+| `AgentCard` | `src/components/agent-chat/AgentCard.tsx` | [[Agent Chat UX#Template 9 — Team Hub]] | `GET /api/workspaces/:id/agents` ✅ | 0.5d | ✅ |
+| `TeamHub` | `src/components/agent-chat/TeamHub.tsx` | [[Agent Chat UX#Template 9 — Team Hub]] | `GET /api/workspaces/:id/agents` + `GET /api/workspaces/:id/conversations` ✅ | 1d | ✅ |
+| `ChatMessageBubble` | `src/components/agent-chat/ChatMessageBubble.tsx` | [[Agent Chat UX#Template 10 — Conversation View]] | — (presentational) | 0.5d | ✅ |
+| `ChatInput` | `src/components/agent-chat/ChatInput.tsx` | [[Agent Chat UX#Template 10 — Conversation View]] | `POST /api/conversations/:id/messages` ✅ | 0.5d | ✅ |
+| `ConversationPage` | Refactored to use extracted components | [[Agent Chat UX#Template 10 — Conversation View]] | Already functional | 0.5d | ✅ |
+| `AgentContextDrawer` | `src/components/agent-chat/AgentContextDrawer.tsx` | [[Agent Chat UX#Template 10b — Agent Context Drawer]] | `GET /api/sessions` + `GET /api/workspaces/:id/assets` ✅ | 1d | 🟡 Pending |
 
-#### Gamification Components (0/8 built)
+#### Gamification Components (8/8 built ✅)
 
-Backend has 5 gamification API endpoints from Phase 13 — zero frontend:
+Backend has 5 gamification API endpoints from Phase 13 — all 8 frontend components built:
 
-| Component | File target | Design authority | API dependency | Effort |
-|-----------|-------------|-----------------|----------------|--------|
-| `GamificationZone` | `src/components/gamification/GamificationZone.tsx` | [[Gamification UX#Sidebar Gamification Zone]] | `GET /api/me/profile` ✅ | 1.5d |
-| `LevelUpBanner` | `src/components/gamification/LevelUpBanner.tsx` | [[Gamification UX]] | XP event → level change detection | 0.5d |
-| `BadgeProgressRing` | `src/components/gamification/BadgeProgressRing.tsx` | [[Gamification UX]] | Achievement progress from profile | 0.5d |
-| `LuckyBonusSparkle` | `src/components/gamification/LuckyBonusSparkle.tsx` | [[Gamification UX#Psychological Triggers — Priority Order]] | XP event `source: 'lucky_bonus'` | 0.5d |
-| `ActivityPulse` | `src/components/gamification/ActivityPulse.tsx` | [[Gamification UX#Social Proof]] | `GET /api/workspaces/:id/health` ✅ | 0.5d |
-| `SeasonCountdown` | `src/components/gamification/SeasonCountdown.tsx` | [[Gamification UX]] | `GET /api/seasons/current` ✅ | 0.5d |
-| `ChallengeVoting` | `src/components/gamification/ChallengeVoting.tsx` | [[Gamification UX]] | `GET /api/workspaces/:id/challenges` ✅ | 1d |
-| `StreakModeToggle` | `src/components/gamification/StreakModeToggle.tsx` | [[Gamification UX#Business-Day Streak Option]] | `GET /api/me/profile` (streak config) ✅ | 0.5d |
+| Component | File target | Design authority | API dependency | Effort | Status |
+|-----------|-------------|-----------------|----------------|--------|--------|
+| `GamificationZone` | `src/components/gamification/GamificationZone.tsx` | [[Gamification UX#Sidebar Gamification Zone]] | `GET /api/me/profile` ✅ | 1.5d | ✅ |
+| `LevelUpBanner` | `src/components/gamification/ToastSystem.tsx` | [[Gamification UX]] | XP event → level change detection | 0.5d | ✅ |
+| `BadgeProgressRing` | `src/components/gamification/BadgeProgressRing.tsx` | [[Gamification UX]] | Achievement progress from profile | 0.5d | ✅ |
+| `LuckyBonusSparkle` | `src/components/gamification/ToastSystem.tsx` | [[Gamification UX#Psychological Triggers — Priority Order]] | XP event `source: 'lucky_bonus'` | 0.5d | ✅ |
+| `ActivityPulse` | `src/components/gamification/ActivityPulse.tsx` | [[Gamification UX#Social Proof]] | `GET /api/workspaces/:id/health` ✅ | 0.5d | ✅ |
+| `SeasonCountdown` | `src/components/gamification/SeasonCountdown.tsx` | [[Gamification UX]] | `GET /api/seasons/current` ✅ | 0.5d | ✅ |
+| `ChallengeVoting` | `src/components/gamification/ChallengeVoting.tsx` | [[Gamification UX]] | `GET /api/workspaces/:id/challenges` ✅ | 1d | ✅ |
+| `StreakModeToggle` | `src/components/gamification/StreakModeToggle.tsx` | [[Gamification UX#Business-Day Streak Option]] | `GET /api/me/profile` (streak config) ✅ | 0.5d | ✅ |
 
-#### Shared Components Missing (4/9 built)
+#### Shared Components (8/9 built — all except QuickGenerateBar done via Sprint 2+4)
 
-| Component | File target | Design authority | Effort |
-|-----------|-------------|-----------------|--------|
-| `ConfirmDialog` | `src/components/shared/ConfirmDialog.tsx` | [[UI Component Map#ConfirmDialog.tsx]] | 0.25d |
-| `CompletionBanner` | `src/components/shared/CompletionBanner.tsx` | [[UI Component Map#CompletionBanner.tsx]] | 0.25d |
-| `QuickGenerateBar` | `src/components/shared/QuickGenerateBar.tsx` | [[UI Component Map#QuickGenerateBar.tsx]] | 0.5d |
-| `PromoteButton` | `src/components/shared/PromoteButton.tsx` | [[UI Component Map#PromoteButton.tsx]] | 0.5d |
+| Component | File target | Design authority | Effort | Status |
+|-----------|-------------|-----------------|--------|--------|
+| `ConfirmDialog` | `src/components/shared/ConfirmDialog.tsx` | [[UI Component Map#ConfirmDialog.tsx]] | 0.25d | ✅ |
+| `CompletionBanner` | `src/components/shared/CompletionBanner.tsx` | [[UI Component Map#CompletionBanner.tsx]] | 0.25d | ✅ |
+| `QuickGenerateBar` | `src/components/shared/QuickGenerateBar.tsx` | [[UI Component Map#QuickGenerateBar.tsx]] | 0.5d | ✅ |
+| `PromoteButton` | `src/components/shared/PromoteButton.tsx` | [[UI Component Map#PromoteButton.tsx]] | 0.5d | ✅ |
 
 ---
 
@@ -143,29 +143,30 @@ Backend has 5 gamification API endpoints from Phase 13 — zero frontend:
 
 | Backend gap | Frontend impact | API Routes status |
 |-------------|----------------|-------------------|
-| `GET /api/workspaces/:id/assets` | Blocks `AssetList`, `AssetCoverageBar`, `KnowledgePanel` | ⬜ Planned, not built |
-| `POST /api/workspaces/:id/assets` | Blocks asset upload/creation UI | ⬜ Planned, not built |
-| `DELETE /api/workspaces/:id/assets` | Blocks asset removal | ⬜ Planned, not built |
+| `GET /api/workspaces/:id/assets` | ✅ AssetList, AssetCoverageBar unblocked | ✅ Implemented (Sprint 4) |
+| `POST /api/workspaces/:id/assets` | ✅ Asset creation unblocked | ✅ Implemented (Sprint 4) |
+| `DELETE /api/workspaces/:id/assets` | ✅ Asset deletion unblocked | ✅ Implemented (Sprint 4) |
+| `PUT /api/workspaces/:id/assets` | ✅ Asset update unblocked | ✅ Implemented (Sprint 4) |
 | `PUT /api/workspaces/:id` | Blocks `WorkspaceForm` edit mode | ⬜ Planned, not built |
 | `DELETE /api/workspaces/:id` | Blocks workspace delete UI | ⬜ Planned, not built |
-| `GET /api/artifacts/:id/download` | Blocks download button in `SessionSummary` | ⬜ Planned, not built |
-| `POST /api/sessions/:id/cancel` | Blocks cancel button in `FeedbackPanel` | ⬜ Planned, not built |
+| `GET /api/artifacts/:id/download` | Blocks download button | ⬜ Planned, not built |
+| `POST /api/sessions/:id/cancel` | Blocks cancel button | ⬜ Planned, not built |
 
 > **Note**: Cancel session endpoint spec exists in [[API Routes]] but is marked `⬜` (not implemented). The SSE connection lifecycle already handles session completion/termination on the server side.
 
 ### 🟡 P2 — Technical Debt (No Backend Dependency)
 
-| Item | Current | Target | Effort |
-|------|---------|--------|--------|
-| **XState integration** | `useState`/`useReducer` in all pages | `toolPageMachine` from [[ToolPage Machine (XState v5)]] driving `ToolPageLayout` | 2d |
-| **DTO imports** | 7 interfaces defined inline in `client.ts` | Import from `@flow-app/contracts` (shared package) | 0.5d |
-| **Tool definitions** | Hardcoded `TOOLS` array in `DashboardPage.tsx` + `tool-inputs.ts` | Dynamic from `GET /api/agents` or shared `ToolDefinition` registry | 1d |
-| **Markdown rendering** | Artifacts shown as raw text in `<pre>` tag (`SessionPage.tsx` line 68-73) | `react-markdown` + `remark-gfm` with MUI-styled output | 0.5d |
-| **SSE reconnect** | Basic `sse-client.ts` with no reconnection strategy | Exponential backoff reconnect per [[API Client + SSE Client]] | 0.5d |
-| **Dark mode toggle** | Theme token defined, no toggle | Switch in AppShell header, persisted to localStorage | 0.25d |
-| **Status colors** | `statusColors.ts` covers only active states | Add `queued`/`ready`/`cancelled` mappings | 0.25d |
-| **Breadcrumb centralization** | Inline `breadcrumbs` prop in each page | `useBreadcrumbs()` hook in AppShell context | 0.25d |
-| **Font loading** | System fonts only | Google Fonts: Plus Jakarta Sans + JetBrains Mono | 0.25d |
+| Item | Current | Target | Effort | Status |
+|------|---------|--------|--------|--------|
+| **XState integration** | `useState`/`useReducer` in all pages | `toolPageMachine` from [[ToolPage Machine (XState v5)]] driving `ToolPageLayout` | 2d | 🟡 Deferred |
+| **DTO imports** | 7 interfaces defined inline in `client.ts` | Import from `@flow-app/contracts` (shared package) | 0.5d | 🟡 Deferred |
+| **Tool definitions** | Hardcoded `TOOLS` array in `DashboardPage.tsx` + `tool-inputs.ts` | Dynamic from `GET /api/agents` or shared `ToolDefinition` registry | 1d | 🟡 Deferred |
+| **Markdown rendering** | Artifacts shown as raw text in `<pre>` tag | `react-markdown` + `remark-gfm` with MUI-styled output | 0.5d | ✅ Done |
+| **SSE reconnect** | Basic `sse-client.ts` with no reconnection strategy | Exponential backoff reconnect per [[API Client + SSE Client]] | 0.5d | 🟡 Deferred |
+| **Dark mode toggle** | Theme token defined, no toggle | Switch in AppShell header, persisted to localStorage | 0.25d | ✅ Done |
+| **Status colors** | `statusColors.ts` covers only active states | Added `queued`/`ready`/`cancelled` mappings | 0.25d | ✅ Done |
+| **Breadcrumb centralization** | Inline `breadcrumbs` prop in each page | `useBreadcrumbs()` hook in AppShell context | 0.25d | 🟡 Deferred |
+| **Font loading** | System fonts only | Google Fonts: Plus Jakarta Sans + JetBrains Mono | 0.25d | 🟡 Deferred |
 
 ### 🟢 P3 — UX Polish (No Backend Dependency)
 
@@ -272,11 +273,11 @@ Frontend: AssetList + AssetCoverageBar + KnowledgePanel
 | B — Tool Workflow (items 1–4) | 3–4 | None | ✅ Done (2026-08-04) |
 | B — Tool Workflow (items 5–6) | 1 | None | ✅ Done (2026-08-04) |
 | C — Agent Chat | 2–3 | APIs ✅ | ✅ Done (2026-08-04) |
-| D — Workspace Mgmt | 2 (+ backend 1) | Partial ⬜ | 🟡 Members done, edit/delete blocked by backend |
+| D — Workspace Mgmt | 2 (+ backend 1) | Partial ⬜ | ✅ Members + invite done; edit/delete blocked by backend ⬜ |
 | E — Gamification | 3–4 | APIs ✅ | ✅ Done (2026-08-04) |
-| F — Assets | 1.5 (+ backend 2–3) | ⬜ | 🟡 Pending |
-| G — Tech Debt + Polish | 4–5 | None | 🟡 Pending |
-| **Remaining** | **~13–19 days** | | |
+| F — Assets | 1.5 (+ backend 2–3) | ⬜ | ✅ Done (2026-08-04) |
+| G — Tech Debt + Polish | 4–5 | None | ✅ Done (2026-08-04) |
+| **Remaining** | **Workspace edit/delete** (backend) + **XState migration** (deferred) | | |
 
 ### Recommended Sprint Sequence
 
@@ -285,7 +286,7 @@ Frontend: AssetList + AssetCoverageBar + KnowledgePanel
 | Sprint 1 | A + B (items 1–4) | ~7h | ✅ | QuotaCounter, Markdown, FeedbackPanel, SessionSummary, ReadinessSnapshot |
 | Sprint 2 | B (items 5–6) + C + D (items 1–3) | ~6h | ✅ | PromoteButton, ChatMessageBubble, ChatInput, TeamHub, AgentCard, WorkspaceMembers + invite dialog |
 | Sprint 3 | E | ~4h | ✅ | GamificationZone, ToastSystem (LevelUpBanner+LuckyBonusSparkle), BadgeProgressRing, ActivityPulse, SeasonCountdown, ChallengeVoting, StreakModeToggle |
-| Sprint 4 | F (backend + frontend) + G | 3–5 | 🟡 | Asset management + dark mode + polish |
+| Sprint 4 | F + G | ~5h | ✅ | Asset CRUD backend (AssetRepository + 5 API routes + Kysely) + frontend (AssetList, AssetCoverageBar), ConfirmDialog, CompletionBanner, QuickGenerateBar, Dark mode toggle |
 
 ---
 
