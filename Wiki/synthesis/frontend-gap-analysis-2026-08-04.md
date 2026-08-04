@@ -6,9 +6,10 @@ tags:
   - wiki/roadmap
   - wiki/implementation
 date_updated: 2026-08-04
-source_count: 13
+source_count: 14
 confidence: high
 parent: synthesis/implementation-roadmap-2026-08-01
+status: 47/50 findings resolved — 3 backend-blocked remain
 ---
 
 # Frontend Gap Analysis — Operational Support (2026-08-04)
@@ -436,7 +437,44 @@ npx vitest run
 
 ---
 
-## Sources
+## Closing Summary (2026-08-04)
+
+### Final Tally: 47/50 Findings Resolved
+
+| Severity | Total | Fixed | Remaining |
+|----------|-------|-------|-----------|
+| 🔴 Critical | 5 | **5** | 0 |
+| 🟠 High | 13 | **12** | 1 (H8) |
+| 🟡 Medium | 23 | **21** | 2 (M10, M13/M14 deferred) |
+| 🟢 Low | 9 | **9** | 0 |
+| **Total** | **50** | **47** | **3** |
+
+### Remaining (3 — All Backend-Blocked)
+
+| ID | Issue | Blocker |
+|----|-------|---------|
+| H8 | ToolPage credit cost non visibile | `ToolDefinition.creditCost` non esposto dal backend |
+| M10 | AgentContextDrawer content preview + deeplink | `GET /api/assets/:id` non include `content` field |
+| M13/M14 | FileUpload + InfoBanner | Deferred — nessun tool attuale usa input type `files` o `apiCalls` |
+
+### Key Achievements
+
+**Sprint 1–5 (tutti completati):**
+- **Sprint 1**: QuotaCounter, react-markdown, FeedbackPanel SSE, SessionSummary, ReadinessSnapshot
+- **Sprint 2**: PromoteButton, ChatMessageBubble, ChatInput, TeamHub, AgentCard, WorkspaceMembers + invite
+- **Sprint 3**: GamificationZone, ToastSystem (LevelUpBanner+LuckyBonusSparkle), BadgeProgressRing, ActivityPulse, SeasonCountdown, ChallengeVoting, StreakModeToggle
+- **Sprint 4**: Asset CRUD backend + frontend (AssetList, AssetCoverageBar), ConfirmDialog, CompletionBanner, QuickGenerateBar, dark mode
+- **Sprint 5**: WorkspaceCard, AgentContextDrawer, DTO cleanup, BreadcrumbContext, SSE reconnect, Google Fonts, XState ToolPageLayout+ToolPageMachine
+
+**UX Critical (5/5):** ToolPageLayout phase controller, XState integration, PromoteButton, download, promote endpoint
+
+**UX High (12/13):** SkipToContent, live regions, Assets nav, QuickGenerateBar+AssetCoverageBar in Dashboard, SessionPage failed state, route `/workspaces/:id/assets` + `/profile`, GamificationZone clickable, SessionSummary download
+
+**UX Medium (21/23):** Elapsed timer, suggested question chips per agent, scroll-lock badge, typing indicator, aria-live on messages, react-markdown in bubbles, streaming cursor, character counter, hero banner, TextareaAutosize, slideInFade/stepPulse animations, multi-format download, border-radius spec, agent emoji avatar, date separator, dashboard layout order, collapsible sidebar, toast bottom-center, badge chips removal, aria-label on progress bar
+
+**UX Low (9/9):** BreadcrumbContext used by all pages, CompletionBanner in SessionPage, prefers-reduced-motion, WorkspaceCard Popover in AppShell, AssetCoverageBar "+" CTA, agent emoji aria-hidden
+
+**Baseline:** `tsc --noEmit` 0 errors, `vite build` ✅, `vitest` 68/69 (1 pre-existing `agent-chat.spec.ts` failure), deployed su Railway dev con smoke test positivo
 
 - [[Frontend Architecture]] — component inventory, routing, state patterns (note: Auth status is stale — see Phase 8)
 - [[UI Component Map]] — full 37-component catalog with props, MUI internals, state bindings
