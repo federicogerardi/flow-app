@@ -1,5 +1,6 @@
 import { Box, Typography, Card, CardContent, CardActionArea } from '@mui/material';
 import Grid from '@mui/material/Grid2';
+import GroupsIcon from '@mui/icons-material/Groups';
 import { useNavigate, useParams } from 'react-router';
 import useSWR from 'swr';
 import { api } from '../../api/client';
@@ -44,8 +45,31 @@ export function TeamHub() {
     <Box>
       <PageHeader
         title={copy.t('workspace.nav.team')}
-        subtitle="Your virtual marketing team — 7 specialists with access to workspace assets"
       />
+
+      {/* Hero banner (M9) */}
+      <Box
+        sx={{
+          p: 3,
+          mb: 3,
+          borderRadius: 2,
+          background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2.5,
+        }}
+      >
+        <GroupsIcon sx={{ fontSize: 40, opacity: 0.8 }} />
+        <Box>
+          <Typography variant="h5" fontWeight={700}>
+            Il tuo team marketing virtuale
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 0.5, opacity: 0.85 }}>
+            7 specialisti con accesso completo agli asset del workspace — pronti a collaborare su strategia, copy, SEO, ads e analytics.
+          </Typography>
+        </Box>
+      </Box>
 
       <Typography variant="h3" sx={{ mb: 2 }}>
         Agents

@@ -1,4 +1,6 @@
 import { Box, Typography, keyframes } from '@mui/material';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const cursorBlink = keyframes`
   0%, 100% { opacity: 1; }
@@ -59,22 +61,66 @@ export function ChatMessageBubble({ role, content, tokensUsed, modelUsed, create
             borderColor: isUser ? 'transparent' : 'divider',
           }}
         >
-          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-            {content}
-            {/* Streaming cursor (M7): blinking ▐ when agent is generating */}
-            {isStreaming && !isUser && (
-              <Box
-                component="span"
-                sx={{
-                  animation: `${cursorBlink} 0.8s step-end infinite`,
-                  color: 'primary.main',
-                  fontWeight: 700,
-                }}
-              >
-                {'\u258C'}
-              </Box>
-            )}
-          </Typography>
+          {isUser ? (
+            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+              {content}
+            </Typography>
+          ) : (
+            <Box
+              sx={{
+                '& p': { m: 0, '&:not(:last-child)': { mb: 0.75 } },
+                '& code': {
+                  bgcolor: 'grey.100',
+                  px: 0.5,
+                  py: 0.25,
+                  borderRadius: 0.5,
+                  fontSize: '0.85em',
+                  fontFamily: 'monospace',
+                },
+                '& pre': {
+                  bgcolor: 'grey.100',
+                  p: 1.5,
+                  borderRadius: 1,
+                  overflow: 'auto',
+                  fontSize: '0.8em',
+                  my: 0.75,
+                },
+                '& ul, & ol': { pl: 2.5, my: 0.5 },
+                '& li': { mb: 0.25 },
+                '& blockquote': {
+                  borderLeft: '3px solid',
+                  borderColor: 'primary.main',
+                  pl: 1.5,
+                  ml: 0,
+                  color: 'text.secondary',
+                  fontStyle: 'italic',
+                  my: 0.5,
+                },
+                '& a': { color: 'primary.main' },
+                '& strong': { fontWeight: 600 },
+                '& em': { fontStyle: 'italic' },
+              }}
+            >
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {content}
+              </ReactMarkdown>
+            </Box>
+          )}
+          {/* Streaming cursor (M7): blinking ▐ when agent is streaming */}
+          {isStreaming && !isUser && (
+            <Box
+              component="span"
+              sx={{
+                display: 'inline',
+                animation: `${cursorBlink} 0.8s step-end infinite`,
+                color: 'primary.main',
+                fontWeight: 700,
+                ml: 0.25,
+              }}
+            >
+              {'\u258C'}
+            </Box>
+          )}
         </Box>
 
         {/* Footer: timestamp + token count */}

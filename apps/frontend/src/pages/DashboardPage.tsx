@@ -130,17 +130,31 @@ export default function DashboardPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Delete workspace button */}
-      <Box sx={{ mb: 3 }}>
-        <Button
-          variant="outlined"
-          color="error"
-          size="small"
-          startIcon={<DeleteIcon />}
-          onClick={() => setDeleteOpen(true)}
-        >
-          Delete workspace
-        </Button>
+      {/* WARNING: destructive, no undo */}
+      <Button
+        variant="outlined"
+        color="error"
+        size="small"
+        startIcon={<DeleteIcon />}
+        onClick={() => setDeleteOpen(true)}
+      >
+        Delete workspace
+      </Button>
+
+      {/* M21: Reorder per WorkspaceDashboard spec: QuickGenerate → Sessions → ReadyToPromote → Coverage → Tools */}
+      <Box sx={{ mt: 3 }}>
+        <QuickGenerateBar workspaceId={workspaceId!} />
+      </Box>
+
+      <Box sx={{ mt: 4 }}>
+        <Typography variant="h3" sx={{ mb: 2 }}>
+          {copy.t('workspace.dashboard.recentSessions')}
+        </Typography>
+        <SessionList workspaceId={workspaceId!} />
+      </Box>
+
+      <Box sx={{ mb: 4, mt: 4 }}>
+        <AssetCoverageBar workspaceId={workspaceId!} />
       </Box>
 
       <Typography variant="h3" sx={{ mb: 2 }}>
@@ -159,19 +173,6 @@ export default function DashboardPage() {
           </Grid>
         ))}
       </Grid>
-
-      <Box sx={{ mt: 4 }}>
-      <QuickGenerateBar workspaceId={workspaceId!} />
-
-      <Box sx={{ mb: 4 }}>
-        <AssetCoverageBar workspaceId={workspaceId!} />
-      </Box>
-
-      <Typography variant="h3" sx={{ mb: 2 }}>
-          {copy.t('workspace.dashboard.recentSessions')}
-        </Typography>
-        <SessionList workspaceId={workspaceId!} />
-      </Box>
 
       <Box sx={{ mt: 4 }}>
         <WorkspaceMembers workspaceId={workspaceId!} />

@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, Typography, IconButton, Tooltip, Chip, keyframes } from '@mui/material';
+import { Box, Card, CardContent, Typography, IconButton, Tooltip, Chip, keyframes, Divider } from '@mui/material';
 import InfoIcon from '@mui/icons-material/Info';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { useRef, useEffect, useState, useCallback } from 'react';
@@ -242,16 +242,36 @@ export default function ConversationPage() {
             </Box>
           )}
 
-          {messages.map((msg) => (
-            <ChatMessageBubble
-              key={msg.id}
-              role={msg.role as 'user' | 'agent' | 'system'}
-              content={msg.content}
-              tokensUsed={msg.tokensUsed}
-              modelUsed={msg.modelUsed}
-              createdAt={msg.createdAt}
-            />
-          ))}
+          {messages.map((msg, i) => {
+            const currentDate = new Date(msg.createdAt).toLocaleDateString();
+            const prevDate = i > 0 ? new Date(messages[i - 1].createdAt).toLocaleDateString() : null;
+            const showSeparator = prevDate !== null && currentDate !== prevDate;
+
+            return (
+              <Box key={msg.id}>
+                {/* Date separator for multi-day conversations (M19) */}
+                {showSeparator && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, my: 2 }}>
+                    <Divider sx={{ flex: 1 }} />
+                    <Chip
+                      label={currentDate}
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontSize: '0.7rem', color: 'text.secondary', borderColor: 'divider' }}
+                    />
+                    <Divider sx={{ flex: 1 }} />
+                  </Box>
+                )}
+                <ChatMessageBubble
+                  role={msg.role as 'user' | 'agent' | 'system'}
+                  content={msg.content}
+                  tokensUsed={msg.tokensUsed}
+                  modelUsed={msg.modelUsed}
+                  createdAt={msg.createdAt}
+                />
+              </Box>
+            );
+          })}
 
           {/* Typing indicator (M4) */}
           {isStreaming && <TypingIndicator />}

@@ -9,6 +9,8 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import HistoryIcon from '@mui/icons-material/History';
 import AddIcon from '@mui/icons-material/Add';
 import MenuIcon from '@mui/icons-material/Menu';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { Outlet, useNavigate, useParams } from 'react-router';
 import useSWR, { mutate } from 'swr';
 import { api } from '../api/client';
@@ -45,13 +47,13 @@ export function useBreadcrumbs() {
 
 const DRAWER_WIDTH = 280;
 
-function NavItem({ icon, label, path, disabled }: { icon: React.ReactNode; label: string; path: string; disabled?: boolean }) {
+function NavItem({ icon, label, path, disabled, collapsed }: { icon: React.ReactNode; label: string; path: string; disabled?: boolean; collapsed?: boolean }) {
   const navigate = useNavigate();
   return (
-    <ListItemButton onClick={() => !disabled && navigate(path)} disabled={disabled} sx={{ borderRadius: 1, mx: 0.5 }}>
-      <ListItemIcon sx={{ minWidth: 36 }}>{icon}</ListItemIcon>
-      <ListItemText primary={label} />
-      {disabled && <Chip label="soon" size="small" variant="outlined" sx={{ fontSize: '0.65rem' }} />}
+    <ListItemButton onClick={() => !disabled && navigate(path)} disabled={disabled} sx={{ borderRadius: 1, mx: 0.5, justifyContent: collapsed ? 'center' : 'flex-start', px: collapsed ? 1 : undefined }}>
+      <ListItemIcon sx={{ minWidth: collapsed ? 'auto' : 36 }}>{icon}</ListItemIcon>
+      {!collapsed && <ListItemText primary={label} />}
+      {disabled && !collapsed && <Chip label="soon" size="small" variant="outlined" sx={{ fontSize: '0.65rem' }} />}
     </ListItemButton>
   );
 }
@@ -72,10 +74,13 @@ export function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
   const [wsSwitcherAnchor, setWsSwitcherAnchor] = useState<HTMLElement | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const handleWorkspaceChange = (newId: string) => {
     navigate(`/workspaces/${newId}`);
   };
+
+  const currentWidth = sidebarCollapsed ? 60 : DRAWER_WIDTH;
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
@@ -145,6 +150,19 @@ export function AppShell() {
           <Typography variant="h6" noWrap sx={{ cursor: 'pointer', fontWeight: 700 }} onClick={() => navigate('/dashboard')}>
             flow app
           </Typography>
+
+          {/* Collapse sidebar toggle (M22) */}
+          {isDesktop && (
+            <IconButton
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              size="small"
+              sx={{ ml: 1 }}
+            >
+              {sidebarCollapsed ? <ChevronRightIcon fontSize="small" /> : <ChevronLeftIcon fontSize="small" />}
+            </IconButton>
+          )}
+
           <Box sx={{ flexGrow: 1 }} />
 
           {/* Dark Mode Toggle */}
@@ -216,21 +234,26 @@ export function AppShell() {
         role="navigation"
         aria-label="Main navigation"
         sx={{
-          width: DRAWER_WIDTH,
+          width: currentWidth,
           flexShrink: 0,
+          transition: 'width 200ms ease',
           [`& .MuiDrawer-paper`]: {
-            width: DRAWER_WIDTH,
+            width: currentWidth,
             boxSizing: 'border-box',
             borderRight: '1px solid',
             borderColor: 'divider',
+            transition: 'width 200ms ease',
+            overflowX: 'hidden',
           },
         }}
       >
         <Toolbar />
 
-        {/* Workspace Switcher + Create (L6: WorkspaceCard via Popover) */}
-        <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Button
+        {/* Workspace Switcher + Create (L6: WorkspaceCard via Popover) — hidden when collapsed */}
+        {!sidebarCollapsed && (
+          <Box>
+            <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Button
             fullWidth
             size="small"
             variant="outlined"
@@ -293,6 +316,8 @@ export function AppShell() {
 
         {/* Gamification */}
         <GamificationZone />
+        </Box>)}
+
 
         <Divider sx={{ mx: 2 }} />
 
@@ -300,7 +325,7 @@ export function AppShell() {
         <Box sx={{ overflow: 'auto', flexGrow: 1, pt: 1 }}>
           <List dense>
             {navItems.map((item) => (
-              <NavItem key={item.label} {...item} />
+              <NavItem key={item.label} {...item} collapsed={sidebarCollapsed} />
             ))}
           </List>
 
@@ -308,32 +333,34 @@ export function AppShell() {
 
           <List dense>
             {secondaryItems.map((item) => (
-              <NavItem key={item.label} {...item} />
+              <NavItem key={item.label} {...item} collapsed={sidebarCollapsed} />
             ))}
           </List>
         </Box>
 
         {/* Quick Generate CTA */}
-        <Box sx={{ px: 2, py: 2 }}>
-          <Button
-            variant="contained"
-            fullWidth
-            startIcon={<AddIcon />}
-            disabled={!activeWorkspaceId}
-            onClick={() => activeWorkspaceId && navigate(`/workspaces/${activeWorkspaceId}/tools/blog-post`)}
-            sx={{
-              bgcolor: accent,
-              '&:hover': { bgcolor: 'primary.dark' },
-              textTransform: 'none',
-              fontWeight: 600,
-            }}
-          >
-            {copy.t('workspace.nav.newGeneration')}
-          </Button>
-        </Box>
+        {!sidebarCollapsed && (
+          <Box sx={{ px: 2, py: 2 }}>
+            <Button
+              variant="contained"
+              fullWidth
+              startIcon={<AddIcon />}
+              disabled={!activeWorkspaceId}
+              onClick={() => activeWorkspaceId && navigate(`/workspaces/${activeWorkspaceId}/tools/blog-post`)}
+              sx={{
+                bgcolor: accent,
+                '&:hover': { bgcolor: 'primary.dark' },
+                textTransform: 'none',
+                fontWeight: 600,
+              }}
+            >
+              {copy.t('workspace.nav.newGeneration')}
+            </Button>
+          </Box>
+        )}
       </Drawer>
 
-      <Box component="main" role="main" id="main-content" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
+      <Box component="main" role="main" id="main-content" sx={{ flexGrow: 1, p: 3, mt: 8, transition: 'margin-left 200ms ease' }}>
         <BreadcrumbContext.Provider value={{ crumbs, setBreadcrumbs: setCrumbs }}>
           <Outlet />
         </BreadcrumbContext.Provider>

@@ -107,7 +107,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ showLevelUp, showLuckyBonus }}>
       {toasts.length > 0 && (
-        <Box sx={{ position: 'fixed', top: 72, right: 24, zIndex: 2000, maxWidth: 360 }}>
+        <Box sx={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 2000, maxWidth: 360, width: '100%', px: 2 }}>
           {toasts.map((t) =>
             t.type === 'level-up' ? (
               <LevelUpBanner key={t.id} level={t.data.level!} label={t.data.label!} />

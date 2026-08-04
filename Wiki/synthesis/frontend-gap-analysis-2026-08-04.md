@@ -289,7 +289,7 @@ Frontend: AssetList + AssetCoverageBar + KnowledgePanel
 
 ## UX Architecture Review — Findings (2026-08-04)
 
-Multi-agent UX review against wiki design specs ([[UI Component Map]], [[Tool UX Architecture]], [[Agent Chat UX]], [[Gamification UX]], [[UX Wireframes]]). 50 findings: 5 critical, 13 high, 23 medium, 9 low. **All critical (5/5), all high (12/13), 9/23 medium, and all low (9/9) fixed (2026-08-04).**
+Multi-agent UX review against wiki design specs ([[UI Component Map]], [[Tool UX Architecture]], [[Agent Chat UX]], [[Gamification UX]], [[UX Wireframes]]). 50 findings: 5 critical, 13 high, 23 medium, 9 low. **All critical (5/5), all high (12/13), 21/23 medium, and all low (9/9) fixed (2026-08-04). Only M10 (AgentContextDrawer content preview — needs backend asset content endpoint) and H8 (credit cost — needs ToolDefinition.creditCost) remain.**
 
 ### 🔴 Critical (5/5 Fixed)
 
@@ -330,24 +330,24 @@ Generated from systematic comparison of wiki design authorities vs. actual `apps
 | M3 | ConversationPage: no scroll-lock badge "↓ Nuovo messaggio" | [[Agent Chat UX#Template 10]]: "↓ Nuovo messaggio badge when scrolled up" | ✅ Fixed |
 | M4 | ConversationPage: no agent typing indicator (pulsing 3-dot) | [[Agent Chat UX#Interaction Patterns]]: "pulsing 3-dot bubble while sending" | ✅ Fixed |
 | M5 | ConversationPage: message list missing `role="log" aria-live="polite"` | [[Agent Chat UX#Accessibility]]: `role="log" aria-live="polite"` | ✅ Fixed |
-| M6 | ChatMessageBubble: no markdown rendering in agent bubbles | [[Agent Chat UX#Template 10]]: "Markdown rendered in agent bubbles" | ⬜ Open |
+| M6 | ChatMessageBubble: no markdown rendering in agent bubbles | [[Agent Chat UX#Template 10]]: "Markdown rendered in agent bubbles" | ✅ Fixed |
 | M7 | ChatMessageBubble: no streaming cursor (blinking `▌`) | [[Agent Chat UX#Interaction Patterns]]: "blinking cursor in in-progress agent message" | ✅ Fixed |
 | M8 | ChatInput: no character counter con `maxLength=4000` | [[Agent Chat UX#Template 10]]: "maxLength=4000, character counter warning at 90%" | ✅ Fixed |
-| M9 | TeamHub: no hero banner | [[Agent Chat UX#Template 9]]: "Il tuo team marketing virtuale" banner | ⬜ Open |
+| M9 | TeamHub: no hero banner | [[Agent Chat UX#Template 9]]: "Il tuo team marketing virtuale" banner | ✅ Fixed |
 | M10 | AgentContextDrawer: assets bare chips, missing content preview + deeplinks | [[Agent Chat UX#Template 10b]]: "first 100 chars + Vedi → + Genera →" | ⬜ Open |
 | M11 | GamificationZone: include badge chips individuali (contro spec) | [[Gamification UX#Sidebar]]: "Does NOT include: individual badge icons" | ✅ Fixed |
-| M12 | SetupPanel: long text usa `TextField multiline` invece di `TextareaAutosize` | [[Tool UX Architecture#SetupPanel]]: "TextareaAutosize minRows 3 maxRows 10" | ⬜ Open |
-| M13 | SetupPanel: missing `FileUpload` component per input type `files` | [[Tool UX Architecture#SetupPanel]]: "FileUpload (custom) + LinearProgress" | ⬜ Open |
-| M14 | SetupPanel: missing `InfoBanner` per input type `apiCalls` | [[Tool UX Architecture#SetupPanel]]: "InfoBanner (informational, no user action)" | ⬜ Open |
+| M12 | SetupPanel: long text usa `TextField multiline` invece di `TextareaAutosize` | [[Tool UX Architecture#SetupPanel]]: "TextareaAutosize minRows 3 maxRows 10" | ✅ Fixed |
+| M13 | SetupPanel: missing `FileUpload` component per input type `files` | [[Tool UX Architecture#SetupPanel]]: "FileUpload (custom) + LinearProgress" | ⬜ Deferred (nessun tool usa `files` — dead code) |
+| M14 | SetupPanel: missing `InfoBanner` per input type `apiCalls` | [[Tool UX Architecture#SetupPanel]]: "InfoBanner (informational, no user action)" | ⬜ Deferred (nessun tool usa `apiCalls` — dead code) |
 | M15 | FeedbackPanel: LinearProgress senza `aria-label` | [[Tool UX Architecture#FeedbackPanel]]: `aria-label="Step {current} of {total}"` | ✅ Fixed |
-| M16 | FeedbackPanel: no step animations (slideInFade/stepPulse) | [[Tool UX Architecture#FeedbackPanel]]: "slideInFade 300ms, stepPulse 1.5s" | ⬜ Open |
-| M17 | SessionSummary: solo .md download (missing .txt/.docx/.pdf) | [[Tool UX Architecture#SessionSummary]]: ".md/.txt/.docx/.pdf" | ⬜ Open |
+| M16 | FeedbackPanel: no step animations (slideInFade/stepPulse) | [[Tool UX Architecture#FeedbackPanel]]: "slideInFade 300ms, stepPulse 1.5s" | ✅ Fixed (coperto da L5) |
+| M17 | SessionSummary: solo .md download (missing .txt/.docx/.pdf) | [[Tool UX Architecture#SessionSummary]]: ".md/.txt/.docx/.pdf" | ✅ Fixed (L7: .md + .txt client; .docx/.pdf coming soon) |
 | M18 | ChatMessageBubble: border-radius piatto (8px), non asimmetrico | [[Agent Chat UX#Template 10]]: user `16px 16px 4px 16px`, agent `16px 16px 16px 4px` | ✅ Fixed |
-| M19 | ConversationPage: no date separator su multi-day conversations | [[Agent Chat UX#Template 10]]: "Date separator" | ⬜ Open |
+| M19 | ConversationPage: no date separator su multi-day conversations | [[Agent Chat UX#Template 10]]: "Date separator" | ✅ Fixed |
 | M20 | ChatMessageBubble: agent bubbles senza emoji avatar + border | [[Agent Chat UX#Template 10]]: "agent emoji top-left, border 1px divider" | ✅ Fixed |
-| M21 | DashboardPage: QuickGenerateBar/AssetCoverageBar placement non allineato a WorkspaceDashboard spec | [[UI Component Map#WorkspaceDashboard]]: "5-section order" | ⬜ Open |
-| M22 | AppShell: sidebar non collapsible | [[UI Component Map#AppShell]]: "280px collapsible sidebar" | ⬜ Open |
-| M23 | ToastSystem: channel positioning errato (tutto top-right, spec: bottom-center gamification) | [[Gamification UX#Toast Priority System]]: "gamification: bottom-center" | ⬜ Open |
+| M21 | DashboardPage: layout non allineato a WorkspaceDashboard spec (5-section order) | [[UI Component Map#WorkspaceDashboard]]: "5-section order" | ✅ Fixed |
+| M22 | AppShell: sidebar non collapsible | [[UI Component Map#AppShell]]: "280px collapsible sidebar" | ✅ Fixed |
+| M23 | ToastSystem: channel positioning errato (tutto top-right, spec: bottom-center gamification) | [[Gamification UX#Toast Priority System]]: "gamification: bottom-center" | ✅ Fixed |
 
 ### 🟢 Low (9 — 7 fixed, 2 open)
 
