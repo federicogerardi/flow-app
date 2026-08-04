@@ -10,6 +10,7 @@ export type { AssetTypeValue } from './value-objects/AssetType';
 export { AssetSource, InvalidAssetSourceError } from './value-objects/AssetSource';
 export type { AssetSourceValue } from './value-objects/AssetSource';
 export type { WorkspaceRepository } from './repositories/WorkspaceRepository';
+export type { AssetRepository } from './repositories/AssetRepository';
 export { AssetResolver, MissingRequiredAssetError } from './domain-services/AssetResolver';
 export {
   NotWorkspaceOwnerError,

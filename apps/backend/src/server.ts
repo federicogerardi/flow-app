@@ -11,7 +11,7 @@ import { validateConfig } from './config.js';
 import { createApp } from './app.js';
 import { logger } from './infrastructure/logger.js';
 import { createDatabase } from '@flow-app/infra-db';
-import { KyselySessionRepository, KyselyWorkspaceRepository, KyselyConversationRepository, KyselyUserRepository, KyselyQuotaRepository, KyselyPlayerProfileRepository, KyselyWorkspaceChallengeRepository } from '@flow-app/infra-db';
+import { KyselySessionRepository, KyselyWorkspaceRepository, KyselyConversationRepository, KyselyUserRepository, KyselyQuotaRepository, KyselyPlayerProfileRepository, KyselyWorkspaceChallengeRepository, KyselyAssetRepository } from '@flow-app/infra-db';
 import { JobEventBridge } from './infrastructure/job-event-bridge.js';
 import { getSessionQueue } from './generation/jobs/enqueue-session.job.js';
 import { CleanupJob } from './infrastructure/cleanup-job.js';
@@ -32,6 +32,7 @@ const userRepo = new KyselyUserRepository(db);
 const quotaRepo = new KyselyQuotaRepository(db);
 const playerProfileRepo = new KyselyPlayerProfileRepository(db);
 const workspaceChallengeRepo = new KyselyWorkspaceChallengeRepository(db);
+const assetRepo = new KyselyAssetRepository(db);
 const eventBridge = new JobEventBridge(config.REDIS_URL);
 const queue = getSessionQueue(config.REDIS_URL);
 
@@ -67,6 +68,7 @@ const app = createApp({
   workspaceRepo,
   conversationRepo,
   quotaRepo,
+  assetRepo,
   playerProfileRepo,
   workspaceChallengeRepo,
   eventBridge,

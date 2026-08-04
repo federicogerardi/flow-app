@@ -13,6 +13,10 @@ import { Outlet, useNavigate, useParams } from 'react-router';
 import useSWR, { mutate } from 'swr';
 import { api } from '../api/client';
 import { useWorkspaceAccent } from '../theme/WorkspaceAccentProvider';
+import { useThemeMode } from '../theme/ThemeProvider';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import { copy } from '@flow-app/copy';
 import { useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
@@ -37,6 +41,7 @@ export function AppShell() {
   const { workspaceId: activeWorkspaceId } = useParams<{ workspaceId: string }>();
   const { data: workspaces } = useSWR('workspaces', () => api.listWorkspaces());
   const accent = useWorkspaceAccent();
+  const { mode, setMode } = useThemeMode();
   const { user, logout } = useAuth();
   const isDesktop = useMediaQuery((t: Theme) => t.breakpoints.up('md'));
 
@@ -98,6 +103,16 @@ export function AppShell() {
             flow app
           </Typography>
           <Box sx={{ flexGrow: 1 }} />
+
+          {/* Dark Mode Toggle */}
+          <IconButton
+            onClick={() => setMode(mode === 'light' ? 'dark' : mode === 'dark' ? 'system' : 'light')}
+            aria-label="Toggle theme"
+            title={`Theme: ${mode}`}
+            sx={{ mr: 0.5 }}
+          >
+            {mode === 'light' ? <LightModeIcon fontSize="small" /> : mode === 'dark' ? <DarkModeIcon fontSize="small" /> : <SettingsBrightnessIcon fontSize="small" />}
+          </IconButton>
 
           {/* User Menu */}
           {user && (

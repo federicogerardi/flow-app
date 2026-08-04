@@ -52,6 +52,18 @@ export interface WorkspacesTable {
   version: Generated<number>;
 }
 
+export interface AssetsTable {
+  id: string;
+  workspace_id: string;
+  asset_type: string;
+  source: string;
+  source_ref: string | null;
+  content: string;
+  created_at: ColumnType<Date, never, never>;
+  updated_at: ColumnType<Date, Date | null, Date>;
+  version: Generated<number>;
+}
+
 export interface WorkspaceMembershipsTable {
   workspace_id: string;
   user_id: string;
@@ -204,6 +216,7 @@ export interface DB {
   idempotency_keys: IdempotencyKeysTable;
   session_snapshots: SessionSnapshotsTable;
   workspaces: WorkspacesTable;
+  assets: AssetsTable;
   workspace_memberships: WorkspaceMembershipsTable;
   users: UsersTable;
   auth_sessions: AuthSessionsTable;

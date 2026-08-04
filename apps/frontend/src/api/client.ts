@@ -75,6 +75,17 @@ export interface AgentDTO {
   capabilities: string[];
 }
 
+// ── Asset DTO ──────────────────────────────────────────────────────────────────
+
+export interface AssetDTO {
+  id: string;
+  workspaceId: string;
+  assetType: string;
+  source: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ── Gamification DTOs ─────────────────────────────────────────────────────────
 
 export interface PlayerProfileDTO {
@@ -308,6 +319,28 @@ class ApiClient {
 
   async getCurrentSeason() {
     return this.request<SeasonDTO>('GET', '/api/seasons/current');
+  }
+
+  // ── Assets ───────────────────────────────────────────────────────────────────
+
+  async listAssets(workspaceId: string) {
+    return this.request<{ assets: AssetDTO[] }>('GET', `/api/workspaces/${workspaceId}/assets`);
+  }
+
+  async createAsset(workspaceId: string, assetType: string, content: string, source?: string) {
+    return this.request<AssetDTO>('POST', `/api/workspaces/${workspaceId}/assets`, { assetType, content, source });
+  }
+
+  async getAsset(workspaceId: string, assetId: string) {
+    return this.request<AssetDTO & { content: string }>('GET', `/api/workspaces/${workspaceId}/assets/${assetId}`);
+  }
+
+  async updateAsset(workspaceId: string, assetId: string, content: string) {
+    return this.request<{ id: string; updatedAt: string }>('PUT', `/api/workspaces/${workspaceId}/assets/${assetId}`, { content });
+  }
+
+  async deleteAsset(workspaceId: string, assetId: string) {
+    return this.request<void>('DELETE', `/api/workspaces/${workspaceId}/assets/${assetId}`);
   }
 }
 

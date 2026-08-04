@@ -6,4 +6,5 @@ export { KyselyUserRepository } from './repositories/user-repository';
 export { KyselyQuotaRepository } from './repositories/quota-repository';
 export { KyselyPlayerProfileRepository } from './repositories/player-profile-repository';
 export { KyselyWorkspaceChallengeRepository } from './repositories/workspace-challenge-repository';
+export { KyselyAssetRepository } from './repositories/asset-repository';
 export type { DB } from './types';
