@@ -2725,6 +2725,28 @@ Created the gamification bounded context as an event-driven overlay on the opera
 
 9 wiki files updated: `Wiki/synthesis/phase-13-implementation-plan.md` (new), `Wiki/synthesis/implementation-roadmap-2026-08-01.md` (Phase 13 → ✅), `Wiki/entities/PlayerProfile.md` (Planned → Implemented), `Wiki/entities/Achievement.md` (Planned → Implemented), `Wiki/concepts/Gamification.md` (status updated), `Wiki/log.md` (this entry).
 
+## 2026-08-04 | deploy — Phase 13 Railway deploy + bugfixes
+
+Three deploy attempts failed due to Docker build cache issues and missing `@types/node`. Root cause: 14 domain files imported `randomUUID` from `node:crypto` which requires `@types/node` for TypeScript compilation. On Railway's clean Docker build, `@types/node` was not installed because the Docker `npm ci` layer was cached from a build before the dependency was added.
+
+**Fix iterations** (5 attempts):
+1. **TS errors in test files**: `tsc --build` type-checked `__tests__/` → fixed: added `**/__tests__/**` to root `tsconfig.json` exclude
+2. **Express.User.sub type error**: `req.user!.sub` failed on Railway (no global augmentation) → fixed: replaced with `getAuthUser(req)!.sub` in 5 files (18 call sites)
+3. **Missing `@types/node`**: added to `package.json` + `package-lock.json` → Docker cache persisted
+4. **Docker layer cache**: added `npm install --save-dev @types/node` in Dockerfile → `--no-save` didn't install; changed to `--save-dev` → still "up to date"
+5. **Dockerfile.backend not in watch patterns**: added to Railway service watch patterns
+
+**Final fix**: Created `packages/domain/src/shared/random-uuid.ts` — uses global `crypto.randomUUID()` (Node 19+) with `Math.random()` fallback. Zero external dependencies. Replaced all 14 `import { randomUUID } from 'node:crypto'` with internal import. This eliminates `@types/node` dependency from the domain package entirely.
+
+**Routing fix**: Gamification routes were not registered in `app.ts`. Added `PlayerProfileRepository` + `WorkspaceChallengeRepository` to `AppDeps`, wired `KyselyPlayerProfileRepository` + `KyselyWorkspaceChallengeRepository` in `server.ts`, registered `createGamificationRoutes`.
+
+**Smoke test** (2026-08-04 09:45 UTC):
+- `GET /health` → 200 `{"status":"ok"}` ✅
+- `GET /api/seasons/current` → 401 (auth required) ✅
+- `GET /api/me/profile` → 401 (auth required) ✅
+
+5 wiki files updated: `Wiki/log.md` (this entry), plus the modified source files in the commits.
+
 ## [2026-08-04] update | Overview status refresh post Phase 11–13
 
 Updated `Wiki/overview.md` to reflect actual implementation state after 3 commits implementing Phases 11, 11.5, and 13:

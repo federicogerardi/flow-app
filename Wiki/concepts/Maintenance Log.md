@@ -13,6 +13,8 @@ confidence: high
 
 ## 2026-08-04
 
+- ✅ **Phase 13 Gamification implemented** — 27 domain files, 9 backend files, 5 infra-db files, migration 010 (7 tables). 2 aggregate roots (PlayerProfile, WorkspaceChallenge), 9 class VOs, 3 domain services, 5 domain events, 22-badge catalog, 5-challenge catalog. GamificationEventPublisher (BullMQ) + worker (atomic dedup + optimistic retry). 5 API endpoints. `tsc --build` + `eslint` clean. See [[log]] for full details.
+- ✅ **Phase 13 deployed to Railway dev** — 5 deploy fix iterations: Docker cache bypass (node:crypto → internal randomUUID), test exclusion from tsc (root tsconfig), req.user!.sub → getAuthUser (Express type augmentation), vite/client types in frontend tsconfig, Dockerfile.backend watch pattern. Smoke test: /health ✅, /api/seasons/current ✅, /api/me/profile ✅. Domain `backend-dev-cfc8.up.railway.app` created.
 - ✅ **Phase 11 testing executed** — 66 test files, ~634 tests across 4 workspaces (domain: 32/415, backend: 18/127, frontend: 12/60, infra-db: 4/32). All passing (infra-db requires real PostgreSQL).
 - ✅ Production vitest configs: per-workspace coverage thresholds, infra-db fork pool + sequential isolation, jsdom + React for frontend, MSW handlers (19 endpoints)
 - ✅ `vitest.workspace.ts` finalized: 4 named projects (contracts + copy excluded — no testable code)
