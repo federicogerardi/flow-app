@@ -1,4 +1,4 @@
-import { Box, Card, CardActionArea, CardContent, Chip, Typography, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, TextField, MenuItem, IconButton, List, ListItem, ListItemText, ListItemSecondaryAction } from '@mui/material';
+import { Box, Card, Typography, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, TextField, MenuItem, IconButton, List, ListItem, ListItemText, ListItemSecondaryAction } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
@@ -10,8 +10,9 @@ import { PageHeader } from '../components/PageHeader';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
 import { LoadingSkeleton } from '../components/LoadingSkeleton';
+import { ToolCard } from '../components/tool/ToolCard';
+import { SessionList } from '../components/workspace/SessionList';
 import { copy } from '@flow-app/copy';
-import { statusColorMap } from '../shared/statusColors';
 
 const TOOLS = [
   { key: 'blog-post', name: 'Blog Post', description: 'SEO-optimized blog article', icon: '📝' },
@@ -146,21 +147,13 @@ export default function DashboardPage() {
       <Grid container spacing={2}>
         {TOOLS.map((tool) => (
           <Grid size={{ xs: 12, sm: 6, md: 4 }} key={tool.key}>
-            <Card>
-              <CardActionArea
-                onClick={() => navigate(`/workspaces/${workspaceId}/tools/${tool.key}`)}
-                sx={{ p: 2 }}
-              >
-                <CardContent sx={{ '&:last-child': { pb: 2 } }}>
-                  <Typography variant="h4" sx={{ mb: 0.5 }}>
-                    {tool.icon} {tool.name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {tool.description}
-                  </Typography>
-                </CardContent>
-              </CardActionArea>
-            </Card>
+            <ToolCard
+              toolKey={tool.key}
+              name={tool.name}
+              description={tool.description}
+              icon={tool.icon}
+              workspaceId={workspaceId!}
+            />
           </Grid>
         ))}
       </Grid>
@@ -169,48 +162,12 @@ export default function DashboardPage() {
         <Typography variant="h3" sx={{ mb: 2 }}>
           {copy.t('workspace.dashboard.recentSessions')}
         </Typography>
-        <RecentSessions workspaceId={workspaceId!} />
+        <SessionList workspaceId={workspaceId!} />
       </Box>
 
       <Box sx={{ mt: 4 }}>
         <WorkspaceMembers workspaceId={workspaceId!} />
       </Box>
-    </Box>
-  );
-}
-
-function RecentSessions({ workspaceId }: { workspaceId: string }) {
-  const { data: sessions, isLoading } = useSWR(
-    `sessions-${workspaceId}`,
-    () => api.listSessions({ workspaceId }),
-  );
-
-  if (isLoading) return <LoadingSkeleton />;
-  if (!sessions || sessions.data.length === 0) {
-    return <EmptyState title={copy.t('workspace.detail.noSessions')} message={copy.t('workspace.dashboard.noSessions')} />;
-  }
-
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-      {sessions.data.map((s) => (
-        <Card key={s.id} variant="outlined">
-          <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.5, '&:last-child': { pb: 1.5 } }}>
-            <Box>
-              <Typography variant="body1" fontWeight={600}>
-                {s.toolKey}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {new Date(s.createdAt).toLocaleString()}
-              </Typography>
-            </Box>
-            <Chip
-              label={s.status}
-              color={statusColorMap[s.status] ?? 'default'}
-              size="small"
-            />
-          </CardContent>
-        </Card>
-      ))}
     </Box>
   );
 }

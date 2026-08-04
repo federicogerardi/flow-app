@@ -4,6 +4,7 @@ import { StartSessionUseCase } from '../application/generation/start-session.use
 import { getAuthUser } from '../middleware/auth-types.js';
 import { enqueueSession } from '../generation/jobs/enqueue-session.job.js';
 import type { SessionRepository } from '@flow-app/domain';
+import { toolRegistry } from '@flow-app/domain';
 import type { DB } from '@flow-app/infra-db';
 import type { SSEPayload } from '../infrastructure/job-event-bridge.js';
 
@@ -11,6 +12,29 @@ export function createGenerationRoutes(sessionRepo: SessionRepository, db: Kysel
   const startSessionUC = new StartSessionUseCase(sessionRepo);
 
   return {
+    listTools: async (_req: Request, res: Response) => {
+      const tools = Object.entries(toolRegistry).map(([key, tool]) => ({
+        toolKey: key,
+        name: tool.name,
+        description: tool.description,
+        stepCount: tool.steps.length,
+        creditCost: tool.creditCost ?? 1,
+        acquisition: {
+          userText: tool.acquisition.userText?.map((f) => ({
+            key: f.key,
+            label: f.label,
+            required: f.required ?? false,
+            type: f.type ?? 'short',
+            placeholder: f.placeholder,
+            options: f.options,
+          })) ?? [],
+        },
+        produces: tool.produces,
+      }));
+
+      res.json({ tools });
+    },
+
     listSessions: async (req: Request, res: Response, next: NextFunction) => {
       try {
         const workspaceId = req.query.workspaceId as string | undefined;

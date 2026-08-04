@@ -1,11 +1,12 @@
-import { Box, Button, Card, CardContent, MenuItem, TextField, Typography, Alert } from '@mui/material';
-import { useState, useMemo } from 'react';
+import { Box, Button, Card, CardContent, Typography, Alert, LinearProgress } from '@mui/material';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { api, ApiClientError } from '../api/client';
 import { PageHeader } from '../components/PageHeader';
 import { ErrorState } from '../components/ErrorState';
 import { ReadinessSnapshot } from '../components/tool/ReadinessSnapshot';
-import { getToolInputs, type TextInput } from '../tool-inputs';
+import { SetupPanel, fetchToolInputs } from '../components/tool/SetupPanel';
+import type { TextInput } from '../tool-inputs';
 import { copy } from '@flow-app/copy';
 
 export default function ToolPage() {
@@ -15,13 +16,20 @@ export default function ToolPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorCode, setErrorCode] = useState<string | null>(null);
+  const [toolDef, setToolDef] = useState<TextInput[]>([]);
+  const [loadingTool, setLoadingTool] = useState(true);
 
-  const toolDef = toolKey ? getToolInputs(toolKey) : [];
-  const userInputs: TextInput[] = toolDef;
+  useEffect(() => {
+    if (!toolKey) return;
+    setLoadingTool(true);
+    fetchToolInputs(toolKey)
+      .then(setToolDef)
+      .finally(() => setLoadingTool(false));
+  }, [toolKey]);
 
   const requiredMissing = useMemo(
-    () => userInputs.some((input) => input.required && !inputs[input.key]?.trim()),
-    [userInputs, inputs],
+    () => toolDef.some((input) => input.required && !inputs[input.key]?.trim()),
+    [toolDef, inputs],
   );
 
   const handleInputChange = (key: string, value: string) => {
@@ -76,38 +84,31 @@ export default function ToolPage() {
             {copy.t('toolPage.config.title')}
           </Typography>
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
-            {userInputs.map((input) => (
-              <TextField
-                key={input.key}
-                label={input.label}
-                placeholder={input.placeholder}
-                value={inputs[input.key] ?? ''}
-                onChange={(e) => handleInputChange(input.key, e.target.value)}
-                required={input.required}
-                select={input.type === 'select'}
-                fullWidth={input.type === 'long'}
-                multiline={input.type === 'long'}
-                rows={input.type === 'long' ? 4 : undefined}
-                sx={input.type !== 'long' ? { maxWidth: 400 } : undefined}
+          {loadingTool ? (
+            <LinearProgress sx={{ mb: 3 }} />
+          ) : (
+            <>
+              <Box sx={{ mb: 3 }}>
+                <SetupPanel
+                  inputs={inputs}
+                  toolDef={toolDef}
+                  onChange={handleInputChange}
+                  disabled={submitting}
+                />
+              </Box>
+
+              <ReadinessSnapshot inputs={inputs} toolDef={toolDef} />
+
+              <Button
+                variant="contained"
+                onClick={handleSubmit}
+                disabled={submitting || requiredMissing}
+                size="large"
               >
-                {input.type === 'select' && input.options?.map((opt) => (
-                  <MenuItem key={opt} value={opt}>{opt}</MenuItem>
-                ))}
-              </TextField>
-            ))}
-          </Box>
-
-          <ReadinessSnapshot inputs={inputs} toolDef={userInputs} />
-
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={submitting || requiredMissing}
-            size="large"
-          >
-            {submitting ? copy.t('toolPage.cta.submitting') : copy.t('toolPage.cta.submit')}
-          </Button>
+                {submitting ? copy.t('toolPage.cta.submitting') : copy.t('toolPage.cta.submit')}
+              </Button>
+            </>
+          )}
         </CardContent>
       </Card>
     </Box>
