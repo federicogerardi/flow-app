@@ -146,4 +146,4 @@ date_updated: 2026-08-04
 | [[synthesis/reverse-proxy-deploy-log]] | Deployment log — 9 Railway attempts, 6 root causes, ✅ resolved | 2026-08-03 |
 | [[synthesis/phase-11-testing-plan]] | Phase 11 implementation plan — 76 test files, 6 sub-phases, DDD guardrails, wiki-vs-code scope exclusion | 2026-08-03 |
 | [[synthesis/usage-quota-implementation-plan]] | Usage & Quota domain implementation — 13 new files, 7 modified, aggregate + VOs + repository + wiring | 2026-08-04 |
-| [[overview]] | High-level synthesis (v3) | 2026-07-31 |
+| [[overview]] | High-level synthesis (v3) | 2026-08-04 |

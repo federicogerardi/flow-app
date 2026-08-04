@@ -12,6 +12,7 @@ import { createAdminRoutes } from './api/admin.js';
 import { createWorkspaceRoutes } from './api/workspaces.js';
 import { createAgentChatRoutes } from './api/agent-chat.js';
 import { createAuthRoutes } from './api/auth/auth-routes.js';
+import { createUsageRoutes } from './api/usage/usage-routes.js';
 import { devAuthMiddleware } from './middleware/dev-auth.js';
 import { authenticate, authenticateOrDev } from './middleware/authenticate.js';
 import { requireWorkspaceRole } from './middleware/workspace-role.js';
@@ -117,6 +118,10 @@ export function createApp(deps: AppDeps) {
   const adminRoutes = createAdminRoutes(deps.queue);
   app.get('/admin/jobs', adminRoutes.getJobs);
   app.get('/admin/health', adminRoutes.getHealth);
+
+  // Usage routes (quota + credits)
+  const usageRoutes = createUsageRoutes(deps.quotaRepo);
+  app.use('/api/usage', usageRoutes);
 
   app.use(errorHandler);
 

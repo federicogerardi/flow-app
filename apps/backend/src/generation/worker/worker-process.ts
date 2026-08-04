@@ -11,7 +11,7 @@ dotenv.config({ path: path.join(root, '.env.local'), override: true });
 import { validateConfig } from '../../config.js';
 import { logger } from '../../infrastructure/logger.js';
 import { createDatabase } from '@flow-app/infra-db';
-import { KyselySessionRepository } from '@flow-app/infra-db';
+import { KyselySessionRepository, KyselyQuotaRepository } from '@flow-app/infra-db';
 import { JobEventBridge } from '../../infrastructure/job-event-bridge.js';
 import { createSessionWorker } from './session-worker.js';
 import { LlmGateway } from '../../infrastructure/llm-gateway.js';
@@ -19,6 +19,7 @@ import { FilesystemPromptTemplateRepository } from '../../infrastructure/prompt-
 import { PromptComponentRegistry, PromptComposer, getDefaultComponents } from '@flow-app/domain';
 import { GamificationEventPublisher } from '../../application/gamification/gamification-event-publisher.js';
 import { getGamificationQueue } from '../jobs/gamification-queue.js';
+import { ConsumeCreditsUseCase } from '../../application/usage/consume-credits.usecase.js';
 
 const config = validateConfig();
 const log = logger.child({ component: 'worker-process' });
@@ -45,7 +46,11 @@ const promptTemplateRepo = new FilesystemPromptTemplateRepository(promptTemplate
 
 const gamificationQueue = getGamificationQueue(config.REDIS_URL);
 const gamificationEventPublisher = new GamificationEventPublisher(gamificationQueue);
-const worker = createSessionWorker({ sessionRepo, eventBridge, llmGateway, promptComposer, promptTemplateRepo, gamificationEventPublisher });
+
+const quotaRepo = new KyselyQuotaRepository(db);
+const consumeCreditsUC = new ConsumeCreditsUseCase(quotaRepo);
+
+const worker = createSessionWorker({ sessionRepo, eventBridge, llmGateway, promptComposer, promptTemplateRepo, gamificationEventPublisher, consumeCreditsUC });
 
 log.info('Worker started');
 

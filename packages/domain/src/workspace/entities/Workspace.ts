@@ -3,6 +3,8 @@ import type { DomainEvent } from '../../shared/domain-event';
 import { MembershipRole } from '../value-objects/MembershipRole';
 import { MembershipStatus } from '../value-objects/MembershipStatus';
 import { WorkspaceMembership } from './WorkspaceMembership';
+import { Asset } from './Asset';
+import { AssetType } from '../value-objects/AssetType';
 import {
   NotWorkspaceOwnerError,
   NotAWorkspaceMemberError,
@@ -13,6 +15,7 @@ import {
 
 export class Workspace {
   private _memberships: WorkspaceMembership[];
+  private _assets: Asset[];
   private _version: number;
 
   private constructor(
@@ -23,9 +26,11 @@ export class Workspace {
     private _updatedAt: Date,
     version: number,
     memberships: WorkspaceMembership[],
+    assets: Asset[] = [],
   ) {
     this._version = version;
     this._memberships = memberships;
+    this._assets = assets;
   }
 
   static create(name: string, createdBy: string): Workspace {
@@ -51,8 +56,9 @@ export class Workspace {
     updatedAt: Date,
     version: number,
     memberships: WorkspaceMembership[],
+    assets?: Asset[],
   ): Workspace {
-    return new Workspace(workspaceId, createdBy, name, createdAt, updatedAt, version, memberships);
+    return new Workspace(workspaceId, createdBy, name, createdAt, updatedAt, version, memberships, assets);
   }
 
   inviteMember(userId: string, role: MembershipRole, invitedBy: string): DomainEvent {
@@ -154,6 +160,19 @@ export class Workspace {
 
   get memberships(): ReadonlyArray<WorkspaceMembership> {
     return this._memberships;
+  }
+
+  get assets(): ReadonlyArray<Asset> {
+    return this._assets;
+  }
+
+  addAsset(asset: Asset): void {
+    this._assets.push(asset);
+    this._version++;
+  }
+
+  getAssetByType(assetType: AssetType): Asset | null {
+    return this._assets.find((a) => a.assetType.equals(assetType)) ?? null;
   }
 
   private assertIsOwner(userId: string): void {

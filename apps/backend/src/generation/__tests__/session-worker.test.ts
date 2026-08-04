@@ -140,6 +140,18 @@ function createMockDeps(overrides: Partial<SessionWorkerDeps> = {}): SessionWork
       findById: vi.fn().mockResolvedValue(null),
       findAll: vi.fn().mockResolvedValue([]),
     },
+    gamificationEventPublisher: {
+      publishSessionCompleted: vi.fn().mockResolvedValue(undefined),
+      publishMessageAdded: vi.fn().mockResolvedValue(undefined),
+      publishMemberJoined: vi.fn().mockResolvedValue(undefined),
+    },
+    consumeCreditsUC: {
+      execute: vi.fn().mockResolvedValue({
+        consumed: 1,
+        remainingCredits: 249,
+        quota: {},
+      }),
+    },
     ...overrides,
   };
 }

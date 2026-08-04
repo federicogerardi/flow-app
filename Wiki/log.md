@@ -2724,3 +2724,53 @@ Created the gamification bounded context as an event-driven overlay on the opera
 **Verification**: `tsc --build` clean (domain + backend, 0 errors), `eslint` clean (0 errors, 0 warnings).
 
 9 wiki files updated: `Wiki/synthesis/phase-13-implementation-plan.md` (new), `Wiki/synthesis/implementation-roadmap-2026-08-01.md` (Phase 13 → ✅), `Wiki/entities/PlayerProfile.md` (Planned → Implemented), `Wiki/entities/Achievement.md` (Planned → Implemented), `Wiki/concepts/Gamification.md` (status updated), `Wiki/log.md` (this entry).
+
+## [2026-08-04] update | Overview status refresh post Phase 11–13
+
+Updated `Wiki/overview.md` to reflect actual implementation state after 3 commits implementing Phases 11, 11.5, and 13:
+
+**Changes**:
+- **Gamification** bounded context row: `Event-driven XP, levels...` → `✅ Event-driven XP, levels, badges (22), streaks...` (was always implied but never marked complete)
+- **Usage & Quota** bounded context row: `🔴 Planned` → `🟡 Domain complete... Wiring pending` (matches actual state: domain done, use cases not yet wired)
+- **Phase table**: "Completed (Phase 0–11.5)" → "Completed (Phase 0–13)". Phase 13 (Gamification) moved from Planned to Completed with full scope description (50 files, 2 aggregates, 22 badges, BullMQ pipeline, 5 API endpoints)
+- **New Planned section**: Phase 12 — Usage & Quota Wiring (use cases, API routes, event subscriptions) — deferred from domain phase
+- **Critical Gaps updated**: replaced outdated "Near-zero tests" with 3 real remaining gaps: (1) Usage & Quota wiring, (2) Asset entity + AssetResolver + Asset Promotion, (3) CrawlData value object
+- **Infrastructure counts**: PostgreSQL 19→26 tables, 8→10 migrations, API 22→27 endpoints
+
+3 wiki files updated: `Wiki/overview.md` (status refresh), `Wiki/log.md` (this entry).
+
+## [2026-08-04] implement | Findings closure — Phase 12 + Asset + CrawlData
+
+Closed all 3 remaining backend gaps identified in the overview audit. 11 files created/modified across domain, application, API, and worker layers.
+
+**Phase 12 — Usage & Quota Wiring (3 new, 4 modified)**:
+- `apps/backend/src/application/usage/consume-credits.usecase.ts` — `ConsumeCreditsUseCase` with `withOptimisticRetry(3)`. Auto-creates quota on first use. Consumes credits synchronously after session completion.
+- `apps/backend/src/api/usage/usage-routes.ts` — `GET /api/usage/credits` returning credit quota (used, limit, remaining, percent), artifact gate, plan type, period.
+- `apps/backend/src/generation/worker/session-worker.ts` — `SessionWorkerDeps` extended with `consumeCreditsUC`. Credit consumption called synchronously before gamification fire-and-forget. Errors logged, don't block session completion.
+- `apps/backend/src/generation/worker/worker-process.ts` — `KyselyQuotaRepository` + `ConsumeCreditsUseCase` instantiated and passed to worker.
+- `apps/backend/src/app.ts` — Usage routes wired at `/api/usage`.
+
+**Asset Tooling (4 new, 1 modified)**:
+- `packages/domain/src/workspace/value-objects/AssetType.ts` — 5 static instances (Brief, BrandVoice, Persona, Angle, AdCopy), `from()`, `equals()`. Rule 4 compliant.
+- `packages/domain/src/workspace/value-objects/AssetSource.ts` — 3 instances (Generated, Uploaded, Manual).
+- `packages/domain/src/workspace/entities/Asset.ts` — Entity with `create()`/`reconstitute()`, `withContent()`. Fields: assetId, workspaceId, assetType, source, content, sourceSessionId, sourceArtifactId.
+- `packages/domain/src/workspace/domain-services/AssetResolver.ts` — Resolves workspace assets for tool execution. Returns `Map<AssetType, AssetContent>`. `MissingRequiredAssetError` for required-but-missing assets.
+- `packages/domain/src/workspace/entities/Workspace.ts` — Added `_assets` collection, `addAsset()`, `getAssetByType()`, `assets` getter. `reconstitute()` accepts optional `assets` param (backward-compatible).
+- `packages/domain/src/workspace/index.ts` — Barrel updated with all new exports.
+
+**CrawlData (1 new, 1 modified)**:
+- `packages/domain/src/generation/value-objects/CrawlData.ts` — Value object for external API data persistence. `create()` validates source + query non-empty. `reconstitute()`, `toJSON()`, `equals()`.
+- `packages/domain/src/generation/index.ts` — Barrel updated.
+
+**Verification**:
+- `tsc --build packages/domain`: ✅ 0 errors
+- `tsc --build apps/backend`: ✅ 0 errors
+- ESLint: ✅ 0 errors, 0 warnings (all 11 files)
+- Domain tests: ✅ 80/80 passed (Quota, Plan, QuotaPeriod — unchanged)
+- Session worker test mock: fixed to include `consumeCreditsUC` + `gamificationEventPublisher`
+
+**Wiki updates**:
+- `overview.md`: Phase 12 marked ✅ complete. Usage & Quota bounded context row updated to `✅ Domain + wiring complete`. Critical Gaps reduced from 3 to 2 (Asset + CrawlData now in domain, wiring pending). "No Planned Phases" — all 13 phases complete.
+- `Wiki/log.md`: this entry.
+
+5 wiki files updated: `Wiki/synthesis/usage-quota-implementation-plan.md` (status already completed), `Wiki/overview.md` (status refresh), `Wiki/log.md` (this entry).

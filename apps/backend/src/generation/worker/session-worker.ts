@@ -6,6 +6,7 @@ import { getTool, Artifact as ArtifactEntity, ContextEnricher, DEFAULT_COMPONENT
 import type { JobEventBridge } from '../../infrastructure/job-event-bridge.js';
 import type { LlmGateway } from '../../infrastructure/llm-gateway.js';
 import type { GamificationEventPublisher } from '../../application/gamification/gamification-event-publisher.js';
+import type { ConsumeCreditsUseCase } from '../../application/usage/consume-credits.usecase.js';
 import { logger } from '../../infrastructure/logger.js';
 
 export interface SessionJobData {
@@ -19,6 +20,7 @@ export interface SessionWorkerDeps {
   promptComposer: PromptComposer;
   promptTemplateRepo: PromptTemplateRepository;
   gamificationEventPublisher: GamificationEventPublisher;
+  consumeCreditsUC: ConsumeCreditsUseCase;
 }
 
 export function createSessionWorker(deps: SessionWorkerDeps): Worker<SessionJobData> {
@@ -160,6 +162,19 @@ async function processSessionJob(
     // Gamification: award XP on successful session completion
     const snapshot = actor.getSnapshot();
     if (snapshot.status === 'done') {
+      // Credit consumption: synchronous with optimistic retry (reliable)
+      try {
+        await deps.consumeCreditsUC.execute({
+          userId: session.userId,
+          sessionId,
+          toolKey: session.toolKey.value,
+        });
+      } catch (error) {
+        log.error({ error, sessionId }, 'credits_consumption_failed');
+        // Don't throw — session is complete, credit failure is logged and monitored
+      }
+
+      // Gamification: fire-and-forget
       deps.gamificationEventPublisher.publishSessionCompleted(
         sessionId,
         session.workspaceId,

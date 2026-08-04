@@ -23,9 +23,9 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 | [[Content Generation]] | Core | [[Session]] | Unified tool execution: acquisition → elaboration → final artifact |
 | [[Workspace & Assets]] | Supporting | [[Workspace]] | Organization, reusable brand resources |
 | [[Agent Chat]] | Supporting | [[Conversation]] | Conversational, multi-turn guidance with workspace-aware context injection |
-| [[Gamification]] | Supporting | [[PlayerProfile]] | Event-driven XP, levels, badges, streaks, workspace challenges |
+| [[Gamification]] | Supporting | [[PlayerProfile]] | ✅ Event-driven XP, levels, badges (22), streaks, workspace challenges. BullMQ pipeline, 5 API endpoints. |
 | [[Auth Dependencies]] | Generic | [[User]] | Auth, roles, sessions |
-| [[Usage & Quota]] | Supporting | [[Quota]] | ✅ Domain complete (10 files, 40 tests). Repository with optimistic locking. Wiring (use cases + API) pending. |
+| [[Usage & Quota]] | Supporting | [[Quota]] | ✅ Domain + wiring complete. Two-track enforcement (artifact gate + credit quota). `ConsumeCreditsUseCase` integrated into session worker. `GET /api/usage/credits`. |
 
 ## Interaction Models
 
@@ -81,7 +81,7 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 
 ## Implementation Status
 
-### Completed (Phase 0–11.5)
+### Completed (Phase 0–13)
 
 | Phase | Status | Scope |
 |-------|--------|-------|
@@ -97,25 +97,26 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 | Phase 9 — DDD Architectural Remediation | ✅ | 8 type aliases → classes, 12 DomainError subclasses, discriminated union |
 | Phase 10 — Deployment & CI/CD | ✅ | Dockerfile (multi-stage), railway.json, GitHub Actions CI + Deploy, .dockerignore |
 | Phase 11 — Testing & Quality | ✅ | 66 test files, ~634 tests, vitest production configs, CI quality gates |
-| Phase 11.5 — Usage & Quota Domain | ✅ | Bounded context: 10 files, 40 tests, Kysely repository, optimistic locking, backend wiring |
+| Phase 11.5 — Usage & Quota Domain | ✅ | Bounded context: 10 files, 40 tests, Kysely repository, optimistic locking |
+| Phase 12 — Usage & Quota Wiring | ✅ | `ConsumeCreditsUseCase` (optimistic retry), session worker integration, `GET /api/usage/credits` |
+| Phase 13 — Gamification | ✅ | 50 files: 2 aggregates (PlayerProfile, WorkspaceChallenge), 9 VOs, 22 badges, 5 workspace challenges, BullMQ event pipeline, 5 API endpoints |
 
-### Planned (Phase 12)
+### No Planned Phases
 
-| Phase | Priority | Scope |
-|-------|----------|-------|
-| Phase 12 — Gamification | 🟢 Medium | Points, achievements, leaderboards, event-driven rewards |
+All planned phases are complete. The [[implementation-roadmap-2026-08-01]] is fully executed.
 
 ### Critical Gaps (remaining)
 
-1. **Usage & Quota wiring** — Domain and persistence layer complete. Use cases (`EnsureQuotaUseCase`, `ConsumeCreditsUseCase`), event subscriptions, and API routes still pending.
+1. **Asset tooling** — `Asset` entity, `AssetType`/`AssetSource` VOs, and `AssetResolver` domain service now implemented in domain layer. `Workspace` aggregate supports `addAsset()` and `getAssetByType()`. Repository persistence and session-worker promotion wiring still pending.
+2. **CrawlData value object** — Implemented in domain layer (`CrawlData.create()` / `reconstitute()`). Session worker integration for the `ai-overview-analysis` tool still pending.
 
 ## Infrastructure (Needs Railway provisioning)
 
 | Resource | Endpoint | Status |
 |----------|----------|--------|
-| PostgreSQL | Railway dev (TCP proxy 5432) | ✅ 19 tables, 8 migrations |
+| PostgreSQL | Railway dev (TCP proxy 5432) | ✅ 26 tables, 10 migrations |
 | Redis | Railway dev (TCP proxy 6379) | ✅ ACTIVE |
-| Backend API | `localhost:3000` | ✅ 22 endpoints verified |
+| Backend API | `localhost:3000` | ✅ 27 endpoints verified |
 | LLM Gateway | OpenRouter (`OPENROUTER_API_KEY`) | ✅ 4 model tiers, fallback chain |
 | Dockerfile | Multi-stage (Node 22-alpine) | ✅ Phase 10 |
 | CI/CD | GitHub Actions (lint, typecheck, test, build, deploy) | ✅ Phase 10 |

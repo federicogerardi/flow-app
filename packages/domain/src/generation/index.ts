@@ -15,6 +15,8 @@ export { ArtifactStatus, InvalidArtifactStatusError, InvalidArtifactTransitionEr
 export type { ArtifactStatusValue } from './value-objects/ArtifactStatus';
 export { ReadinessPolicy } from './value-objects/ReadinessPolicy';
 export type { AcquisitionData } from './value-objects/ReadinessPolicy';
+export { CrawlData, InvalidCrawlDataError } from './value-objects/CrawlData';
+export type { CrawlDataProps } from './value-objects/CrawlData';
 
 // Lifecycle
 export { SessionLifecycle } from './session-lifecycle';
