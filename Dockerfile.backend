@@ -15,6 +15,9 @@ COPY apps/frontend/package.json apps/frontend/
 
 RUN npm ci
 
+# Ensure @types/node is available for node:crypto imports in domain packages
+RUN npm install --no-save @types/node@^22.0.0
+
 COPY tsconfig.json ./
 COPY packages/domain/tsconfig.json packages/domain/
 COPY packages/domain/src packages/domain/src
