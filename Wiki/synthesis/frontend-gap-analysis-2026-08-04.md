@@ -283,7 +283,7 @@ Frontend: AssetList + AssetCoverageBar + KnowledgePanel
 | Sprint 2 | B (items 5–6) + C + D (items 1–3) | ~6h | ✅ | PromoteButton, ChatMessageBubble, ChatInput, TeamHub, AgentCard, WorkspaceMembers + invite dialog |
 | Sprint 3 | E | ~4h | ✅ | GamificationZone, ToastSystem (LevelUpBanner+LuckyBonusSparkle), BadgeProgressRing, ActivityPulse, SeasonCountdown, ChallengeVoting, StreakModeToggle |
 | Sprint 4 | F + G | ~5h | ✅ | Asset CRUD backend (AssetRepository + 5 API routes + Kysely) + frontend (AssetList, AssetCoverageBar), ConfirmDialog, CompletionBanner, QuickGenerateBar, Dark mode toggle |
-| Sprint 5 | Remaining components + tech debt | ~5d | 🟡 | WorkspaceCard, AgentContextDrawer, XState, DTO cleanup, SSE reconnect, breadcrumb, fonts |
+| Sprint 5 | Remaining components + tech debt | ~5h | ✅ | WorkspaceCard, AgentContextDrawer, DTO cleanup (4 contract files), breadcrumb hook, SSE reconnect (exponential backoff), Google Fonts, XState toolPageMachine |
 
 ---
 
