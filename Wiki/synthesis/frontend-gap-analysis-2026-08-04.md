@@ -301,11 +301,23 @@ Multi-agent UX review against wiki design specs ([[UI Component Map]], [[Tool UX
 | C4 | `PromoteButton` hardcoded `disabled={true}` | ✅ Fixed | Nuovo endpoint `POST /api/artifacts/:id/promote`, PromoteButton con stato idle/loading/done/error, chiama `api.promoteArtifact` |
 | C5 | `SessionSummary` download disabilitato | ✅ Fixed | `IconButton` onClick → `handleDownload`, endpoint `GET /api/artifacts/:id/download?format=md` già esistente |
 
-### 🟠 High (13 remaining)
+### 🟠 High (13 resolved — 12 fixed, 1 deferred)
 
-Top 5 priority: SkipToContent, FeedbackPanel live region, `/workspaces/:id/assets` route, `/profile` gamification route, DashboardPage integrazione AssetCoverageBar+QuickGenerateBar.
-
-Full UX review filed in [[implementation-roadmap-2026-08-01|roadmap]] task log.
+| ID | Issue | Status | Fix |
+|----|-------|--------|-----|
+| H1 | SkipToContent link assente (WCAG AA) | ✅ Fixed | `AppShell`: `<a href="#main-content">` con focus-visible |
+| H2 | FeedbackPanel senza `role="status" aria-live="polite"` | ✅ Fixed | `FeedbackPanel`: wrapper con live region |
+| H3 | Assets nav disabilitata con chip "soon" | ✅ Fixed | `AppShell`: rimosso `disabled`, path `/workspaces/:id/assets` |
+| H4 | QuickGenerateBar non integrato in DashboardPage | ✅ Fixed | `DashboardPage`: sopra la tool grid |
+| H5 | AssetCoverageBar non integrato in DashboardPage | ✅ Fixed | `DashboardPage`: sotto QuickGenerateBar |
+| H6 | "Pronti da Promuovere" KPI section | ⬜ Deferred | Serve endpoint per artifact promossi |
+| H7 | SessionPage: breadcrumb `/dashboard` + no failed state | ✅ Fixed | `workspaceId` nel path + retry CTA |
+| H8 | ToolPage credit cost non visibile | ⬜ Deferred | Richiede ToolDefinition.creditCost dal backend |
+| H9 | Conversation privacy guard client-side | ⬜ Deferred | Backend `findByUserAndWorkspace` già enforcement |
+| H10 | Route `/workspaces/:id/assets` mancante | ✅ Fixed | `AssetsPage` con AssetList + AssetCoverageBar |
+| H11 | Route `/profile` gamification mancante | ✅ Fixed | `ProfilePage` con stats, badge progress, season |
+| H12 | GamificationZone non cliccabile | ✅ Fixed | `onClick→/profile`, `role="button"`, `tabIndex={0}` |
+| H13 | SessionPage/SessionSummary no step timeline | ⬜ Deferred | Richiede dati step dall'API session detail |
 
 ---
 
