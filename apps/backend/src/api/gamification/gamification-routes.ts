@@ -8,6 +8,7 @@ import { GetPlayerProfileUseCase } from '../../application/gamification/get-play
 import { authenticate } from '../../middleware/authenticate';
 import type { TokenService } from '../../infrastructure/token-service';
 import { requireWorkspaceRole } from '../../middleware/workspace-role';
+import { getAuthUser } from '../../middleware/auth-types';
 
 export function createGamificationRoutes(
   db: Kysely<DB>,
@@ -31,7 +32,7 @@ export function createGamificationRoutes(
   // GET /api/me/profile — player's XP, level, streak, badges
   router.get('/api/me/profile', auth, async (req, res) => {
     try {
-      const userId = req.user!.sub as string;
+      const userId = getAuthUser(req)!.sub as string;
       if (!userId) {
         return res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } });
       }
@@ -76,7 +77,7 @@ export function createGamificationRoutes(
     async (req, res) => {
       try {
         const workspaceId = req.params.id as string;
-        const userId = req.user!.sub as string;
+        const userId = getAuthUser(req)!.sub as string;
         const seasonId = SeasonId.current().value;
 
         const entries = await leaderboardRepo.getLeaderboard(workspaceId, seasonId);

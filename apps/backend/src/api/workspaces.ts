@@ -6,6 +6,7 @@ import { AcceptInvitationUseCase } from '../application/workspace/accept-invitat
 import { TransferOwnershipUseCase } from '../application/workspace/transfer-ownership.usecase.js';
 import { GamificationEventPublisher } from '../application/gamification/gamification-event-publisher.js';
 import { getGamificationQueue } from '../generation/jobs/gamification-queue.js';
+import { getAuthUser } from '../middleware/auth-types.js';
 
 export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository, redisUrl: string) {
   const gamificationQueue = getGamificationQueue(redisUrl);
@@ -17,7 +18,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository, redisU
   return {
     createWorkspace: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const userId = req.user!.sub;
+        const userId = getAuthUser(req)!.sub;
         const { name } = req.body;
 
         if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -43,7 +44,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository, redisU
 
     listWorkspaces: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const userId = req.user!.sub as string;
+        const userId = getAuthUser(req)!.sub as string;
         const workspaces = await workspaceRepo.findByMember(userId);
         res.json({
           workspaces: workspaces.map((w) => ({
@@ -83,7 +84,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository, redisU
       try {
         const { userId, role } = req.body;
         const workspaceId = req.params.id as string;
-        const invitedBy = req.user!.sub as string;
+        const invitedBy = getAuthUser(req)!.sub as string;
 
         const result = await inviteMemberUC.execute({
           workspaceId,
@@ -101,7 +102,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository, redisU
     acceptInvitation: async (req: Request, res: Response, next: NextFunction) => {
       try {
         const workspaceId = req.params.id as string;
-        const userId = req.user!.sub as string;
+        const userId = getAuthUser(req)!.sub as string;
 
         const result = await acceptInvitationUC.execute({ workspaceId, userId });
         res.json(result);
@@ -113,7 +114,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository, redisU
     declineInvitation: async (req: Request, res: Response, next: NextFunction) => {
       try {
         const workspaceId = req.params.id as string;
-        const userId = req.user!.sub as string;
+        const userId = getAuthUser(req)!.sub as string;
 
         const workspace = await workspaceRepo.findById(workspaceId);
         if (!workspace) {
@@ -152,7 +153,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository, redisU
       try {
         const workspaceId = req.params.id as string;
         const memberUserId = req.params.userId as string;
-        const removedBy = req.user!.sub as string;
+        const removedBy = getAuthUser(req)!.sub as string;
 
         const workspace = await workspaceRepo.findById(workspaceId);
         if (!workspace) {
@@ -175,7 +176,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository, redisU
         const workspaceId = req.params.id as string;
         const memberUserId = req.params.userId as string;
         const { role } = req.body;
-        const changedBy = req.user!.sub as string;
+        const changedBy = getAuthUser(req)!.sub as string;
 
         const workspace = await workspaceRepo.findById(workspaceId);
         if (!workspace) {
@@ -197,7 +198,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository, redisU
       try {
         const workspaceId = req.params.id as string;
         const { toUserId } = req.body;
-        const fromUserId = req.user!.sub as string;
+        const fromUserId = getAuthUser(req)!.sub as string;
 
         const result = await transferOwnershipUC.execute({
           workspaceId,
@@ -213,7 +214,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository, redisU
 
     listPendingInvitations: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const userId = req.user!.sub as string;
+        const userId = getAuthUser(req)!.sub as string;
         const workspaces = await workspaceRepo.findPendingInvitations(userId);
         res.json({
           invitations: workspaces.map((w) => ({

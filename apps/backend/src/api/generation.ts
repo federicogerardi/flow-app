@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { Kysely } from 'kysely';
 import { StartSessionUseCase } from '../application/generation/start-session.usecase.js';
+import { getAuthUser } from '../middleware/auth-types.js';
 import { enqueueSession } from '../generation/jobs/enqueue-session.job.js';
 import type { SessionRepository } from '@flow-app/domain';
 import type { DB } from '@flow-app/infra-db';
@@ -67,7 +68,7 @@ export function createGenerationRoutes(sessionRepo: SessionRepository, db: Kysel
       try {
         const toolKey = req.params.toolKey as string;
         const { workspaceId, inputs } = req.body;
-        const userId = req.user?.sub ?? 'anonymous';
+        const userId = getAuthUser(req)?.sub ?? 'anonymous';
 
         const result = await startSessionUC.execute({
           userId,

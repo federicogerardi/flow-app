@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import type { QuotaRepository } from '@flow-app/domain';
+import { getAuthUser } from '../../middleware/auth-types.js';
 
 export function createUsageRoutes(quotaRepo: QuotaRepository) {
   const router = Router();
 
   router.get('/credits', async (req, res, next) => {
     try {
-      const userId = req.user!.sub;
+      const userId = getAuthUser(req)!.sub;
       const quota = await quotaRepo.findCurrent(userId);
 
       if (!quota) {

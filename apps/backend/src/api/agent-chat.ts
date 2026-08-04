@@ -6,6 +6,7 @@ import { SendMessageUseCase } from '../application/agent-chat/send-message.useca
 import type { LlmGateway } from '../infrastructure/llm-gateway.js';
 import { GamificationEventPublisher } from '../application/gamification/gamification-event-publisher.js';
 import { getGamificationQueue } from '../generation/jobs/gamification-queue.js';
+import { getAuthUser } from '../middleware/auth-types.js';
 
 export function createAgentChatRoutes(
   conversationRepo: ConversationRepository,
@@ -34,7 +35,7 @@ export function createAgentChatRoutes(
 
     listConversations: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const userId = req.user!.sub as string;
+        const userId = getAuthUser(req)!.sub as string;
         const workspaceId = req.params.workspaceId as string;
         const conversations = await conversationRepo.findByUserAndWorkspace(userId, workspaceId);
 
@@ -64,7 +65,7 @@ export function createAgentChatRoutes(
 
     startConversation: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const userId = req.user!.sub as string;
+        const userId = getAuthUser(req)!.sub as string;
         const workspaceId = req.params.workspaceId as string;
         const { agentKey } = req.body;
 
@@ -82,7 +83,7 @@ export function createAgentChatRoutes(
 
     getConversation: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const userId = req.user!.sub as string;
+        const userId = getAuthUser(req)!.sub as string;
         const conversationId = req.params.id as string;
 
         const conversation = await conversationRepo.findById(conversationId);
@@ -125,7 +126,7 @@ export function createAgentChatRoutes(
 
     sendMessage: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const userId = req.user!.sub as string;
+        const userId = getAuthUser(req)!.sub as string;
         const conversationId = req.params.id as string;
         const { content } = req.body;
 
@@ -143,7 +144,7 @@ export function createAgentChatRoutes(
 
     archiveConversation: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const userId = req.user!.sub as string;
+        const userId = getAuthUser(req)!.sub as string;
         const conversationId = req.params.id as string;
 
         const conversation = await conversationRepo.findById(conversationId);
