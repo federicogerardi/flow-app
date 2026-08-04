@@ -6,6 +6,8 @@ export const workspace = {
     createLabel: 'Nome workspace',
   },
   detail: {
+    members:      '{count} members',
+    deleteTitle:  'Delete workspace',
     assets:       'Asset',
     recentSessions: 'Sessioni recenti',
     noSessions:   'Nessuna sessione. Avvia un tool per iniziare.',

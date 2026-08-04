@@ -147,10 +147,11 @@ class ApiClient {
   }
 
   async listWorkspaceMembers(workspaceId: string) {
-    return this.request<{ userId: string; role: string; status: string; joinedAt: string | null }[]>(
+    const res = await this.request<{ members: { userId: string; role: string; status: string; joinedAt: string | null }[] }>(
       'GET',
       `/api/workspaces/${workspaceId}/members`,
     );
+    return res.members ?? [];
   }
 
   async inviteMember(workspaceId: string, email: string, role: string) {

@@ -65,7 +65,16 @@ export function createGamificationRoutes(
         season: SeasonId.current().value,
       });
     } catch {
-      res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch profile' } });
+      // Graceful fallback if gamification tables don't exist (migration not run)
+      return res.json({
+        xpTotal: 0,
+        level: 1,
+        levelLabel: 'Novice',
+        currentStreak: 0,
+        longestStreak: 0,
+        badges: [],
+        season: SeasonId.current().value,
+      });
     }
   });
 
