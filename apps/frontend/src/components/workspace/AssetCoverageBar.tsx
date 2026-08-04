@@ -1,5 +1,6 @@
 import { Box, Typography, LinearProgress, Stack, Button, Tooltip } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { useNavigate } from 'react-router';
 import useSWR from 'swr';
 import { api } from '../../api/client';
 
@@ -13,11 +14,21 @@ const ASSET_LABELS: Record<string, string> = {
   'ad-copy': 'Ad Copy',
 };
 
+/** Map asset types to their corresponding tool keys */
+const ASSET_TOOL_MAP: Record<string, string> = {
+  'brief': 'brief',
+  'brand-voice': 'brand-voice',
+  'persona': 'buyer-persona',
+  'angle': 'marketing-angle',
+  'ad-copy': 'ad-copy',
+};
+
 interface AssetCoverageBarProps {
   workspaceId: string;
 }
 
 export function AssetCoverageBar({ workspaceId }: AssetCoverageBarProps) {
+  const navigate = useNavigate();
   const { data } = useSWR(
     `assets-${workspaceId}-coverage`,
     () => api.listAssets(workspaceId),
@@ -58,6 +69,7 @@ export function AssetCoverageBar({ workspaceId }: AssetCoverageBarProps) {
                       size="small"
                       variant="text"
                       sx={{ minWidth: 'auto', p: 0, fontSize: '0.65rem', textTransform: 'none' }}
+                      onClick={() => navigate(`/workspaces/${workspaceId}/tools/${ASSET_TOOL_MAP[type]}`)}
                     >
                       +
                     </Button>

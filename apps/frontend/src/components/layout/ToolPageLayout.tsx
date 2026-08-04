@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { api, ApiClientError } from '../../api/client';
 import { PageHeader } from '../PageHeader';
+import { useBreadcrumbs } from '../../layout/AppShell';
 import { ErrorState } from '../ErrorState';
 import { ReadinessSnapshot } from '../tool/ReadinessSnapshot';
 import { SetupPanel, fetchToolInputs } from '../tool/SetupPanel';
@@ -26,9 +27,20 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
   const [state, send] = useMachine(toolPageMachine);
   const [toolDef, setToolDef] = useState<TextInput[]>([]);
   const [loadingTool, setLoadingTool] = useState(true);
+  const { setBreadcrumbs } = useBreadcrumbs();
 
   const phase = state.value as string;
   const { inputs, error, errorCode, sessionId } = state.context;
+
+  const title = toolKey?.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) ?? 'Tool';
+
+  // Set breadcrumbs via context (L1)
+  useEffect(() => {
+    setBreadcrumbs([
+      { label: copy.t('workspace.nav.home'), path: `/workspaces/${workspaceId}` },
+      { label: title },
+    ]);
+  }, [workspaceId, title, setBreadcrumbs]);
 
   // Load tool definition on mount
   useEffect(() => {
@@ -82,17 +94,9 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
     }
   };
 
-  const title = toolKey?.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) ?? 'Tool';
-
   return (
     <Box>
-      <PageHeader
-        title={title}
-        breadcrumbs={[
-          { label: copy.t('workspace.nav.home'), path: `/workspaces/${workspaceId}` },
-          { label: toolKey },
-        ]}
-      />
+      <PageHeader title={title} />
 
       {/* Quota errors */}
       {error && (errorCode === 'QUOTA_EXCEEDED' || errorCode === 'ARTIFACT_GATE_EXCEEDED') && (

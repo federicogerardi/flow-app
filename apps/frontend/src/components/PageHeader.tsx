@@ -1,26 +1,22 @@
 import { Breadcrumbs, Box, Typography, Button, Link } from '@mui/material';
 import { useNavigate } from 'react-router';
-
-interface Crumb {
-  label: string;
-  path?: string;
-}
+import { useBreadcrumbs } from '../layout/AppShell';
 
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
-  breadcrumbs?: Crumb[];
   action?: { label: string; onClick: () => void };
 }
 
-export function PageHeader({ title, subtitle, breadcrumbs, action }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
   const navigate = useNavigate();
+  const { crumbs } = useBreadcrumbs();
 
   return (
     <Box sx={{ mb: 3 }}>
-      {breadcrumbs && breadcrumbs.length > 0 && (
+      {crumbs.length > 0 && (
         <Breadcrumbs sx={{ mb: 1 }}>
-          {breadcrumbs.map((c, i) =>
+          {crumbs.map((c, i) =>
             c.path ? (
               <Link
                 key={i}

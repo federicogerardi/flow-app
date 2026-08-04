@@ -1,9 +1,12 @@
 import { Box, Card, CardContent, Chip, Typography } from '@mui/material';
 import { useParams, useNavigate } from 'react-router';
+import { useEffect } from 'react';
 import { useSession } from '../api/hooks';
 import { PageHeader } from '../components/PageHeader';
+import { useBreadcrumbs } from '../layout/AppShell';
 import { FeedbackPanel } from '../components/tool/FeedbackPanel';
 import { SessionSummary } from '../components/tool/SessionSummary';
+import { CompletionBanner } from '../components/shared/CompletionBanner';
 import { LoadingSkeleton } from '../components/LoadingSkeleton';
 import { ErrorState } from '../components/ErrorState';
 import { copy } from '@flow-app/copy';
@@ -13,6 +16,14 @@ export default function SessionPage() {
   const { sessionId, workspaceId } = useParams<{ sessionId: string; workspaceId: string }>();
   const navigate = useNavigate();
   const { session, progress, loading, error } = useSession(sessionId ?? null);
+  const { setBreadcrumbs } = useBreadcrumbs();
+
+  useEffect(() => {
+    setBreadcrumbs([
+      { label: copy.t('workspace.nav.home'), path: workspaceId ? `/workspaces/${workspaceId}` : '/dashboard' },
+      { label: session ? `Session: ${session.toolKey}` : 'Session' },
+    ]);
+  }, [workspaceId, session, setBreadcrumbs]);
 
   if (loading) return <LoadingSkeleton />;
   if (error) return <ErrorState message={error.message} />;
@@ -20,13 +31,7 @@ export default function SessionPage() {
 
   return (
     <Box>
-      <PageHeader
-        title={`Session: ${session.toolKey}`}
-        breadcrumbs={[
-          { label: copy.t('workspace.nav.home'), path: workspaceId ? `/workspaces/${workspaceId}` : '/dashboard' },
-          { label: 'Session' },
-        ]}
-      />
+      <PageHeader title={`Session: ${session.toolKey}`} />
 
       <Card sx={{ mb: 3 }}>
         <CardContent>
@@ -52,7 +57,14 @@ export default function SessionPage() {
       </Card>
 
       {session.status === 'completed' && session.artifacts && (
-        <SessionSummary artifacts={session.artifacts} workspaceId={workspaceId} />
+        <>
+          <CompletionBanner
+            durationSeconds={0}
+            stepCount={session.artifacts.length}
+            creditCost={1}
+          />
+          <SessionSummary artifacts={session.artifacts} workspaceId={workspaceId} />
+        </>
       )}
     </Box>
   );

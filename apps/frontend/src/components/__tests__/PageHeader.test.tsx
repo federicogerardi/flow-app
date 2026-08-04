@@ -3,6 +3,13 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { PageHeader } from '../PageHeader';
 
+// Mock useBreadcrumbs to return controlled crumbs
+vi.mock('../../layout/AppShell', () => ({
+  useBreadcrumbs: vi.fn(() => ({ crumbs: [] })),
+}));
+
+import { useBreadcrumbs } from '../../layout/AppShell';
+
 function renderWithRouter(ui: React.ReactElement) {
   return render(<MemoryRouter>{ui}</MemoryRouter>);
 }
@@ -28,16 +35,16 @@ describe('PageHeader', () => {
     expect(screen.getByRole('button', { name: 'New workspace' })).toBeInTheDocument();
   });
 
-  it('breadcrumbs render when provided', () => {
-    renderWithRouter(
-      <PageHeader
-        title="Dashboard"
-        breadcrumbs={[
-          { label: 'Home', path: '/' },
-          { label: 'Dashboard' },
-        ]}
-      />,
-    );
+  it('breadcrumbs render from context', () => {
+    vi.mocked(useBreadcrumbs).mockReturnValue({
+      crumbs: [
+        { label: 'Home', path: '/' },
+        { label: 'Dashboard' },
+      ],
+      setBreadcrumbs: vi.fn(),
+    });
+
+    renderWithRouter(<PageHeader title="Dashboard" />);
 
     expect(screen.getByText('Home')).toBeInTheDocument();
     expect(screen.getAllByText('Dashboard')).toHaveLength(2);

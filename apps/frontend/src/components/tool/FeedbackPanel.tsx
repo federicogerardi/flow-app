@@ -1,8 +1,18 @@
-import { Box, Typography, LinearProgress, Stack } from '@mui/material';
+import { Box, Typography, LinearProgress, Stack, keyframes } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import { copy } from '@flow-app/copy';
 import { useEffect, useState, useRef } from 'react';
+
+const slideInFade = keyframes`
+  from { transform: translateX(-8px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+`;
+
+const stepPulse = keyframes`
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+`;
 
 interface StepProgressData {
   current: number;
@@ -48,9 +58,18 @@ function StepIndicator({ index, isCompleted, isActive }: { index: number; isComp
         py: 1.5,
         px: 2,
         borderRadius: 1,
-        transition: 'all 200ms ease',
         bgcolor: isActive ? 'action.selected' : 'transparent',
         opacity: isCompleted || isActive ? 1 : 0.4,
+        // L5: slideInFade on completed, stepPulse on active
+        animation: isCompleted
+          ? `${slideInFade} 300ms ease-out`
+          : isActive
+            ? `${stepPulse} 1.5s ease-in-out infinite`
+            : 'none',
+        // L8: respect reduced motion
+        '@media (prefers-reduced-motion: reduce)': {
+          animation: 'none',
+        },
       }}
     >
       {isCompleted ? (

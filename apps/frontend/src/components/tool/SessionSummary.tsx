@@ -1,16 +1,76 @@
-import { Box, Typography, Divider, Card, Tooltip, IconButton } from '@mui/material';
+import { Box, Typography, Divider, Card, IconButton, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
+import DescriptionIcon from '@mui/icons-material/Description';
+import TextSnippetIcon from '@mui/icons-material/TextSnippet';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import ArticleIcon from '@mui/icons-material/Article';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { copy } from '@flow-app/copy';
 import { PromoteButton } from '../shared/PromoteButton';
 import type { ArtifactDTO } from '../../api/client';
+import { useState } from 'react';
 
-function handleDownload(artifactId: string) {
+function downloadFile(content: string, filename: string, mimeType: string) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = `/api/artifacts/${artifactId}/download?format=md`;
-  a.download = `artifact-${artifactId.slice(0, 8)}.md`;
+  a.href = url;
+  a.download = filename;
   a.click();
+  URL.revokeObjectURL(url);
+}
+
+function ArtifactDownloadMenu({ artifactId, content, index }: { artifactId: string; content: string; index: number }) {
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const shortId = artifactId.slice(0, 8);
+
+  const handleDownload = (format: string) => {
+    setAnchorEl(null);
+    switch (format) {
+      case 'md': {
+        const a = document.createElement('a');
+        a.href = `/api/artifacts/${artifactId}/download?format=md`;
+        a.download = `step-${index + 1}-${shortId}.md`;
+        a.click();
+        break;
+      }
+      case 'txt':
+        // Strip basic markdown formatting for plain text
+        downloadFile(content, `step-${index + 1}-${shortId}.txt`, 'text/plain;charset=utf-8');
+        break;
+      case 'docx':
+      case 'pdf':
+        // Requires server-side conversion — deferred
+        break;
+    }
+  };
+
+  return (
+    <>
+      <IconButton size="small" onClick={(e) => setAnchorEl(e.currentTarget)} aria-label={copy.t('shared.actions.download')}>
+        <DownloadIcon fontSize="small" />
+      </IconButton>
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+        <MenuItem onClick={() => handleDownload('md')}>
+          <ListItemIcon><DescriptionIcon fontSize="small" /></ListItemIcon>
+          <ListItemText>Markdown (.md)</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => handleDownload('txt')}>
+          <ListItemIcon><TextSnippetIcon fontSize="small" /></ListItemIcon>
+          <ListItemText>Plain Text (.txt)</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => handleDownload('docx')} disabled>
+          <ListItemIcon><ArticleIcon fontSize="small" /></ListItemIcon>
+          <ListItemText>Word (.docx) — coming soon</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => handleDownload('pdf')} disabled>
+          <ListItemIcon><PictureAsPdfIcon fontSize="small" /></ListItemIcon>
+          <ListItemText>PDF (.pdf) — coming soon</ListItemText>
+        </MenuItem>
+      </Menu>
+    </>
+  );
 }
 
 interface SessionSummaryProps {
@@ -40,11 +100,11 @@ export function SessionSummary({ artifacts, workspaceId }: SessionSummaryProps) 
                 Step {artifact.stepNumber}
               </Typography>
               <Box sx={{ display: 'flex', gap: 0.5 }}>
-                <Tooltip title={copy.t('shared.actions.download')}>
-                  <IconButton size="small" onClick={() => handleDownload(artifact.artifactId ?? `step-${i}`)} aria-label={copy.t('shared.actions.download')}>
-                    <DownloadIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
+                <ArtifactDownloadMenu
+                  artifactId={artifact.artifactId ?? `step-${i}`}
+                  content={artifact.content}
+                  index={i}
+                />
                 <PromoteButton
                   artifactId={artifact.artifactId ?? `step-${i}`}
                   workspaceId={workspaceId ?? ''}

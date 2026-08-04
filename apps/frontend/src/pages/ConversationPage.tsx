@@ -6,6 +6,7 @@ import { useParams } from 'react-router';
 import useSWR from 'swr';
 import { api } from '../api/client';
 import { PageHeader } from '../components/PageHeader';
+import { useBreadcrumbs } from '../layout/AppShell';
 import { LoadingSkeleton } from '../components/LoadingSkeleton';
 import { ErrorState } from '../components/ErrorState';
 import { ChatMessageBubble } from '../components/agent-chat/ChatMessageBubble';
@@ -91,6 +92,7 @@ export default function ConversationPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isScrolledUp, setIsScrolledUp] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
+  const { setBreadcrumbs } = useBreadcrumbs();
 
   const {
     data: conversation,
@@ -101,6 +103,16 @@ export default function ConversationPage() {
     conversationId ? `conversation-${conversationId}` : null,
     () => api.getConversation(conversationId!),
   );
+
+  // Set breadcrumbs via context (L1)
+  useEffect(() => {
+    if (conversation) {
+      setBreadcrumbs([
+        { label: copy.t('workspace.nav.home'), path: '/dashboard' },
+        { label: conversation.agentName },
+      ]);
+    }
+  }, [conversation, setBreadcrumbs]);
 
   // Detect scroll position for "scroll-lock" badge (M3)
   const handleScroll = useCallback(() => {
@@ -144,10 +156,6 @@ export default function ConversationPage() {
     <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
       <PageHeader
         title={conversation.title ?? `Chat with ${conversation.agentName}`}
-        breadcrumbs={[
-          { label: copy.t('workspace.nav.home'), path: '/dashboard' },
-          { label: conversation.agentName },
-        ]}
         action={{
           label: '',
           onClick: () => {},

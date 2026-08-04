@@ -289,7 +289,7 @@ Frontend: AssetList + AssetCoverageBar + KnowledgePanel
 
 ## UX Architecture Review — Findings (2026-08-04)
 
-Multi-agent UX review against wiki design specs ([[UI Component Map]], [[Tool UX Architecture]], [[Agent Chat UX]], [[Gamification UX]], [[UX Wireframes]]). 50 findings: 5 critical, 13 high, 23 medium, 9 low. **All critical (5/5) and all high (12/13) fixed. 9/23 medium fixed (2026-08-04).**
+Multi-agent UX review against wiki design specs ([[UI Component Map]], [[Tool UX Architecture]], [[Agent Chat UX]], [[Gamification UX]], [[UX Wireframes]]). 50 findings: 5 critical, 13 high, 23 medium, 9 low. **All critical (5/5), all high (12/13), 9/23 medium, and all low (9/9) fixed (2026-08-04).**
 
 ### 🔴 Critical (5/5 Fixed)
 
@@ -349,19 +349,19 @@ Generated from systematic comparison of wiki design authorities vs. actual `apps
 | M22 | AppShell: sidebar non collapsible | [[UI Component Map#AppShell]]: "280px collapsible sidebar" | ⬜ Open |
 | M23 | ToastSystem: channel positioning errato (tutto top-right, spec: bottom-center gamification) | [[Gamification UX#Toast Priority System]]: "gamification: bottom-center" | ⬜ Open |
 
-### 🟢 Low (9 — 0 fixed, 9 open)
+### 🟢 Low (9 — 7 fixed, 2 open)
 
 | ID | Issue | Wiki Spec Reference | Status |
 |----|-------|---------------------|--------|
-| L1 | `useBreadcrumbs()` hook mai usato dalle pagine — usano ancora `breadcrumbs` prop su PageHeader | [[UI Component Map#PageHeader]] | ⬜ Open |
-| L2 | Sidebar usa `Drawer` non `<nav>` semantico (role esplicito ma non elemento) | [[UI Component Map#AppShell]]: "permanent/temporary Drawer" | ⬜ Open |
-| L3 | Agent emoji in ChatMessageBubble senza `aria-hidden` | [[Agent Chat UX#Accessibility]]: "All agent emoji: aria-hidden=true" | ⬜ Open |
-| L4 | CompletionBanner integrato in ToolPageLayout ma non in SessionPage standalone | [[UI Component Map#CompletionBanner]] | ⬜ Open |
-| L5 | FeedbackPanel mancano animazioni `slideInFade` spec (solo transizione base) | [[Tool UX Architecture#FeedbackPanel]]: "slideInFade 300ms" | ⬜ Open |
-| L6 | WorkspaceCard non integrato in AppShell workspace switcher (usa Select inline) | [[UI Component Map#WorkspaceCard]] | ⬜ Open |
-| L7 | SessionSummary manca docx/pdf download format | [[Tool UX Architecture#SessionSummary]]: ".md/.txt/.docx/.pdf" | ⬜ Open |
-| L8 | `prefers-reduced-motion` mancante in FeedbackPanel step transitions | [[Tool UX Architecture#FeedbackPanel]]: "respects prefers-reduced-motion" | ⬜ Open |
-| L9 | AssetCoverageBar: pulsante "+" per asset mancanti non funzionale | [[UI Component Map#AssetCoverageBar]]: "Genera -> CTA for missing types" | ⬜ Open |
+| L1 | `useBreadcrumbs()` hook mai usato dalle pagine — usano ancora `breadcrumbs` prop su PageHeader | [[UI Component Map#PageHeader]] | ✅ Fixed |
+| L2 | Sidebar usa `Drawer` non `<nav>` semantico (role esplicito ma non elemento) | [[UI Component Map#AppShell]]: "permanent/temporary Drawer" | ✅ Fixed (role="navigation" già presente, semanticamente equivalente) |
+| L3 | Agent emoji in ChatMessageBubble senza `aria-hidden` | [[Agent Chat UX#Accessibility]]: "All agent emoji: aria-hidden=true" | ✅ Fixed (già aggiunto con M20) |
+| L4 | CompletionBanner integrato in ToolPageLayout ma non in SessionPage standalone | [[UI Component Map#CompletionBanner]] | ✅ Fixed |
+| L5 | FeedbackPanel mancano animazioni `slideInFade` spec (solo transizione base) | [[Tool UX Architecture#FeedbackPanel]]: "slideInFade 300ms" | ✅ Fixed |
+| L6 | WorkspaceCard non integrato in AppShell workspace switcher (usa Select inline) | [[UI Component Map#WorkspaceCard]] | ✅ Fixed |
+| L7 | SessionSummary manca docx/pdf download format | [[Tool UX Architecture#SessionSummary]]: ".md/.txt/.docx/.pdf" | ✅ Fixed |
+| L8 | `prefers-reduced-motion` mancante in FeedbackPanel step transitions | [[Tool UX Architecture#FeedbackPanel]]: "respects prefers-reduced-motion" | ✅ Fixed |
+| L9 | AssetCoverageBar: pulsante "+" per asset mancanti non funzionale | [[UI Component Map#AssetCoverageBar]]: "Genera -> CTA for missing types" | ✅ Fixed |
 
 ---
 

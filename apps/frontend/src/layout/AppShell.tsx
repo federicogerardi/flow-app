@@ -1,4 +1,4 @@
-import { AppBar, Box, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, Divider, Button, Select, MenuItem, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Avatar, Menu, useMediaQuery } from '@mui/material';
+import { AppBar, Box, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, Divider, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Avatar, Menu, MenuItem, useMediaQuery, Popover, Chip } from '@mui/material';
 import type { Theme } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import BuildIcon from '@mui/icons-material/Build';
@@ -22,6 +22,7 @@ import { GamificationZone } from '../components/gamification/GamificationZone';
 import { copy } from '@flow-app/copy';
 import { useState, createContext, useContext } from 'react';
 import { useAuth } from '../auth/AuthContext';
+import { WorkspaceCard } from '../components/workspace/WorkspaceCard';
 
 interface Crumb {
   label: string;
@@ -70,6 +71,7 @@ export function AppShell() {
   const [userMenuAnchor, setUserMenuAnchor] = useState<HTMLElement | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
+  const [wsSwitcherAnchor, setWsSwitcherAnchor] = useState<HTMLElement | null>(null);
 
   const handleWorkspaceChange = (newId: string) => {
     navigate(`/workspaces/${newId}`);
@@ -226,40 +228,63 @@ export function AppShell() {
       >
         <Toolbar />
 
-        {/* Workspace Switcher + Create */}
+        {/* Workspace Switcher + Create (L6: WorkspaceCard via Popover) */}
         <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Select
+          <Button
             fullWidth
             size="small"
-            value={activeWorkspaceId ?? ''}
-            onChange={(e) => handleWorkspaceChange(e.target.value)}
-            displayEmpty
-            aria-label="Select workspace"
-            inputProps={{ 'aria-label': 'Current workspace' }}
-            renderValue={(selected) => {
-              if (!selected) return <em style={{ opacity: 0.5 }}>{copy.t('workspace.switcher.selectWorkspace')}</em>;
-              const ws = workspaces?.find((w) => w.id === selected);
-              return (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: accent, flexShrink: 0 }} />
-                  <Typography variant="body2" noWrap>{ws?.name ?? selected}</Typography>
-                </Box>
-              );
+            variant="outlined"
+            onClick={(e) => setWsSwitcherAnchor(e.currentTarget)}
+            sx={{
+              justifyContent: 'flex-start',
+              textTransform: 'none',
+              color: 'text.primary',
+              borderColor: 'divider',
+              px: 1.5,
             }}
           >
-            {workspaces?.map((ws) => (
-              <MenuItem key={ws.id} value={ws.id}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: accent, flexShrink: 0 }} />
-                  {ws.name}
-                </Box>
-              </MenuItem>
-            ))}
-          </Select>
+            {activeWorkspaceId && workspaces ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, overflow: 'hidden' }}>
+                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: accent, flexShrink: 0 }} />
+                <Typography variant="body2" noWrap>
+                  {workspaces.find((w) => w.id === activeWorkspaceId)?.name ?? activeWorkspaceId}
+                </Typography>
+              </Box>
+            ) : (
+              <Typography variant="body2" noWrap sx={{ opacity: 0.5 }}>
+                {copy.t('workspace.switcher.selectWorkspace')}
+              </Typography>
+            )}
+          </Button>
           <IconButton size="small" onClick={() => setCreateOpen(true)} aria-label={copy.t('workspace.list.createCta')} title={copy.t('workspace.list.createCta')}>
             <AddIcon fontSize="small" />
           </IconButton>
         </Box>
+
+        {/* Workspace Switcher Popover */}
+        <Popover
+          open={Boolean(wsSwitcherAnchor)}
+          anchorEl={wsSwitcherAnchor}
+          onClose={() => setWsSwitcherAnchor(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+          slotProps={{ paper: { sx: { width: DRAWER_WIDTH - 32, p: 1 } } }}
+        >
+          {workspaces?.map((ws) => (
+            <WorkspaceCard
+              key={ws.id}
+              id={ws.id}
+              name={ws.name}
+              memberCount={1}
+              isActive={ws.id === activeWorkspaceId}
+              accentColor={accent}
+              onClick={() => {
+                setWsSwitcherAnchor(null);
+                handleWorkspaceChange(ws.id);
+              }}
+            />
+          ))}
+        </Popover>
 
         <Divider sx={{ mx: 2 }} />
 
