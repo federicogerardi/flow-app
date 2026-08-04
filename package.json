@@ -21,6 +21,7 @@
     "prepare": "husky"
   },
   "devDependencies": {
+    "@types/node": "^22.20.1",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "@vitest/coverage-v8": "^4.1.0",
