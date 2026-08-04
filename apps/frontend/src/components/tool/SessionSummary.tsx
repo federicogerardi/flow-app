@@ -6,6 +6,13 @@ import { copy } from '@flow-app/copy';
 import { PromoteButton } from '../shared/PromoteButton';
 import type { ArtifactDTO } from '../../api/client';
 
+function handleDownload(artifactId: string) {
+  const a = document.createElement('a');
+  a.href = `/api/artifacts/${artifactId}/download?format=md`;
+  a.download = `artifact-${artifactId.slice(0, 8)}.md`;
+  a.click();
+}
+
 interface SessionSummaryProps {
   artifacts: ArtifactDTO[];
   workspaceId?: string;
@@ -34,14 +41,13 @@ export function SessionSummary({ artifacts, workspaceId }: SessionSummaryProps) 
               </Typography>
               <Box sx={{ display: 'flex', gap: 0.5 }}>
                 <Tooltip title={copy.t('shared.actions.download')}>
-                  <IconButton size="small" disabled aria-label={copy.t('shared.actions.download')}>
+                  <IconButton size="small" onClick={() => handleDownload(artifact.artifactId ?? `step-${i}`)} aria-label={copy.t('shared.actions.download')}>
                     <DownloadIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
                 <PromoteButton
                   artifactId={artifact.artifactId ?? `step-${i}`}
                   workspaceId={workspaceId ?? ''}
-                  disabled
                 />
               </Box>
             </Box>

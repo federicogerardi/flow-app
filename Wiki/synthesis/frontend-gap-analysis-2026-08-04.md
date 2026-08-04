@@ -287,6 +287,28 @@ Frontend: AssetList + AssetCoverageBar + KnowledgePanel
 
 ---
 
+## UX Architecture Review — Findings (2026-08-04)
+
+Multi-agent UX review against wiki design specs ([[UI Component Map]], [[Tool UX Architecture]], [[Agent Chat UX]], [[Gamification UX]], [[UX Wireframes]]). 50 findings: 5 critical, 13 high, 23 medium, 9 low.
+
+### 🔴 Critical (5/5 Fixed)
+
+| ID | Issue | Status | Commit |
+|----|-------|--------|--------|
+| C1 | `ToolPageLayout` era inerte — solo `data-phase` attr | ✅ Fixed | `ToolPageLayout` ora è phase controller con `useMachine`, renderizza SetupPanel/FeedbackPanel/SessionSummary/CompletionBanner per fase |
+| C2 | XState mai integrato con ToolPage — usava `useState` | ✅ Fixed | `ToolPage` delegato a `ToolPageLayout`, eventi macchina (`CONFIGURE`, `SUBMIT`, `SESSION_STARTED`, `SESSION_COMPLETED`, `SESSION_FAILED`) inviati dal layout |
+| C3 | ToolPageLayout non renderizzava condizionalmente per fase | ✅ Fixed | Switch su `state.value`: configuring→SetupPanel, submitting→spinner, running→FeedbackPanel, completed→SessionSummary+CompletionBanner, failed→ErrorState |
+| C4 | `PromoteButton` hardcoded `disabled={true}` | ✅ Fixed | Nuovo endpoint `POST /api/artifacts/:id/promote`, PromoteButton con stato idle/loading/done/error, chiama `api.promoteArtifact` |
+| C5 | `SessionSummary` download disabilitato | ✅ Fixed | `IconButton` onClick → `handleDownload`, endpoint `GET /api/artifacts/:id/download?format=md` già esistente |
+
+### 🟠 High (13 remaining)
+
+Top 5 priority: SkipToContent, FeedbackPanel live region, `/workspaces/:id/assets` route, `/profile` gamification route, DashboardPage integrazione AssetCoverageBar+QuickGenerateBar.
+
+Full UX review filed in [[implementation-roadmap-2026-08-01|roadmap]] task log.
+
+---
+
 ## Sprint 5 — Implementation Plan (Remaining Non-Blocking)
 
 ### Overview

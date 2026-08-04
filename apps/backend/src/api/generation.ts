@@ -144,6 +144,49 @@ export function createGenerationRoutes(sessionRepo: SessionRepository, db: Kysel
       }
     },
 
+    promoteArtifact: async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const artifactId = req.params.id as string;
+        const { assetType, workspaceId } = req.body as { assetType: string; workspaceId: string };
+
+        const row = await db
+          .selectFrom('artifacts')
+          .where('id', '=', artifactId)
+          .selectAll()
+          .executeTakeFirst();
+
+        if (!row) {
+          return res.status(404).json({
+            error: { code: 'ARTIFACT_NOT_FOUND', message: 'Artifact not found' },
+          });
+        }
+
+        await db
+          .insertInto('assets')
+          .values({
+            id: crypto.randomUUID(),
+            workspace_id: workspaceId,
+            asset_type: assetType,
+            source: 'generated',
+            source_ref: artifactId,
+            content: row.content,
+          })
+          .onConflict((oc) =>
+            oc.columns(['workspace_id', 'asset_type']).doUpdateSet({
+              content: row.content,
+              source: 'generated',
+              source_ref: artifactId,
+              updated_at: new Date(),
+            }),
+          )
+          .execute();
+
+        res.status(201).json({ artifactId, assetType, promoted: true });
+      } catch (error) {
+        next(error);
+      }
+    },
+
     startSession: async (req: Request, res: Response, next: NextFunction) => {
       try {
         const toolKey = req.params.toolKey as string;

@@ -125,6 +125,14 @@ class ApiClient {
     return this.request<Blob>('GET', `/api/artifacts/${artifactId}/download?format=${format}`);
   }
 
+  async promoteArtifact(artifactId: string, assetType: string, workspaceId: string) {
+    return this.request<{ artifactId: string; assetType: string; promoted: boolean }>(
+      'POST',
+      `/api/artifacts/${artifactId}/promote`,
+      { assetType, workspaceId },
+    );
+  }
+
   // ── Artifacts ────────────────────────────────────────────────────────────────
 
   async getArtifact(artifactId: string) {

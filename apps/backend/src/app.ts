@@ -98,6 +98,7 @@ export function createApp(deps: AppDeps) {
   app.post('/api/sessions/:id/cancel', generationRoutes.cancelSession);
   app.get('/api/artifacts/:id', generationRoutes.getArtifact);
   app.get('/api/artifacts/:id/download', generationRoutes.downloadArtifact);
+  app.post('/api/artifacts/:id/promote', generationRoutes.promoteArtifact);
 
   // Workspace routes
   const workspaceRoutes = createWorkspaceRoutes(deps.workspaceRepo, process.env.REDIS_URL!);

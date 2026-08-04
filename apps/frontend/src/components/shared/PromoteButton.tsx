@@ -1,30 +1,57 @@
 import { Button, Tooltip } from '@mui/material';
+import { useState } from 'react';
 import PushPinIcon from '@mui/icons-material/PushPin';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { api } from '../../api/client';
 import { copy } from '@flow-app/copy';
 
 interface PromoteButtonProps {
   artifactId: string;
+  assetType?: string;
   workspaceId: string;
   onPromoted?: () => void;
-  disabled?: boolean;
 }
 
-export function PromoteButton({ artifactId: _artifactId, workspaceId: _workspaceId, onPromoted: _onPromoted, disabled = true }: PromoteButtonProps) {
+export function PromoteButton({ artifactId, assetType = 'ad-copy', workspaceId, onPromoted }: PromoteButtonProps) {
+  const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+
+  if (state === 'done') {
+    return (
+      <Button
+        variant="outlined"
+        size="small"
+        color="success"
+        startIcon={<CheckCircleIcon />}
+        disabled
+      >
+        Promoted
+      </Button>
+    );
+  }
+
+  const handlePromote = async () => {
+    setState('loading');
+    try {
+      await api.promoteArtifact(artifactId, assetType, workspaceId);
+      setState('done');
+      onPromoted?.();
+    } catch {
+      setState('error');
+    }
+  };
+
   return (
-    <Tooltip title={disabled ? 'API in arrivo — presto disponibile' : copy.t('shared.actions.promote')}>
-      <span>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<PushPinIcon />}
-          disabled={disabled}
-          onClick={() => {
-            // TODO: call api.promoteArtifact(artifactId, workspaceId) when endpoint exists
-          }}
-        >
-          {copy.t('shared.actions.promote')}
-        </Button>
-      </span>
+    <Tooltip title={copy.t('shared.actions.promote')}>
+      <Button
+        variant="outlined"
+        size="small"
+        startIcon={<PushPinIcon />}
+        onClick={handlePromote}
+        disabled={state === 'loading'}
+        color={state === 'error' ? 'error' : 'primary'}
+      >
+        {state === 'loading' ? '...' : state === 'error' ? 'Retry' : copy.t('shared.actions.promote')}
+      </Button>
     </Tooltip>
   );
 }
