@@ -230,6 +230,10 @@ class ApiClient {
     return this.request<void>('POST', `/api/sessions/${sessionId}/cancel`);
   }
 
+  async downloadArtifact(artifactId: string, format: 'md' | 'txt' = 'md') {
+    return this.request<Blob>('GET', `/api/artifacts/${artifactId}/download?format=${format}`);
+  }
+
   // ── Artifacts ────────────────────────────────────────────────────────────────
 
   async getArtifact(artifactId: string) {
@@ -268,6 +272,14 @@ class ApiClient {
 
   async changeMemberRole(workspaceId: string, userId: string, role: string) {
     return this.request<void>('PUT', `/api/workspaces/${workspaceId}/members/${userId}/role`, { role });
+  }
+
+  async renameWorkspace(workspaceId: string, name: string) {
+    return this.request<{ id: string; name: string; updatedAt: string }>('PUT', `/api/workspaces/${workspaceId}`, { name });
+  }
+
+  async deleteWorkspace(workspaceId: string) {
+    return this.request<void>('DELETE', `/api/workspaces/${workspaceId}`);
   }
 
   // ── Agent Chat ───────────────────────────────────────────────────────────────

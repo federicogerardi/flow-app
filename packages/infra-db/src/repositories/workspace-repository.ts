@@ -177,6 +177,16 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
     });
   }
 
+  async delete(id: string): Promise<void> {
+    await this.db.transaction().execute(async (trx) => {
+      await trx.deleteFrom('workspace_memberships').where('workspace_id', '=', id).execute();
+      await trx.deleteFrom('assets').where('workspace_id', '=', id).execute();
+      await trx.deleteFrom('workspace_leaderboard').where('workspace_id', '=', id).execute();
+      await trx.deleteFrom('workspace_challenges').where('workspace_id', '=', id).execute();
+      await trx.deleteFrom('workspaces').where('id', '=', id).execute();
+    });
+  }
+
   async findMembership(workspaceId: string, userId: string): Promise<WorkspaceMembership | null> {
     const row = await this.db
       .selectFrom('workspace_memberships')

@@ -175,6 +175,17 @@ export class Workspace {
     return this._assets.find((a) => a.assetType.equals(assetType)) ?? null;
   }
 
+  rename(newName: string, userId: string): void {
+    this.assertIsOwner(userId);
+    const trimmed = newName.trim();
+    if (trimmed.length < 2 || trimmed.length > 50) {
+      throw new Error('Workspace name must be between 2 and 50 characters');
+    }
+    this._name = trimmed;
+    this._updatedAt = new Date();
+    this._version++;
+  }
+
   private assertIsOwner(userId: string): void {
     if (!this.isOwner(userId)) {
       throw new NotWorkspaceOwnerError(userId, this.workspaceId);

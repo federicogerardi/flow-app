@@ -1,4 +1,4 @@
-import { Box, Card, CardActionArea, CardContent, Chip, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, IconButton, List, ListItem, ListItemText, ListItemSecondaryAction } from '@mui/material';
+import { Box, Card, CardActionArea, CardContent, Chip, Typography, Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, TextField, MenuItem, IconButton, List, ListItem, ListItemText, ListItemSecondaryAction } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
@@ -34,6 +34,42 @@ export default function DashboardPage() {
 
   const currentWorkspace = workspaces?.find((w) => w.id === workspaceId);
 
+  // Rename state
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState('');
+  const [renaming, setRenaming] = useState(false);
+  // Delete state
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleRename = async () => {
+    if (!renameValue.trim() || !workspaceId) return;
+    setRenaming(true);
+    try {
+      await api.renameWorkspace(workspaceId, renameValue.trim());
+      await mutate('workspaces');
+      setRenameOpen(false);
+      setRenameValue('');
+    } catch {
+      // handled by global error handler
+    } finally {
+      setRenaming(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!workspaceId) return;
+    setDeleting(true);
+    try {
+      await api.deleteWorkspace(workspaceId);
+      navigate('/dashboard');
+    } catch {
+      // handled by global error handler
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (isLoading) return <LoadingSkeleton />;
   if (error) return <ErrorState message={error.message} />;
   if (!currentWorkspace) {
@@ -50,7 +86,59 @@ export default function DashboardPage() {
       <PageHeader
         title={currentWorkspace.name}
         subtitle={copy.t('workspace.dashboard.subtitle')}
+        action={{ label: 'Modifica', onClick: () => setRenameOpen(true) }}
       />
+
+      {/* Rename Dialog */}
+      <Dialog open={renameOpen} onClose={() => setRenameOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Rename Workspace</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            label="Name"
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleRename(); }}
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRenameOpen(false)}>{copy.t('shared.actions.cancel')}</Button>
+          <Button variant="contained" onClick={handleRename} disabled={!renameValue.trim() || renaming}>
+            {renaming ? copy.t('shared.status.loading') : copy.t('shared.actions.save')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>{copy.t('workspace.detail.deleteTitle')}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Deleting "{currentWorkspace.name}" will remove all assets, sessions, and conversations. This cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteOpen(false)}>{copy.t('shared.actions.cancel')}</Button>
+          <Button variant="contained" color="error" onClick={handleDelete} disabled={deleting}>
+            {deleting ? copy.t('shared.status.loading') : copy.t('shared.actions.delete')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete workspace button */}
+      <Box sx={{ mb: 3 }}>
+        <Button
+          variant="outlined"
+          color="error"
+          size="small"
+          startIcon={<DeleteIcon />}
+          onClick={() => setDeleteOpen(true)}
+        >
+          Delete workspace
+        </Button>
+      </Box>
 
       <Typography variant="h3" sx={{ mb: 2 }}>
         {copy.t('workspace.dashboard.tools')}

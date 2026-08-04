@@ -228,5 +228,62 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository, redisU
         next(error);
       }
     },
+
+    updateWorkspace: async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const workspaceId = req.params.id as string;
+        const userId = getAuthUser(req)!.sub as string;
+        const { name } = req.body;
+
+        if (!name || typeof name !== 'string' || name.trim().length < 2) {
+          return res.status(422).json({
+            error: { code: 'VALIDATION_ERROR', message: 'Workspace name must be at least 2 characters', retryable: false },
+          });
+        }
+
+        const workspace = await workspaceRepo.findById(workspaceId);
+        if (!workspace) {
+          return res.status(404).json({
+            error: { code: 'WORKSPACE_NOT_FOUND', message: 'Workspace not found', retryable: false },
+          });
+        }
+
+        workspace.rename(name.trim(), userId);
+        await workspaceRepo.save(workspace);
+
+        res.json({
+          id: workspace.workspaceId,
+          name: workspace.name,
+          updatedAt: workspace.updatedAt.toISOString(),
+        });
+      } catch (error) {
+        next(error);
+      }
+    },
+
+    deleteWorkspace: async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const workspaceId = req.params.id as string;
+        const userId = getAuthUser(req)!.sub as string;
+
+        const workspace = await workspaceRepo.findById(workspaceId);
+        if (!workspace) {
+          return res.status(404).json({
+            error: { code: 'WORKSPACE_NOT_FOUND', message: 'Workspace not found', retryable: false },
+          });
+        }
+
+        if (!workspace.isOwner(userId)) {
+          return res.status(403).json({
+            error: { code: 'FORBIDDEN', message: 'Only the workspace owner can delete the workspace', retryable: false },
+          });
+        }
+
+        await workspaceRepo.delete(workspaceId);
+        res.status(204).end();
+      } catch (error) {
+        next(error);
+      }
+    },
   };
 }

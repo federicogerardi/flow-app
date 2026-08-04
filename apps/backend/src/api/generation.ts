@@ -64,6 +64,62 @@ export function createGenerationRoutes(sessionRepo: SessionRepository, db: Kysel
       }
     },
 
+    downloadArtifact: async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const artifactId = req.params.id as string;
+        const format = (req.query.format as string) || 'md';
+
+        const row = await db
+          .selectFrom('artifacts')
+          .where('id', '=', artifactId)
+          .selectAll()
+          .executeTakeFirst();
+
+        if (!row) {
+          return res.status(404).json({
+            error: { code: 'ARTIFACT_NOT_FOUND', message: 'Artifact not found', retryable: false },
+          });
+        }
+
+        const content = row.content;
+        const filename = `artifact-${artifactId.slice(0, 8)}.${format}`;
+        const mimeTypes: Record<string, string> = {
+          md: 'text/markdown',
+          txt: 'text/plain',
+        };
+
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-Type', mimeTypes[format] || 'text/plain');
+        res.send(content);
+      } catch (error) {
+        next(error);
+      }
+    },
+
+    cancelSession: async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const sessionId = req.params.id as string;
+        const session = await sessionRepo.findById(sessionId);
+        if (!session) {
+          return res.status(404).json({
+            error: { code: 'SESSION_NOT_FOUND', message: 'Session not found', retryable: false },
+          });
+        }
+
+        if (session.status.toString() !== 'running' && session.status.toString() !== 'queued') {
+          return res.status(409).json({
+            error: { code: 'INVALID_STATE', message: `Cannot cancel session in ${session.status.toString()} state`, retryable: false },
+          });
+        }
+
+        session.apply({ type: 'CANCEL' });
+        await sessionRepo.save(session);
+        res.json({ id: sessionId, status: 'cancelled' });
+      } catch (error) {
+        next(error);
+      }
+    },
+
     startSession: async (req: Request, res: Response, next: NextFunction) => {
       try {
         const toolKey = req.params.toolKey as string;

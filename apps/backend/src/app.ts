@@ -94,13 +94,17 @@ export function createApp(deps: AppDeps) {
   app.post('/api/tools/:toolKey/sessions', generationRoutes.startSession);
   app.get('/api/sessions/:id', generationRoutes.getSession);
   app.get('/api/sessions/:id/events', generationRoutes.getEvents);
+  app.post('/api/sessions/:id/cancel', generationRoutes.cancelSession);
   app.get('/api/artifacts/:id', generationRoutes.getArtifact);
+  app.get('/api/artifacts/:id/download', generationRoutes.downloadArtifact);
 
   // Workspace routes
   const workspaceRoutes = createWorkspaceRoutes(deps.workspaceRepo, process.env.REDIS_URL!);
   app.post('/api/workspaces', workspaceRoutes.createWorkspace);
   app.get('/api/workspaces', workspaceRoutes.listWorkspaces);
   app.get('/api/workspaces/:id', requireWorkspaceRole(deps.workspaceRepo, MembershipRole.Owner, MembershipRole.Editor, MembershipRole.Viewer), workspaceRoutes.getWorkspace);
+  app.put('/api/workspaces/:id', requireWorkspaceRole(deps.workspaceRepo, MembershipRole.Owner), workspaceRoutes.updateWorkspace);
+  app.delete('/api/workspaces/:id', requireWorkspaceRole(deps.workspaceRepo, MembershipRole.Owner), workspaceRoutes.deleteWorkspace);
   app.post('/api/workspaces/:id/invitations', requireWorkspaceRole(deps.workspaceRepo, MembershipRole.Owner), workspaceRoutes.inviteMember);
   app.get('/api/workspaces/:id/members', requireWorkspaceRole(deps.workspaceRepo, MembershipRole.Owner, MembershipRole.Editor, MembershipRole.Viewer), workspaceRoutes.listMembers);
   app.delete('/api/workspaces/:id/members/:userId', requireWorkspaceRole(deps.workspaceRepo, MembershipRole.Owner), workspaceRoutes.removeMember);
