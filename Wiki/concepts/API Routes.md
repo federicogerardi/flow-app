@@ -70,8 +70,8 @@ Compatibility rule: no breaking response-schema change inside the same API major
 | `GET` | `/api/workspaces` | ✅ | ✅ | List user's workspaces |
 | `POST` | `/api/workspaces` | ✅ | ✅ | Create workspace |
 | `GET` | `/api/workspaces/:id` | ✅ | ✅ | Get workspace detail |
-| `PUT` | `/api/workspaces/:id` | ✅ | ⬜ | Update workspace |
-| `DELETE` | `/api/workspaces/:id` | ✅ | ⬜ | Delete workspace |
+| `PUT` | `/api/workspaces/:id` | ✅ | ✅ | Update workspace |
+| `DELETE` | `/api/workspaces/:id` | ✅ | ✅ | Delete workspace |
 | `POST` | `/api/workspaces/:id/invitations` | owner | ✅ | Invite member |
 | `GET` | `/api/workspaces/:id/members` | member | ✅ | List members |
 | `DELETE` | `/api/workspaces/:id/members/:userId` | owner | ✅ | Remove member |
@@ -80,18 +80,18 @@ Compatibility rule: no breaking response-schema change inside the same API major
 | `GET` | `/api/invitations` | ✅ | ✅ | List pending invitations |
 | `POST` | `/api/invitations/:id/accept` | ✅ | ✅ | Accept invitation |
 | `POST` | `/api/invitations/:id/decline` | ✅ | ✅ | Decline invitation |
-| `GET` | `/api/workspaces/:id/assets` | ✅ | ⬜ | List assets (planned) |
-| `POST` | `/api/workspaces/:id/assets` | ✅ | ⬜ | Create asset (planned) |
-| `GET` | `/api/workspaces/:wid/assets/:aid` | ✅ | ⬜ | Get asset (planned) |
-| `PUT` | `/api/workspaces/:wid/assets/:aid` | ✅ | ⬜ | Update asset (planned) |
-| `DELETE` | `/api/workspaces/:wid/assets/:aid` | ✅ | ⬜ | Delete asset (planned) |
+| `GET` | `/api/workspaces/:id/assets` | ✅ | ✅ | List workspace assets |
+| `POST` | `/api/workspaces/:id/assets` | ✅ | ✅ | Create asset |
+| `GET` | `/api/workspaces/:wid/assets/:aid` | ✅ | ✅ | Get asset detail |
+| `PUT` | `/api/workspaces/:wid/assets/:aid` | ✅ | ✅ | Update asset content |
+| `DELETE` | `/api/workspaces/:wid/assets/:aid` | ✅ | ✅ | Delete asset |
 | `POST` | `/api/tools/:toolKey/sessions` | ✅ | ✅ | Start generation (idempotent) |
 | `GET` | `/api/sessions` | ✅ | ✅ | List sessions (filterable) |
 | `GET` | `/api/sessions/:id` | ✅ | ✅ | Get session detail |
 | `GET` | `/api/sessions/:id/events` | ✅ | ✅ | SSE progress stream |
-| `POST` | `/api/sessions/:id/cancel` | ✅ | ⬜ | Cancel running session |
+| `POST` | `/api/sessions/:id/cancel` | ✅ | ✅ | Cancel queued/running session |
 | `GET` | `/api/artifacts/:id` | ✅ | ✅ | Get artifact content |
-| `GET` | `/api/artifacts/:id/download` | ✅ | ⬜ | Download artifact |
+| `GET` | `/api/artifacts/:id/download` | ✅ | ✅ | Download artifact (md/txt) |
 | `GET` | `/api/workspaces/:workspaceId/agents` | member | ✅ | List 7 agent personas |
 | `GET` | `/api/workspaces/:workspaceId/conversations` | member | ✅ | List user's conversations |
 | `POST` | `/api/workspaces/:workspaceId/conversations` | member | ✅ | Start conversation |
@@ -194,13 +194,13 @@ GitHub OAuth planned. Same pattern as Google.
 
 Returns workspace detail. Requires workspace membership.
 
-### `PUT /api/workspaces/:id` ⬜
+### `PUT /api/workspaces/:id` ✅
 
-Update workspace name. Planned — not yet implemented.
+Update workspace name. Owner only. Request: `{ "name": "string" }`. Response: `{ "id", "name", "updatedAt" }`.
 
-### `DELETE /api/workspaces/:id` ⬜
+### `DELETE /api/workspaces/:id` ✅
 
-Delete workspace (cascades to assets). Planned — not yet implemented.
+Delete workspace and all related data (cascade: memberships, assets, leaderboard, challenges). Owner only. Response: `204`.
 
 ### Workspace Membership ✅
 
@@ -219,11 +219,10 @@ All membership routes are implemented and role-gated via `requireWorkspaceRole()
 
 ---
 
-## Assets ⬜
+## Assets ✅
 
-> **Status**: planned. Workspace asset CRUD (5 endpoints) is specified but not yet implemented.
-> Assets are currently managed implicitly through session generation (artifacts can be promoted to assets).
-> Blocked by: asset management domain model not yet built. Target: Phase 9-10.
+> **Status**: implemented (Sprint 4). Full CRUD on workspace assets — 5 endpoints.
+> `KyselyAssetRepository` with upsert save, cascade delete via workspace.
 
 ---
 
@@ -356,9 +355,9 @@ event: session_failed
 data: {"sessionId":"uuid","status":"failed","failedAtStep":2,"error":{"code":"LLM_TIMEOUT","message":"..."}}
 ```
 
-### `POST /api/sessions/:id/cancel` ⬜
+### `POST /api/sessions/:id/cancel` ✅
 
-Cancels a running session. Planned — not yet implemented. Endpoint registered in Wiki spec only.
+Cancel a queued or running session via `session.apply({ type: 'CANCEL' })`. Valid states: `queued` or `running`. Response `200`: `{ "id", "status": "cancelled" }`. Error: `409 INVALID_STATE` if session not in cancellable state.
 
 ---
 
@@ -368,9 +367,9 @@ Cancels a running session. Planned — not yet implemented. Endpoint registered 
 
 Returns artifact content by ID.
 
-### `GET /api/artifacts/:id/download` ⬜
+### `GET /api/artifacts/:id/download` ✅
 
-Download in `md`/`txt`/`docx`/`pdf` format. Planned — not yet implemented.
+Download artifact as file. Query: `?format=md|txt`. Sets `Content-Disposition: attachment; filename="artifact-{id}.{format}"`. Response: file content with `Content-Type: text/markdown` or `text/plain`.
 
 ---
 
