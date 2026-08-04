@@ -1,5 +1,6 @@
-import { Box, Card, CardContent, Typography } from '@mui/material';
-import { useRef, useEffect } from 'react';
+import { Box, Card, CardContent, Typography, IconButton, Tooltip } from '@mui/material';
+import InfoIcon from '@mui/icons-material/Info';
+import { useRef, useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import useSWR from 'swr';
 import { api } from '../api/client';
@@ -8,11 +9,13 @@ import { LoadingSkeleton } from '../components/LoadingSkeleton';
 import { ErrorState } from '../components/ErrorState';
 import { ChatMessageBubble } from '../components/agent-chat/ChatMessageBubble';
 import { ChatInput } from '../components/agent-chat/ChatInput';
+import { AgentContextDrawer } from '../components/agent-chat/AgentContextDrawer';
 import { copy } from '@flow-app/copy';
 
 export default function ConversationPage() {
   const { conversationId } = useParams<{ conversationId: string }>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const {
     data: conversation,
@@ -46,7 +49,18 @@ export default function ConversationPage() {
           { label: copy.t('workspace.nav.home'), path: '/dashboard' },
           { label: conversation.agentName },
         ]}
+        action={{
+          label: '',
+          onClick: () => {},
+        }}
       />
+      <Box sx={{ position: 'absolute', top: 80, right: 24, zIndex: 1 }}>
+        <Tooltip title="Workspace context">
+          <IconButton onClick={() => setDrawerOpen(true)} size="small">
+            <InfoIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
 
       <Card sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <CardContent sx={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -71,6 +85,12 @@ export default function ConversationPage() {
 
         <ChatInput onSend={handleSend} />
       </Card>
+
+      <AgentContextDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        workspaceId={conversation.workspaceId}
+      />
     </Box>
   );
 }

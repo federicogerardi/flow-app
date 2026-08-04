@@ -17,11 +17,30 @@ import { useThemeMode } from '../theme/ThemeProvider';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
-import { copy } from '@flow-app/copy';
-import { useState } from 'react';
-import { useAuth } from '../auth/AuthContext';
 import { QuotaCounter } from '../components/usage/QuotaCounter';
 import { GamificationZone } from '../components/gamification/GamificationZone';
+import { copy } from '@flow-app/copy';
+import { useState, createContext, useContext } from 'react';
+import { useAuth } from '../auth/AuthContext';
+
+interface Crumb {
+  label: string;
+  path?: string;
+}
+
+interface BreadcrumbContextValue {
+  crumbs: Crumb[];
+  setBreadcrumbs: (crumbs: Crumb[]) => void;
+}
+
+const BreadcrumbContext = createContext<BreadcrumbContextValue>({
+  crumbs: [],
+  setBreadcrumbs: () => {},
+});
+
+export function useBreadcrumbs() {
+  return useContext(BreadcrumbContext);
+}
 
 const DRAWER_WIDTH = 280;
 
@@ -50,6 +69,7 @@ export function AppShell() {
   const [creating, setCreating] = useState(false);
   const [userMenuAnchor, setUserMenuAnchor] = useState<HTMLElement | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [crumbs, setCrumbs] = useState<Crumb[]>([]);
 
   const handleWorkspaceChange = (newId: string) => {
     navigate(`/workspaces/${newId}`);
@@ -268,7 +288,9 @@ export function AppShell() {
       </Drawer>
 
       <Box component="main" role="main" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
-        <Outlet />
+        <BreadcrumbContext.Provider value={{ crumbs, setBreadcrumbs: setCrumbs }}>
+          <Outlet />
+        </BreadcrumbContext.Provider>
       </Box>
 
       {/* Create Workspace Dialog */}

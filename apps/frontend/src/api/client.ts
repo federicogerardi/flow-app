@@ -1,10 +1,12 @@
-import type { ApiError, SessionDetailDTO, SessionStatusDTO, ArtifactDTO as ContractArtifactDTO } from '@flow-app/contracts';
+import type { ApiError, SessionDetailDTO, SessionStatusDTO, ArtifactDTO as ContractArtifactDTO, WorkspaceDTO, MessageDTO, ConversationDTO, ConversationListItemDTO, AgentDTO, PlayerProfileDTO, LeaderboardEntryDTO, WorkspaceHealthDTO, ChallengeDTO, SeasonDTO, AssetDTO } from '@flow-app/contracts';
 import { getAccessToken, attemptTokenRefresh } from '../auth/AuthContext';
 
 // ── DTOs (match API response shapes) ─────────────────────────────────────────
 //
 // Session & Artifact DTOs derive from @flow-app/contracts (canonical source)
 // with local extensions where the API response shape diverges from the contract.
+// Workspace, Message, Conversation, Agent, Gamification, Asset DTOs are now
+// imported from @flow-app/contracts.
 
 export interface SessionDTO extends Omit<SessionDetailDTO, 'status' | 'artifacts'> {
   status: SessionStatusDTO;
@@ -20,118 +22,7 @@ export interface SessionListResponse {
   total: number;
 }
 
-// TODO: migrate to @flow-app/contracts once WorkspaceDTO is defined there
-export interface WorkspaceDTO {
-  id: string;
-  name: string;
-  role?: string;
-  createdBy?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-// TODO: migrate to @flow-app/contracts once MessageDTO is defined there
-export interface MessageDTO {
-  id: string;
-  role: string;
-  content: string;
-  tokensUsed: number;
-  modelUsed: string | null;
-  createdAt: string;
-}
-
-// TODO: migrate to @flow-app/contracts once ConversationDTO is defined there
-export interface ConversationDTO {
-  id: string;
-  workspaceId: string;
-  agentKey: string;
-  agentName: string;
-  title: string | null;
-  status: string;
-  messages: MessageDTO[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-// TODO: migrate to @flow-app/contracts once ConversationListItemDTO is defined there
-export interface ConversationListItemDTO {
-  id: string;
-  agentKey: string;
-  agentName: string;
-  title: string | null;
-  status: string;
-  messageCount: number;
-  lastMessage: { content: string; role: string; createdAt: string } | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// TODO: migrate to @flow-app/contracts once AgentDTO is defined there
-export interface AgentDTO {
-  key: string;
-  name: string;
-  role: string;
-  essence: string;
-  capabilities: string[];
-}
-
-// ── Asset DTO ──────────────────────────────────────────────────────────────────
-
-export interface AssetDTO {
-  id: string;
-  workspaceId: string;
-  assetType: string;
-  source: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// ── Gamification DTOs ─────────────────────────────────────────────────────────
-
-export interface PlayerProfileDTO {
-  xpTotal: number;
-  level: number;
-  levelLabel: string;
-  levelProgress: number;
-  nextLevelXP: number;
-  currentStreak: number;
-  longestStreak: number;
-  badges: { badgeKey: string; awardedAt: string }[];
-  season: string;
-}
-
-export interface LeaderboardEntryDTO {
-  rank: number;
-  userId: string;
-  xp?: number;
-  xpPercent: number;
-  isSelf: boolean;
-}
-
-export interface WorkspaceHealthDTO {
-  score: number;
-  label: string;
-  color: string;
-}
-
-export interface ChallengeDTO {
-  id: string;
-  key: string;
-  progress: number;
-  target: number;
-  status: string;
-  weekStart: string;
-  completedAt: string | null;
-}
-
-export interface SeasonDTO {
-  seasonId: string;
-  label: string;
-  quarter: number;
-  year: number;
-  startDate: string;
-  endDate: string;
-}
+export type { WorkspaceDTO, MessageDTO, ConversationDTO, ConversationListItemDTO, AgentDTO, PlayerProfileDTO, LeaderboardEntryDTO, WorkspaceHealthDTO, ChallengeDTO, SeasonDTO, AssetDTO };
 
 // ── API Client ────────────────────────────────────────────────────────────────
 

@@ -18,3 +18,22 @@ export type {
 export type { SSEEvent, StepProgress } from './generation/events';
 
 export type { ApiError, PaginatedResponse } from './shared/index';
+
+export type { WorkspaceDTO } from './workspace/workspace.dto';
+
+export type {
+  MessageDTO,
+  ConversationDTO,
+  ConversationListItemDTO,
+  AgentDTO,
+} from './agent-chat/agent-chat.dto';
+
+export type {
+  PlayerProfileDTO,
+  LeaderboardEntryDTO,
+  WorkspaceHealthDTO,
+  ChallengeDTO,
+  SeasonDTO,
+} from './gamification/gamification.dto';
+
+export type { AssetDTO } from './assets/asset.dto';

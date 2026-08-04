@@ -18,7 +18,7 @@ const tokens = {
     divider: '#e2e8f0',
   },
   typography: {
-    fontFamily: '"Inter", "Helvetica Neue", Arial, sans-serif',
+    fontFamily: '"Plus Jakarta Sans", "Inter", "Helvetica Neue", Arial, sans-serif',
     h1: { fontWeight: 700, fontSize: '2rem' },
     h2: { fontWeight: 600, fontSize: '1.5rem' },
     h3: { fontWeight: 600, fontSize: '1.25rem' },

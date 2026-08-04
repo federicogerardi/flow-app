@@ -5,26 +5,31 @@ export interface SSEEvent {
   data: Record<string, unknown>;
 }
 
+type SSECallbacks = {
+  onStarted?: (data: Record<string, unknown>) => void;
+  onStep?: (data: Record<string, unknown>) => void;
+  onCompleted?: (data: Record<string, unknown>) => void;
+  onFailed?: (data: Record<string, unknown>) => void;
+  onError?: (error: Event) => void;
+};
+
+const MAX_RETRIES = 5;
+const BASE_DELAY_MS = 1000;
+const MAX_DELAY_MS = 30000;
+
 export class SSEClient {
   private sources = new Map<string, EventSource>();
+  private callbacks = new Map<string, SSECallbacks>();
+  private retryCount = new Map<string, number>();
+  private retryTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
-  connect(
-    sessionId: string,
-    handlers: {
-      onStarted?: (data: Record<string, unknown>) => void;
-      onStep?: (data: Record<string, unknown>) => void;
-      onCompleted?: (data: Record<string, unknown>) => void;
-      onFailed?: (data: Record<string, unknown>) => void;
-      onError?: (error: Event) => void;
-    },
-  ): () => void {
-    this.disconnect(sessionId);
-
+  private connectSource(sessionId: string, handlers: SSECallbacks): EventSource {
     const source = new EventSource(`/api/sessions/${sessionId}/events`, {
       withCredentials: true,
     });
 
     source.addEventListener('session_started', (e: MessageEvent) => {
+      this.retryCount.set(sessionId, 0);
       handlers.onStarted?.(JSON.parse(e.data));
     });
 
@@ -34,38 +39,79 @@ export class SSEClient {
 
     source.addEventListener('session_completed', (e: MessageEvent) => {
       handlers.onCompleted?.(JSON.parse(e.data));
-      source.close();
-      this.sources.delete(sessionId);
+      this.cleanup(sessionId);
     });
 
     source.addEventListener('session_failed', (e: MessageEvent) => {
       handlers.onFailed?.(JSON.parse(e.data));
-      source.close();
-      this.sources.delete(sessionId);
+      this.cleanup(sessionId);
     });
 
     source.onerror = (e) => {
+      this.handleReconnect(sessionId);
       handlers.onError?.(e);
-      source.close();
-      this.sources.delete(sessionId);
     };
 
     this.sources.set(sessionId, source);
-    return () => this.disconnect(sessionId);
+    this.callbacks.set(sessionId, handlers);
+    return source;
+  }
+
+  private handleReconnect(sessionId: string): void {
+    const count = (this.retryCount.get(sessionId) ?? 0) + 1;
+    if (count > MAX_RETRIES) {
+      this.cleanup(sessionId);
+      return;
+    }
+
+    const delay = Math.min(BASE_DELAY_MS * Math.pow(2, count - 1), MAX_DELAY_MS);
+    this.retryCount.set(sessionId, count);
+
+    // Close existing source
+    const existing = this.sources.get(sessionId);
+    existing?.close();
+
+    // Retry after backoff
+    const timer = setTimeout(() => {
+      const handlers = this.callbacks.get(sessionId);
+      if (handlers) {
+        this.connectSource(sessionId, handlers);
+      }
+    }, delay);
+
+    this.retryTimers.set(sessionId, timer);
+  }
+
+  private cleanup(sessionId: string): void {
+    const source = this.sources.get(sessionId);
+    source?.close();
+    const timer = this.retryTimers.get(sessionId);
+    if (timer) clearTimeout(timer);
+    this.sources.delete(sessionId);
+    this.callbacks.delete(sessionId);
+    this.retryCount.delete(sessionId);
+    this.retryTimers.delete(sessionId);
+  }
+
+  connect(
+    sessionId: string,
+    handlers: SSECallbacks,
+  ): () => void {
+    this.cleanup(sessionId);
+    this.retryCount.set(sessionId, 0);
+    this.connectSource(sessionId, handlers);
+    return () => this.cleanup(sessionId);
   }
 
   disconnect(sessionId?: string): void {
     if (sessionId) {
-      const source = this.sources.get(sessionId);
-      source?.close();
-      this.sources.delete(sessionId);
+      this.cleanup(sessionId);
       return;
     }
 
-    for (const source of this.sources.values()) {
-      source.close();
+    for (const id of this.sources.keys()) {
+      this.cleanup(id);
     }
-    this.sources.clear();
   }
 }
 
