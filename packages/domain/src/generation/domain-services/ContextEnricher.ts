@@ -20,8 +20,14 @@ export class ContextEnricher {
       }
     }
 
-    for (const asset of input.acquisitionData.resolvedAssets.entries()) {
-      parts.push(`[Asset - ${asset[0]}]\n${asset[1]}`);
+    for (const [type, contents] of input.acquisitionData.resolvedAssets.entries()) {
+      if (contents.length === 1) {
+        parts.push(`[Asset - ${type}]\n${contents[0]}`);
+      } else {
+        for (let i = 0; i < contents.length; i++) {
+          parts.push(`[Asset - ${type} #${i + 1}]\n${contents[i]}`);
+        }
+      }
     }
 
     for (const [key, value] of Object.entries(input.acquisitionData.fileContents)) {

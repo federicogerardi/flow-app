@@ -110,12 +110,85 @@ describe('ReadinessPolicy', () => {
         makeData({
           userInputs: { topic: 'AI' },
           fileContents: { brief: 'content' },
-          resolvedAssets: new Map([['logo', 'logo-url']]),
+          resolvedAssets: new Map([['logo', ['logo-url']]]),
         }),
       );
 
       expect(result.isReady).toBe(true);
       expect(result.missing).toEqual([]);
+    });
+
+    it('should return isReady true when single asset stored as array', () => {
+      const tool = makeTool({
+        acquisition: {
+          assets: [{ assetType: 'brief', required: true }],
+        },
+      });
+      const policy = ReadinessPolicy.from(tool);
+      const result = policy.evaluate(
+        makeData({ resolvedAssets: new Map([['brief', ['content']]]) }),
+      );
+
+      expect(result.isReady).toBe(true);
+      expect(result.missing).toEqual([]);
+    });
+
+    it('should return isReady true when multiple assets of same type are present', () => {
+      const tool = makeTool({
+        acquisition: {
+          assets: [{ assetType: 'persona', required: true, multiple: true }],
+        },
+      });
+      const policy = ReadinessPolicy.from(tool);
+      const result = policy.evaluate(
+        makeData({ resolvedAssets: new Map([['persona', ['persona-1', 'persona-2', 'persona-3']]]) }),
+      );
+
+      expect(result.isReady).toBe(true);
+      expect(result.missing).toEqual([]);
+    });
+
+    it('should return isReady false when required asset has empty array', () => {
+      const tool = makeTool({
+        acquisition: {
+          assets: [{ assetType: 'persona', required: true, multiple: true }],
+        },
+      });
+      const policy = ReadinessPolicy.from(tool);
+      const result = policy.evaluate(
+        makeData({ resolvedAssets: new Map([['persona', []]]) }),
+      );
+
+      expect(result.isReady).toBe(false);
+      expect(result.missing).toEqual([{ type: 'asset', key: 'persona', label: 'persona' }]);
+    });
+
+    it('should return isReady true when optional asset has empty array', () => {
+      const tool = makeTool({
+        acquisition: {
+          assets: [{ assetType: 'persona', required: false, multiple: true }],
+        },
+      });
+      const policy = ReadinessPolicy.from(tool);
+      const result = policy.evaluate(
+        makeData({ resolvedAssets: new Map([['persona', []]]) }),
+      );
+
+      expect(result.isReady).toBe(true);
+      expect(result.missing).toEqual([]);
+    });
+
+    it('should return isReady false when resolvedAssets is empty Map and asset is required', () => {
+      const tool = makeTool({
+        acquisition: {
+          assets: [{ assetType: 'persona', required: true }],
+        },
+      });
+      const policy = ReadinessPolicy.from(tool);
+      const result = policy.evaluate(makeData({ resolvedAssets: new Map() }));
+
+      expect(result.isReady).toBe(false);
+      expect(result.missing).toEqual([{ type: 'asset', key: 'persona', label: 'persona' }]);
     });
 
     it('should return isReady false with multiple missing items', () => {

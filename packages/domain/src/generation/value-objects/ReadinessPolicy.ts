@@ -4,7 +4,7 @@ export interface AcquisitionData {
   userInputs: Record<string, string>;
   fileContents: Record<string, string>;
   apiResponses: Array<{ source: string; data: unknown }>;
-  resolvedAssets: Map<string, string>;
+  resolvedAssets: Map<string, string[]>;
 }
 
 interface ReadinessResult {
@@ -40,7 +40,8 @@ export class ReadinessPolicy {
 
     if (this.tool.acquisition.assets) {
       for (const asset of this.tool.acquisition.assets) {
-        if (asset.required && !data.resolvedAssets.has(asset.assetType)) {
+        const resolved = data.resolvedAssets.get(asset.assetType) ?? [];
+        if (asset.required && resolved.length === 0) {
           missing.push({ type: 'asset', key: asset.assetType, label: asset.assetType });
         }
       }
