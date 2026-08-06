@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Wiki/synthesis/implementation-roadmap-2026-08-01.md",
+                "file": "Wiki/sources/USER-STORIES.md",
                 "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "implementation-roadmap-2026-08-01"
+              "title": "USER-STORIES"
             }
           }
         ]
@@ -200,17 +200,20 @@
   },
   "active": "23889eaa27ad3006",
   "lastOpenFiles": [
-    "apps/frontend/dist/test/mocks/server.js.map",
-    "apps/frontend/dist/test/mocks/server.js",
-    "apps/frontend/dist/test/mocks/server.d.ts.map",
-    "apps/frontend/dist/test/mocks/handlers.d.ts.map",
-    "apps/frontend/dist/test/mocks/handlers.js.map",
-    "apps/frontend/dist/test/mocks/handlers.js",
-    "apps/frontend/dist/test/setup.js.map",
-    "apps/frontend/dist/test/setup.js",
-    "apps/frontend/dist/test/setup.d.ts.map",
-    "apps/frontend/dist/test/mocks",
-    "apps/frontend/dist/test",
+    "Wiki/synthesis/frontend-gap-analysis-2026-08-04.md",
+    "apps/frontend/src/pages/SessionsPage.tsx",
+    "apps/frontend/dist/assets/ProfilePage-D3AjCwwu.js",
+    "apps/frontend/dist/assets/AssetCoverageBar-DAniaZdC.js",
+    "apps/frontend/dist/assets/AuthLayout-DB7U2S-B.js",
+    "apps/frontend/dist/assets/AssetsPage-Jb7ewgLT.js",
+    "apps/frontend/dist/assets/RegisterPage-Bb1faPlr.js",
+    "apps/frontend/dist/assets/ListItem-FwKcteXw.js",
+    "apps/frontend/dist/assets/LoginPage-B2Yg83ep.js",
+    "apps/frontend/dist/assets/CheckCircle-BpOR5Ufe.js",
+    "apps/frontend/dist/assets/hooks-D_Gg9Sy5.js",
+    "node_modules/@xstate/react/README.md",
+    "node_modules/use-isomorphic-layout-effect/README.md",
+    "Wiki/synthesis/implementation-roadmap-2026-08-01.md",
     "Wiki/synthesis/phase-13-implementation-plan.md",
     "Wiki/synthesis/phase-12-implementation-plan.md",
     "Wiki/synthesis/phase-11-testing-plan.md",
@@ -232,10 +235,6 @@
     "node_modules/xmlchars/README.md",
     "node_modules/agent-base/README.md",
     "node_modules/https-proxy-agent/README.md",
-    "node_modules/tr46/README.md",
-    "node_modules/tr46/LICENSE.md",
-    "node_modules/nwsapi/README.md",
-    "node_modules/http-proxy-agent/README.md",
     "node_modules/passport/sponsors/descope.svg",
     "node_modules/passport/sponsors/workos.png",
     "node_modules/passport/sponsors/snyk.png",
