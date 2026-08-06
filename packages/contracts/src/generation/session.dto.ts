@@ -17,6 +17,7 @@ export interface SessionDTO {
 }
 
 export interface SessionDetailDTO extends SessionDTO {
+  produces?: string;
   currentStepIndex: number;
   startedAt: string | null;
   completedAt: string | null;
@@ -42,4 +43,6 @@ export interface ArtifactListItemDTO {
 export interface ArtifactDTO extends ArtifactListItemDTO {
   sessionId: string;
   content: string;
+  /** If this artifact has been promoted to an Asset, the Asset's UUID. Null otherwise. */
+  promotedAssetId?: string | null;
 }

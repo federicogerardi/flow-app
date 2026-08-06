@@ -156,7 +156,7 @@ export default function SessionPage() {
             stepCount={session.artifacts.length}
             creditCost={1}
           />
-          <SessionSummary artifacts={session.artifacts} workspaceId={workspaceId} />
+          <SessionSummary artifacts={session.artifacts} workspaceId={workspaceId} produces={session.produces} />
         </>
       )}
     </Box>

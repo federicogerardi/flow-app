@@ -93,7 +93,7 @@ export function createApp(deps: AppDeps) {
   }
 
   // Generation routes
-  const generationRoutes = createGenerationRoutes(deps.sessionRepo, deps.db);
+  const generationRoutes = createGenerationRoutes(deps.sessionRepo, deps.workspaceRepo, deps.assetRepo, deps.db);
   app.get('/api/tools', generationRoutes.listTools);
   app.get('/api/sessions', generationRoutes.listSessions);
   app.post('/api/tools/:toolKey/sessions', generationRoutes.startSession);

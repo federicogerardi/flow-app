@@ -81,14 +81,14 @@ export class KyselyAssetRepository implements AssetRepository {
         workspace_id: asset.workspaceId,
         asset_type: asset.assetType.value,
         source: asset.source.value,
-        source_ref: asset.sourceSessionId,
+        source_ref: asset.sourceArtifactId,
         content: asset.content,
       })
       .onConflict((oc) =>
         oc.columns(['workspace_id', 'asset_type']).doUpdateSet({
           content: asset.content,
           source: asset.source.value,
-          source_ref: asset.sourceSessionId,
+          source_ref: asset.sourceArtifactId,
           updated_at: asset.updatedAt,
         }),
       )

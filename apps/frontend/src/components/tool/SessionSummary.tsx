@@ -76,9 +76,10 @@ function ArtifactDownloadMenu({ artifactId, content, index }: { artifactId: stri
 interface SessionSummaryProps {
   artifacts: ArtifactDTO[];
   workspaceId?: string;
+  produces?: string;
 }
 
-export function SessionSummary({ artifacts, workspaceId }: SessionSummaryProps) {
+export function SessionSummary({ artifacts, workspaceId, produces }: SessionSummaryProps) {
   if (!artifacts || artifacts.length === 0) return null;
 
   return (
@@ -94,20 +95,22 @@ export function SessionSummary({ artifacts, workspaceId }: SessionSummaryProps) 
       <Divider />
       <Box sx={{ p: 2 }}>
         {artifacts.map((artifact, i) => (
-          <Box key={artifact.artifactId ?? i} sx={{ mb: i < artifacts.length - 1 ? 3 : 0 }}>
+          <Box key={artifact.id ?? i} sx={{ mb: i < artifacts.length - 1 ? 3 : 0 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
               <Typography variant="subtitle2" color="text.secondary" fontWeight={600}>
                 Step {artifact.stepNumber}
               </Typography>
               <Box sx={{ display: 'flex', gap: 0.5 }}>
                 <ArtifactDownloadMenu
-                  artifactId={artifact.artifactId ?? `step-${i}`}
+                  artifactId={artifact.id}
                   content={artifact.content}
                   index={i}
                 />
                 <PromoteButton
-                  artifactId={artifact.artifactId ?? `step-${i}`}
+                  artifactId={artifact.id}
                   workspaceId={workspaceId ?? ''}
+                  produces={produces}
+                  promotedAssetId={artifact.promotedAssetId}
                 />
               </Box>
             </Box>

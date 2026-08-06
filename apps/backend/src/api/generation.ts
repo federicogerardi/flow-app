@@ -1,15 +1,22 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { Kysely } from 'kysely';
 import { StartSessionUseCase } from '../application/generation/start-session.usecase.js';
+import { PromoteToAssetUseCase } from '../application/workspace/promote-to-asset.usecase.js';
 import { getAuthUser } from '../middleware/auth-types.js';
 import { enqueueSession } from '../generation/jobs/enqueue-session.job.js';
-import type { SessionRepository } from '@flow-app/domain';
+import type { SessionRepository, WorkspaceRepository, AssetRepository } from '@flow-app/domain';
 import { toolRegistry } from '@flow-app/domain';
 import type { DB } from '@flow-app/infra-db';
 import type { SSEPayload } from '../infrastructure/job-event-bridge.js';
 
-export function createGenerationRoutes(sessionRepo: SessionRepository, db: Kysely<DB>) {
+export function createGenerationRoutes(
+  sessionRepo: SessionRepository,
+  workspaceRepo: WorkspaceRepository,
+  assetRepo: AssetRepository,
+  db: Kysely<DB>,
+) {
   const startSessionUC = new StartSessionUseCase(sessionRepo);
+  const promoteToAssetUC = new PromoteToAssetUseCase(sessionRepo, workspaceRepo, assetRepo);
 
   return {
     listTools: async (_req: Request, res: Response) => {
@@ -155,41 +162,27 @@ export function createGenerationRoutes(sessionRepo: SessionRepository, db: Kysel
     promoteArtifact: async (req: Request, res: Response, next: NextFunction) => {
       try {
         const artifactId = req.params.id as string;
-        const { assetType, workspaceId } = req.body as { assetType: string; workspaceId: string };
+        const { workspaceId } = req.body as { workspaceId: string };
 
-        const row = await db
-          .selectFrom('artifacts')
-          .where('id', '=', artifactId)
-          .selectAll()
-          .executeTakeFirst();
-
-        if (!row) {
-          return res.status(404).json({
-            error: { code: 'ARTIFACT_NOT_FOUND', message: 'Artifact not found' },
+        const user = getAuthUser(req);
+        if (!user) {
+          return res.status(401).json({
+            error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
           });
         }
 
-        await db
-          .insertInto('assets')
-          .values({
-            id: crypto.randomUUID(),
-            workspace_id: workspaceId,
-            asset_type: assetType,
-            source: 'generated',
-            source_ref: artifactId,
-            content: row.content,
-          })
-          .onConflict((oc) =>
-            oc.columns(['workspace_id', 'asset_type']).doUpdateSet({
-              content: row.content,
-              source: 'generated',
-              source_ref: artifactId,
-              updated_at: new Date(),
-            }),
-          )
-          .execute();
+        const result = await promoteToAssetUC.execute({
+          userId: user.sub,
+          workspaceId,
+          artifactId,
+        });
 
-        res.status(201).json({ artifactId, assetType, promoted: true });
+        res.status(201).json({
+          artifactId,
+          assetType: result.assetType,
+          assetId: result.assetId,
+          promoted: true,
+        });
       } catch (error) {
         next(error);
       }
@@ -255,6 +248,20 @@ export function createGenerationRoutes(sessionRepo: SessionRepository, db: Kysel
           .orderBy('step_number', 'asc')
           .execute();
 
+        // Fetch promoted assets for this session's artifacts (for persistent "Promoted" state)
+        const artifactIds = artifactRows.map((a) => a.id);
+        const promotedAssets = await db
+          .selectFrom('assets')
+          .where('source', '=', 'generated')
+          .where('source_ref', 'in', artifactIds.length > 0 ? artifactIds : ['__none__'])
+          .select(['id', 'source_ref'])
+          .execute();
+
+        const promotedMap = new Map<string, string>();
+        for (const pa of promotedAssets) {
+          if (pa.source_ref) promotedMap.set(pa.source_ref, pa.id);
+        }
+
         const tool = toolRegistry[session.toolKey.value];
 
         res.json({
@@ -263,6 +270,7 @@ export function createGenerationRoutes(sessionRepo: SessionRepository, db: Kysel
           workspaceId: session.workspaceId,
           status: session.status.toString(),
           stepCount: tool?.steps.length ?? 0,
+          produces: tool?.produces ?? undefined,
           currentStepIndex: session.currentStepIndex,
           startedAt: session.startedAt?.toISOString() ?? null,
           completedAt: session.completedAt?.toISOString() ?? null,
@@ -273,6 +281,7 @@ export function createGenerationRoutes(sessionRepo: SessionRepository, db: Kysel
             content: a.content,
             status: a.status,
             createdAt: a.created_at?.toISOString?.() ?? null,
+            promotedAssetId: promotedMap.get(a.id) ?? null,
           })),
         });
       } catch (error) {

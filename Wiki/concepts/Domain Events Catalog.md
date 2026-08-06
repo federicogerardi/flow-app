@@ -19,9 +19,14 @@ Domain events are **immutable DTOs** defined in `packages/domain`. They are publ
 ```
 Aggregate Root                  DomainEventBus                  Handlers
 ──────────────                  ──────────────                  ────────
-Session.complete()              eventBus.publish()              PromoteToAssetUseCase
-  └── new SessionCompleted ───▶ SessionCompleted ────────────▶  ConsumeCreditsUseCase
-                                                                 UI progress (SSE)
+Session.complete()              eventBus.publish()              ConsumeCreditsUseCase
+  └── new SessionCompleted ───▶ SessionCompleted ────────────▶  UI progress (SSE)
+
+                                ┌─ explicit user action ─┐
+                                │  POST /api/artifacts/   │
+                                │       :id/promote       │
+                                └──▶ PromoteToAssetUseCase│
+                                     (not eventBus-driven) │
 ```
 
 ## Event Index
@@ -30,7 +35,9 @@ Session.complete()              eventBus.publish()              PromoteToAssetUs
 |-------|---------|-----------|---------|
 | `SessionStarted` | [[Session]] | UI (SSE), Monitoring | sessionId, toolKey, workspaceId, userId |
 | `StepCompleted` | [[Session]] | UI (SSE progress) | sessionId, stepNumber, stepLabel, artifactId |
-| `SessionCompleted` | [[Session]] | [[Asset Promotion]], [[Usage & Quota]], UI | sessionId, workspaceId, userId, toolKey, finalArtifact |
+| `SessionCompleted` | [[Session]] | [[Usage & Quota]], UI | sessionId, workspaceId, userId, toolKey, finalArtifact |
+
+> **Note**: `PromoteToAssetUseCase` is NOT wired to `SessionCompleted` via `eventBus`. Promotion is explicit — the user clicks "Promote to Asset" in the UI, which calls `POST /api/artifacts/:id/promote`. Asset promotion via domain event is deferred. See [[Asset Promotion#Implementation Status]].
 | `SessionFailed` | [[Session]] | UI, Monitoring | sessionId, stepNumber, errorCode, errorMessage |
 | `SessionCancelled` | [[Session]] | UI | sessionId, cancelledAt |
 | `AssetCreated` | [[Workspace]] | UI (Knowledge Panel) | workspaceId, assetId, assetType |

@@ -52,7 +52,7 @@ date_updated: 2026-08-06
 | [[Application Services]] | high | 4 |
 | [[Achievements & Badges]] | high | 4 |
 | [[ArtifactContent]] | high | 3 |
-| [[Asset Promotion]] | high | 4 |
+| [[Asset Promotion]] | high | 5 |
 | [[AssetResolver]] | high | 4 |
 | [[Auth Dependencies]] | high | 8 |
 | [[Auth Middleware]] | high | 5 |
@@ -145,8 +145,8 @@ date_updated: 2026-08-06
 | [[synthesis/medium-fix-plan-2026-08-02]] | Medium-severity remediation plan — 16 findings (M2–M18), 5 phases, M1 deferred ✅ | 2026-08-02 |
 | [[synthesis/low-fix-plan-2026-08-02]] | Low-severity remediation plan — 5 findings (L1–L5), 2 phases, 8 files ✅ | 2026-08-02 |
 | [[synthesis/nodejs-thin-reverse-proxy-proposal]] | Node.js thin reverse proxy — frontend-backend internal DNS, eliminates public backend URL | 2026-08-03 |
-| [[synthesis/nodejs-thin-reverse-proxy-plan]] | Implementation plan for the thin reverse proxy — 8 steps, 6 files, ~1h | 2026-08-03 |
-| [[synthesis/reverse-proxy-deploy-log]] | Deployment log — 9 Railway attempts, 6 root causes, ✅ resolved | 2026-08-03 |
+| [[synthesis/nodejs-thin-reverse-proxy-plan]] | Implementation plan for the thin reverse proxy — 8 steps, 6 files, ~1h | 2026-08-06 |
+| [[synthesis/reverse-proxy-deploy-log]] | Deployment log — 9 Railway attempts, 6 root causes, ✅ resolved | 2026-08-06 |
 | [[synthesis/phase-11-testing-plan]] | Phase 11 implementation plan — 76 test files, 6 sub-phases, DDD guardrails, wiki-vs-code scope exclusion | 2026-08-03 |
 | [[synthesis/usage-quota-implementation-plan]] | Usage & Quota domain implementation — 13 new files, 7 modified, aggregate + VOs + repository + wiring | 2026-08-04 |
 | [[synthesis/frontend-gap-analysis-2026-08-04]] | Frontend operational gap analysis — 28 missing components, 7 execution tracks, sprint roadmap | 2026-08-04 |

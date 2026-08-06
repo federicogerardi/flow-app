@@ -251,7 +251,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
             creditCost={1}
           />
           {session?.artifacts && (
-            <SessionSummary artifacts={session.artifacts} workspaceId={workspaceId} />
+            <SessionSummary artifacts={session.artifacts} workspaceId={workspaceId} produces={session.produces} />
           )}
            <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
             <Button variant="outlined" onClick={() => { send({ type: 'RESET' }); setPhaseOverride(null); setLocalSessionId(null); setSubmitting(false); }}>

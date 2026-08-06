@@ -5,6 +5,18 @@ import { Session, ConcurrencyError, SessionStatus, ToolKey, Artifact, ArtifactSt
 export class KyselySessionRepository implements SessionRepository {
   constructor(private readonly db: Kysely<DB>) {}
 
+  async findByArtifactId(artifactId: string): Promise<Session | null> {
+    const artifactRow = await this.db
+      .selectFrom('artifacts')
+      .where('id', '=', artifactId)
+      .select('session_id')
+      .executeTakeFirst();
+
+    if (!artifactRow) return null;
+
+    return this.findById(artifactRow.session_id);
+  }
+
   async findById(id: string): Promise<Session | null> {
     const row = await this.db
       .selectFrom('sessions')

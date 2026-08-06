@@ -12,6 +12,55 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-06] impl | Promote to Asset — use case, API, frontend
+
+**Context**: [[Asset Promotion]] was documented but the `POST /api/artifacts/:id/promote` handler was raw SQL bypassing the domain layer. No `Asset.create()`, no `AssetType` validation, no workspace authorization, no provenance tracking.
+
+**Changes** (9 files):
+
+| File | Change |
+|------|--------|
+| `packages/domain/.../SessionRepository.ts` | Added `findByArtifactId(artifactId)` |
+| `packages/infra-db/.../session-repository.ts` | Implemented: query `artifacts.session_id` → `findById` |
+| `apps/backend/.../promote-to-asset.usecase.ts` | **NEW** — 5 domain errors, session completion check, workspace auth, `Asset.create()` with provenance |
+| `apps/backend/.../generation.ts` | Handler delegates to `PromoteToAssetUseCase`, removed raw SQL |
+| `apps/backend/.../app.ts` | `createGenerationRoutes` receives `workspaceRepo` + `assetRepo` |
+| `packages/contracts/.../session.dto.ts` | `SessionDetailDTO` gains `produces?: string` |
+| `apps/frontend/.../PromoteButton.tsx` | Accepts `produces` instead of `assetType`, hidden when undefined |
+| `apps/frontend/.../SessionSummary.tsx` | Passes `produces` to `PromoteButton` |
+| `apps/frontend/.../SessionPage.tsx` + `ToolPageLayout.tsx` | Pass `session.produces` to `SessionSummary` |
+
+**Architecture decisions**:
+- `assetType` derived from `tool.produces` (domain-driven) rather than request body — `AssetType.from(tool.produces)` validates it
+- Promotion is **explicit** (user clicks button) rather than automatic on `SessionCompleted` event. This gives the user control. EventBus wiring deferred.
+- `AssetCreated` domain event also deferred — `Workspace.addAsset()` doesn't emit events yet
+- Frontend `PromoteButton` only renders when `produces` is set on the tool config
+
+**DDD validation**: All 14 rules pass. Custom errors extend `DomainError` with `code` + `retryable`. Authorization via `workspace.isMember()`. No external validation libraries. Business validation delegated to `AssetType.from()`. `Asset.create()` uses canonical factory pattern with full provenance (`sourceSessionId`, `sourceArtifactId`).
+
+**Verification**: TypeScript 0 errors (5 packages). Tests 616/616 pass (57 files).
+
+**Wiki updated**: [[Asset Promotion]], [[Application Services]], [[Domain Events Catalog]], `index.md`, `log.md`.
+
+## [2026-08-06] ops | Removed backend public domain — proxy-only architecture complete
+
+**Context**: [[nodejs-thin-reverse-proxy-plan]] Step 8 was documented as complete but the backend public domain (`backend-dev-cfc8.up.railway.app`) was still active. Proxy architecture was functionally correct (all traffic through `backend.railway.internal:3000`, CORS disabled), but the domain was unnecessary attack surface.
+
+**Actions**:
+- Deleted backend public domain via Railway API (`railway_delete_domain`)
+- Verified proxy: `GET /health` → `{"status":"ok","proxy":"http://backend.railway.internal:3000"}`, `GET /api` → `{"message":"Flow App API"}` — both through frontend proxy
+- Verified backend directly unreachable: `GET backend-dev-cfc8.up.railway.app/health` → 404
+
+**Final architecture**:
+```
+Browser → frontend-dev-b363.up.railway.app (server.mjs)
+           ├─ /, /*     → dist/ (SPA)
+           └─ /api/*, /health → proxy → backend.railway.internal:3000 (private)
+```
+Zero public surface on backend. CORS disabled. All auth cookies same-origin.
+
+**Wiki updated**: [[nodejs-thin-reverse-proxy-plan]] — Status section + Step 8 verification.
+
 ## [2026-08-06] fix | Railway Log Errors — trust proxy + migration runner
 
 Two errors appeared in Railway deploy logs after brief generation:

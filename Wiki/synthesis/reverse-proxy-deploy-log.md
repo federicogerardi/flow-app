@@ -125,7 +125,7 @@ Key insight: **only `express` and `http-proxy-middleware` are needed at runtime*
 | `BACKEND_INTERNAL_URL` | — | `http://backend.railway.internal:3000` |
 | `VITE_API_URL` | (not set) | `""` (empty — same-origin relative paths) |
 
-Backend CORS and public domain removal are pre-configured (code) but NOT applied on Railway yet, pending proxy verification.
+Backend CORS disabled (`CORS_ORIGIN=""`). Public domain removed (2026-08-06). Proxy-only architecture complete. ✅
 
 ## Related
 

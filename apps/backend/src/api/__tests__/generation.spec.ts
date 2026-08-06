@@ -33,6 +33,7 @@ function createMockSessionRepo() {
   return {
     sessions,
     findById: vi.fn(async (id: string) => sessions.get(id) ?? null),
+    findByArtifactId: vi.fn(async (_artifactId: string) => null),
     findAll: vi.fn(async ({ status, limit }: { status?: string; limit?: number } = {}) => {
       const all = Array.from(sessions.values());
       let filtered = all;
@@ -59,9 +60,32 @@ function mockDb() {
     selectFrom: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
     selectAll: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
     orderBy: vi.fn().mockReturnThis(),
     executeTakeFirst: vi.fn().mockResolvedValue(null),
     execute: vi.fn().mockResolvedValue([]),
+  };
+}
+
+function createMockWorkspaceRepo() {
+  return {
+    findById: vi.fn(async () => null),
+    findByMember: vi.fn(async () => []),
+    save: vi.fn(async () => {}),
+    saveWithLock: vi.fn(async () => {}),
+    delete: vi.fn(async () => {}),
+    findMembership: vi.fn(async () => null),
+    findPendingInvitations: vi.fn(async () => []),
+  };
+}
+
+function createMockAssetRepo() {
+  return {
+    findByWorkspace: vi.fn(async () => []),
+    findById: vi.fn(async () => null),
+    findByWorkspaceAndType: vi.fn(async () => null),
+    save: vi.fn(async () => {}),
+    delete: vi.fn(async () => {}),
   };
 }
 
@@ -118,7 +142,7 @@ describe('Generation Routes', () => {
     vi.clearAllMocks();
     sessionRepo = createMockSessionRepo();
     const db = mockDb() as unknown as ReturnType<typeof mockDb>;
-    routes = createGenerationRoutes(sessionRepo, db as never);
+    routes = createGenerationRoutes(sessionRepo, createMockWorkspaceRepo(), createMockAssetRepo(), db as never);
   });
 
   describe('listSessions', () => {
@@ -248,7 +272,7 @@ describe('Generation Routes', () => {
         created_at: '2025-01-01T00:00:00.000Z',
       });
 
-      const routesWithArtifact = createGenerationRoutes(sessionRepo, db as never);
+      const routesWithArtifact = createGenerationRoutes(sessionRepo, createMockWorkspaceRepo(), createMockAssetRepo(), db as never);
 
       const req = mockReq({ params: { id: 'a-1' } });
       const res = mockRes();
@@ -268,7 +292,7 @@ describe('Generation Routes', () => {
       const db = mockDb();
       db.executeTakeFirst.mockResolvedValueOnce(null);
 
-      const routesWithArtifact = createGenerationRoutes(sessionRepo, db as never);
+      const routesWithArtifact = createGenerationRoutes(sessionRepo, createMockWorkspaceRepo(), createMockAssetRepo(), db as never);
 
       const req = mockReq({ params: { id: 'nonexistent' } });
       const res = mockRes();

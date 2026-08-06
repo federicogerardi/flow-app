@@ -4,7 +4,7 @@ tags:
   - wiki/synthesis
   - wiki/deployment
   - wiki/reverse-proxy
-date_updated: 2026-08-03
+date_updated: 2026-08-06
 source_count: 0
 confidence: high
 ---
@@ -13,13 +13,22 @@ confidence: high
 
 > Execution plan derived from [[nodejs-thin-reverse-proxy-proposal]]. 8 steps, ~1h estimated.
 
-## Status (2026-08-03)
+## Status (2026-08-06)
 
-✅ **Complete** — All 8 steps executed. Proxy verified on Railway dev.
+✅ **Complete** — All 8 steps executed. Backend public domain removed (2026-08-06). Proxy verified on Railway dev.
 
-Backend public domain removed, CORS disabled. SPA + `/api/*` routed through frontend proxy via `backend.railway.internal`.
+SPA + `/api/*` + `/health` routed through frontend proxy via `backend.railway.internal:3000`. CORS disabled on backend. Zero public surface on backend service.
 
 Deploy log with 9 attempts and 6 root causes: [[reverse-proxy-deploy-log]].
+
+## Architecture (Final)
+
+```
+Browser → https://frontend-dev-b363.up.railway.app (server.mjs proxy)
+           ├─ /, /*        → dist/ (SPA statica)
+           └─ /api/*, /health → proxy → http://backend.railway.internal:3000
+                                      (private network only, no public domain)
+```
 
 ## Prerequisites
 
@@ -234,15 +243,20 @@ curl http://localhost:3000/nonexistent   # → index.html (SPA fallback)
    - Login: OAuth flow works (httpOnly cookies, same-origin)
 4. Check Railway frontend logs: `Frontend proxy listening on :3000`
 
-## Step 8 — Remove backend public domain ✅
+## Step 8 — Remove backend public domain ✅ (2026-08-06)
 
 Once verified:
 
 1. **Railway backend service** → Settings → Networking:
-   - Remove public domain (make service private/internal only)
+   - Remove public domain (make service private/internal only) ✅
 2. **Railway backend service** → Variables:
    - Set `CORS_ORIGIN=` (empty string)
 3. **Verify again**: all `/api/*` and `/health` requests still work (now going through `backend.railway.internal:3000` only)
+
+**Verification (2026-08-06)**:
+- `GET /health` via frontend proxy → `{"status":"ok","proxy":"http://backend.railway.internal:3000"}` ✅
+- `GET /api` via frontend proxy → `{"message":"Flow App API","version":"0.0.1"}` ✅
+- `GET backend-dev-cfc8.up.railway.app/health` → 404 (domain removed) ✅
 
 ## Rollback Plan
 

@@ -9,6 +9,11 @@ export interface SessionFilters {
 
 export interface SessionRepository {
   findById(id: string): Promise<Session | null>;
+  /**
+   * Find the session that owns a given artifact. Used by cross-context operations
+   * like promote-to-asset where only the artifact ID is available.
+   */
+  findByArtifactId(artifactId: string): Promise<Session | null>;
   findByIdempotencyKeyHash(hash: string): Promise<Session | null>;
   findByWorkspace(workspaceId: string, filters?: SessionFilters): Promise<Session[]>;
   findAll(filters?: SessionFilters): Promise<Session[]>;

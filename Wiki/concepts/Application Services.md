@@ -163,38 +163,67 @@ type ProcessStepCommand = {
 
 ### `PromoteToAssetUseCase`
 
-Cross-context: consumes the `SessionCompleted` event and promotes the final Artifact to an Asset.
+Cross-context: promotes a `final` [[Artifact]] from a completed [[Session]] into a reusable [[Asset]] in [[Workspace & Assets]]. Invoked via `POST /api/artifacts/:id/promote`.
+
+> **Implemented** (2026-08-06) — explicit user-triggered promotion. EventBus auto-promotion (`SessionCompleted → PromoteToAssetUseCase`) is deferred; see [[Asset Promotion#Implementation Status]].
 
 ```typescript
 // apps/backend/src/application/workspace/promote-to-asset.usecase.ts
 
 class PromoteToAssetUseCase {
   constructor(
+    private sessionRepo: SessionRepository,
     private workspaceRepo: WorkspaceRepository,
+    private assetRepo: AssetRepository,
   ) {}
 
-  async execute(event: SessionCompleted): Promise<void> {
-    // tool.produces declares whether this tool creates a promotable Asset (domain knowledge)
-    const tool = this.toolRegistry.get(event.toolKey);
-    const assetType = tool?.produces; // undefined for content / analysis tools
-    if (!assetType) return;
+  async execute(cmd: PromoteToAssetCommand): Promise<PromoteToAssetResult> {
+    // 1. Find the session that owns this artifact
+    const session = await this.sessionRepo.findByArtifactId(cmd.artifactId);
+    if (!session) throw new ArtifactNotFoundError(cmd.artifactId);
 
-    const workspace = await this.workspaceRepo.findById(event.workspaceId);
-    if (!workspace) throw new WorkspaceNotFoundError(event.workspaceId);
+    // 2. Verify session is completed
+    if (!session.status.equals(SessionStatus.Completed))
+      throw new SessionNotCompletedError(session.sessionId, session.status.toString());
 
-    workspace.addAsset(
-      AssetContent.from(event.finalArtifact.content),
+    // 3. Get tool and check if it produces an asset
+    const tool = getTool(session.toolKey);
+    if (!tool?.produces) throw new ToolNotPromotableError(session.toolKey.value);
+
+    // 4. Validate asset type from tool config (domain-driven)
+    const assetType = AssetType.from(tool.produces);
+
+    // 5. Verify workspace membership
+    const workspace = await this.workspaceRepo.findById(cmd.workspaceId);
+    if (!workspace) throw new WorkspaceNotFoundError(cmd.workspaceId);
+    if (!workspace.isMember(cmd.userId))
+      throw new NotAWorkspaceMemberError(cmd.userId, cmd.workspaceId);
+
+    // 6. Create asset with full provenance
+    const asset = Asset.create({
+      workspaceId: cmd.workspaceId,
       assetType,
-      AssetSource.Generated,
-      event.finalArtifact.artifactId,
-    );
+      source: AssetSource.Generated,
+      content: artifact.content,
+      sourceSessionId: session.sessionId,
+      sourceArtifactId: cmd.artifactId,
+    });
 
-    await this.workspaceRepo.save(workspace);
-
-    eventBus.publish(new AssetCreated(workspace.workspaceId, assetType));
+    await this.assetRepo.save(asset);
+    return { assetId, assetType, workspaceId, created };
   }
 }
 ```
+
+**Errors raised**:
+
+| Error | Code | Trigger |
+|-------|------|---------|
+| `ArtifactNotFoundError` | `ARTIFACT_NOT_FOUND` | Artifact ID not found in any session |
+| `SessionNotCompletedError` | `INVALID_STATE` | Session is not in `completed` status |
+| `ToolNotPromotableError` | `VALIDATION_ERROR` | Tool does not have `produces` set |
+| `WorkspaceNotFoundError` | `WORKSPACE_NOT_FOUND` | Workspace does not exist |
+| `NotAWorkspaceMemberError` | `FORBIDDEN` | User is not a member of the workspace |
 
 ## Complete Flow
 

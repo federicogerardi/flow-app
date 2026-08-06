@@ -28,6 +28,13 @@ confidence: high
 - ✅ `vitest.config.base.ts` updated: `testTimeout: 10s`, `hookTimeout: 10s`
 - ✅ Wiki pages updated: `Testing Strategy` → Phase 11 Baseline section + updated configs, `phase-11-testing-plan` → Results section, `log.md`, `Maintenance Log`
 
+## 2026-08-06
+
+- ✅ Backend public domain removed on Railway (`backend-dev-cfc8.up.railway.app`). Proxy-only architecture complete — zero public surface on backend. Verified: `/health` and `/api` work through frontend proxy. [[nodejs-thin-reverse-proxy-plan]] Step 8 completed.
+- ✅ CI/CD workflow — GitHub runner availability issues (Build/Test stuck). Railway deploy unaffected (deploys via GitHub integration independently of CI checks).
+- ✅ **Promote to Asset implemented** — `PromoteToAssetUseCase` (5 domain errors, workspace auth, `Asset.create()` with provenance), `findByArtifactId` on `SessionRepository`, `POST /api/artifacts/:id/promote` delegates to use case (no raw SQL), frontend `PromoteButton` visible only for tools with `produces`. 616/616 tests, TypeScript 0 errors. See [[Asset Promotion]].
+- ✅ Wiki dark theme audit + WCAG AA contrast fixes deployed ([[tokens.ts]] palette aligned with [[Design Tokens]] wiki page).
+
 ## 2026-08-03
 
 - ✅ Node.js thin reverse proxy deployed and verified on Railway dev. 9 attempts, 6 root causes resolved. Backend public domain removed, CORS disabled. Proxy serving SPA + /api/* via backend.railway.internal. Deploy log: [[synthesis/reverse-proxy-deploy-log]].

@@ -7,13 +7,21 @@ import { copy } from '@flow-app/copy';
 
 interface PromoteButtonProps {
   artifactId: string;
-  assetType?: string;
   workspaceId: string;
+  produces?: string;
+  /** If already promoted, the Asset UUID. Causes the button to render in "done" state on mount. */
+  promotedAssetId?: string | null;
   onPromoted?: () => void;
 }
 
-export function PromoteButton({ artifactId, assetType = 'ad-copy', workspaceId, onPromoted }: PromoteButtonProps) {
-  const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+export function PromoteButton({ artifactId, workspaceId, produces, promotedAssetId, onPromoted }: PromoteButtonProps) {
+  // If already promoted, start in "done" state (persistent across page refreshes)
+  const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>(
+    promotedAssetId ? 'done' : 'idle',
+  );
+
+  // Only show for tools that produce a promotable asset
+  if (!produces) return null;
 
   if (state === 'done') {
     return (
@@ -32,7 +40,7 @@ export function PromoteButton({ artifactId, assetType = 'ad-copy', workspaceId, 
   const handlePromote = async () => {
     setState('loading');
     try {
-      await api.promoteArtifact(artifactId, assetType, workspaceId);
+      await api.promoteArtifact(artifactId, workspaceId);
       setState('done');
       onPromoted?.();
     } catch {
