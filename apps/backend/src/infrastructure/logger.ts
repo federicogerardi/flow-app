@@ -60,6 +60,8 @@ export const httpLogger = pinoHttp({
   customLogLevel: (_req, res, err) => {
     if (res.statusCode >= 500 || err) return 'error';
     if (res.statusCode >= 400) return 'warn';
+    // Silence 304 cache hits and periodic polling noise
+    if (res.statusCode === 304) return 'silent';
     return 'info';
   },
   customSuccessMessage: (req, res) =>
@@ -67,6 +69,13 @@ export const httpLogger = pinoHttp({
   customErrorMessage: (req, res, err) =>
     `${req.method} ${req.url} → ${res.statusCode} (${err?.message ?? 'unknown'})`,
   autoLogging: {
-    ignore: (req) => req.url === '/health',
+    ignore: (req) => {
+      if (req.url === '/health') return true;
+      return false;
+    },
+  },
+  serializers: {
+    req: () => undefined,         // drop full request object
+    res: () => undefined,         // drop full response object
   },
 });

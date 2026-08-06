@@ -7,24 +7,24 @@ import { PageHeader } from '../PageHeader';
 import { useBreadcrumbs } from '../../layout/AppShell';
 import { ErrorState } from '../ErrorState';
 import { ReadinessSnapshot } from '../tool/ReadinessSnapshot';
-import { SetupPanel, fetchToolInputs } from '../tool/SetupPanel';
+import { SetupPanel, fetchToolDefinitions } from '../tool/SetupPanel';
 import { FeedbackPanel } from '../tool/FeedbackPanel';
 import { SessionSummary } from '../tool/SessionSummary';
 import { CompletionBanner } from '../shared/CompletionBanner';
 import { toolPageMachine } from '../../machines/tool-page-machine';
 import { useSession } from '../../api/hooks';
-import type { TextInput } from '../../tool-inputs';
+import type { TextInput, FileInput } from '../../tool-inputs';
 import { copy } from '@flow-app/copy';
 import { useState } from 'react';
 
-/** Fetch tool metadata including creditCost (H8) */
-async function fetchToolMeta(toolKey: string): Promise<{ creditCost: number }> {
-  const base = (import.meta.env.VITE_API_URL as string) || '';
-  const resp = await fetch(`${base}/api/tools`, { credentials: 'include' });
-  if (!resp.ok) return { creditCost: 1 };
-  const { tools } = await resp.json() as { tools: Array<{ toolKey: string; creditCost: number }> };
-  const tool = tools.find((t) => t.toolKey === toolKey);
-  return { creditCost: tool?.creditCost ?? 1 };
+/** Read file content as text for API submission */
+function readFileContent(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsText(file);
+  });
 }
 
 interface ToolPageLayoutProps {
@@ -36,14 +36,31 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
   const navigate = useNavigate();
   const [state, send] = useMachine(toolPageMachine);
   const [toolDef, setToolDef] = useState<TextInput[]>([]);
+  const [fileDef, setFileDef] = useState<FileInput[]>([]);
+  const [files, setFiles] = useState<Record<string, File>>({});
   const [loadingTool, setLoadingTool] = useState(true);
   const [creditCost, setCreditCost] = useState(1);
   const { setBreadcrumbs } = useBreadcrumbs();
 
-  const phase = state.value as string;
-  const { inputs, error, errorCode, sessionId } = state.context;
+  // Local state for submission/running/completed/failed — bypass XState async transition issue
+  const [submitting, setSubmitting] = useState(false);
+  const [localSessionId, setLocalSessionId] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [localErrorCode, setLocalErrorCode] = useState<string | null>(null);
+  const [phaseOverride, setPhaseOverride] = useState<'running' | 'completed' | 'failed' | null>(null);
+
+  const phase = phaseOverride ?? (state.value as string);
+  const { inputs } = state.context;
+  const displaySessionId = localSessionId;
+  const displayError = localError ?? state.context.error;
+  const displayErrorCode = localErrorCode ?? state.context.errorCode;
 
   const title = toolKey?.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) ?? 'Tool';
+
+  // Debug: write phase to document title
+  useEffect(() => {
+    document.title = `[${phase}] ${title}${localSessionId ? ` #${localSessionId.slice(0,8)}` : ''}`;
+  }, [phase, title, localSessionId]);
 
   // Set breadcrumbs via context (L1)
   useEffect(() => {
@@ -56,57 +73,93 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
   // Load tool definition + credit cost on mount
   useEffect(() => {
     setLoadingTool(true);
+    // Reset file state when tool changes
+    setFiles({});
     Promise.all([
-      fetchToolInputs(toolKey),
-      fetchToolMeta(toolKey),
+      fetchToolDefinitions(toolKey),
     ])
-      .then(([def, meta]) => {
-        setToolDef(def);
-        setCreditCost(meta.creditCost);
+      .then(([defs]) => {
+        setToolDef(defs.textInputs);
+        setFileDef(defs.fileInputs);
+        setCreditCost(defs.creditCost);
       })
       .finally(() => setLoadingTool(false));
   }, [toolKey]);
 
   // SSE session tracking when running
   const { session, progress } = useSession(
-    phase === 'running' || phase === 'completed' ? sessionId : null,
+    phase === 'running' || phase === 'completed' ? displaySessionId : null,
   );
 
-  // React to session completion via SSE
+  // React to session completion via SSE — override to completed/failed
   useEffect(() => {
-    if (session?.status === 'completed' && phase === 'running') {
-      send({ type: 'SESSION_COMPLETED' });
+    if (session?.status === 'completed' && phaseOverride === 'running') {
+      setPhaseOverride('completed');
     }
-    if (session?.status === 'failed' && phase === 'running') {
-      send({ type: 'SESSION_FAILED', error: 'Session failed' });
+    if (session?.status === 'failed' && phaseOverride === 'running') {
+      setPhaseOverride('failed');
+      setLocalError('Session failed');
     }
-  }, [session?.status, phase, send]);
+  }, [session?.status, phaseOverride]);
 
-  const requiredMissing = toolDef.some(
+  const textMissing = toolDef.some(
     (input) => input.required && !inputs[input.key]?.trim(),
   );
+  const fileMissing = fileDef.some(
+    (input) => input.required && !files[input.key],
+  );
+  const requiredMissing = textMissing || fileMissing;
 
   const handleInputChange = (key: string, value: string) => {
     send({ type: 'CONFIGURE', key, value });
   };
 
-  const handleSubmit = async () => {
-    send({ type: 'SUBMIT' });
-    try {
-      const result = await api.startSession(toolKey, { workspaceId, inputs });
-      send({ type: 'SESSION_STARTED', sessionId: result.session.id });
-    } catch (err) {
-      if (err instanceof ApiClientError) {
-        send({
-          type: 'SESSION_FAILED',
-          error: err.message,
-          code: err.code,
-        });
+  const handleFileChange = (key: string, file: File | null) => {
+    setFiles((prev) => {
+      const next = { ...prev };
+      if (file) {
+        next[key] = file;
       } else {
-        send({
-          type: 'SESSION_FAILED',
-          error: err instanceof Error ? err.message : copy.t('errors.generation.failedToStart'),
-        });
+        delete next[key];
+      }
+      return next;
+    });
+  };
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setLocalError(null);
+    setLocalErrorCode(null);
+    try {
+      // Read file contents for API submission
+      const fileContents: { key: string; content: string }[] = [];
+      for (const [key, file] of Object.entries(files)) {
+        try {
+          const content = await readFileContent(file);
+          fileContents.push({ key, content });
+        } catch {
+          // File read failed — submit without this file
+        }
+      }
+
+      const result = await api.startSession(toolKey, {
+        workspaceId,
+        inputs: {
+          text: inputs,
+          files: fileContents.length > 0 ? fileContents : undefined,
+        },
+      });
+
+      setLocalSessionId(result.session.id);
+      setSubmitting(false);
+      setPhaseOverride('running');
+    } catch (err) {
+      setSubmitting(false);
+      if (err instanceof ApiClientError) {
+        setLocalError(err.message);
+        setLocalErrorCode(err.code);
+      } else {
+        setLocalError(err instanceof Error ? err.message : copy.t('errors.generation.failedToStart'));
       }
     }
   };
@@ -116,8 +169,8 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
       <PageHeader title={title} />
 
       {/* Quota errors */}
-      {error && (errorCode === 'QUOTA_EXCEEDED' || errorCode === 'ARTIFACT_GATE_EXCEEDED') && (
-        <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
+      {(displayError) && (displayErrorCode === 'QUOTA_EXCEEDED' || displayErrorCode === 'ARTIFACT_GATE_EXCEEDED') && (
+        <Alert severity="error" sx={{ mb: 2 }}>{displayError}</Alert>
       )}
 
       {/* Phase: configuring */}
@@ -138,9 +191,17 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
                     toolDef={toolDef}
                     onChange={handleInputChange}
                     disabled={false}
+                    fileDef={fileDef.length > 0 ? fileDef : undefined}
+                    files={files}
+                    onFileChange={handleFileChange}
                   />
                 </Box>
-                <ReadinessSnapshot inputs={inputs} toolDef={toolDef} />
+                <ReadinessSnapshot
+                  inputs={inputs}
+                  toolDef={toolDef}
+                  fileDef={fileDef.length > 0 ? fileDef : undefined}
+                  files={files}
+                />
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
                   <Button
                     variant="contained"
@@ -161,7 +222,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
       )}
 
       {/* Phase: submitting */}
-      {phase === 'submitting' && (
+      {submitting && (
         <Card>
           <CardContent>
             <LinearProgress sx={{ mb: 2 }} />
@@ -192,8 +253,8 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
           {session?.artifacts && (
             <SessionSummary artifacts={session.artifacts} workspaceId={workspaceId} />
           )}
-          <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-            <Button variant="outlined" onClick={() => send({ type: 'RESET' })}>
+           <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+            <Button variant="outlined" onClick={() => { send({ type: 'RESET' }); setPhaseOverride(null); setLocalSessionId(null); setSubmitting(false); }}>
               New Generation
             </Button>
             <Button variant="outlined" onClick={() => navigate(`/workspaces/${workspaceId}`)}>
@@ -206,9 +267,9 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
       {/* Phase: failed */}
       {phase === 'failed' && (
         <>
-          {error && !errorCode && <ErrorState message={error} onRetry={() => send({ type: 'SUBMIT' })} />}
+          {(displayError && !displayErrorCode) && <ErrorState message={displayError} onRetry={() => send({ type: 'SUBMIT' })} />}
           <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-            <Button variant="outlined" onClick={() => send({ type: 'RESET' })}>
+            <Button variant="outlined" onClick={() => { send({ type: 'RESET' }); setPhaseOverride(null); setLocalSessionId(null); setSubmitting(false); }}>
               Try Again
             </Button>
             <Button variant="outlined" onClick={() => navigate(`/workspaces/${workspaceId}`)}>

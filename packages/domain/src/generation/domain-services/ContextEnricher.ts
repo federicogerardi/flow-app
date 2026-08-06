@@ -24,6 +24,10 @@ export class ContextEnricher {
       parts.push(`[Asset - ${asset[0]}]\n${asset[1]}`);
     }
 
+    for (const [key, value] of Object.entries(input.acquisitionData.fileContents)) {
+      parts.push(`[File - ${key}]\n${value}`);
+    }
+
     for (const [key, value] of Object.entries(input.acquisitionData.userInputs)) {
       parts.push(`[Input - ${key}]\n${value}`);
     }

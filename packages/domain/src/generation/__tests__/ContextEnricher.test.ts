@@ -135,4 +135,35 @@ describe('ContextEnricher', () => {
 
     expect(result).not.toContain('[API Data');
   });
+
+  it('should include file contents from acquisition data', () => {
+    const result = enricher.enrich({
+      step: makeStep(),
+      previousResults: [],
+      acquisitionData: makeData({
+        fileContents: {
+          briefing: '# Product Overview\nAcme Corp is a SaaS platform...',
+        },
+      }),
+    });
+
+    expect(result).toContain('[File - briefing]');
+    expect(result).toContain('Acme Corp is a SaaS platform');
+  });
+
+  it('should handle multiple file contents', () => {
+    const result = enricher.enrich({
+      step: makeStep(),
+      previousResults: [],
+      acquisitionData: makeData({
+        fileContents: {
+          briefing: 'Brief content',
+          context: 'Context document',
+        },
+      }),
+    });
+
+    expect(result).toContain('[File - briefing]');
+    expect(result).toContain('[File - context]');
+  });
 });

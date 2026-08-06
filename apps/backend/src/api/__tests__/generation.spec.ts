@@ -59,6 +59,7 @@ function mockDb() {
     selectFrom: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
     selectAll: vi.fn().mockReturnThis(),
+    orderBy: vi.fn().mockReturnThis(),
     executeTakeFirst: vi.fn().mockResolvedValue(null),
     execute: vi.fn().mockResolvedValue([]),
   };

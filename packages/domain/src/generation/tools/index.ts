@@ -56,14 +56,58 @@ const blogPostTool: ToolDefinition = {
   ],
 };
 
+const briefTool: ToolDefinition = {
+  toolKey: 'brief',
+  name: 'Brief',
+  description: 'Genera un brief marketing strutturato — il documento base per tutti i tool di generazione',
+  creditCost: 1,
+  produces: 'brief',
+  acquisition: {
+    userText: [
+      { key: 'objective', label: 'Obiettivo', required: true, type: 'long', placeholder: 'Descrivi obiettivo e contesto del brief...' },
+      { key: 'company', label: 'Azienda', required: true, type: 'short', placeholder: 'Nome azienda' },
+      { key: 'product', label: 'Prodotto / Servizio', required: true, type: 'short', placeholder: 'Prodotto o servizio oggetto del brief' },
+    ],
+    files: [
+      { key: 'briefing', label: 'Documento briefing', accept: ['.txt', '.md', '.docx'], required: false, description: 'Opzionale: carica un documento briefing per un\'estrazione più completa' },
+    ],
+  },
+  steps: [
+    {
+      order: 1,
+      label: 'extraction',
+      enrichment: 'serial',
+      prompt: {
+        templateId: 'brief/extraction',
+        version: '1.0.0',
+        model: ModelTier.Balanced,
+        components: ['output-json/v1'],
+      },
+      execution: { timeoutMs: 60000, maxRetries: 2 },
+    },
+    {
+      order: 2,
+      label: 'brief-generation',
+      enrichment: 'serial',
+      prompt: {
+        templateId: 'brief/brief-generation',
+        version: '1.0.0',
+        model: ModelTier.Balanced,
+        components: ['output-plain-text/v1', 'italian-formal/v1'],
+      },
+      execution: { timeoutMs: 120000, maxRetries: 2 },
+    },
+  ],
+};
+
 export const toolRegistry: Record<ToolKeyValue, ToolDefinition> = {
   'blog-post': blogPostTool,
+  'brief': briefTool,
   'landing-funnel': blogPostTool,
   'landing-page': blogPostTool,
   'video-script-long-form': blogPostTool,
   'video-description': blogPostTool,
   'ad-copy': blogPostTool,
-  'brief': blogPostTool,
   'brand-voice': blogPostTool,
   'buyer-persona': blogPostTool,
   'marketing-angle': blogPostTool,

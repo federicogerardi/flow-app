@@ -1,4 +1,5 @@
 import { Queue } from 'bullmq';
+import type { SessionJobData } from '../worker/session-worker.js';
 
 let sessionQueue: Queue | null;
 
@@ -17,14 +18,17 @@ export function getSessionQueue(redisUrl: string): Queue {
   return sessionQueue;
 }
 
-export async function enqueueSession(sessionId: string): Promise<void> {
+export async function enqueueSession(
+  sessionId: string,
+  acquisitionData: SessionJobData['acquisitionData'],
+): Promise<void> {
   const redisUrl = process.env.REDIS_URL;
   if (!redisUrl) throw new Error('REDIS_URL not set');
 
   const queue = getSessionQueue(redisUrl);
   await queue.add(
     `session:${sessionId}`,
-    { sessionId },
+    { sessionId, acquisitionData },
     { jobId: sessionId },
   );
 }

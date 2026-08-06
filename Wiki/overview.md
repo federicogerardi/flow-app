@@ -81,7 +81,7 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 
 ## Implementation Status
 
-### Completed (Phase 0–13)
+### Completed (Phase 0–13 + Brief Tool)
 
 | Phase | Status | Scope |
 |-------|--------|-------|
@@ -99,16 +99,20 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 | Phase 11 — Testing & Quality | ✅ | 66 test files, ~634 tests, vitest production configs, CI quality gates |
 | Phase 11.5 — Usage & Quota Domain | ✅ | Bounded context: 10 files, 40 tests, Kysely repository, optimistic locking |
 | Phase 12 — Usage & Quota Wiring | ✅ | `ConsumeCreditsUseCase` (optimistic retry), session worker integration, `GET /api/usage/credits` |
-| Phase 13 — Gamification | ✅ | 50 files: 2 aggregates (PlayerProfile, WorkspaceChallenge), 9 VOs, 22 badges, 5 workspace challenges, BullMQ event pipeline, 5 API endpoints |
+| Phase 13 — Gamification | ✅ | 50 files: 2 aggregates, 9 VOs, 22 badges, 5 challenges, BullMQ pipeline, 5 API endpoints |
+| **Brief Tool** | ✅ | 2-step extraction→generation pipeline, 11-section Italian output, FileUpload, SSE completion, smoke test passed |
 
 ### No Planned Phases
 
-All planned phases are complete. The [[implementation-roadmap-2026-08-01]] is fully executed.
+All phases through 13 + the Brief Tool are fully implemented and smoke-tested.
 
-### Critical Gaps (remaining)
+### Remaining Stubs
 
-1. **Asset tooling** — `Asset` entity, `AssetType`/`AssetSource` VOs, and `AssetResolver` domain service now implemented in domain layer. `Workspace` aggregate supports `addAsset()` and `getAssetByType()`. Repository persistence and session-worker promotion wiring still pending.
-2. **CrawlData value object** — Implemented in domain layer (`CrawlData.create()` / `reconstitute()`). Session worker integration for the `ai-overview-analysis` tool still pending.
+| Gap | Status |
+|-----|--------|
+| **9 other tool definitions** | 🟡 Stubs — `landing-funnel`, `landing-page`, `video-script-long-form`, `video-description`, `ad-copy`, `brand-voice`, `buyer-persona`, `marketing-angle`, `ai-overview-analysis` all map to `blogPostTool`. Only `brief` has a real definition. |
+| **CrawlData value object** | 🟡 Implemented in domain layer (`CrawlData.create()` / `reconstitute()`). `ai-overview-analysis` session worker integration still pending. |
+| **Credits auto-create** | 🟡 `ConsumeCreditsUseCase` has a `42703` error on first-use quota creation — PostgreSQL column mismatch in the auto-create path. Non-blocking: credit consumption logs warn but don't crash. |
 
 ## Infrastructure (Needs Railway provisioning)
 
@@ -117,6 +121,7 @@ All planned phases are complete. The [[implementation-roadmap-2026-08-01]] is fu
 | PostgreSQL | Railway dev (TCP proxy 5432) | ✅ 26 tables, 10 migrations |
 | Redis | Railway dev (TCP proxy 6379) | ✅ ACTIVE |
 | Backend API | `localhost:3000` | ✅ 27 endpoints verified |
+| BullMQ Worker | Local (dev:worker) | ✅ Processes session jobs (concurrency: 5) |
 | LLM Gateway | OpenRouter (`OPENROUTER_API_KEY`) | ✅ 4 model tiers, fallback chain |
 | Dockerfile | Multi-stage (Node 22-alpine) | ✅ Phase 10 |
 | CI/CD | GitHub Actions (lint, typecheck, test, build, deploy) | ✅ Phase 10 |

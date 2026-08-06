@@ -11,7 +11,7 @@
     "packages/copy"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace=apps/backend & npm run dev --workspace=apps/frontend",
+    "dev": "npm run dev --workspace=apps/backend & npm run dev:worker --workspace=apps/backend & npm run dev --workspace=apps/frontend",
     "build": "tsc --build && npm run build --workspace=apps/frontend",
     "test": "vitest",
     "test:run": "vitest --run",

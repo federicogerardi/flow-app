@@ -28,6 +28,14 @@ export function createGenerationRoutes(sessionRepo: SessionRepository, db: Kysel
             placeholder: f.placeholder,
             options: f.options,
           })) ?? [],
+          files: tool.acquisition.files?.map((f) => ({
+            key: f.key,
+            label: f.label,
+            accept: f.accept,
+            required: f.required,
+            description: f.description,
+            maxSizeMb: f.maxSizeMb,
+          })) ?? [],
         },
         produces: tool.produces,
       }));
@@ -200,7 +208,18 @@ export function createGenerationRoutes(sessionRepo: SessionRepository, db: Kysel
           inputs: inputs ?? {},
         });
 
-        await enqueueSession(result.session.sessionId);
+        // Build serializable acquisition data for the worker job
+        const acquisitionData = {
+          userInputs: inputs?.text ?? {},
+          fileContents: Object.fromEntries(
+            (inputs?.files as Array<{ key: string; content: string }> | undefined ?? [])
+              .map((f) => [f.key, f.content]),
+          ),
+          apiResponses: [],
+          resolvedAssets: {} as Record<string, string>,
+        };
+
+        await enqueueSession(result.session.sessionId, acquisitionData);
 
         const statusCode = result.replayed ? 200 : 201;
         res.status(statusCode).json({
@@ -227,15 +246,34 @@ export function createGenerationRoutes(sessionRepo: SessionRepository, db: Kysel
             error: { code: 'SESSION_NOT_FOUND', message: 'Session not found', retryable: false },
           });
         }
+
+        // Fetch artifacts for this session
+        const artifactRows = await db
+          .selectFrom('artifacts')
+          .where('session_id', '=', session.sessionId)
+          .selectAll()
+          .orderBy('step_number', 'asc')
+          .execute();
+
+        const tool = toolRegistry[session.toolKey.value];
+
         res.json({
           id: session.sessionId,
           toolKey: session.toolKey.toString(),
           workspaceId: session.workspaceId,
           status: session.status.toString(),
+          stepCount: tool?.steps.length ?? 0,
           currentStepIndex: session.currentStepIndex,
           startedAt: session.startedAt?.toISOString() ?? null,
           completedAt: session.completedAt?.toISOString() ?? null,
           createdAt: session.startedAt?.toISOString() ?? new Date().toISOString(),
+          artifacts: artifactRows.map((a) => ({
+            id: a.id,
+            stepNumber: a.step_number,
+            content: a.content,
+            status: a.status,
+            createdAt: a.created_at?.toISOString?.() ?? null,
+          })),
         });
       } catch (error) {
         next(error);

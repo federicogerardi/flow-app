@@ -8,6 +8,15 @@ export interface TextInput {
   description?: string;
 }
 
+export interface FileInput {
+  key: string;
+  label: string;
+  accept: string[];
+  required: boolean;
+  description?: string;
+  maxSizeMb?: number;
+}
+
 const BLOG_POST_INPUTS: TextInput[] = [
   { key: 'topic', label: 'Topic', required: true, type: 'short' },
   { key: 'language', label: 'Language', required: false, type: 'select', options: ['it', 'en'], placeholder: 'it' },
@@ -21,9 +30,13 @@ const AD_COPY_INPUTS: TextInput[] = [
 ];
 
 const BRIEF_INPUTS: TextInput[] = [
-  { key: 'objective', label: 'Objective', required: true, type: 'long' },
-  { key: 'company', label: 'Company', required: true, type: 'short' },
-  { key: 'product', label: 'Product / Service', required: true, type: 'short' },
+  { key: 'objective', label: 'Obiettivo', required: true, type: 'long', placeholder: 'Descrivi obiettivo e contesto del brief...' },
+  { key: 'company', label: 'Azienda', required: true, type: 'short', placeholder: 'Nome azienda' },
+  { key: 'product', label: 'Prodotto / Servizio', required: true, type: 'short', placeholder: 'Prodotto o servizio oggetto del brief' },
+];
+
+const BRIEF_FILES: FileInput[] = [
+  { key: 'briefing', label: 'Documento briefing', accept: ['.txt', '.md', '.docx'], required: false, description: 'Opzionale: carica un documento per un\'estrazione più completa' },
 ];
 
 const DEFAULT_INPUTS: TextInput[] = [
@@ -45,6 +58,14 @@ const TOOL_INPUTS: Record<string, TextInput[]> = {
   'ai-overview-analysis': DEFAULT_INPUTS,
 };
 
+const TOOL_FILES: Record<string, FileInput[]> = {
+  'brief': BRIEF_FILES,
+};
+
 export function getToolInputs(toolKey: string): TextInput[] {
   return TOOL_INPUTS[toolKey] ?? DEFAULT_INPUTS;
+}
+
+export function getToolFiles(toolKey: string): FileInput[] {
+  return TOOL_FILES[toolKey] ?? [];
 }

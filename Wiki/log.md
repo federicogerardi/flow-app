@@ -2,7 +2,7 @@
 type: log
 tags:
   - wiki/log
-date_updated: 2026-08-04
+date_updated: 2026-08-06
 ---
 
 # Wiki Operation Log
@@ -11,6 +11,97 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Cmd+P → "View operation history"
 - Or open from Settings → Auto Maintenance → Operation History
 ---
+
+## [2026-08-06] implementation | Brief Tool — Smoke Test ✅ + Bug Fixes (7 root causes)
+
+Smoke test passed: session created → extraction step → brief-generation step → 2 artifacts in DB → FE displays final brief.
+
+**7 critical bugs fixed during end-to-end validation:**
+
+1. **Readiness always failed** — FE sent `{...inputs}` flat, backend expected `{ text: inputs }`. Fixed request body shape.
+2. **FE stuck on "preparazione in corso"** — XState `send()` after `await` didn't transition state. Replaced with local `useState`.
+3. **Worker `InvalidSessionStateError`** — Session aggregate stayed in `ready` when machine sent `ADD_ARTIFACT`. Applied `QUEUE`+`WORKER_PICKUP` to aggregate before processing.
+4. **`saveWithLock` version mismatch** — `session.version` incremented by `apply()` before optimistic lock check. Used `version - 1`.
+5. **`COMPLETE` not persisted before SSE** — Session saved as `running` because `save()` happened after `session_completed` publish. Reordered: save first, then publish.
+6. **Session detail missing artifacts** — `GET /api/sessions/:id` returned no `artifacts[]`. Added artifact query to endpoint.
+7. **Worker never started** — Missing `dev:worker` script + wrong env path in worker-process. Added script + fixed `../../..`.
+
+**Additional fixes:**
+- Logger: silenced 304 responses; dropped verbose req/res serializers
+- Frontend: merged `fetchToolMeta` + `fetchToolDefinitions` into single `GET /api/tools` call (was 2 calls)
+- Test mock: added `orderBy` to mockDb for artifacts query
+
+**Verification**: `tsc --noEmit` ✅ (3 projects), `vitest` 644/644 ✅, `vite build` ✅, smoke test ✅.
+
+**Wiki updated**: [[Brief Tool - Prompt Architecture]] (implementation status → complete with final data flow), [[log]] (this entry).
+
+## [2026-08-06] implementation | Brief Tool — Gap Closure (File Content Wiring)
+
+Closed all 3 remaining gaps from the brief tool implementation:
+
+**`ContextEnricher.enrich()` — file content emission**:
+- ✅ Added `[File - {key}]\n{content}` sections between asset emission and user inputs (line 26-28 of `packages/domain/src/generation/domain-services/ContextEnricher.ts`)
+- ✅ Added 2 tests: single file, multiple files — 457 domain tests ✅
+
+**`AcquisitionData` flow from API to worker**:
+- ✅ `SessionJobData` extended with `acquisitionData: { userInputs, fileContents, apiResponses, resolvedAssets }` (`session-worker.ts`)
+- ✅ `enqueueSession()` now accepts and passes `acquisitionData` alongside `sessionId` (`enqueue-session.job.ts`)
+- ✅ API handler builds serializable `acquisitionData` from `req.body.inputs` and passes it to `enqueueSession()` (`generation.ts:214-222`)
+- ✅ Worker reads `job.data.acquisitionData` and sends `CONFIGURE` event with real data (replaces empty `{}` at `session-worker.ts:156-164`)
+- ✅ `Map` serialization: `resolvedAssets` converted `Record<string,string>` ↔ `Map<string,string>` at JSON boundary
+
+**Verification**: `tsc --noEmit` ✅ (3 projects), `vitest` 644/644 ✅ (domain 457 + backend 127 + frontend 60), `vite build` 2.58s ✅
+
+**Wiki updated**: [[Brief Tool - Prompt Architecture]] (implementation status → complete, gaps → all closed, data flow diagram), [[log]] (this entry).
+
+## [2026-08-06] implementation | Brief Tool — Domain + Prompts + Frontend
+
+Implemented the `brief` tool based on the ingested prompt prototypes from [[sources/brief-generator]].
+
+**Domain** (`packages/domain/src/generation/tools/index.ts`):
+- ✅ Added `briefTool` definition: 2-step extraction→generation pipeline, `produces: 'brief'`, 3 userText fields + optional file upload
+- ✅ Registered in `toolRegistry` (replaced blogPostTool stub)
+
+**Prompt templates** (`apps/backend/src/prompts/brief/`):
+- ✅ `extraction/versions/1.0.0/system.md` — Data Extraction Specialist, 5-field JSON output, anti-hallucination guardrails
+- ✅ `extraction/versions/1.0.0/user.md`
+- ✅ `brief-generation/versions/1.0.0/system.md` — Senior Creative Strategist, 11-section structure, downstream-first design
+- ✅ `brief-generation/versions/1.0.0/user.md`
+
+**Backend API** (`apps/backend/src/api/generation.ts`):
+- ✅ `GET /api/tools` now exposes `acquisition.files[]` alongside `acquisition.userText[]`
+
+**Frontend** (5 files):
+- ✅ `SetupPanel.tsx` — FileUpload component with drag-and-drop, remove, accept filter
+- ✅ `ReadinessSnapshot.tsx` — file readiness tracking
+- ✅ `ToolPageLayout.tsx` — file state management, FileReader integration on submit
+- ✅ `tool-inputs.ts` — `FileInput` type, `BRIEF_FILES`, `getToolFiles()`, Italian labels
+
+**Verification**: `tsc --noEmit` ✅ (3 projects), `vitest` 642/642 ✅ (domain 455 + backend 127 + frontend 60), `vite build` 1.71s ✅
+
+**Remaining**: `ContextEnricher.enrich()` doesn't pass file content to the prompt enrichment context. File content from the API `inputs.files[].content` must be wired into the acquisition data so the `extraction` step's `[File - key]\ncontent` sections appear in the LLM context.
+
+**Wiki updated**: [[Brief Tool - Prompt Architecture]] (implementation status section), [[log]] (this entry).
+
+## [2026-08-06] ingest | Brief Generator Prompts (sources/brief-generator/)
+
+Ingested 2 raw prompt prototype files from `Wiki/sources/brief-generator/`:
+- `prompt_extraction.md` — Step 1: 5-field data extraction from briefing documents (JSON output)
+- `prompt_brief_generation.md` — Step 2: 11-section creative brief synthesis (Italian, Markdown)
+
+**Wiki files created/updated**:
+- ✅ Created [[sources/brief-generator]] — source summary with architecture overview, design principles
+- ✅ Created [[Brief Tool - Prompt Architecture]] — concept page: 2-step pipeline, downstream-first design, anti-hallucination guardrails, implementation checklist
+- ✅ Updated [[index]] — added source to Processed Sources table, concept to Concepts table
+- ✅ Updated [[log]] (this entry)
+
+**Key architectural findings**:
+1. The brief tool prototype uses a **2-step extraction→generation pipeline** — not a single step as assumed by the current stub
+2. The output is **Italian-only** and **downstream-first**: every section answers a question that `landing-funnel`, `ad-copy`, `marketing-angle`, `video-script-long-form`, or `landing-page` will need
+3. The 11-section output structure makes the brief the **only orchestrating asset** — it gates the quality of all downstream generation
+4. The current tool registry stub (`'brief': blogPostTool` in `index.ts`) maps brief to 3-step SEO blog post definition — completely incompatible with the prototype
+
+**Implementation gap identified**: 4 files to modify/create (tool definition + 2 prompt templates × 2 steps), 2 frontend gaps (SetupPanel needs FileUpload support, ReadinessSnapshot needs files input type).
 
 ## [2026-08-04] implementation | Sprint 4 — Asset CRUD + Dark Mode + Polish
 

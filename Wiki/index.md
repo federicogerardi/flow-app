@@ -17,6 +17,7 @@ date_updated: 2026-08-06
 | PRD.md | [[sources/PRD]] | 2026-07-30 |
 | STARTUP.md | [[sources/STARTUP]] | 2026-07-30 |
 | USER-STORIES.md | [[sources/USER-STORIES]] | 2026-07-30 |
+| prompt_extraction.md, prompt_brief_generation.md | [[sources/brief-generator]] | 2026-08-06 |
 
 ## Entities
 
@@ -55,6 +56,7 @@ date_updated: 2026-08-06
 | [[AssetResolver]] | high | 4 |
 | [[Auth Dependencies]] | high | 8 |
 | [[Auth Middleware]] | high | 5 |
+| [[Brief Tool - Prompt Architecture]] | high | 3 |
 | [[BullMQ Worker Wiring]] | high | 5 |
 | [[CI-CD Promotion Policy]] | high | 7 |
 | [[Centralized Copy Modules]] | high | 3 |
