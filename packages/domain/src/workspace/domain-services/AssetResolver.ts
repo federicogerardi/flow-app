@@ -12,28 +12,58 @@ export class MissingRequiredAssetError extends DomainError {
   }
 }
 
+export class InvalidAssetSelectionError extends DomainError {
+  readonly code = 'ASSET_NOT_FOUND';
+  readonly retryable = false;
+  constructor(assetIds: string[]) {
+    super(`Invalid asset selection: [${assetIds.join(', ')}] not found in workspace`);
+  }
+}
+
 export class AssetResolver {
   constructor(private readonly workspaceRepo: WorkspaceRepository) {}
 
   async resolve(
     workspaceId: string,
     tool: ToolDefinition,
-  ): Promise<Map<string, string>> {
+    selectedAssetIds?: string[],
+  ): Promise<Map<string, string[]>> {
     const workspace = await this.workspaceRepo.findById(workspaceId);
     if (!workspace) throw new WorkspaceNotFoundError(workspaceId);
 
-    const resolvedAssets = new Map<string, string>();
+    // F1: validate selectedAssetIds if provided
+    if (selectedAssetIds && selectedAssetIds.length > 0) {
+      const allWorkspaceAssets = workspace.assets;
+      const allIds = new Set(allWorkspaceAssets.map((a) => a.assetId));
+      const invalidIds = selectedAssetIds.filter((id) => !allIds.has(id));
+      if (invalidIds.length > 0) {
+        throw new InvalidAssetSelectionError(invalidIds);
+      }
+    }
+
+    const selectedSet = selectedAssetIds?.length
+      ? new Set(selectedAssetIds)
+      : null;
+
+    const resolvedAssets = new Map<string, string[]>();
 
     for (const mapping of tool.acquisition.assets ?? []) {
       const type = AssetType.from(mapping.assetType);
-      const asset = workspace.getAssetByType(type);
+      const assets = workspace.getAssetsByType(type);
 
-      if (asset) {
-        resolvedAssets.set(mapping.assetType, asset.content);
+      // Filter by selectedAssetIds if provided
+      const filtered = selectedSet
+        ? assets.filter((a) => selectedSet.has(a.assetId))
+        : assets;
+
+      const contents = filtered.map((a) => a.content);
+
+      if (contents.length > 0) {
+        resolvedAssets.set(mapping.assetType, contents);
       } else if (mapping.required) {
         throw new MissingRequiredAssetError(mapping.assetType);
       }
-      // Optional assets: silently skip
+      // Optional assets: silently skip (empty array)
     }
 
     return resolvedAssets;

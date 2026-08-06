@@ -171,6 +171,11 @@ export class Workspace {
     this._version++;
   }
 
+  getAssetsByType(assetType: AssetType): Asset[] {
+    return this._assets.filter((a) => a.assetType.equals(assetType));
+  }
+
+  /** @deprecated Use getAssetsByType() — returns first match only */
   getAssetByType(assetType: AssetType): Asset | null {
     return this._assets.find((a) => a.assetType.equals(assetType)) ?? null;
   }
