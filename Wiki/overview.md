@@ -110,9 +110,9 @@ All phases through 13 + the Brief Tool are fully implemented and smoke-tested.
 
 | Gap | Status |
 |-----|--------|
+| **Credits auto-create** | ✅ Fixed — migration 009 (`version` column on `quotas`) was missing on Railway. Applied manually + auto-migration runner now ensures all migrations run on every deploy. [[Migration Tooling]] |
 | **9 other tool definitions** | 🟡 Stubs — `landing-funnel`, `landing-page`, `video-script-long-form`, `video-description`, `ad-copy`, `brand-voice`, `buyer-persona`, `marketing-angle`, `ai-overview-analysis` all map to `blogPostTool`. Only `brief` has a real definition. |
 | **CrawlData value object** | 🟡 Implemented in domain layer (`CrawlData.create()` / `reconstitute()`). `ai-overview-analysis` session worker integration still pending. |
-| **Credits auto-create** | 🟡 `ConsumeCreditsUseCase` has a `42703` error on first-use quota creation — PostgreSQL column mismatch in the auto-create path. Non-blocking: credit consumption logs warn but don't crash. |
 | **Worker deployment** | ✅ Fixed — worker now runs inline in `server.ts` (same process as API). `worker-process.ts` retained as standalone reference. Verified on Railway: pending sessions auto-picked and completed on deploy. |
 
 ## Infrastructure (Needs Railway provisioning)
@@ -126,4 +126,4 @@ All phases through 13 + the Brief Tool are fully implemented and smoke-tested.
 | LLM Gateway | OpenRouter (`OPENROUTER_API_KEY`) | ✅ 4 model tiers, fallback chain |
 | Dockerfile | Multi-stage (Node 22-alpine) | ✅ Phase 10 |
 | CI/CD | GitHub Actions (lint, typecheck, test, build, deploy) | ✅ Phase 10 |
-| railway.json | Railway service definition | ✅ Phase 10 |
+| Migration Runner | Inline in server startup | ✅ Auto-runs on every deploy via `runMigrations()`. Idempotent — skips already-applied migrations. Auto-detects manually-applied migrations. [[Migration Tooling]] |

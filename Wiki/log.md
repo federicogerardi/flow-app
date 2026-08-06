@@ -12,6 +12,30 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-06] fix | Railway Log Errors — trust proxy + migration runner
+
+Two errors appeared in Railway deploy logs after brief generation:
+
+**1. `ERR_ERL_UNEXPECTED_X_FORWARDED_FOR` (express-rate-limit)**
+- Root cause: Railway routes traffic through a reverse proxy which sets `X-Forwarded-For`, but Express `trust proxy` was not enabled. express-rate-limit couldn't identify the real client IP.
+- Fix: `app.set('trust proxy', 1)` in `apps/backend/src/app.ts` (commit `d58fb0e`).
+- Verified: no more ERR_ERL errors on Railway deploy.
+
+**2. `credits_consumption_failed` (PostgreSQL 42703 — undefined column)**
+- Root cause: Migration 009 (`ALTER TABLE quotas ADD COLUMN version`) was not applied on Railway. The `KyselyQuotaRepository.save()` INSERT referenced a column that didn't exist.
+- Fix: Applied `ALTER TABLE` manually on Railway database. Implemented auto-migration runner (`packages/infra-db/src/migrate.ts`) that runs on every server startup.
+- Migration runner features:
+  - Creates `migrations` tracking table on first run
+  - Reads `.sql` files in alphabetical order, applies unapplied ones in transactions
+  - Auto-detects manually-applied migrations via PostgreSQL error codes (42710, 42P07, 42P16, 42701)
+  - Fail-fast on unknown errors
+  - Called from `server.ts` before `createApp()`
+- Verified (Railway): 10/10 migrations skip as "already applied", server starts clean, no ERROR logs on deploy.
+
+**Files changed**: `apps/backend/src/app.ts`, `apps/backend/src/server.ts`, `packages/infra-db/src/migrate.ts` (new), `packages/infra-db/src/index.ts`.
+
+**Wiki updated**: [[Migration Tooling]] (rewritten with actual implementation), [[overview]] (credits fixed, migration runner in infra table), [[Brief Tool - Prompt Architecture]] (credits consumption error resolved), [[log]] (this entry).
+
 ## [2026-08-06] fix | Worker Gap — Inline Worker in Server Process
 
 **Problem**: Railway `Dockerfile.backend` only started `server.ts`. The BullMQ worker (`worker-process.ts`) was a separate process with no deployment. Sessions were enqueued but never processed on Railway.

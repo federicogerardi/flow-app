@@ -164,6 +164,8 @@ Both steps share a consistent anti-hallucination contract:
 | Session detail missing artifacts | `GET /api/sessions/:id` didn't include artifacts | Added artifact query + `artifacts[]` + `stepCount` to response |
 | Worker didn't start | Missing `dev:worker` script; wrong env path | Added script + fixed `../../..` |
 | Railway worker gap (no session processing) | `Dockerfile` only started server; worker was separate process with no Railway service | Worker inlined into `server.ts`: initialized after `app.listen()`, graceful shutdown coordinates `worker.pause()` → drain(30s) → `worker.close()`. `dev:worker` script removed, `dev` simplified to server + vite only. Verified on Railway: pending sessions auto-picked and completed on deploy. |
+| Railway `ERR_ERL_UNEXPECTED_X_FORWARDED_FOR` | Railway proxy sets `X-Forwarded-For` but Express `trust proxy` not enabled → rate-limiting broken | `app.set('trust proxy', 1)` in `app.ts`. Verified: zero ERR_ERL errors on Railway. |
+| Railway `credits_consumption_failed` (42703) | Migration 009 (`version` column on `quotas`) not applied on Railway → INSERT failed on auto-create path | Applied `ALTER TABLE` manually + implemented auto-migration runner (`runMigrations()` in `server.ts`). Auto-detects manually-applied migrations via PostgreSQL error codes. Verified: 10/10 migrations skip cleanly, no ERROR logs on deploy. |
 
 ### Verification
 

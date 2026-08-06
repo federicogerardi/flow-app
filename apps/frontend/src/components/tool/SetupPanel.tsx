@@ -1,4 +1,4 @@
-import { TextField, MenuItem, Box, Typography, TextareaAutosize, FormControl, FormLabel, Button, Paper } from '@mui/material';
+import { TextField, MenuItem, Box, Typography, TextareaAutosize, FormControl, FormLabel, Button, Paper, useTheme } from '@mui/material';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import type { TextInput as ToolTextInput, FileInput as ToolFileInput } from '../../tool-inputs';
 
@@ -14,6 +14,8 @@ interface SetupPanelProps {
 }
 
 export function SetupPanel({ inputs, toolDef, onChange, disabled = false, fileDef, files = {}, onFileChange }: SetupPanelProps) {
+  const theme = useTheme();
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {/* Text inputs */}
@@ -36,10 +38,12 @@ export function SetupPanel({ inputs, toolDef, onChange, disabled = false, fileDe
                   padding: '10px 14px',
                   borderRadius: 4,
                   border: '1px solid',
-                  borderColor: 'rgba(0,0,0,0.23)',
+                  borderColor: theme.palette.divider,
                   fontFamily: 'inherit',
                   fontSize: '0.875rem',
                   resize: 'vertical',
+                  backgroundColor: theme.palette.background.paper,
+                  color: theme.palette.text.primary,
                 }}
               />
               {input.description && (
@@ -90,8 +94,8 @@ export function SetupPanel({ inputs, toolDef, onChange, disabled = false, fileDe
                       p: 3,
                       textAlign: 'center',
                       borderStyle: 'dashed',
-                      borderColor: 'rgba(0,0,0,0.23)',
-                      bgcolor: 'grey.50',
+                      borderColor: 'divider',
+                      bgcolor: 'background.paper',
                       cursor: disabled ? 'default' : 'pointer',
                       '&:hover': disabled ? {} : { borderColor: 'primary.main', bgcolor: 'action.hover' },
                     }}

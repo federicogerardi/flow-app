@@ -4,10 +4,10 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-08-02
+date_updated: 2026-08-06
 source_count: 9
 confidence: high
-maintenance: 2026-08-02 — drift remediation: added Agent Chat tables (conversations, messages), updated ER diagram, updated migration strategy (007, 008), corrected Kysely DB type (only 11/18 tables typed).
+maintenance: 2026-08-06 — updated migration strategy (009 quotas version, 010 gamification), added migration runner section linking to [[Migration Tooling]].
 ---
 
 # Database Schema
@@ -578,8 +578,30 @@ CREATE TABLE conversations (...);
 CREATE TABLE messages (...);
 
 -- Migration 008: seed data (dev user)
--- No tables created — INSERT only
+-- No tables created — INSERT only (ON CONFLICT DO NOTHING)
+
+-- Migration 009: quotas version column
+ALTER TABLE quotas ADD COLUMN version INTEGER NOT NULL DEFAULT 1;
+
+-- Migration 010: gamification
+CREATE TABLE player_profiles (...);
+CREATE TABLE achievements (...);
+CREATE TABLE xp_transactions (...);
+CREATE TABLE gamification_processed_events (...);
+CREATE TABLE workspace_leaderboard (...);
+CREATE TABLE workspace_challenges (...);
+CREATE TABLE challenge_contributions (...);
 ```
+
+## Migration Runner
+
+Migrations run automatically on server startup via `packages/infra-db/src/migrate.ts`. See [[Migration Tooling]] for details.
+
+Key properties:
+- **Automatic**: no manual steps, no CI script — runs in `server.ts` before `createApp()`
+- **Idempotent**: tracks applied migrations in a `migrations` table; skips already-applied files
+- **Auto-resilient**: detects manually-applied migrations via PostgreSQL error codes (42710, 42P07, etc.) and marks them as done
+- **Fail-fast**: unknown errors crash the server (bad migration should never reach production)
 
 ## Sources
 

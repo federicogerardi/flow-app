@@ -3,151 +3,72 @@ type: concept
 tags:
   - wiki/concept
   - wiki/infrastructure
-date_updated: 2026-07-30
-source_count: 2
+date_updated: 2026-08-06
+source_count: 3
 confidence: high
+implementation: complete
 ---
 
 # Migration Tooling
 
-> Database migration runner for `packages/infra-db`  
-> Via Kysely + tsx, no external CLI needed
+> Automatic database migration runner. Executes on server startup — zero manual steps, zero CI scripts required.
 
-## Principle
+## Implementation
 
-SQL migrations already exist in `packages/infra-db/migrations/`. We need a minimal runner that executes them in order. Kysely doesn't include a built-in runner — we use a simple TypeScript script.
+`packages/infra-db/src/migrate.ts` — `runMigrations(db, migrationsPath, log?)`
 
-## Directory Structure
+- Reads `.sql` files from `packages/infra-db/migrations/` in alphabetical order
+- Tracks applied migrations in a `migrations` table (auto-created on first run)
+- Runs each unapplied migration in a PostgreSQL transaction
+- **Auto-resilience**: if a migration fails with a "duplicate object" error (42710, 42P07, 42P16, 42701), the runner detects it was applied manually and marks it as done — no crash, no rollback, no manual intervention needed
+- Unknown errors crash the server (fail-fast)
 
-```
-packages/infra-db/
-├── src/
-│   ├── migrate.ts          # Migration runner
-│   └── types.ts            # Kysely DB type (auto-generated)
-├── migrations/
-│   ├── 001_enums.sql
-│   ├── 002_users_auth.sql
-│   ├── 003_workspaces_assets.sql
-│   ├── 004_sessions_artifacts.sql
-│   ├── 005_quotas.sql
-│   └── 006_platform_config.sql
-└── package.json
-```
-
-## Migration Runner
+Called from `apps/backend/src/server.ts` before `createApp()`:
 
 ```typescript
-// packages/infra-db/src/migrate.ts
-
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import { Kysely, sql, type Migration, type MigrationProvider } from 'kysely';
-import { Pool } from 'pg';
-import { PostgresDialect } from 'kysely';
-
-class FileMigrationProvider implements MigrationProvider {
-  constructor(private migrationsPath: string) {}
-
-  async getMigrations(): Promise<Record<string, Migration>> {
-    const files = await fs.readdir(this.migrationsPath);
-    const migrations: Record<string, Migration> = {};
-
-    for (const file of files.sort()) {
-      if (!file.endsWith('.sql')) continue;
-      const sqlContent = await fs.readFile(path.join(this.migrationsPath, file), 'utf-8');
-      const name = file.replace('.sql', '');
-
-      migrations[name] = {
-        up: async (db) => {
-          await sql.raw(sqlContent).execute(db);
-        },
-        // Down migrations: optional — not implemented for now
-      };
-    }
-
-    return migrations;
-  }
-}
-
-async function runMigrations() {
-  const db = new Kysely({
-    dialect: new PostgresDialect({
-      pool: new Pool({ connectionString: process.env.DATABASE_URL! }),
-    }),
-  });
-
-  // Create migrations table if not exists
-  await sql`
-    CREATE TABLE IF NOT EXISTS kysely_migrations (
-      name VARCHAR(255) PRIMARY KEY,
-      run_at TIMESTAMPTZ DEFAULT NOW()
-    )
-  `.execute(db);
-
-  const provider = new FileMigrationProvider(
-    path.resolve(__dirname, '../migrations')
-  );
-
-  const { results, error } = await db.migration.migrateToLatest({ provider });
-
-  if (error) {
-    console.error('Migration failed:', error);
-    process.exit(1);
-  }
-
-  if (results && results.length > 0) {
-    console.log(`Applied ${results.length} migration(s):`);
-    for (const r of results) {
-      console.log(`  ✓ ${r.migrationName} (${r.direction})`);
-    }
-  } else {
-    console.log('No pending migrations.');
-  }
-
-  await db.destroy();
-}
-
-const command = process.argv[2];
-
-switch (command) {
-  case 'up':
-    await runMigrations();
-    break;
-  default:
-    console.log('Usage: tsx src/migrate.ts up');
-    process.exit(1);
+const migrationsPath = path.resolve(root, '..', '..', 'packages', 'infra-db', 'migrations');
+const applied = await runMigrations(db, migrationsPath, (msg) => logger.info(msg));
+if (applied.length > 0) {
+  logger.info({ count: applied.length, files: applied }, 'migrations_applied');
 }
 ```
 
-## Package Scripts
+## Deployment Behavior
 
-```json
-// packages/infra-db/package.json
-{
-  "scripts": {
-    "migrate:up": "tsx src/migrate.ts up",
-    "migrate:create": "tsx src/migrate.ts create",
-    "codegen": "kysely-codegen --dialect postgres --out-file src/types.ts --url \"$DATABASE_URL\""
-  }
-}
+| Scenario | Behavior |
+|----------|----------|
+| Fresh DB (no objects) | All 10 migrations apply sequentially ✅ |
+| DB with manual migrations | Auto-detected via PostgreSQL error codes → marked as applied ✅ |
+| Re-deploy (all already applied) | All skip as "already applied" (~1s) ✅ |
+| New migration added | Only the new file applies ✅ |
+| Migration SQL has error | Transaction rolls back, server exits ✅ |
+
+## Migration Files
+
+```
+packages/infra-db/migrations/
+├── 001_enums.sql              # 7 enum types
+├── 002_users_auth.sql         # users, auth_sessions, oauth_accounts
+├── 003_workspaces.sql         # workspaces, memberships, assets
+├── 004_sessions.sql           # sessions, artifacts, idempotency, crawl_data, snapshots
+├── 005_quotas.sql             # quotas, credit_transactions
+├── 006_platform_config.sql    # llm_models, api_services, tool_step_bindings
+├── 007_conversations.sql      # conversations, messages
+├── 008_seed_user.sql          # dev@flow-app.local (ON CONFLICT DO NOTHING)
+├── 009_quotas_version.sql     # ALTER TABLE quotas ADD COLUMN version
+└── 010_gamification.sql       # player_profiles, achievements, xp_transactions, challenges
 ```
 
-## CI Integration
+## Verification
 
-```yaml
-# .github/workflows/deploy.yml
-
-jobs:
-  deploy:
-    steps:
-      - run: npm ci
-      - run: npm run migrate:up --workspace=packages/infra-db
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      - run: npm run build
+```
+First run (local):  10 migrations applied / auto-detected
+Second run (local): 10 migrations skip ("already applied")
+Railway deploy:      10 migrations skip ("already applied") → Server started ✅
 ```
 
 ## Sources
 
 - [[Database Schema]] — migration files documented
-- [[Environment Configuration]] — DATABASE_URL
+- [[CLAUDE.md]] — implementation context
+- `packages/infra-db/src/migrate.ts` — source code
