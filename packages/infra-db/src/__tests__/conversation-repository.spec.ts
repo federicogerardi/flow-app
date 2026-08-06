@@ -13,12 +13,6 @@ describe('KyselyConversationRepository', () => {
     db = createTestDb();
     repo = new KyselyConversationRepository(db);
 
-    await db.insertInto('workspaces').values({
-      id: '10000000-0000-0000-0000-000000000001',
-      created_by: '20000000-0000-0000-0000-000000000001',
-      name: 'Test Workspace',
-    }).onConflict((oc) => oc.column('id').doNothing()).execute();
-
     await db.insertInto('users').values({
       id: '20000000-0000-0000-0000-000000000001',
       email: 'test@example.com',
@@ -27,6 +21,12 @@ describe('KyselyConversationRepository', () => {
     await db.insertInto('users').values({
       id: '20000000-0000-0000-0000-000000000002',
       email: 'other@example.com',
+    }).onConflict((oc) => oc.column('id').doNothing()).execute();
+
+    await db.insertInto('workspaces').values({
+      id: '10000000-0000-0000-0000-000000000001',
+      created_by: '20000000-0000-0000-0000-000000000001',
+      name: 'Test Workspace',
     }).onConflict((oc) => oc.column('id').doNothing()).execute();
   });
 

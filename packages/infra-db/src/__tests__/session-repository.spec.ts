@@ -13,6 +13,16 @@ describe('KyselySessionRepository', () => {
     db = createTestDb();
     repo = new KyselySessionRepository(db);
 
+    await db.insertInto('users').values({
+      id: '20000000-0000-0000-0000-000000000001',
+      email: 'test@example.com',
+    }).onConflict((oc) => oc.column('id').doNothing()).execute();
+
+    await db.insertInto('users').values({
+      id: '20000000-0000-0000-0000-000000000002',
+      email: 'other@example.com',
+    }).onConflict((oc) => oc.column('id').doNothing()).execute();
+
     await db.insertInto('workspaces').values({
       id: '10000000-0000-0000-0000-000000000001',
       created_by: '20000000-0000-0000-0000-000000000001',
@@ -23,16 +33,6 @@ describe('KyselySessionRepository', () => {
       id: '10000000-0000-0000-0000-000000000002',
       created_by: '20000000-0000-0000-0000-000000000002',
       name: 'Other Workspace',
-    }).onConflict((oc) => oc.column('id').doNothing()).execute();
-
-    await db.insertInto('users').values({
-      id: '20000000-0000-0000-0000-000000000001',
-      email: 'test@example.com',
-    }).onConflict((oc) => oc.column('id').doNothing()).execute();
-
-    await db.insertInto('users').values({
-      id: '20000000-0000-0000-0000-000000000002',
-      email: 'other@example.com',
     }).onConflict((oc) => oc.column('id').doNothing()).execute();
   });
 
