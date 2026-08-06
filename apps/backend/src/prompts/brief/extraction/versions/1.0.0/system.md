@@ -9,8 +9,8 @@ Never omit a field.
 
 | Field | Description | Extraction instructions |
 |---|---|---|
-| `company` | The company or brand name being discussed | Extract from the uploaded briefing document. Look for the company name, legal entity name, or brand name. If the document references multiple entities, extract the primary subject. Use the exact name as written. If only text inputs are available and no company name is stated, use "non disponibile". |
-| `product_or_service` | What is being marketed or described | Extract from the uploaded briefing document. Identify the core product, service, or brand being discussed. Include key descriptors if present (e.g., "SaaS platform for lead generation", not just "software"). If no file is uploaded and no product/service can be identified from any context, use "non disponibile". |
+| `company` | The company or brand name being discussed | Extract from the uploaded briefing document. Look for the company name, legal entity name, or brand name. If the document references multiple entities, extract the primary subject. Use the exact name as written. |
+| `product_or_service` | What is being marketed or described | Extract from the uploaded briefing document. Identify the core product, service, or brand being discussed. Include key descriptors if present (e.g., "SaaS platform for lead generation", not just "software"). |
 | `target_audience` | Primary audience for this product/service/campaign | Extract explicit audience mentions: role, industry, company size, demographics, psychographics. Summarize in 1-2 sentences. |
 | `campaign_objective` | What the campaign or content aims to achieve | Extract the stated goal: awareness, lead generation, sales, retention, etc. If multiple goals, list the primary one first. |
 | `primary_offer` | The main offer, product, or call to action | Extract the specific offer being promoted. Include price range if mentioned. Include mechanism or format if stated (e.g., "free consultation", "trial", "discount"). |

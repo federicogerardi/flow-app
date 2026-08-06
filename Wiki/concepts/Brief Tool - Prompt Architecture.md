@@ -91,12 +91,11 @@ This is the **only tool in Flow App** whose output is explicitly structured for 
 
 ## Acquisition Model (2026-08-06 revision)
 
-The brief tool uses a **single text input + optional file upload** model. The only explicit user text field is `objective` (free-text description of the campaign context and goal). All structural data — company name, product/service, audience, offer, tone — is extracted from the uploaded briefing document. If no file is uploaded, the extraction step returns `"non disponibile"` for `company` and `product_or_service`, and the brief generation step writes "Non specificato nel documento di input" for those sections.
+The brief tool uses a **single text input + required file upload** model. The user provides `objective` (free-text context/goal) and must upload a briefing document (`required: true`). All structural data — company name, product/service, audience, offer, tone — is extracted from the uploaded briefing document.
 
 | Mode | Acquisition | Result |
 |------|-------------|--------|
-| **File-based** | User uploads `.txt`/`.md`/`.docx` + fills `objective` | Full extraction: company, product, audience, offer, tone from file |
-| **Objective-only** | User fills only `objective` without file | Company + product = "non disponibile" / "Non specificato". Brief still generated with available context. |
+| **Always** | User uploads `.txt`/`.md`/`.docx` + fills `objective` | Full extraction: company, product, audience, offer, tone from file |
 
 The earlier text-only fallback (structuring user-provided `company` and `product` fields) has been removed — these fields were redundant with the file content and created a maintenance burden of keeping the prompt-aware of two separate data sources for the same information.
 
@@ -120,7 +119,7 @@ Both steps share a consistent anti-hallucination contract:
 
 | File | Change |
 |------|--------|
-| `packages/domain/src/generation/tools/index.ts` | `briefTool`: 2-step pipeline, 1 text field (`objective`) + optional file upload, `produces: 'brief'` |
+| `packages/domain/src/generation/tools/index.ts` | `briefTool`: 2-step pipeline, 1 text field (`objective`) + required file upload, `produces: 'brief'` |
 | `apps/backend/src/prompts/brief/extraction/.../system.md` | Data Extraction Specialist — 6-field JSON, anti-hallucination |
 | `apps/backend/src/prompts/brief/extraction/.../user.md` | User prompt with file + text context |
 | `apps/backend/src/prompts/brief/brief-generation/.../system.md` | Senior Creative Strategist — 11 sections, Italian, downstream-first |
@@ -211,7 +210,7 @@ ToolPageLayout                  ▼                              │   (SSE to F
 
 For the `brief` `ToolDefinition` in `packages/domain/src/generation/tools/index.ts`:
 - [ ] `toolKey: 'brief'`, `name: 'Brief'`, `produces: 'brief'`, `creditCost: 1`
-- [ ] `acquisition.files`: `{ key: 'briefing', label: 'Documento briefing', accept: ['.txt','.md','.docx'], required: false }`
+- [ ] `acquisition.files`: `{ key: 'briefing', label: 'Documento briefing', accept: ['.txt','.md','.docx'], required: true }` — file upload is mandatory
 - [ ] `acquisition.userText`: 1 field (objective/long) — company and product are extracted from the uploaded file, not provided as text inputs
 - [ ] `acquisition.assets`: none required (brief is the root asset — it generates from scratch, not from existing assets)
 - [ ] Step 1: `{ order: 1, label: 'extraction', enrichment: 'serial', prompt: { templateId: 'brief/extraction', version: '1.0.0', model: ModelTier.Balanced, components: ['output-json/v1'] } }`

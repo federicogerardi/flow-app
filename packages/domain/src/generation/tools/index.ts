@@ -67,7 +67,7 @@ const briefTool: ToolDefinition = {
       { key: 'objective', label: 'Obiettivo', required: true, type: 'long', placeholder: 'Descrivi obiettivo e contesto del brief...' },
     ],
     files: [
-      { key: 'briefing', label: 'Documento briefing', accept: ['.txt', '.md', '.docx'], required: false, description: 'Opzionale: carica un documento briefing per un\'estrazione più completa' },
+      { key: 'briefing', label: 'Documento briefing', accept: ['.txt', '.md', '.docx'], required: true, description: 'Carica un documento briefing (.txt, .md, .docx)' },
     ],
   },
   steps: [

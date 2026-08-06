@@ -34,7 +34,7 @@ const BRIEF_INPUTS: TextInput[] = [
 ];
 
 const BRIEF_FILES: FileInput[] = [
-  { key: 'briefing', label: 'Documento briefing', accept: ['.txt', '.md', '.docx'], required: false, description: 'Opzionale: carica un documento per un\'estrazione più completa' },
+  { key: 'briefing', label: 'Documento briefing', accept: ['.txt', '.md', '.docx'], required: true, description: 'Carica un documento briefing (.txt, .md, .docx)' },
 ];
 
 const DEFAULT_INPUTS: TextInput[] = [
