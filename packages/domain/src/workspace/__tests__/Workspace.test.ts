@@ -373,7 +373,7 @@ describe('Workspace', () => {
       );
       const asset = Asset.reconstitute(
         'asset-1', 'ws-1', AssetType.from('persona'), AssetSource.Generated,
-        'content', null, null, now, now,
+        'content', null, null, null, now, now,
       );
       const workspace = Workspace.reconstitute('ws-1', ownerId, 'WS', now, now, 1, [ownerMembership], [asset]);
       expect(workspace.assets).toHaveLength(1);

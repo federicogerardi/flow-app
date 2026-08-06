@@ -22,6 +22,7 @@ export class KyselyAssetRepository implements AssetRepository {
         r.content,
         r.source_ref,
         null,
+        r.name ?? null,
         r.created_at,
         r.updated_at,
       ),
@@ -45,6 +46,7 @@ export class KyselyAssetRepository implements AssetRepository {
       row.content,
       row.source_ref,
       null,
+      row.name ?? null,
       row.created_at,
       row.updated_at,
     );
@@ -68,6 +70,7 @@ export class KyselyAssetRepository implements AssetRepository {
         r.content,
         r.source_ref,
         null,
+        r.name ?? null,
         r.created_at,
         r.updated_at,
       ),
@@ -83,11 +86,13 @@ export class KyselyAssetRepository implements AssetRepository {
         asset_type: asset.assetType.value,
         source: asset.source.value,
         source_ref: asset.sourceArtifactId,
+        name: asset.name,
         content: asset.content,
       })
       .onConflict((oc) =>
-        oc.columns(['workspace_id', 'asset_type', 'source_ref']).doUpdateSet({
+        oc.columns(['id']).doUpdateSet({
           content: asset.content,
+          name: asset.name,
           source: asset.source.value,
           updated_at: asset.updatedAt,
         }),

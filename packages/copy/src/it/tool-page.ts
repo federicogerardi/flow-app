@@ -14,6 +14,7 @@ export const toolPage = {
     missingText:     'Inserisci un valore',
     missingAsset:    'Seleziona un asset o creane uno',
     noInputsRequired:'Nessun input richiesto. Puoi avviare la generazione direttamente.',
+    assetsOnly:      'Questo tool richiede la selezione di asset. Usa il selettore qui sotto.',
     statusOk:        'Configurato',
     statusMissing:   'Richiesto — mancante',
     statusOptional:  'Opzionale',
@@ -59,7 +60,17 @@ export const toolPage = {
   },
   assets: {
     emptyState:       'Nessun asset di tipo "{type}" disponibile. Creane uno dal workspace.',
+    createAssetCta:   'Crea {type}',
+    autoSelected:     '"{label}" selezionato automaticamente.',
     selectOne:        'Seleziona un asset',
     selectMultiple:   'Seleziona uno o più asset',
+  },
+  promote: {
+    title:            'Promuovi a {type}',
+    nameFieldLabel:   'Nome asset',
+    namePlaceholder:  'Es. "{placeholder}"',
+    nameHelperText:   'Facoltativo. Lascia vuoto per usare il tipo come nome.',
+    confirmCta:       'Promuovi',
+    saving:           'Promozione in corso...',
   },
 } as const;

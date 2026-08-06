@@ -16,6 +16,7 @@ export function createAssetRoutes(assetRepo: AssetRepository) {
           id: a.assetId,
           workspaceId: a.workspaceId,
           assetType: a.assetType.value,
+          name: a.name,
           source: a.source.value,
           content: a.content,
           createdAt: a.createdAt.toISOString(),
@@ -31,7 +32,7 @@ export function createAssetRoutes(assetRepo: AssetRepository) {
   router.post('/api/workspaces/:id/assets', async (req, res, next) => {
     try {
       const workspaceId = req.params.id as string;
-      const { assetType, content, source } = req.body as { assetType: string; content: string; source?: string };
+      const { assetType, content, source, name } = req.body as { assetType: string; content: string; source?: string; name?: string | null };
 
       if (!assetType || !content) {
         return res.status(422).json({ error: { code: 'VALIDATION_ERROR', message: 'assetType and content are required' } });
@@ -42,6 +43,7 @@ export function createAssetRoutes(assetRepo: AssetRepository) {
         assetType: AssetType.from(assetType),
         source: source ? AssetSource.from(source) : AssetSource.Manual,
         content,
+        name,
       });
 
       await assetRepo.save(asset);
@@ -50,6 +52,7 @@ export function createAssetRoutes(assetRepo: AssetRepository) {
         id: asset.assetId,
         workspaceId: asset.workspaceId,
         assetType: asset.assetType.value,
+        name: asset.name,
         source: asset.source.value,
         createdAt: asset.createdAt.toISOString(),
       });
@@ -70,6 +73,7 @@ export function createAssetRoutes(assetRepo: AssetRepository) {
         id: asset.assetId,
         workspaceId: asset.workspaceId,
         assetType: asset.assetType.value,
+        name: asset.name,
         source: asset.source.value,
         content: asset.content,
         sourceSessionId: asset.sourceSessionId,
@@ -90,12 +94,18 @@ export function createAssetRoutes(assetRepo: AssetRepository) {
         return res.status(404).json({ error: { code: 'ASSET_NOT_FOUND', message: 'Asset not found' } });
       }
 
-      const { content } = req.body as { content?: string };
-      if (!content) {
-        return res.status(422).json({ error: { code: 'VALIDATION_ERROR', message: 'content is required' } });
+      const { content, name } = req.body as { content?: string; name?: string | null };
+      if (content === undefined && name === undefined) {
+        return res.status(422).json({ error: { code: 'VALIDATION_ERROR', message: 'content or name is required' } });
       }
 
-      const updated = asset.withContent(content);
+      let updated = asset;
+      if (content !== undefined) {
+        updated = updated.withContent(content);
+      }
+      if (name !== undefined) {
+        updated = updated.withName(name);
+      }
       await assetRepo.save(updated);
 
       res.json({ id: updated.assetId, updatedAt: updated.updatedAt.toISOString() });

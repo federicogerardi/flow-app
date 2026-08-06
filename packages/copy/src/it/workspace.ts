@@ -28,6 +28,11 @@ export const workspace = {
     selectWorkspace: 'Seleziona un workspace',
     noWorkspaces: 'Nessun workspace',
   },
+  assets: {
+    renameTitle: 'Rinomina asset',
+    renameLabel: 'Nome',
+    defaultName: '{type}',
+  },
   dashboard: {
     title: 'Dashboard',
     tools: 'Tools',

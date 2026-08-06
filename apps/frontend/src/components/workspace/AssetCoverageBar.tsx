@@ -6,7 +6,7 @@ import { api } from '../../api/client';
 
 const COVERABLE_TYPES = ['brief', 'brand-voice', 'persona', 'angle', 'ad-copy'] as const;
 
-const ASSET_LABELS: Record<string, string> = {
+export const ASSET_LABELS: Record<string, string> = {
   'brief': 'Brief',
   'brand-voice': 'Brand Voice',
   'persona': 'Persona',
@@ -15,7 +15,7 @@ const ASSET_LABELS: Record<string, string> = {
 };
 
 /** Map asset types to their corresponding tool keys */
-const ASSET_TOOL_MAP: Record<string, string> = {
+export const ASSET_TOOL_MAP: Record<string, string> = {
   'brief': 'brief',
   'brand-voice': 'brand-voice',
   'persona': 'buyer-persona',

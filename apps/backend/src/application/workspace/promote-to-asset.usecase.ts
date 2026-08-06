@@ -40,12 +40,14 @@ export interface PromoteToAssetCommand {
   userId: string;
   workspaceId: string;
   artifactId: string;
+  name?: string;
 }
 
 export interface PromoteToAssetResult {
   assetId: string;
   assetType: string;
   workspaceId: string;
+  name: string | null;
 }
 
 export class PromoteToAssetUseCase {
@@ -96,6 +98,7 @@ export class PromoteToAssetUseCase {
         assetId: existingMatch.assetId,
         assetType: assetType.value,
         workspaceId: cmd.workspaceId,
+        name: existingMatch.name,
       };
     }
 
@@ -107,6 +110,7 @@ export class PromoteToAssetUseCase {
       content: artifact.content,
       sourceSessionId: session.sessionId,
       sourceArtifactId: cmd.artifactId,
+      name: cmd.name,
     });
 
     await this.assetRepo.save(asset);
@@ -115,6 +119,7 @@ export class PromoteToAssetUseCase {
       assetId: asset.assetId,
       assetType: assetType.value,
       workspaceId: cmd.workspaceId,
+      name: asset.name,
     };
   }
 }

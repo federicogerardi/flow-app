@@ -168,7 +168,7 @@ export function createGenerationRoutes(
     promoteArtifact: async (req: Request, res: Response, next: NextFunction) => {
       try {
         const artifactId = req.params.id as string;
-        const { workspaceId } = req.body as { workspaceId: string };
+        const { workspaceId, name } = req.body as { workspaceId: string; name?: string };
 
         const user = getAuthUser(req);
         if (!user) {
@@ -181,12 +181,14 @@ export function createGenerationRoutes(
           userId: user.sub,
           workspaceId,
           artifactId,
+          name,
         });
 
         res.status(201).json({
           artifactId,
           assetType: result.assetType,
           assetId: result.assetId,
+          name: result.name,
           promoted: true,
         });
       } catch (error) {

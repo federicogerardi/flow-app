@@ -18,6 +18,7 @@ date_updated: 2026-08-06
 | STARTUP.md | [[sources/STARTUP]] | 2026-07-30 |
 | USER-STORIES.md | [[sources/USER-STORIES]] | 2026-07-30 |
 | prompt_extraction.md, prompt_brief_generation.md | [[sources/brief-generator]] | 2026-08-06 |
+| prompt_extraction.md, prompt_personas_generation.md | [[sources/personas-generator]] | 2026-08-06 |
 
 ## Entities
 
@@ -90,6 +91,7 @@ date_updated: 2026-08-06
 | [[Logging Strategy]] | high | 4 |
 | [[Maintenance Log]] | high | 2 |
 | [[Migration Tooling]] | high | 2 |
+| [[Persona Generator - Prompt Architecture]] | high | 4 |
 | [[Progressive Context Enrichment]] | high | 2 |
 | [[Project Dependencies]] | high | 4 |
 | [[Project Brand Persona]] | high | 5 |

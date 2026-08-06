@@ -125,11 +125,11 @@ class ApiClient {
     return this.request<Blob>('GET', `/api/artifacts/${artifactId}/download?format=${format}`);
   }
 
-  async promoteArtifact(artifactId: string, workspaceId: string) {
-    return this.request<{ artifactId: string; assetType: string; assetId: string; promoted: boolean }>(
+  async promoteArtifact(artifactId: string, workspaceId: string, name?: string) {
+    return this.request<{ artifactId: string; assetType: string; assetId: string; name: string | null; promoted: boolean }>(
       'POST',
       `/api/artifacts/${artifactId}/promote`,
-      { workspaceId },
+      { workspaceId, name: name?.trim() || undefined },
     );
   }
 
@@ -247,8 +247,8 @@ class ApiClient {
     return this.request<AssetDTO>('GET', `/api/workspaces/${workspaceId}/assets/${assetId}`);
   }
 
-  async updateAsset(workspaceId: string, assetId: string, content: string) {
-    return this.request<{ id: string; updatedAt: string }>('PUT', `/api/workspaces/${workspaceId}/assets/${assetId}`, { content });
+  async updateAsset(workspaceId: string, assetId: string, updates: { content?: string; name?: string | null }) {
+    return this.request<{ id: string; updatedAt: string }>('PUT', `/api/workspaces/${workspaceId}/assets/${assetId}`, updates);
   }
 
   async deleteAsset(workspaceId: string, assetId: string) {

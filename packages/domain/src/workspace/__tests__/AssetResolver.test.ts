@@ -23,7 +23,7 @@ function makeWorkspaceWithAssets(workspaceId: string, assetData: Array<{ type: s
   const ws = Workspace.reconstitute(
     workspaceId, 'owner-1', 'Test WS', now, now, 1, [],
     assetData.map((d) =>
-      Asset.reconstitute(d.id, workspaceId, AssetType.from(d.type), AssetSource.Generated, d.content, null, null, now, now),
+      Asset.reconstitute(d.id, workspaceId, AssetType.from(d.type), AssetSource.Generated, d.content, null, null, null, now, now),
     ),
   );
   return ws;

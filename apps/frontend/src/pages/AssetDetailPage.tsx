@@ -8,16 +8,9 @@ import { PageHeader } from '../components/PageHeader';
 import { useBreadcrumbs } from '../layout/AppShell';
 import { LoadingSkeleton } from '../components/LoadingSkeleton';
 import { ErrorState } from '../components/ErrorState';
+import { ASSET_TYPE_LABELS } from '../constants/assets';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-
-const ASSET_TYPE_LABELS: Record<string, string> = {
-  brief: 'Brief',
-  'brand-voice': 'Brand Voice',
-  persona: 'Buyer Persona',
-  angle: 'Marketing Angle',
-  'ad-copy': 'Ad Copy',
-};
 
 const SOURCE_LABELS: Record<string, string> = {
   generated: 'Generato',
@@ -37,7 +30,7 @@ export default function AssetDetailPage() {
 
   useEffect(() => {
     const label = asset
-      ? ASSET_TYPE_LABELS[asset.assetType] ?? asset.assetType
+      ? (asset.name ?? ASSET_TYPE_LABELS[asset.assetType] ?? asset.assetType)
       : 'Asset';
     setBreadcrumbs([
       { label: 'Home', path: workspaceId ? `/workspaces/${workspaceId}` : '/dashboard' },
@@ -51,13 +44,17 @@ export default function AssetDetailPage() {
   if (!asset) return <ErrorState message="Asset not found" />;
 
   const typeLabel = ASSET_TYPE_LABELS[asset.assetType] ?? asset.assetType;
+  const pageTitle = asset.name ?? typeLabel;
   const sourceLabel = SOURCE_LABELS[asset.source] ?? asset.source;
 
   return (
     <Box>
-      <PageHeader title={typeLabel} />
+      <PageHeader title={pageTitle} />
 
       <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap', alignItems: 'center' }}>
+        {asset.name && (
+          <Chip label={typeLabel} size="small" variant="outlined" />
+        )}
         <Chip label={sourceLabel} size="small" color="primary" variant="outlined" />
         <Typography variant="caption" color="text.secondary">
           Creato {new Date(asset.createdAt).toLocaleString()}

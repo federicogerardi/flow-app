@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/workspace
 date_updated: 2026-08-06
-source_count: 6
+source_count: 7
 confidence: high
 ---
 
@@ -46,6 +46,7 @@ This context **did not exist** in the original v1 architecture. In v1, workspace
 | `AssetType` | `brief` \| `brand-voice` \| `persona` \| `angle` \| `ad-copy` |
 | `AssetSource` | `generated` \| `uploaded` \| `manual` |
 | `AssetContent` | Immutable content |
+| `AssetName` | Optional user-defined label (`string \| null`, max 80 chars). Falls back to `AssetType` label when null |
 
 ## Domain Services
 
@@ -74,6 +75,7 @@ interface WorkspaceRepository {
 ## Invariants
 
 - Multiple [[Asset]]s of the same `AssetType` per [[Workspace]] are allowed — deduplication by `source_ref` (DB constraint: `UNIQUE(workspace_id, asset_type, source_ref)`). Manual assets (NULL source_ref) have a partial unique index to prevent accidental duplicates.
+- Each [[Asset]] can have an optional user-defined `name` (max 80 chars, stored in `assets.name VARCHAR(255)`). When null, the `AssetType` label is used as fallback in all UI surfaces
 - `Asset.source = 'generated'` requires valid `sourceRef` to original [[Artifact]]
 - A Workspace has exactly one active owner membership
 - Workspace deletion cascades to all Assets
@@ -86,3 +88,4 @@ interface WorkspaceRepository {
 - [[sources/APP-CONCEPT]] — Knowledge Panel, AssetFieldMapping
 - [[Workspace Sharing]] — membership-based access model
 - [[synthesis/multi-asset-implementation-plan]] — migration 011, multi-asset constraint
+- [[log]] — 2026-08-06 name field implementation

@@ -17,6 +17,7 @@ import type { TextInput, FileInput, AssetInput } from '../../tool-inputs';
 import { copy } from '@flow-app/copy';
 import { useState } from 'react';
 import { AssetPicker } from '../shared/AssetPicker';
+import { ASSET_LABELS, ASSET_TOOL_MAP } from '../workspace/AssetCoverageBar';
 
 /** Read file content as text for API submission */
 function readFileContent(file: File): Promise<string> {
@@ -39,11 +40,12 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
   const [toolDef, setToolDef] = useState<TextInput[]>([]);
   const [fileDef, setFileDef] = useState<FileInput[]>([]);
   const [assetDef, setAssetDef] = useState<AssetInput[]>([]);
-  const [workspaceAssets, setWorkspaceAssets] = useState<Array<{ id: string; assetType: string; content: string }>>([]);
+  const [workspaceAssets, setWorkspaceAssets] = useState<Array<{ id: string; assetType: string; name: string | null; createdAt: string }>>([]);
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
   const [files, setFiles] = useState<Record<string, File>>({});
   const [loadingTool, setLoadingTool] = useState(true);
   const [creditCost, setCreditCost] = useState(1);
+  const [stepCount, setStepCount] = useState(1);
   const { setBreadcrumbs } = useBreadcrumbs();
 
   // Local state for submission/running/completed/failed — bypass XState async transition issue
@@ -89,10 +91,25 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
         setFileDef(defs.fileInputs);
         setAssetDef(defs.assetInputs);
         setCreditCost(defs.creditCost);
+        setStepCount(defs.stepCount);
         setWorkspaceAssets(assetsData.assets ?? []);
       })
       .finally(() => setLoadingTool(false));
   }, [toolKey]);
+
+  // Auto-select single asset when exactly one matching asset exists for a required single-select type.
+  // Avoids unnecessary click when there's only one option (e.g., workspace has exactly one brief).
+  useEffect(() => {
+    if (loadingTool) return;
+    for (const def of assetDef) {
+      if (def.required && !def.multiple) {
+        const matching = workspaceAssets.filter((a) => a.assetType === def.assetType);
+        if (matching.length === 1 && !selectedAssets.includes(matching[0].id)) {
+          setSelectedAssets((prev) => [...prev, matching[0].id]);
+        }
+      }
+    }
+  }, [assetDef, workspaceAssets, loadingTool]);
 
   // SSE session tracking when running
   const { session, progress } = useSession(
@@ -211,16 +228,24 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
                     fileDef={fileDef.length > 0 ? fileDef : undefined}
                     files={files}
                     onFileChange={handleFileChange}
+                    assetDef={assetDef.length > 0 ? assetDef : undefined}
                   />
                 </Box>
                 {assetDef.length > 0 && (
                   <Box sx={{ mb: 3 }}>
-                    <AssetPicker
-                      assetDef={assetDef}
-                      workspaceAssets={workspaceAssets}
-                      selectedAssets={selectedAssets}
-                      onSelectionChange={setSelectedAssets}
-                    />
+<AssetPicker
+                    assetDef={assetDef}
+                    workspaceAssets={workspaceAssets}
+                    selectedAssets={selectedAssets}
+                    onSelectionChange={setSelectedAssets}
+                    onCreateAsset={(assetType) => {
+                      const toolKey = ASSET_TOOL_MAP[assetType];
+                      if (toolKey) {
+                        navigate(`/workspaces/${workspaceId}/tools/${toolKey}`);
+                      }
+                    }}
+                    assetLabels={ASSET_LABELS}
+                  />
                   </Box>
                 )}
                 <ReadinessSnapshot
@@ -277,8 +302,8 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
         <>
           <CompletionBanner
             durationSeconds={0}
-            stepCount={toolDef.length || 1}
-            creditCost={1}
+            stepCount={stepCount}
+            creditCost={creditCost}
           />
           {session?.artifacts && (
             <SessionSummary artifacts={session.artifacts} workspaceId={workspaceId} produces={session.produces} />

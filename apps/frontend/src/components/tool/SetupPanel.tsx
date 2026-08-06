@@ -12,9 +12,11 @@ interface SetupPanelProps {
   fileDef?: ToolFileInput[];
   files?: Record<string, File>;
   onFileChange?: (key: string, file: File | null) => void;
+  /** Asset acquisition — used to show correct empty-state message */
+  assetDef?: ToolAssetInput[];
 }
 
-export function SetupPanel({ inputs, toolDef, onChange, disabled = false, fileDef, files = {}, onFileChange }: SetupPanelProps) {
+export function SetupPanel({ inputs, toolDef, onChange, disabled = false, fileDef, files = {}, onFileChange, assetDef }: SetupPanelProps) {
   const theme = useTheme();
 
   return (
@@ -151,9 +153,14 @@ export function SetupPanel({ inputs, toolDef, onChange, disabled = false, fileDe
         </Box>
       )}
 
-      {toolDef.length === 0 && !fileDef?.length && (
+      {toolDef.length === 0 && !fileDef?.length && !assetDef?.length && (
         <Typography variant="body2" color="text.secondary">
           {copy.t('toolPage.readiness.noInputsRequired')}
+        </Typography>
+      )}
+      {toolDef.length === 0 && !fileDef?.length && (assetDef?.length ?? 0) > 0 && (
+        <Typography variant="body2" color="text.secondary">
+          {copy.t('toolPage.readiness.assetsOnly')}
         </Typography>
       )}
     </Box>
@@ -166,25 +173,28 @@ export interface ToolDefinitionData {
   fileInputs: ToolFileInput[];
   assetInputs: ToolAssetInput[];
   creditCost: number;
+  /** Total number of pipeline steps (extraction + generation, etc.) */
+  stepCount: number;
 }
 
 /** Fetch tool definitions (text + file + asset inputs + credit cost) from the API in a single call */
 export async function fetchToolDefinitions(toolKey: string): Promise<ToolDefinitionData> {
   const base = import.meta.env.VITE_API_URL as string || '';
   const resp = await fetch(`${base}/api/tools`, { credentials: 'include' });
-  if (!resp.ok) return { textInputs: [], fileInputs: [], assetInputs: [], creditCost: 1 };
+  if (!resp.ok) return { textInputs: [], fileInputs: [], assetInputs: [], creditCost: 1, stepCount: 1 };
 
-  interface ApiToolResponse {
-    tools: Array<{
-      toolKey: string;
-      creditCost: number;
-      acquisition: {
-        userText: ToolTextInput[];
-        files: ToolFileInput[];
-        assets: ToolAssetInput[];
-      };
-    }>;
-  }
+interface ApiToolResponse {
+      tools: Array<{
+        toolKey: string;
+        creditCost: number;
+        stepCount?: number;
+        acquisition: {
+          userText: ToolTextInput[];
+          files: ToolFileInput[];
+          assets: ToolAssetInput[];
+        };
+      }>;
+    }
 
   const { tools } = await resp.json() as ApiToolResponse;
   const tool = tools.find((t) => t.toolKey === toolKey);
@@ -193,6 +203,7 @@ export async function fetchToolDefinitions(toolKey: string): Promise<ToolDefinit
     fileInputs: tool?.acquisition?.files ?? [],
     assetInputs: tool?.acquisition?.assets ?? [],
     creditCost: tool?.creditCost ?? 1,
+    stepCount: tool?.stepCount ?? (tool?.acquisition?.userText?.length || tool?.acquisition?.files?.length || 1),
   };
 }
 

@@ -8,8 +8,11 @@ export const notifications = {
   asset: {
     promoted:         'Promosso ad asset',
     promotedWithType: 'Asset "{type}" promosso',
+    promotedWithName: '"{name}" promosso ad asset',
     created:          'Asset creato',
     deleted:          'Asset eliminato',
+    renamed:          'Asset rinominato',
+    renameFailed:     'Impossibile rinominare l\'asset',
   },
   auth: {
     loggedIn:  'Accesso effettuato',
