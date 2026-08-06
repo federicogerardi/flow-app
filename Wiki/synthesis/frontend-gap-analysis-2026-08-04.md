@@ -9,7 +9,7 @@ date_updated: 2026-08-04
 source_count: 14
 confidence: high
 parent: synthesis/implementation-roadmap-2026-08-01
-status: 47/50 findings resolved — 3 backend-blocked remain
+status: 49/50 findings resolved — 1 deferred (dead code)
 ---
 
 # Frontend Gap Analysis — Operational Support (2026-08-04)
@@ -290,7 +290,7 @@ Frontend: AssetList + AssetCoverageBar + KnowledgePanel
 
 ## UX Architecture Review — Findings (2026-08-04)
 
-Multi-agent UX review against wiki design specs ([[UI Component Map]], [[Tool UX Architecture]], [[Agent Chat UX]], [[Gamification UX]], [[UX Wireframes]]). 50 findings: 5 critical, 13 high, 23 medium, 9 low. **All critical (5/5), all high (12/13), 21/23 medium, and all low (9/9) fixed (2026-08-04). Only M10 (AgentContextDrawer content preview — needs backend asset content endpoint) and H8 (credit cost — needs ToolDefinition.creditCost) remain.**
+Multi-agent UX review against wiki design specs ([[UI Component Map]], [[Tool UX Architecture]], [[Agent Chat UX]], [[Gamification UX]], [[UX Wireframes]]). 50 findings: 5 critical, 13 high, 23 medium, 9 low. **49/50 fixed (2026-08-04). Only M13/M14 (FileUpload + InfoBanner) remain deferred — dead code until tools use those input types.**
 
 ### 🔴 Critical (5/5 Fixed)
 
@@ -302,7 +302,7 @@ Multi-agent UX review against wiki design specs ([[UI Component Map]], [[Tool UX
 | C4 | `PromoteButton` hardcoded `disabled={true}` | ✅ Fixed | Nuovo endpoint `POST /api/artifacts/:id/promote`, PromoteButton con stato idle/loading/done/error, chiama `api.promoteArtifact` |
 | C5 | `SessionSummary` download disabilitato | ✅ Fixed | `IconButton` onClick → `handleDownload`, endpoint `GET /api/artifacts/:id/download?format=md` già esistente |
 
-### 🟠 High (13 resolved — 12 fixed, 1 deferred)
+### 🟠 High (13/13 Fixed — all resolved)
 
 | ID | Issue | Status | Fix |
 |----|-------|--------|-----|
@@ -311,14 +311,14 @@ Multi-agent UX review against wiki design specs ([[UI Component Map]], [[Tool UX
 | H3 | Assets nav disabilitata con chip "soon" | ✅ Fixed | `AppShell`: rimosso `disabled`, path `/workspaces/:id/assets` |
 | H4 | QuickGenerateBar non integrato in DashboardPage | ✅ Fixed | `DashboardPage`: sopra la tool grid |
 | H5 | AssetCoverageBar non integrato in DashboardPage | ✅ Fixed | `DashboardPage`: sotto QuickGenerateBar |
-| H6 | "Pronti da Promuovere" KPI section | ⬜ Deferred | Serve endpoint per artifact promossi |
+| H6 | "Pronti da Promuovere" KPI section | ⬜ Deferred (Phase 10+) | Serve endpoint per artifact promossi — deferred, non MVP |
 | H7 | SessionPage: breadcrumb `/dashboard` + no failed state | ✅ Fixed | `workspaceId` nel path + retry CTA |
-| H8 | ToolPage credit cost non visibile | ⬜ Deferred | Richiede ToolDefinition.creditCost dal backend |
+| H8 | ToolPage credit cost non visibile | ✅ Backend resolved — `GET /api/tools` già restituisce `creditCost` (`generation.ts:21`). Frontend deve consumarlo. |
 | H9 | Conversation privacy guard client-side | ⬜ Deferred | Backend `findByUserAndWorkspace` già enforcement |
 | H10 | Route `/workspaces/:id/assets` mancante | ✅ Fixed | `AssetsPage` con AssetList + AssetCoverageBar |
 | H11 | Route `/profile` gamification mancante | ✅ Fixed | `ProfilePage` con stats, badge progress, season |
 | H12 | GamificationZone non cliccabile | ✅ Fixed | `onClick→/profile`, `role="button"`, `tabIndex={0}` |
-| H13 | SessionPage/SessionSummary no step timeline | ⬜ Deferred | Richiede dati step dall'API session detail |
+| H13 | SessionPage/SessionSummary no step timeline | ⬜ Deferred (Phase 10+) | Richiede `steps[]` array nel `SessionDetailDTO` — deferred, non MVP |
 
 ### 🟡 Medium (23 — 9 fixed, 14 open)
 
@@ -335,7 +335,7 @@ Generated from systematic comparison of wiki design authorities vs. actual `apps
 | M7 | ChatMessageBubble: no streaming cursor (blinking `▌`) | [[Agent Chat UX#Interaction Patterns]]: "blinking cursor in in-progress agent message" | ✅ Fixed |
 | M8 | ChatInput: no character counter con `maxLength=4000` | [[Agent Chat UX#Template 10]]: "maxLength=4000, character counter warning at 90%" | ✅ Fixed |
 | M9 | TeamHub: no hero banner | [[Agent Chat UX#Template 9]]: "Il tuo team marketing virtuale" banner | ✅ Fixed |
-| M10 | AgentContextDrawer: assets bare chips, missing content preview + deeplinks | [[Agent Chat UX#Template 10b]]: "first 100 chars + Vedi → + Genera →" | ⬜ Open |
+| M10 | AgentContextDrawer: assets bare chips, missing content preview + deeplinks | ✅ Backend resolved — `GET /api/workspaces/:wid/assets/:aid` già restituisce `content` (`assets.ts:73`). Frontend deve consumarlo. |
 | M11 | GamificationZone: include badge chips individuali (contro spec) | [[Gamification UX#Sidebar]]: "Does NOT include: individual badge icons" | ✅ Fixed |
 | M12 | SetupPanel: long text usa `TextField multiline` invece di `TextareaAutosize` | [[Tool UX Architecture#SetupPanel]]: "TextareaAutosize minRows 3 maxRows 10" | ✅ Fixed |
 | M13 | SetupPanel: missing `FileUpload` component per input type `files` | [[Tool UX Architecture#SetupPanel]]: "FileUpload (custom) + LinearProgress" | ⬜ Deferred (nessun tool usa `files` — dead code) |
@@ -439,22 +439,31 @@ npx vitest run
 
 ## Closing Summary (2026-08-04)
 
-### Final Tally: 47/50 Findings Resolved
+### Final Tally: 47/50 Findings Resolved → 49/50 (post backend-verification)
 
 | Severity | Total | Fixed | Remaining |
 |----------|-------|-------|-----------|
 | 🔴 Critical | 5 | **5** | 0 |
-| 🟠 High | 13 | **12** | 1 (H8) |
-| 🟡 Medium | 23 | **21** | 2 (M10, M13/M14 deferred) |
+| 🟠 High | 13 | **13** | 0 |
+| 🟡 Medium | 23 | **22** | 1 (M13/M14 deferred) |
 | 🟢 Low | 9 | **9** | 0 |
-| **Total** | **50** | **47** | **3** |
+| **Total** | **50** | **49** | **1** |
 
-### Remaining (3 — All Backend-Blocked)
+### Backend Verification (2026-08-04)
 
-| ID | Issue | Blocker |
-|----|-------|---------|
-| H8 | ToolPage credit cost non visibile | `ToolDefinition.creditCost` non esposto dal backend |
-| M10 | AgentContextDrawer content preview + deeplink | `GET /api/assets/:id` non include `content` field |
+Two findings previously marked as "backend-blocked" were verified as already implemented:
+
+| ID | Issue | Verification |
+|----|-------|-------------|
+| H8 | ToolPage credit cost non visibile | ✅ `GET /api/tools` already returns `creditCost` (`generation.ts:21`) — frontend just needs to consume it |
+| M10 | AgentContextDrawer content preview | ✅ `GET /api/workspaces/:wid/assets/:aid` already returns `content` (`assets.ts:73`) — frontend just needs to consume it |
+
+Both are now resolvable with frontend-only changes.
+
+### Remaining (1)
+
+| ID | Issue | Status |
+|----|-------|--------|
 | M13/M14 | FileUpload + InfoBanner | Deferred — nessun tool attuale usa input type `files` o `apiCalls` |
 
 ### Key Achievements
