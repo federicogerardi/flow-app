@@ -21,6 +21,10 @@ import { PromptComponentRegistry, PromptComposer, getDefaultComponents } from '@
 import { BcryptPasswordHasher } from './infrastructure/bcrypt-hasher.js';
 import { TokenService } from './infrastructure/token-service.js';
 import { AuthService } from './api/auth/auth-service.js';
+import { createSessionWorker } from './generation/worker/session-worker.js';
+import { GamificationEventPublisher } from './application/gamification/gamification-event-publisher.js';
+import { getGamificationQueue } from './generation/jobs/gamification-queue.js';
+import { ConsumeCreditsUseCase } from './application/usage/consume-credits.usecase.js';
 
 const config = validateConfig();
 
@@ -60,6 +64,11 @@ const tokenService = new TokenService(
 );
 const authService = new AuthService(userRepo, hasher, tokenService);
 
+const gamificationQueue = getGamificationQueue(config.REDIS_URL);
+const gamificationEventPublisher = new GamificationEventPublisher(gamificationQueue);
+
+const consumeCreditsUC = new ConsumeCreditsUseCase(quotaRepo);
+
 const cleanupJob = new CleanupJob(db);
 cleanupJob.start();
 
@@ -87,11 +96,45 @@ app.listen(config.PORT, () => {
   logger.info({ port: config.PORT, env: config.NODE_ENV }, 'Server started');
 });
 
-process.on('SIGTERM', async () => {
-  logger.info('Shutting down...');
-  cleanupJob.stop();
-  await queue.close();
-  await eventBridge.close();
-  await db.destroy();
-  process.exit(0);
+// ── Worker (runs in same process as server) ───────────────────────────────────
+const worker = createSessionWorker({
+  sessionRepo,
+  eventBridge,
+  llmGateway,
+  promptComposer,
+  promptTemplateRepo,
+  gamificationEventPublisher,
+  consumeCreditsUC,
 });
+logger.info('Worker started');
+
+// ── Graceful Shutdown ─────────────────────────────────────────────────────────
+let isShuttingDown = false;
+async function gracefulShutdown(signal: string) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  logger.info({ signal }, 'graceful_shutdown_started');
+
+  try {
+    await worker.pause();
+    const timeout = 30_000;
+    const deadline = Date.now() + timeout;
+    while (worker.isRunning() && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    await worker.close();
+    cleanupJob.stop();
+    await queue.close();
+    await gamificationQueue.close();
+    await eventBridge.close();
+    await db.destroy();
+    logger.info('graceful_shutdown_completed');
+    process.exit(0);
+  } catch (err) {
+    logger.error({ err }, 'graceful_shutdown_error');
+    process.exit(1);
+  }
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
