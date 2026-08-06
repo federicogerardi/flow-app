@@ -61,18 +61,19 @@ vi.mock('@flow-app/domain', async () => {
       { key: 'strategist', name: 'Strategist', role: 'Marketing strategist', essence: 'Helps with strategy', capabilities: ['planning'] },
       { key: 'writer', name: 'Writer', role: 'Content writer', essence: 'Writes content', capabilities: ['writing'] },
     ]),
-    getAgent: vi.fn((key: string) => {
-      if (key === 'strategist') return {
+    getAgent: vi.fn((key: string | { toString: () => string; value?: string }) => {
+      const keyStr = typeof key === 'string' ? key : (key.toString() || (key as { value?: string }).value || String(key));
+      if (keyStr === 'strategist') return {
         key: 'strategist', name: 'Strategist', role: 'Marketing strategist',
         systemPrompt: 'You are a strategist.',
         essence: 'Helps with strategy', capabilities: ['planning'],
       };
-      if (key === 'writer') return {
+      if (keyStr === 'writer') return {
         key: 'writer', name: 'Writer', role: 'Content writer',
         systemPrompt: 'You are a writer.',
         essence: 'Writes content', capabilities: ['writing'],
       };
-      throw new Error(`Unknown agent: ${key}`);
+      throw new Error(`Unknown agent: ${keyStr}`);
     }),
     Message: {
       user: vi.fn(() => createMessageMock('msg-user', 'user', 'Help me plan')),
