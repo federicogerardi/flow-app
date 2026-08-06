@@ -19,10 +19,11 @@ export default function SessionPage() {
   const { setBreadcrumbs } = useBreadcrumbs();
 
   useEffect(() => {
-    setBreadcrumbs([
-      { label: copy.t('workspace.nav.home'), path: workspaceId ? `/workspaces/${workspaceId}` : '/dashboard' },
-      { label: session ? `Session: ${session.toolKey}` : 'Session' },
-    ]);
+      setBreadcrumbs([
+        { label: copy.t('workspace.nav.home'), path: workspaceId ? `/workspaces/${workspaceId}` : '/dashboard' },
+        { label: 'Sessions', path: workspaceId ? `/workspaces/${workspaceId}/sessions` : '/dashboard' },
+        { label: session ? `Session: ${session.toolKey}` : 'Session' },
+      ]);
   }, [workspaceId, session, setBreadcrumbs]);
 
   if (loading) return <LoadingSkeleton />;

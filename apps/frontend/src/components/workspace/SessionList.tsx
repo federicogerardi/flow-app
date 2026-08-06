@@ -1,4 +1,5 @@
-import { Box, Card, CardContent, Chip, Typography } from '@mui/material';
+import { Box, Card, CardActionArea, CardContent, Chip, Typography } from '@mui/material';
+import { useNavigate } from 'react-router';
 import useSWR from 'swr';
 import { api } from '../../api/client';
 import { LoadingSkeleton } from '../LoadingSkeleton';
@@ -11,6 +12,7 @@ interface SessionListProps {
 }
 
 export function SessionList({ workspaceId }: SessionListProps) {
+  const navigate = useNavigate();
   const { data: sessions, isLoading } = useSWR(
     `sessions-${workspaceId}`,
     () => api.listSessions({ workspaceId }),
@@ -25,7 +27,8 @@ export function SessionList({ workspaceId }: SessionListProps) {
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
       {sessions.data.map((s) => (
         <Card key={s.id} variant="outlined">
-          <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.5, '&:last-child': { pb: 1.5 } }}>
+          <CardActionArea onClick={() => navigate(`/workspaces/${workspaceId}/sessions/${s.id}`)}>
+            <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.5, '&:last-child': { pb: 1.5 } }}>
             <Box>
               <Typography variant="body1" fontWeight={600}>
                 {s.toolKey}
@@ -40,6 +43,7 @@ export function SessionList({ workspaceId }: SessionListProps) {
               size="small"
             />
           </CardContent>
+          </CardActionArea>
         </Card>
       ))}
     </Box>
