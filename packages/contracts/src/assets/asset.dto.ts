@@ -3,6 +3,7 @@ export interface AssetDTO {
   workspaceId: string;
   assetType: string;
   source: string;
+  content: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,8 +1,14 @@
 import { Box, Typography, Stack } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
-import type { TextInput, FileInput } from '../../tool-inputs';
+import type { TextInput, FileInput, AssetInput } from '../../tool-inputs';
 import { copy } from '@flow-app/copy';
+
+interface WorkspaceAsset {
+  id: string;
+  assetType: string;
+  content: string;
+}
 
 interface ReadinessSnapshotProps {
   inputs: Record<string, string>;
@@ -10,12 +16,32 @@ interface ReadinessSnapshotProps {
   /** File acquisition readiness */
   fileDef?: FileInput[];
   files?: Record<string, File>;
+  /** Asset acquisition readiness */
+  assetDef?: AssetInput[];
+  selectedAssets?: string[];
+  workspaceAssets?: WorkspaceAsset[];
 }
 
-export function ReadinessSnapshot({ inputs, toolDef, fileDef, files = {} }: ReadinessSnapshotProps) {
+export function ReadinessSnapshot({
+  inputs,
+  toolDef,
+  fileDef,
+  files = {},
+  assetDef,
+  selectedAssets = [],
+  workspaceAssets = [],
+}: ReadinessSnapshotProps) {
   const textReady = toolDef.every((f) => !f.required || inputs[f.key]?.trim());
   const filesReady = !fileDef || fileDef.every((f) => !f.required || !!files[f.key]);
-  const hasAnyRequired = toolDef.some((f) => f.required) || (fileDef?.some((f) => f.required) ?? false);
+  const assetsReady = !assetDef || assetDef.every((def) => {
+    if (!def.required) return true;
+    const matching = workspaceAssets.filter((a) => a.assetType === def.assetType);
+    const selected = selectedAssets.filter((id) => matching.some((a) => a.id === id));
+    return selected.length > 0;
+  });
+  const hasAnyRequired = toolDef.some((f) => f.required)
+    || (fileDef?.some((f) => f.required) ?? false)
+    || (assetDef?.some((f) => f.required) ?? false);
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -66,8 +92,33 @@ export function ReadinessSnapshot({ inputs, toolDef, fileDef, files = {} }: Read
               </Box>
             );
           })}
+
+        {/* Asset readiness */}
+        {assetDef
+          ?.filter((def) => def.required)
+          .map((def) => {
+            const matching = workspaceAssets.filter((a) => a.assetType === def.assetType);
+            const selected = selectedAssets.filter((id) => matching.some((a) => a.id === id));
+            const hasAssets = selected.length > 0;
+            const label = `${def.assetType}${matching.length > 1 ? ` (${selected.length}/${matching.length})` : ''}`;
+            return (
+              <Box key={`asset:${def.assetType}`} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {hasAssets ? (
+                  <CheckCircleIcon color="success" fontSize="small" />
+                ) : (
+                  <CancelIcon color="error" fontSize="small" />
+                )}
+                <Typography
+                  variant="body2"
+                  color={hasAssets ? 'text.primary' : 'error.main'}
+                >
+                  {label}
+                </Typography>
+              </Box>
+            );
+          })}
       </Stack>
-      {textReady && filesReady && hasAnyRequired && (
+      {textReady && filesReady && assetsReady && hasAnyRequired && (
         <Typography variant="body2" color="success.main" sx={{ mt: 1, fontWeight: 500 }}>
           {copy.t('toolPage.readiness.allReady')}
         </Typography>

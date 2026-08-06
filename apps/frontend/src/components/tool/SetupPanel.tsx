@@ -1,6 +1,6 @@
 import { TextField, MenuItem, Box, Typography, TextareaAutosize, FormControl, FormLabel, Button, Paper, useTheme } from '@mui/material';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
-import type { TextInput as ToolTextInput, FileInput as ToolFileInput } from '../../tool-inputs';
+import type { TextInput as ToolTextInput, FileInput as ToolFileInput, AssetInput as ToolAssetInput } from '../../tool-inputs';
 import { copy } from '@flow-app/copy';
 
 interface SetupPanelProps {
@@ -164,14 +164,15 @@ export function SetupPanel({ inputs, toolDef, onChange, disabled = false, fileDe
 export interface ToolDefinitionData {
   textInputs: ToolTextInput[];
   fileInputs: ToolFileInput[];
+  assetInputs: ToolAssetInput[];
   creditCost: number;
 }
 
-/** Fetch tool definitions (text + file inputs + credit cost) from the API in a single call */
+/** Fetch tool definitions (text + file + asset inputs + credit cost) from the API in a single call */
 export async function fetchToolDefinitions(toolKey: string): Promise<ToolDefinitionData> {
   const base = import.meta.env.VITE_API_URL as string || '';
   const resp = await fetch(`${base}/api/tools`, { credentials: 'include' });
-  if (!resp.ok) return { textInputs: [], fileInputs: [], creditCost: 1 };
+  if (!resp.ok) return { textInputs: [], fileInputs: [], assetInputs: [], creditCost: 1 };
 
   interface ApiToolResponse {
     tools: Array<{
@@ -180,6 +181,7 @@ export async function fetchToolDefinitions(toolKey: string): Promise<ToolDefinit
       acquisition: {
         userText: ToolTextInput[];
         files: ToolFileInput[];
+        assets: ToolAssetInput[];
       };
     }>;
   }
@@ -189,6 +191,7 @@ export async function fetchToolDefinitions(toolKey: string): Promise<ToolDefinit
   return {
     textInputs: tool?.acquisition?.userText ?? [],
     fileInputs: tool?.acquisition?.files ?? [],
+    assetInputs: tool?.acquisition?.assets ?? [],
     creditCost: tool?.creditCost ?? 1,
   };
 }

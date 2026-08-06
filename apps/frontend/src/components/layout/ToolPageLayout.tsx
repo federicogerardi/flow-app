@@ -13,9 +13,10 @@ import { SessionSummary } from '../tool/SessionSummary';
 import { CompletionBanner } from '../shared/CompletionBanner';
 import { toolPageMachine } from '../../machines/tool-page-machine';
 import { useSession } from '../../api/hooks';
-import type { TextInput, FileInput } from '../../tool-inputs';
+import type { TextInput, FileInput, AssetInput } from '../../tool-inputs';
 import { copy } from '@flow-app/copy';
 import { useState } from 'react';
+import { AssetPicker } from '../shared/AssetPicker';
 
 /** Read file content as text for API submission */
 function readFileContent(file: File): Promise<string> {
@@ -37,6 +38,9 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
   const [state, send] = useMachine(toolPageMachine);
   const [toolDef, setToolDef] = useState<TextInput[]>([]);
   const [fileDef, setFileDef] = useState<FileInput[]>([]);
+  const [assetDef, setAssetDef] = useState<AssetInput[]>([]);
+  const [workspaceAssets, setWorkspaceAssets] = useState<Array<{ id: string; assetType: string; content: string }>>([]);
+  const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
   const [files, setFiles] = useState<Record<string, File>>({});
   const [loadingTool, setLoadingTool] = useState(true);
   const [creditCost, setCreditCost] = useState(1);
@@ -70,18 +74,22 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
     ]);
   }, [workspaceId, title, setBreadcrumbs]);
 
-  // Load tool definition + credit cost on mount
+  // Load tool definition + credit cost + workspace assets on mount
   useEffect(() => {
     setLoadingTool(true);
-    // Reset file state when tool changes
+    // Reset file and asset state when tool changes
     setFiles({});
+    setSelectedAssets([]);
     Promise.all([
       fetchToolDefinitions(toolKey),
+      api.listAssets(workspaceId).catch(() => ({ assets: [] })),
     ])
-      .then(([defs]) => {
+      .then(([defs, assetsData]) => {
         setToolDef(defs.textInputs);
         setFileDef(defs.fileInputs);
+        setAssetDef(defs.assetInputs);
         setCreditCost(defs.creditCost);
+        setWorkspaceAssets(assetsData.assets ?? []);
       })
       .finally(() => setLoadingTool(false));
   }, [toolKey]);
@@ -108,7 +116,15 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
   const fileMissing = fileDef.some(
     (input) => input.required && !files[input.key],
   );
-  const requiredMissing = textMissing || fileMissing;
+  const assetMissing = assetDef.some((def) => {
+    if (!def.required) return false;
+    const matchingAssets = workspaceAssets.filter((a) => a.assetType === def.assetType);
+    const selectedOfType = selectedAssets.filter((id) =>
+      matchingAssets.some((a) => a.id === id),
+    );
+    return selectedOfType.length === 0;
+  });
+  const requiredMissing = textMissing || fileMissing || assetMissing;
 
   const handleInputChange = (key: string, value: string) => {
     send({ type: 'CONFIGURE', key, value });
@@ -147,6 +163,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
         inputs: {
           text: inputs,
           files: fileContents.length > 0 ? fileContents : undefined,
+          selectedAssets: selectedAssets.length > 0 ? selectedAssets : undefined,
         },
       });
 
@@ -196,11 +213,24 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
                     onFileChange={handleFileChange}
                   />
                 </Box>
+                {assetDef.length > 0 && (
+                  <Box sx={{ mb: 3 }}>
+                    <AssetPicker
+                      assetDef={assetDef}
+                      workspaceAssets={workspaceAssets}
+                      selectedAssets={selectedAssets}
+                      onSelectionChange={setSelectedAssets}
+                    />
+                  </Box>
+                )}
                 <ReadinessSnapshot
                   inputs={inputs}
                   toolDef={toolDef}
                   fileDef={fileDef.length > 0 ? fileDef : undefined}
                   files={files}
+                  assetDef={assetDef.length > 0 ? assetDef : undefined}
+                  selectedAssets={selectedAssets}
+                  workspaceAssets={workspaceAssets}
                 />
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
                   <Button

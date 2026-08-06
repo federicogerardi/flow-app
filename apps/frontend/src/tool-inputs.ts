@@ -17,6 +17,12 @@ export interface FileInput {
   maxSizeMb?: number;
 }
 
+export interface AssetInput {
+  assetType: string;
+  required: boolean;
+  multiple: boolean;
+}
+
 const BLOG_POST_INPUTS: TextInput[] = [
   { key: 'topic', label: 'Topic', required: true, type: 'short' },
   { key: 'language', label: 'Language', required: false, type: 'select', options: ['it', 'en'], placeholder: 'it' },
