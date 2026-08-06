@@ -15,7 +15,7 @@ export interface SessionJobData {
     userInputs: Record<string, string>;
     fileContents: Record<string, string>;
     apiResponses: Array<{ source: string; data: unknown }>;
-    resolvedAssets: Record<string, string>;
+    resolvedAssets: Record<string, string[]>;
   };
 }
 
