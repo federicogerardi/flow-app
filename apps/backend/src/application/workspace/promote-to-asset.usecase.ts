@@ -105,7 +105,7 @@ export class PromoteToAssetUseCase {
       assetId: asset.assetId,
       assetType: assetType.value,
       workspaceId: cmd.workspaceId,
-      created: existing === null,
+      created: existing.length === 0,
     };
   }
 }

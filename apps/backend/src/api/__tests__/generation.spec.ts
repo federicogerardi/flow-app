@@ -83,7 +83,7 @@ function createMockAssetRepo() {
   return {
     findByWorkspace: vi.fn(async () => []),
     findById: vi.fn(async () => null),
-    findByWorkspaceAndType: vi.fn(async () => null),
+    findByWorkspaceAndType: vi.fn(async () => []),
     save: vi.fn(async () => {}),
     delete: vi.fn(async () => {}),
   };
