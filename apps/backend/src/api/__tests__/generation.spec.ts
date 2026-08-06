@@ -69,7 +69,12 @@ function mockDb() {
 
 function createMockWorkspaceRepo() {
   return {
-    findById: vi.fn(async () => null),
+    findById: vi.fn(async () => ({
+      workspaceId: 'ws-1',
+      isMember: vi.fn(() => true),
+      assets: [],
+      getAssetsByType: vi.fn(() => []),
+    })),
     findByMember: vi.fn(async () => []),
     save: vi.fn(async () => {}),
     saveWithLock: vi.fn(async () => {}),
@@ -103,6 +108,7 @@ vi.mock('@flow-app/domain', async () => {
         return {
           toolKey: k,
           name: 'Blog Post',
+          acquisition: {},
           steps: [{ label: 'Draft', prompt: { model: 'test-model' }, execution: { timeoutMs: 30000 } }],
         };
       }
@@ -226,6 +232,7 @@ describe('Generation Routes', () => {
 
       await routes.startSession(req, res, next);
 
+      expect(next).not.toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({

@@ -5,7 +5,7 @@ import { PromoteToAssetUseCase } from '../application/workspace/promote-to-asset
 import { getAuthUser } from '../middleware/auth-types.js';
 import { enqueueSession } from '../generation/jobs/enqueue-session.job.js';
 import type { SessionRepository, WorkspaceRepository, AssetRepository } from '@flow-app/domain';
-import { toolRegistry } from '@flow-app/domain';
+import { AssetResolver, toolRegistry } from '@flow-app/domain';
 import type { DB } from '@flow-app/infra-db';
 import type { SSEPayload } from '../infrastructure/job-event-bridge.js';
 
@@ -15,7 +15,8 @@ export function createGenerationRoutes(
   assetRepo: AssetRepository,
   db: Kysely<DB>,
 ) {
-  const startSessionUC = new StartSessionUseCase(sessionRepo);
+  const assetResolver = new AssetResolver(workspaceRepo);
+  const startSessionUC = new StartSessionUseCase(sessionRepo, assetResolver);
   const promoteToAssetUC = new PromoteToAssetUseCase(sessionRepo, workspaceRepo, assetRepo);
 
   return {
@@ -209,7 +210,7 @@ export function createGenerationRoutes(
               .map((f) => [f.key, f.content]),
           ),
           apiResponses: [],
-          resolvedAssets: {} as Record<string, string>,
+          resolvedAssets: {} as Record<string, string[]>,
         };
 
         await enqueueSession(result.session.sessionId, acquisitionData);
