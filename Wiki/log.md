@@ -12,6 +12,28 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-06] plan | multi-asset promotion — complete implementation plan
+
+**Context**: Enable tools to consume multiple promoted assets of the same type (e.g. 3 buyer personas). Full gate validation against all 19 DDD rules: 3 blocking gates (DB constraint, type change, resolver return type), 4 design gates (readiness semantics, promotion overwrite, AssetInput type, context enrichment), 0 architectural blockers.
+
+**Wiki changes**:
+- `Wiki/synthesis/multi-asset-implementation-plan.md` — new page: 21 steps across 7 phases covering domain, DB migration, backend, frontend, copy module, DI, contracts
+- `Wiki/index.md` — added synthesis entry
+- `Wiki/log.md` — this entry
+
+**Plan structure**:
+- Phase 1: Domain Foundation (3 files) — `AssetInput.multiple`, `AcquisitionData` type, `ContextEnricher`
+- Phase 2: Database (2 files) — migration 011, repository ON CONFLICT change
+- Phase 3: Workspace Domain (2 files) — `getAssetsByType()`, `AssetResolver`
+- Phase 4: Application Layer (2 files) — `PromoteToAssetUseCase`, `StartSessionUseCase`
+- Phase 5: Backend API + Worker (3 files) — `listTools`, `acquisitionData`, `SessionJobData`
+- Phase 6: Frontend (6 files) — `SetupPanel` asset picker, `ToolPageLayout` wiring, `ReadinessSnapshot`, `KnowledgePanel` fix, `AssetCoverageBar` count
+- Phase 7: Copy + DI + Contracts (3 files)
+
+**Gate validation**: 3 blocking (G1–G3), 4 design (G4–G7), 12 compliant (Rules 1,2,4,6–14,17–19), 1 pre-existing (Rule 3 violation in `Workspace.rename()`)
+
+**Cross-references**: [[DDD Domain Design Rules]], [[Creating a New Tool]], [[ReadinessPolicy]], [[Centralized Copy Modules]]
+
 ## [2026-08-06] docs | howto: Creating a New Tool — step-by-step guide
 
 **Context**: After implementing the `brief` tool and fixing 19 copy module violations, a reusable guide was needed for adding future tools without rediscovering the pattern each time.
