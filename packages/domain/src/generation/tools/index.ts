@@ -65,8 +65,6 @@ const briefTool: ToolDefinition = {
   acquisition: {
     userText: [
       { key: 'objective', label: 'Obiettivo', required: true, type: 'long', placeholder: 'Descrivi obiettivo e contesto del brief...' },
-      { key: 'company', label: 'Azienda', required: true, type: 'short', placeholder: 'Nome azienda' },
-      { key: 'product', label: 'Prodotto / Servizio', required: true, type: 'short', placeholder: 'Prodotto o servizio oggetto del brief' },
     ],
     files: [
       { key: 'briefing', label: 'Documento briefing', accept: ['.txt', '.md', '.docx'], required: false, description: 'Opzionale: carica un documento briefing per un\'estrazione più completa' },

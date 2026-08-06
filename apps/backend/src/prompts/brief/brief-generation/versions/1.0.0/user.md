@@ -1,6 +1,7 @@
 Generate the complete 11-section creative brief from the extraction data provided in the context.
 
 The context contains a JSON extraction from Step 1 with these fields:
+- `company`
 - `product_or_service`
 - `target_audience`
 - `campaign_objective`

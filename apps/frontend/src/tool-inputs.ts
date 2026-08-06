@@ -31,8 +31,6 @@ const AD_COPY_INPUTS: TextInput[] = [
 
 const BRIEF_INPUTS: TextInput[] = [
   { key: 'objective', label: 'Obiettivo', required: true, type: 'long', placeholder: 'Descrivi obiettivo e contesto del brief...' },
-  { key: 'company', label: 'Azienda', required: true, type: 'short', placeholder: 'Nome azienda' },
-  { key: 'product', label: 'Prodotto / Servizio', required: true, type: 'short', placeholder: 'Prodotto o servizio oggetto del brief' },
 ];
 
 const BRIEF_FILES: FileInput[] = [

@@ -12,6 +12,23 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-06] refactor | brief: remove company+product text inputs → file extraction
+
+**Context**: `company` and `product` were redundant text inputs in `briefTool.acquisition.userText` — both values already present in the uploaded briefing file. Extracting them from the file eliminates data duplication and simplifies the SetupPanel to a single `objective` field.
+
+**Code changes** (7 files):
+- `packages/domain/src/generation/tools/index.ts`: removed `company` and `product` from `briefTool.acquisition.userText` (1 field remaining: `objective`)
+- `apps/frontend/src/tool-inputs.ts`: removed `company` and `product` from `BRIEF_INPUTS`
+- `apps/backend/src/prompts/brief/extraction/versions/1.0.0/system.md`: extraction now 6-field JSON (+ `company`), `product_or_service` instructions reinforced for file extraction, added company extraction example
+- `apps/backend/src/prompts/brief/extraction/versions/1.0.0/user.md`: added file-extraction instructions for `company` + `product_or_service`
+- `apps/backend/src/prompts/brief/brief-generation/versions/1.0.0/system.md`: `## Panoramica` now includes `- Azienda:` bullet, payload reference updated to 6 fields
+- `apps/backend/src/prompts/brief/brief-generation/versions/1.0.0/user.md`: added `company` to extraction field list
+
+**Wiki changes**:
+- `Wiki/concepts/Brief Tool - Prompt Architecture.md`: updated ASCII diagram, acquisition model rewritten, comparison table, data flow, checklist (1 text input, 6 extraction fields)
+
+**Verification**: tsc (3 packages) ✅, vitest (644 tests) ✅, vite build ✅
+
 ## [2026-08-06] feat | AssetDetailPage + toast notification + AssetList navigation
 
 **Context**: [[Asset Promotion]] was working but users had no way to view promoted asset content without returning to the session. Also missing: feedback after promotion and navigation from asset list to detail.

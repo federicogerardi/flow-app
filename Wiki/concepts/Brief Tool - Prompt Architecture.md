@@ -28,13 +28,13 @@ ACQUISITION                         STEP 1 (extraction)              STEP 2 (bri
 │ (.txt/.md/   │  │                 │ Specialist           │          │ Senior Creative Strategist│
 │  .docx)      │  │                 │                      │          │                           │
 └──────────────┘  │    ┌─────────┐  │ Input: file content  │  JSON    │ Input: extraction JSON    │
-                  ├───▶│ Enricher │─▶│ Output: 5-field JSON │─────────▶│ Output: 11-section brief  │
+                  ├───▶│ Enricher │─▶│ Output: 6-field JSON │─────────▶│ Output: 11-section brief  │
 ┌──────────────┐  │    └─────────┘  │                      │          │ (Italian, Markdown)       │
 │ user text     │──┘                 └─────────────────────┘          └──────────────────────────┘
-│ (objective,   │                             │                                 │
-│  company,     │                             ▼                                 ▼
-│  product)     │                    `output-json/v1`                  `output-plain-text/v1`
-└──────────────┘                                                      `italian-formal/v1`
+│ (objective)   │                             │                                 │
+│              │                             ▼                                 ▼
+└──────────────┘                    `output-json/v1`                  `output-plain-text/v1`
+                                                                     `italian-formal/v1`
 ```
 
 ### Step 1: Extraction
@@ -44,8 +44,9 @@ ACQUISITION                         STEP 1 (extraction)              STEP 2 (bri
 **Prompt component**: `output-json/v1`  
 **Enrichment**: `serial` (receives file content + user text inputs)
 
-Extracts 5 core data points from the briefing source:
-- `product_or_service` — what is being marketed
+Extracts 6 core data points from the briefing source:
+- `company` — company/brand name (extracted from file, not a user input)
+- `product_or_service` — what is being marketed (extracted from file, not a user input)
 - `target_audience` — primary audience segments
 - `campaign_objective` — stated goal (awareness, lead-gen, sales, retention)
 - `primary_offer` — specific offer, mechanism, price range
@@ -83,21 +84,21 @@ This is the **only tool in Flow App** whose output is explicitly structured for 
 | Steps | 3 (SEO → Outline → Article) | 2 (Extraction → Brief) |
 | Step model | `blog-post` template | `brief`-specific templates |
 | Output language | Not specified | Italian only (`it-IT`) |
-| Acquisition | `userText` only (topic, language) | `files` (briefing document) + `userText` (objective, company, product) |
+| Acquisition | `userText` only (topic, language) | `files` (briefing document) + `userText` (`objective` only) |
 | Asset production | None (`produces: undefined`) | `produces: 'brief'` |
 | Default components | `output-markdown/v1`, `seo-optimized/v1` | `output-json/v1` (step 1), `output-plain-text/v1`, `italian-formal/v1` (step 2) |
 | Design philosophy | Generic content generation | Downstream-first, every section answers a tool's question |
 
-## Acquisition Design Decision
+## Acquisition Model (2026-08-06 revision)
 
-The prototype is **file-centric** — Step 1 reads an unstructured briefing document. However, for the Flow App implementation, the tool should support both modes:
+The brief tool uses a **single text input + optional file upload** model. The only explicit user text field is `objective` (free-text description of the campaign context and goal). All structural data — company name, product/service, audience, offer, tone — is extracted from the uploaded briefing document. If no file is uploaded, the extraction step returns `"non disponibile"` for `company` and `product_or_service`, and the brief generation step writes "Non specificato nel documento di input" for those sections.
 
-| Mode | Acquisition | Use case |
-|------|-------------|----------|
-| **File-based** | User uploads `.txt`/`.md`/`.docx` briefing | Full brief from existing document |
-| **Text-only** | User fills `objective`, `company`, `product` text fields | Quick brief when no document exists |
+| Mode | Acquisition | Result |
+|------|-------------|--------|
+| **File-based** | User uploads `.txt`/`.md`/`.docx` + fills `objective` | Full extraction: company, product, audience, offer, tone from file |
+| **Objective-only** | User fills only `objective` without file | Company + product = "non disponibile" / "Non specificato". Brief still generated with available context. |
 
-In text-only mode, Step 1 structures the user text into the 5-field extraction format (with `(from user input)` attribution). In file-based mode, Step 1 extracts from the file. The `files` input should be **optional** with a fallback to `userText` structuring — this keeps the tool accessible while preserving the full extraction power for users with briefing documents.
+The earlier text-only fallback (structuring user-provided `company` and `product` fields) has been removed — these fields were redundant with the file content and created a maintenance burden of keeping the prompt-aware of two separate data sources for the same information.
 
 ## Anti-Hallucination Guardrails
 
@@ -119,8 +120,8 @@ Both steps share a consistent anti-hallucination contract:
 
 | File | Change |
 |------|--------|
-| `packages/domain/src/generation/tools/index.ts` | `briefTool`: 2-step pipeline, 3 text fields + optional file upload, `produces: 'brief'` |
-| `apps/backend/src/prompts/brief/extraction/.../system.md` | Data Extraction Specialist — 5-field JSON, anti-hallucination |
+| `packages/domain/src/generation/tools/index.ts` | `briefTool`: 2-step pipeline, 1 text field (`objective`) + optional file upload, `produces: 'brief'` |
+| `apps/backend/src/prompts/brief/extraction/.../system.md` | Data Extraction Specialist — 6-field JSON, anti-hallucination |
 | `apps/backend/src/prompts/brief/extraction/.../user.md` | User prompt with file + text context |
 | `apps/backend/src/prompts/brief/brief-generation/.../system.md` | Senior Creative Strategist — 11 sections, Italian, downstream-first |
 | `apps/backend/src/prompts/brief/brief-generation/.../user.md` | User prompt with extraction context |
@@ -184,7 +185,7 @@ Frontend                      API + Worker (same process)
 ────────                      ──────────────────────────
 SetupPanel                    POST /api/tools/              processSessionJob()
   ├─ text fields               brief/sessions                 │
-  │  objective/company/product   │                             ├─ session.apply(QUEUE)
+  │  objective                   │                             ├─ session.apply(QUEUE)
   │                              ├─ StartSessionUseCase        ├─ session.apply(WORKER_PICKUP)
   └─ [Generate]                  │   → readiness(✅)           ├─ sessionRepo.save()
      │                          │   → Session.create()          │
@@ -211,14 +212,14 @@ ToolPageLayout                  ▼                              │   (SSE to F
 For the `brief` `ToolDefinition` in `packages/domain/src/generation/tools/index.ts`:
 - [ ] `toolKey: 'brief'`, `name: 'Brief'`, `produces: 'brief'`, `creditCost: 1`
 - [ ] `acquisition.files`: `{ key: 'briefing', label: 'Documento briefing', accept: ['.txt','.md','.docx'], required: false }`
-- [ ] `acquisition.userText`: 3 fields (objective/long, company/short, product/short)
+- [ ] `acquisition.userText`: 1 field (objective/long) — company and product are extracted from the uploaded file, not provided as text inputs
 - [ ] `acquisition.assets`: none required (brief is the root asset — it generates from scratch, not from existing assets)
 - [ ] Step 1: `{ order: 1, label: 'extraction', enrichment: 'serial', prompt: { templateId: 'brief/extraction', version: '1.0.0', model: ModelTier.Balanced, components: ['output-json/v1'] } }`
 - [ ] Step 2: `{ order: 2, label: 'brief-generation', enrichment: 'serial', prompt: { templateId: 'brief/brief-generation', version: '1.0.0', model: ModelTier.Balanced, components: ['output-plain-text/v1', 'italian-formal/v1'] } }`
 
 For prompt template files (`apps/backend/src/prompts/`):
 - [ ] `brief/extraction/versions/1.0.0/system.md` — system prompt from the extraction prototype
-- [ ] `brief/extraction/versions/1.0.0/user.md` — user prompt with `{{slot:file:briefing}}` and `{{slot:text:objective}}`, `{{slot:text:company}}`, `{{slot:text:product}}` slots
+- [ ] `brief/extraction/versions/1.0.0/user.md` — user prompt with `{{slot:file:briefing}}` and `{{slot:text:objective}}` slots (company and product no longer have dedicated slots — extracted from file)
 - [ ] `brief/brief-generation/versions/1.0.0/system.md` — system prompt from the brief generation prototype
 - [ ] `brief/brief-generation/versions/1.0.0/user.md` — user prompt with `{{slot:step:1}}` injection + structural constraints
 
@@ -226,7 +227,7 @@ For frontend:
 - [ ] `SetupPanel.fetchToolInputs()` already reads from `GET /api/tools` — no changes needed
 - [ ] `ReadinessSnapshot` must support `files` input type (currently only shows `userText`)
 - [ ] `SetupPanel` must render `FileUpload` component for `files` acquisition type (currently only renders `userText`)
-- [ ] `tool-inputs.ts` has `BRIEF_INPUTS` with 3 fields — keep as text-only fallback
+- [ ] `tool-inputs.ts` has `BRIEF_INPUTS` with 1 field (`objective` only) — company and product are file-extracted
 
 ## Sources
 
