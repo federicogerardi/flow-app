@@ -65,12 +65,14 @@ Three findings from invariant + encapsulation analysis:
 
 - **Modified type**: `AssetInput` (`packages/domain/.../tool-definition.ts:23`) — adds `multiple?: boolean`
 - **Modified type**: `AcquisitionData.resolvedAssets` (`packages/domain/.../ReadinessPolicy.ts:7`) — `Map<string, string>` → `Map<string, string[]>`
+- **Modified type**: `StartSessionResult` (`apps/backend/.../start-session.usecase.ts:39`) — adds `resolvedAssets: Map<string, string[]>`
 - **Modified type**: `SessionJobData.resolvedAssets` (`apps/backend/.../session-worker.ts:18`) — `Record<string, string>` → `Record<string, string[]>`
 - **Modified entity method**: `Workspace.getAssetByType()` → `getAssetsByType()` (`packages/domain/.../Workspace.ts:174`) — returns `Asset[]` instead of `Asset | null`
-- **Modified repository method**: `AssetRepository.findByWorkspaceAndType()` → `findByWorkspaceAndType()` (`packages/domain/.../AssetRepository.ts:7`) — returns `Asset[]`
-- **New migration**: `011_multi_asset.sql` — drops old unique constraint, creates new one
+- **Modified repository method**: `AssetRepository.findByWorkspaceAndType()` (`packages/domain/.../AssetRepository.ts:7`) — returns `Asset[]`
+- **New migration**: `011_multi_asset.sql` — drops old unique constraint, creates new one + partial index for NULL source_ref
 - **New error class**: `InvalidAssetSelectionError` (`packages/domain/.../AssetResolver.ts`) — thrown when `selectedAssetIds` contains IDs not found in workspace assets
-- **New UI component**: Asset picker section inside `SetupPanel` — radio buttons for single-select types, checkboxes for multi-select types. Controlled by `AssetInput.multiple` flag per type
+- **New UI component**: `AssetPicker` (`apps/frontend/.../shared/AssetPicker.tsx`) — reusable radio/checkbox selector per asset type. Used by `SetupPanel` and (future) `KnowledgePanel` replacement
+- **Modified error handler**: `ErrorMapper` (`apps/backend/.../error-handler.ts`) — adds `ASSET_NOT_FOUND` → 404 mapping
 
 ## Implementation Steps
 
@@ -97,15 +99,26 @@ Three findings from invariant + encapsulation analysis:
 ### Phase 2: Database (2 files)
 
 4. **Create migration `011_multi_asset.sql`** (File: `packages/infra-db/migrations/011_multi_asset.sql`)
-   - Action:
-     ```sql
-     ALTER TABLE assets DROP CONSTRAINT uq_assets_workspace_type;
-     ALTER TABLE assets ADD CONSTRAINT uq_assets_workspace_type_source
-       UNIQUE (workspace_id, asset_type, source_ref);
-     ```
-   - Why: Existing `UNIQUE (workspace_id, asset_type)` prevents multiple rows with same type. New constraint deduplicates by `source_ref` (artifact ID) — same artifact promoted twice = UPSERT, different artifact = new row. `source_ref` can be NULL for manual assets — multiple NULLs are allowed in PostgreSQL UNIQUE constraints.
-   - Dependencies: None (runs before code changes, backward-compatible — existing rows satisfy new constraint)
-   - Risk: Medium — irreversible. Must be tested with: existing single-asset workspaces, manual assets with NULL source_ref, promotion idempotency
+    - Action:
+      ```sql
+      BEGIN;
+
+      ALTER TABLE assets DROP CONSTRAINT uq_assets_workspace_type;
+      ALTER TABLE assets ADD CONSTRAINT uq_assets_workspace_type_source
+        UNIQUE (workspace_id, asset_type, source_ref);
+
+      -- Prevent multiple NULL-source manual assets per type per workspace
+      -- PostgreSQL treats NULL ≠ NULL in UNIQUE constraints, so multiple
+      -- (workspace_id, type, NULL) rows would be allowed without this index
+      CREATE UNIQUE INDEX uq_assets_workspace_type_null_source
+        ON assets (workspace_id, asset_type)
+        WHERE source_ref IS NULL;
+
+      COMMIT;
+      ```
+    - Why: Existing `UNIQUE (workspace_id, asset_type)` prevents multiple rows with same type. New constraint deduplicates by `source_ref` (artifact ID) — same artifact promoted twice = UPSERT, different artifact = new row. The partial unique index prevents accidental duplicates from manual asset creation (where `source_ref` is NULL). `BEGIN/COMMIT` follows existing migration conventions (`003_workspaces.sql`)
+    - Dependencies: None (runs before code changes, backward-compatible — existing rows satisfy new constraint)
+    - Risk: Medium — irreversible. Must be tested with: existing single-asset workspaces, manual assets with NULL source_ref, promotion idempotency. Existing assets with NULL source_ref (if any) would be caught by the partial index — run `SELECT workspace_id, asset_type, COUNT(*) FROM assets WHERE source_ref IS NULL GROUP BY workspace_id, asset_type HAVING COUNT(*) > 1;` before migration to verify no pre-existing duplicates
 
 5. **Update `KyselyAssetRepository`** (File: `packages/infra-db/src/repositories/asset-repository.ts`)
    - Action 1: Change `findByWorkspaceAndType` return type from `Asset | null` to `Asset[]` — remove `.executeTakeFirst()`, use `.execute()` and map all rows
@@ -137,23 +150,25 @@ Three findings from invariant + encapsulation analysis:
 
 8. **Update `PromoteToAssetUseCase` — remove overwrite, fix idempotency** (File: `apps/backend/src/application/workspace/promote-to-asset.usecase.ts`)
     - Action:
-      - **F2 fix (assetId mismatch)**: Before `Asset.create()`, query existing assets of this type and check if THIS artifact was already promoted by matching `sourceArtifactId === cmd.artifactId`. If found, return the existing asset's data immediately (idempotent — same request → same assetId). This prevents the `Asset.create()` UUID from diverging from the actual DB row on UPSERT
+      - **F2 fix (assetId mismatch)**: Before `Asset.create()`, query all workspace assets via `findByWorkspace(workspaceId)` (not `findByWorkspaceAndType` — we need the full list to match by `sourceArtifactId`). Filter in-memory: `existingOfType.filter(a => a.assetType.equals(assetType) && a.sourceArtifactId === cmd.artifactId)`. If match found, return the existing asset's data immediately (idempotent — same request → same assetId). This prevents the `Asset.create()` UUID from diverging from the actual DB row on UPSERT
       - **F3 fix (dead code)**: Remove `created: boolean` from `PromoteToAssetResult` — it is never consumed by the API handler (which hardcodes `promoted: true`) or the frontend
       - Remove the old `findByWorkspaceAndType` check (line 90) that was used only for the `created` flag
-      - If asset is new (no existing match on `source_ref`): `Asset.create()` → `assetRepo.save()`. The ON CONFLICT `(workspace_id, asset_type, source_ref)` handles concurrent retries at DB level
+      - If asset is new (no existing match on `sourceArtifactId`): `Asset.create()` → `assetRepo.save()`. The ON CONFLICT `(workspace_id, asset_type, source_ref)` handles concurrent retries at DB level
     - Why: Multi-asset means multiple same-type assets can coexist. The existing check was for overwrite detection — now replaced by source_ref matching for idempotency. The assetId mismatch bug (F2) becomes visible with multi-asset because different artifacts of the same type produce different rows
     - Dependencies: Step 5 (repository ON CONFLICT change to include `source_ref`)
 
 9. **Update `StartSessionUseCase` — resolve assets** (File: `apps/backend/src/application/generation/start-session.usecase.ts`)
-   - Action:
-     - Add `WorkspaceRepository` to constructor (or `AssetResolver` directly — inject whichever the DI prefers)
-     - Before readiness check, if `cmd.inputs.selectedAssets?.length > 0`: create `AssetResolver`, call `resolve(workspaceId, tool, cmd.inputs.selectedAssets)`, populate `acquisitionData.resolvedAssets`
-     - Update `AcquisitionData.resolvedAssets` from `new Map()` to the resolved result
-   - Why: This is the missing piece — assets are currently never resolved before session start. Readiness check currently always sees empty `resolvedAssets`
-   - Dependencies: Steps 2, 7 (AssetResolver must accept `selectedAssetIds`)
-   - Risk: Medium — changes the constructor signature, requires DI update
+    - Action:
+      - Add `WorkspaceRepository` to constructor (inject `AssetResolver` directly — cleaner: `new StartSessionUseCase(sessionRepo, assetResolver)`)
+      - **BA-C4/FE-C4 fix**: Call `AssetResolver.resolve()` unconditionally — not gated on `selectedAssets?.length > 0`. The resolver handles all cases: no `selectedAssetIds` → returns ALL assets per type (D3), empty `[]` → same, populated → validates + filters. This ensures `resolvedAssets` is never empty when workspace has matching assets
+      - Add `resolvedAssets: Map<string, string[]>` to `StartSessionResult` interface (BA-C2 fix) so the API layer can forward resolved assets to the worker
+      - Replayed path: return `resolvedAssets: new Map()` — a replayed session has already been processed, no new assets to resolve
+      - Populate `acquisitionData.resolvedAssets` from the resolver output before readiness check and before creating the session
+    - Why: This is the missing piece — assets are currently never resolved before session start. The readiness check must see resolved assets to correctly evaluate `required` constraints
+    - Dependencies: Steps 2, 7 (AssetResolver must accept `selectedAssetIds`)
+    - Risk: Medium — changes the constructor signature and return type, requires DI update
 
-### Phase 5: Backend API + Worker (3 files)
+### Phase 5: Backend API + Worker (4 files)
 
 10. **Serialize `assets` in `listTools` response** (File: `apps/backend/src/api/generation.ts`, lines 22-51)
     - Action: Add `assets` to the `acquisition` object in the mapped response:
@@ -170,103 +185,160 @@ Three findings from invariant + encapsulation analysis:
 
 11. **Pass `resolvedAssets` to the worker job** (File: `apps/backend/src/api/generation.ts`, lines 191-232)
     - Action:
-      - After `startSessionUC.execute()`, the use case returns resolved assets. Convert `Map<string, string[]>` to `Record<string, string[]>` for BullMQ serialization:
+      - After `startSessionUC.execute()`, the use case returns resolved assets in `result.resolvedAssets` (BA-C2). Convert `Map<string, string[]>` to `Record<string, string[]>` for BullMQ serialization:
         ```typescript
         const resolvedAssets: Record<string, string[]> = {};
         for (const [type, contents] of result.resolvedAssets.entries()) {
           resolvedAssets[type] = contents;
         }
         ```
-      - Pass to `enqueueSession(sessionId, { ...acquisitionData, resolvedAssets })`
-    - Why: The worker needs resolved asset content for `ContextEnricher`
-    - Dependencies: Step 9 (use case must return resolved assets)
-    - Risk: Low — serialization change, BullMQ handles JSON arrays natively
+      - **BA-C5 fix**: Skip `enqueueSession()` for replayed sessions — the session has already been processed. Only enqueue new sessions:
+        ```typescript
+        if (!result.replayed) {
+          await enqueueSession(result.session.sessionId, acquisitionData);
+        }
+        ```
+      - This avoids re-enqueuing a completed session in the worker queue
+    - Why: The worker needs resolved asset content for `ContextEnricher`. Replayed sessions don't need a new job
+    - Dependencies: Step 9 (use case must return resolvedAssets in result)
 
 12. **Update `SessionJobData` and worker reconstruction** (File: `apps/backend/src/generation/worker/session-worker.ts`)
     - Action 1: Change `SessionJobData.resolvedAssets` from `Record<string, string>` to `Record<string, string[]>`
     - Action 2: Update line 180 `new Map(Object.entries(...))` — this already works with arrays since `Object.entries({persona: ['c1', 'c2']})` → `[['persona', ['c1', 'c2']]]` → `Map { 'persona' => ['c1', 'c2'] }`. No code change needed, just the type.
     - Why: Type safety for the worker contract
     - Dependencies: Steps 2, 11
-    - Risk: Low — type-only change, runtime behavior identical
+
+13. **Add `ASSET_NOT_FOUND` to `ErrorMapper`** (File: `apps/backend/src/infrastructure/error-handler.ts`)
+    - Action: Add a case before the default fallthrough:
+      ```typescript
+      case 'ASSET_NOT_FOUND':
+        return 404;
+      ```
+    - Why: `InvalidAssetSelectionError` (F1) has code `ASSET_NOT_FOUND`. Without this mapper entry, invalid asset selections would return HTTP 500 instead of 404
+    - Dependencies: Step 7 (error class exists)
 
 ### Phase 6: Frontend (6 files)
 
-13. **Add `assets` to `fetchToolDefinitions` response type** (File: `apps/frontend/src/components/tool/SetupPanel.tsx`, lines 164-194)
-    - Action: Add `assets: Array<{ assetType: string; required: boolean; multiple?: boolean }>` to `ApiToolResponse.acquisition`. Map it through in the destructured result. Export a new `AssetDef[]` type alongside `ToolDefinitionData`
-    - Why: SetupPanel needs to know which asset types the tool consumes
+14. **Add `assets` to `fetchToolDefinitions` response type** (File: `apps/frontend/src/components/tool/SetupPanel.tsx`, lines 164-194)
+    - Action: Add `assets: Array<{ assetType: string; required: boolean; multiple?: boolean }>` to `ApiToolResponse.acquisition`. Map it through in the destructured result. Export the type alongside `ToolDefinitionData`
+    - Why: ToolPageLayout needs to know which asset types the tool consumes to pass to AssetPicker
     - Dependencies: Step 10 (backend must serialize assets)
-    - Risk: Low
 
-14. **Build asset picker section in `SetupPanel`** (File: `apps/frontend/src/components/tool/SetupPanel.tsx`)
-    - Action: Add a new `"Workspace Assets"` section below file inputs. For each `assetDef`:
-      - Fetch workspace assets via `useSWR('assets-${workspaceId}', () => api.listAssets(workspaceId))` — add `workspaceId` prop to `SetupPanelProps`
-      - Filter assets by `assetDef.assetType`
-      - Render **radio buttons** if `multiple: false` (single select, e.g. brief, brand-voice) or **checkboxes** if `multiple: true` (multi select, e.g. personas)
-      - Show asset metadata: type label + creation date
-      - If no assets of type exist: show CTA button linking to the tool that generates that asset (use `ASSET_TOOL_MAP` from `AssetCoverageBar`)
-      - Add `selectedAssets: string[]` and `onAssetChange: (ids: string[]) => void` props
-      - For radio (single) types: selecting one automatically deselects any previously selected of same type (standard radio behavior, or filter by type in onChange)
-    - Why: Core UI for multi-asset selection — this is the user-facing feature. Per-type `multiple` flag controls the interaction model
-    - Dependencies: Step 13 (needs `assetDef` from API)
-
-15. **Add asset readiness to `ReadinessSnapshot`** (File: `apps/frontend/src/components/tool/ReadinessSnapshot.tsx`)
-    - Action:
-      - Add `assetDef?: Array<{ assetType: string; required: boolean; multiple?: boolean }>` and `selectedAssets?: string[]` and `workspaceAssets?: AssetDTO[]` props
-      - Add asset readiness rows: for each required asset type, show check/cross with count (e.g. "✅ Persona: 2 selezionati", "❌ Brand Voice: 0/1 (obbligatorio)")
-      - Extend `hasAnyRequired` to include asset requirements
-    - Why: Users need visibility into which assets they still need to select
-    - Dependencies: Step 14 (same props)
-    - Risk: Low — pattern identical to existing text/file readiness
+15. **Create `AssetPicker` shared component** — FE-C1 fix (File: `apps/frontend/src/components/shared/AssetPicker.tsx` — NEW)
+    - Action: Extract a reusable `AssetPicker` component instead of inlining asset selection in `SetupPanel`. The component:
+      - Props: `workspaceId`, `assetDefs: AssetDef[]`, `selectedIds: string[]`, `onChange: (ids: string[]) => void`, `disabled?: boolean`, `exclusivePerType?: boolean`
+      - Fetches workspace assets internally via `useSWR('assets-${workspaceId}-picker', () => api.listAssets(workspaceId))`
+      - Renders per-type sections with radio buttons (`multiple: false`) or checkboxes (`multiple: true`)
+      - Shows asset metadata (type label, creation date) for each asset
+      - Empty state per type: CTA "Genera {type}" linking via `ASSET_TOOL_MAP`
+      - `exclusivePerType: true` mode: selecting one asset unchecks any other of same type (single-select per type). Used by `KnowledgePanel` for agent chat context
+      - Handles stale selections (FE-C5): when SWR revalidates, filter out `selectedIds` that no longer exist in the response
+    - Why: `SetupPanel` would exceed 300 lines with inline assets (text + file + asset sections). A shared component avoids code duplication with `KnowledgePanel` (which currently enforces per-type single-select inline at lines 30-33). The `exclusivePerType` prop makes the same component work for both tool setup (per-type config from `assetDef.multiple`) and agent chat (always single-select per type)
+    - Dependencies: Step 14 (needs `AssetDef` type)
+    - Risk: Medium — new component ~150 lines, must handle loading/empty/error/multi-select states
 
 16. **Wire `selectedAssets` state in `ToolPageLayout`** (File: `apps/frontend/src/components/layout/ToolPageLayout.tsx`)
     - Action:
       - Add `[selectedAssets, setSelectedAssets] = useState<string[]>([])` state
       - Add `[assetDef, setAssetDef] = useState<AssetDef[]>([])` from `fetchToolDefinitions`
-      - Pass `selectedAssets`, `onAssetChange`, `assetDef`, `workspaceAssets` to `SetupPanel`
-      - Pass `assetDef`, `selectedAssets`, `workspaceAssets` to `ReadinessSnapshot`
+      - **FE-C2 fix**: Fetch workspace assets ONCE in ToolPageLayout — not in SetupPanel:
+        ```typescript
+        const { data: assetsData } = useSWR(`assets-${workspaceId}`, () => api.listAssets(workspaceId));
+        const workspaceAssets = assetsData?.assets ?? [];
+        ```
+        (Note: same SWR key as `AssetList` — cache sharing is intentional and beneficial, no duplicate network requests. Document this in a code comment.)
+      - **FE-C3 fix**: Pre-compute `selectedByType: Map<string, number>` with `useMemo`:
+        ```typescript
+        const selectedByType = useMemo(() => {
+          const map = new Map<string, number>();
+          for (const id of selectedAssets) {
+            const asset = workspaceAssets.find(a => a.id === id);
+            if (asset) map.set(asset.assetType, (map.get(asset.assetType) ?? 0) + 1);
+          }
+          return map;
+        }, [selectedAssets, workspaceAssets]);
+        ```
+      - Extend `requiredMissing` check:
+        ```typescript
+        const assetMissing = assetDef.some(
+          a => a.required && (selectedByType.get(a.assetType) ?? 0) === 0
+        );
+        const requiredMissing = textMissing || fileMissing || assetMissing;
+        ```
+      - **FE-C5 fix**: Filter stale `selectedAssets` on SWR revalidate:
+        ```typescript
+        useEffect(() => {
+          const validIds = new Set(workspaceAssets.map(a => a.id));
+          setSelectedAssets(prev => prev.filter(id => validIds.has(id)));
+        }, [workspaceAssets]);
+        ```
+      - **FE-C10 fix**: Reset `selectedAssets` on tool change (alongside `setFiles({})` at line 77)
+      - Pass `assetDef`, `selectedAssets`, `onAssetChange`, `workspaceAssets`, `selectedByType` to `SetupPanel` and `ReadinessSnapshot`
       - In `handleSubmit`: include `selectedAssets` in the `inputs` object sent to `api.startSession()`
-      - Extend `requiredMissing` check: `assetMissing = assetDef.some(a => a.required && countByType(a.assetType) === 0)`
-      - Fetch workspace assets once and pass down: `useSWR('assets-${workspaceId}', () => api.listAssets(workspaceId))`
-    - Why: ToolPageLayout is the orchestrator — must manage the new state and wire it to children
-    - Dependencies: Steps 13, 14, 15
-    - Risk: Medium — wiring is straightforward but touches the main orchestration flow. Must not break existing text/file-only tools
+    - Why: ToolPageLayout is the orchestrator — must manage the new state and wire it to children. All asset data flows down from here
+    - Dependencies: Steps 14, 15
+    - Risk: Medium — touches the main orchestration flow. Must not break existing text/file-only tools (assetDef is empty, all asset code paths are no-ops)
 
-17. **Remove per-type exclusive constraint in `KnowledgePanel`** (File: `apps/frontend/src/components/tool/KnowledgePanel.tsx`)
-    - Action: In `handleToggle`, remove lines 30-33 that filter out existing selections of the same type. When `checked: true`, simply append the asset ID without removing same-type siblings
-    - Why: KnowledgePanel currently enforces single-select per type. Multi-asset tools need multi-select
-    - Dependencies: None (independent UI fix)
-    - Risk: Low — 2 lines removed, all other tools remain single-select by convention (they only have one asset per type anyway)
+17. **Note: `KnowledgePanel` is dead code** — FE-C8 (File: `apps/frontend/src/components/tool/KnowledgePanel.tsx`)
+    - Finding: `KnowledgePanel` has 0 imports anywhere in the frontend. It is dead code.
+    - Action: Do NOT modify it (Step 17 in the original plan). When agent chat needs per-type asset selection, use the new `AssetPicker` component with `exclusivePerType={true}` instead
+    - Cleanup: File a follow-up task to delete `KnowledgePanel.tsx` as dead code in a separate PR (not this feature)
 
-18. **Show count in `AssetCoverageBar`** (File: `apps/frontend/src/components/workspace/AssetCoverageBar.tsx`)
-    - Action: Change `presentTypes: Set<string>` to count map. Change label from `ASSET_LABELS[type]` to include count: `"Persona (3)"`. Change progress bar from binary (0/100) to proportional (count/maxCount — or just keep 100% if any are present). Adjust check icon logic
+18. **Add asset readiness to `ReadinessSnapshot`** (File: `apps/frontend/src/components/tool/ReadinessSnapshot.tsx`)
+    - Action:
+      - Add `assetDef?: AssetDef[]`, `selectedByType?: Map<string, number>`, and `workspaceAssets?: AssetDTO[]` props
+      - Add asset readiness rows: for each required asset type, show check/cross with count:
+        - `multiple: true` → "✅ Persona: 2 selezionati" or "❌ Persona: 0 selezionati (obbligatorio)"
+        - `multiple: false` → "✅ Brief selezionato" or "❌ Brief non selezionato (obbligatorio)"
+      - Extend `hasAnyRequired` to include asset requirements
+      - Use `selectedByType` map (passed from ToolPageLayout) for O(1) count lookup per type
+    - Why: Users need visibility into which assets they still need to select
+    - Dependencies: Step 16 (receives `selectedByType` from ToolPageLayout)
+
+19. **Show count in `AssetCoverageBar`** (File: `apps/frontend/src/components/workspace/AssetCoverageBar.tsx`)
+    - Action: Change `presentTypes: Set<string>` to count map. Change label from `ASSET_LABELS[type]` to `"Persona (3)"`. If count > 0 show 100% progress + count; if 0 show 0%. Label format `"Persona (3)"` fits within the 100px label width up to 99 assets — adequate for typical B2B team sizes (FE-C7: acceptable)
     - Why: With multiple same-type assets, showing just "present/absent" is misleading. Count gives users useful information
     - Dependencies: None
-    - Risk: Low — cosmetic change
 
 ### Phase 7: Copy Module + DI + Contracts (3 files)
 
-19. **Add copy keys** (File: `packages/copy/src/it/tool-page.ts`)
-    - Action: Add keys:
-      - `assetPicker.title` → `"Asset del workspace"`
-      - `assetPicker.manageAssets` → `"Gestisci asset"`
-      - `assetPicker.noAssets` → `"Nessun asset di questo tipo"`
-      - `assetPicker.generateAsset` → `"Genera {type}"`
-      - `readiness.assetsRequired` → `"{count} {type} richiesti"`
-    - Why: Zero hardcoded strings
-    - Dependencies: Steps 14, 15
-    - Risk: Low
+20. **Add copy keys** (File: `packages/copy/src/it/tool-page.ts`)
+    - Action: Add keys under `assetPicker` and `readiness` namespaces:
+      ```typescript
+      assetPicker: {
+        title:            'Asset del workspace',
+        manageAssets:     'Gestisci asset',
+        noAssets:         'Nessun asset di questo tipo',
+        noneAvailable:    'Nessun {type} disponibile. Generane uno.',
+        generateAsset:    'Genera {type}',
+        selectOne:        'Seleziona un {type}',
+        selectAtLeastOne: 'Seleziona almeno un {type}',
+      },
+      ```
+      Add readiness keys for asset count display (singular/plural handled by callers):
+      ```typescript
+      readiness: {
+        // ... existing keys ...
+        assetsSelected:   '{count} {type} selezionati',
+        assetsSelectedOne:'{count} {type} selezionato',
+        assetsRequired:   '{count} {type} richiesti (obbligatorio)',
+      },
+      ```
+    - Why: Zero hardcoded strings. FE-C6 identified 6 missing keys — `selectOne`, `selectAtLeastOne`, `noneAvailable` for the picker, `assetsSelected`/`assetsSelectedOne`/`assetsRequired` for readiness
+    - Dependencies: Steps 15, 18
 
-20. **Update DI wiring** (File: `apps/backend/src/api/generation.ts`, line 18)
-    - Action: Change `new StartSessionUseCase(sessionRepo)` → `new StartSessionUseCase(sessionRepo, workspaceRepo)` to match the new constructor
-    - Why: Use case now needs `WorkspaceRepository` to resolve assets
+21. **Update DI wiring** (File: `apps/backend/src/api/generation.ts`, line 18)
+    - Action: Change constructor call to inject `AssetResolver`:
+      ```typescript
+      const assetResolver = new AssetResolver(workspaceRepo);
+      const startSessionUC = new StartSessionUseCase(sessionRepo, assetResolver);
+      ```
+    - Why: `StartSessionUseCase` now needs `AssetResolver` to resolve assets before readiness check (Step 9). Both `sessionRepo` and `workspaceRepo` are already available in scope. `AssetResolver` wraps `workspaceRepo` cleanly
     - Dependencies: Step 9
-    - Risk: Low — 1 line, workspaceRepo already available in scope
 
-21. **Verify `StartSessionRequest` contract** (File: `packages/contracts/src/generation/start-session.dto.ts`)
+22. **Verify `StartSessionRequest` contract** (File: `packages/contracts/src/generation/start-session.dto.ts`)
     - Action: No change needed — `selectedAssets?: string[]` already exists at line 6
     - Why: Contract was forward-designed for this feature
-    - Dependencies: None
-    - Risk: None — contract is already compatible
 
 ## Testing Strategy
 
@@ -284,10 +356,14 @@ Three findings from invariant + encapsulation analysis:
 ### Integration Tests
 - `StartSessionUseCase` with `selectedAssets` → resolves and populates `acquisitionData`
 - `StartSessionUseCase` without `selectedAssets` (old tools) → empty `resolvedAssets`, backward compat
+- **BA-C4 test**: `StartSessionUseCase` with tool requiring assets but no `selectedAssets` in request → resolver auto-resolves all workspace assets → readiness passes
 - `PromoteToAssetUseCase` — promoting two different personas → two rows in DB
-- **F2 test**: `PromoteToAssetUseCase` — promoting same artifact twice → returns same `assetId` both times (idempotency)
+- **F2 test**: `PromoteToAssetUseCase` — promoting same artifact twice → returns same `assetId` both times (idempotency via `sourceArtifactId` match)
 - **F2 test**: `PromoteToAssetUseCase` — promoting artifact A then artifact B (same type) → two different `assetId`s, both rows in DB
 - **F3 test**: API promote response no longer includes `created` or `promoted` field → verify frontend still works (it never used them)
+- **BA-C5 test**: `StartSessionUseCase` returns `replayed: true` → API does NOT enqueue a new worker job
+- **BA-C1 test**: Sending `selectedAssets` with non-existent IDs → API returns 404 (not 500)
+- **BA-C4 migration test**: Insert two manual assets with same `(workspace_id, type)` and NULL `source_ref` → constraint violation from partial unique index
 
 ### E2E Tests
 - Workspace with 0 personas → tool page shows "Genera Persona" CTA

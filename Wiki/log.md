@@ -12,6 +12,33 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-06] review | cross-validation: backend-architect + frontend-engineer — 15 fixes integrated
+
+**Both reviewers**: APPROVED WITH CHANGES. 4 blockers, 7 medium, 3 low.
+
+**Cross-review finding** (both found independently): `StartSessionUseCase` must always call `AssetResolver.resolve()` — not gated on `selectedAssets.length > 0`. Otherwise required-asset tools fail readiness when no explicit selection is made.
+
+**Backend fixes integrated** (BA-C1 to BA-C5):
+- BA-C1: `ASSET_NOT_FOUND` added to `ErrorMapper` → 404 (new Step 13)
+- BA-C2: `resolvedAssets` added to `StartSessionResult` interface (Step 9)
+- BA-C3: `PromoteToAssetUseCase` F2 fix specified as `findByWorkspace()` + in-memory `sourceArtifactId` filter (Step 8)
+- BA-C4: partial unique index for NULL `source_ref` in migration 011 (Step 4)
+- BA-C5: skip `enqueueSession()` on replayed path (Step 11)
+
+**Frontend fixes integrated** (FE-C1 to FE-C10):
+- FE-C1: `AssetPicker` extracted as shared component — not inline in SetupPanel (Step 15)
+- FE-C2: data fetching only in `ToolPageLayout`, `workspaceAssets` passed as prop (Step 16)
+- FE-C3: `selectedByType: Map<string, number>` pre-computed with `useMemo` (Step 16)
+- FE-C4: same as BA-C4 cross-review (Step 9)
+- FE-C5: stale `selectedAssets` filtered on SWR revalidate (Step 16)
+- FE-C6: 6 new copy keys — `selectOne`, `selectAtLeastOne`, `noneAvailable`, `assetsSelected`/`assetsSelectedOne`/`assetsRequired` (Step 20)
+- FE-C7: AssetCoverageBar count overflow acceptable at B2B scale (Step 19 note)
+- FE-C8: `KnowledgePanel` confirmed dead code (0 imports) — Step 17 replaced with defer-to-AssetPicker note
+- FE-C9: SWR key collision between AssetList and ToolPageLayout documented as intentional cache sharing (Step 16 note)
+- FE-C10: `selectedAssets` reset on tool change alongside `setFiles({})` (Step 16)
+
+**Updated Architecture Changes**: 10 entries (was 7) — added `StartSessionResult`, `ErrorMapper`, `AssetPicker`
+
 ## [2026-08-06] review | type-design audit: 3 findings (2 medium, 1 low) integrated into plan
 
 **F1** — `AssetResolver` silently drops invalid `selectedAssetIds` → added `InvalidAssetSelectionError` validation in Step 7
