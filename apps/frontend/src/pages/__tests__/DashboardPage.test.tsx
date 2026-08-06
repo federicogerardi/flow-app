@@ -153,8 +153,8 @@ describe('DashboardPage', () => {
     expect(screen.getByText('workspace.dashboard.recentSessions')).toBeDefined();
     expect(screen.getAllByText('Blog Post').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Landing Page')).toBeDefined();
-    expect(screen.getByText('completed')).toBeDefined();
-    expect(screen.getByText('failed')).toBeDefined();
+    expect(screen.getByText('Completed')).toBeDefined();
+    expect(screen.getByText('Failed')).toBeDefined();
   });
 
   it('navigates to tool page on tool card click', () => {

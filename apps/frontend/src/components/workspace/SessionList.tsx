@@ -11,6 +11,17 @@ interface SessionListProps {
   workspaceId: string;
 }
 
+/** Status label for display */
+const STATUS_LABELS: Record<string, string> = {
+  completed: 'Completed',
+  running: 'Running',
+  failed: 'Failed',
+  cancelled: 'Cancelled',
+  queued: 'Queued',
+  draft: 'Draft',
+  ready: 'Ready',
+};
+
 export function SessionList({ workspaceId }: SessionListProps) {
   const navigate = useNavigate();
   const { data: sessions, isLoading } = useSWR(
@@ -29,20 +40,20 @@ export function SessionList({ workspaceId }: SessionListProps) {
         <Card key={s.id} variant="outlined">
           <CardActionArea onClick={() => navigate(`/workspaces/${workspaceId}/sessions/${s.id}`)}>
             <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.5, '&:last-child': { pb: 1.5 } }}>
-            <Box>
-              <Typography variant="body1" fontWeight={600}>
-                {s.toolKey}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {new Date(s.createdAt).toLocaleString()}
-              </Typography>
-            </Box>
-            <Chip
-              label={s.status}
-              color={statusColorMap[s.status] ?? 'default'}
-              size="small"
-            />
-          </CardContent>
+              <Box>
+                <Typography variant="body1" fontWeight={600}>
+                  {s.toolKey.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {s.stepCount} step{s.stepCount !== 1 ? 's' : ''} · {new Date(s.createdAt).toLocaleString()}
+                </Typography>
+              </Box>
+              <Chip
+                label={STATUS_LABELS[s.status] ?? s.status}
+                color={statusColorMap[s.status] ?? 'default'}
+                size="small"
+              />
+            </CardContent>
           </CardActionArea>
         </Card>
       ))}
