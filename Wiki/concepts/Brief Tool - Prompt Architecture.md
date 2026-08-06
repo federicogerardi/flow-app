@@ -127,11 +127,11 @@ Both steps share a consistent anti-hallucination contract:
 | `apps/backend/src/api/generation.ts` | `GET /api/tools` exposes `files[]`; `GET /api/sessions/:id` returns `artifacts[]` + `stepCount`; `POST /api/tools/brief/sessions` passes `acquisitionData` to job queue |
 | `apps/backend/src/generation/jobs/enqueue-session.job.ts` | Accepts `acquisitionData` parameter for worker |
 | `apps/backend/src/generation/worker/session-worker.ts` | `SessionJobData` extended; `QUEUE`/`WORKER_PICKUP` applied to session aggregate; `session.save()` before SSE publish; `expectedVersion = session.version - 1`; manual `session_completed` publish after DB consistency |
-| `apps/backend/src/generation/worker/worker-process.ts` | Fixed env path (`../../..` instead of `../..`) |
+| `apps/backend/src/generation/worker/worker-process.ts` | ~~Fixed env path~~ — **deprecated**: worker now runs inline in `server.ts` |
 | `packages/domain/src/generation/domain-services/ContextEnricher.ts` | File content emission: `[File - {key}]\n{content}` |
 | `packages/domain/src/generation/__tests__/ContextEnricher.test.ts` | +2 tests for file content |
-| `apps/backend/package.json` | Added `dev:worker` script |
-| `package.json` | Root `dev` starts server + worker + vite |
+| `apps/backend/package.json` | ~~Added `dev:worker` script~~ — removed; worker starts with server |
+| `package.json` | Root `dev` starts server + vite (worker is inline) |
 
 ### Frontend
 
@@ -163,21 +163,23 @@ Both steps share a consistent anti-hallucination contract:
 | SSE received but FE didn't show result | Session saved as `running` (COMPLETE not persisted before SSE publish) | `session.save()` then manual `session_completed` publish |
 | Session detail missing artifacts | `GET /api/sessions/:id` didn't include artifacts | Added artifact query + `artifacts[]` + `stepCount` to response |
 | Worker didn't start | Missing `dev:worker` script; wrong env path | Added script + fixed `../../..` |
+| Railway worker gap (no session processing) | `Dockerfile` only started server; worker was separate process with no Railway service | Worker inlined into `server.ts`: initialized after `app.listen()`, graceful shutdown coordinates `worker.pause()` → drain(30s) → `worker.close()`. `dev:worker` script removed, `dev` simplified to server + vite only. Verified on Railway: pending sessions auto-picked and completed on deploy. |
 
 ### Verification
 
 ```
 tsc --noEmit  →  domain ✅  backend ✅  frontend ✅
-vitest        →  domain 35/457 ✅  backend 18/127 ✅  frontend 12/60 ✅
+vitest        →  676/676 (69 files) ✅
 vite build    →  ✅
 smoke test   →  ✅ session created → extraction step → brief-generation step → artifacts in DB → FE displays result
+Railway deploy →  ✅ Worker started inline → pending sessions auto-processed → job_completed
 ```
 
 ### Data Flow (Final)
 
 ```
-Frontend                      API                           Worker
-────────                      ───                           ──────
+Frontend                      API + Worker (same process)
+────────                      ──────────────────────────
 SetupPanel                    POST /api/tools/              processSessionJob()
   ├─ text fields               brief/sessions                 │
   │  objective/company/product   │                             ├─ session.apply(QUEUE)

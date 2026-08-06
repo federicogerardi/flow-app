@@ -113,6 +113,7 @@ All phases through 13 + the Brief Tool are fully implemented and smoke-tested.
 | **9 other tool definitions** | 🟡 Stubs — `landing-funnel`, `landing-page`, `video-script-long-form`, `video-description`, `ad-copy`, `brand-voice`, `buyer-persona`, `marketing-angle`, `ai-overview-analysis` all map to `blogPostTool`. Only `brief` has a real definition. |
 | **CrawlData value object** | 🟡 Implemented in domain layer (`CrawlData.create()` / `reconstitute()`). `ai-overview-analysis` session worker integration still pending. |
 | **Credits auto-create** | 🟡 `ConsumeCreditsUseCase` has a `42703` error on first-use quota creation — PostgreSQL column mismatch in the auto-create path. Non-blocking: credit consumption logs warn but don't crash. |
+| **Worker deployment** | ✅ Fixed — worker now runs inline in `server.ts` (same process as API). `worker-process.ts` retained as standalone reference. Verified on Railway: pending sessions auto-picked and completed on deploy. |
 
 ## Infrastructure (Needs Railway provisioning)
 
@@ -121,7 +122,7 @@ All phases through 13 + the Brief Tool are fully implemented and smoke-tested.
 | PostgreSQL | Railway dev (TCP proxy 5432) | ✅ 26 tables, 10 migrations |
 | Redis | Railway dev (TCP proxy 6379) | ✅ ACTIVE |
 | Backend API | `localhost:3000` | ✅ 27 endpoints verified |
-| BullMQ Worker | Local (dev:worker) | ✅ Processes session jobs (concurrency: 5) |
+| BullMQ Worker | Inline in server process | ✅ Processes session jobs (concurrency: 5). Formerly separate `worker-process.ts`, now started from `server.ts`. Verified on Railway deploy. |
 | LLM Gateway | OpenRouter (`OPENROUTER_API_KEY`) | ✅ 4 model tiers, fallback chain |
 | Dockerfile | Multi-stage (Node 22-alpine) | ✅ Phase 10 |
 | CI/CD | GitHub Actions (lint, typecheck, test, build, deploy) | ✅ Phase 10 |

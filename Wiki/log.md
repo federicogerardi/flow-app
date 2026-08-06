@@ -12,6 +12,25 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-06] fix | Worker Gap — Inline Worker in Server Process
+
+**Problem**: Railway `Dockerfile.backend` only started `server.ts`. The BullMQ worker (`worker-process.ts`) was a separate process with no deployment. Sessions were enqueued but never processed on Railway.
+
+**Fix — Option 3 (Worker Inline)**:
+- `apps/backend/src/server.ts`: imports `createSessionWorker`, `GamificationEventPublisher`, `getGamificationQueue`, `ConsumeCreditsUseCase`. Worker instantiated after `app.listen()`. Graceful shutdown coordinates `worker.pause()` → drain(30s) → `worker.close()`.
+- `apps/backend/package.json`: removed `dev:worker` script.
+- `package.json`: `dev` script simplified to server + vite only.
+- `Dockerfile.backend`: no changes needed (CMD already points to `server.ts`).
+
+**Verification**:
+```
+tsc --noEmit  →  backend ✅  domain ✅
+vitest        →  676/676 (69 files) ✅
+Railway deploy →  Worker started ✅ → pending session auto-picked → extraction → brief-generation → job_completed ✅
+```
+
+**Wiki updated**: [[overview]] (infra table, remaining stubs), [[Brief Tool - Prompt Architecture]] (worker entries, data flow diagram), [[log]] (this entry).
+
 ## [2026-08-06] implementation | Brief Tool — Smoke Test ✅ + Bug Fixes (7 root causes)
 
 Smoke test passed: session created → extraction step → brief-generation step → 2 artifacts in DB → FE displays final brief.
