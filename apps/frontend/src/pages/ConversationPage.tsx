@@ -86,7 +86,7 @@ function TypingIndicator() {
 }
 
 export default function ConversationPage() {
-  const { conversationId } = useParams<{ conversationId: string }>();
+  const { conversationId, workspaceId } = useParams<{ conversationId: string; workspaceId: string }>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -108,7 +108,7 @@ export default function ConversationPage() {
   useEffect(() => {
     if (conversation) {
       setBreadcrumbs([
-        { label: copy.t('workspace.nav.home'), path: '/dashboard' },
+        { label: copy.t('workspace.nav.home'), path: workspaceId ? `/workspaces/${workspaceId}` : '/dashboard' },
         { label: conversation.agentName },
       ]);
     }

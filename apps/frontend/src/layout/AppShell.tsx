@@ -1,7 +1,6 @@
 import { AppBar, Box, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, Divider, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Avatar, Menu, MenuItem, useMediaQuery, Popover, Chip } from '@mui/material';
 import type { Theme } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import BuildIcon from '@mui/icons-material/Build';
 import PlayCircleIcon from '@mui/icons-material/PlayCircle';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import PeopleIcon from '@mui/icons-material/People';
@@ -100,7 +99,6 @@ export function AppShell() {
 
   const navItems = [
     { label: copy.t('workspace.nav.home'), icon: <DashboardIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}` : '/dashboard' },
-    { label: copy.t('workspace.nav.tools'), icon: <BuildIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/tools/blog-post` : '/dashboard' },
     { label: copy.t('workspace.nav.sessions'), icon: <PlayCircleIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}` : '/dashboard' },
     { label: copy.t('workspace.nav.assets'), icon: <InventoryIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/assets` : '/dashboard' },
     { label: copy.t('workspace.nav.team'), icon: <PeopleIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/team` : '/dashboard' },
