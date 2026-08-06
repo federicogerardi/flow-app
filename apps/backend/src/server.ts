@@ -10,8 +10,7 @@ dotenv.config({ path: path.join(root, '.env.local'), override: true });
 import { validateConfig } from './config.js';
 import { createApp } from './app.js';
 import { logger } from './infrastructure/logger.js';
-import { createDatabase } from '@flow-app/infra-db';
-import { KyselySessionRepository, KyselyWorkspaceRepository, KyselyConversationRepository, KyselyUserRepository, KyselyQuotaRepository, KyselyPlayerProfileRepository, KyselyWorkspaceChallengeRepository, KyselyAssetRepository } from '@flow-app/infra-db';
+import { createDatabase, KyselySessionRepository, KyselyWorkspaceRepository, KyselyConversationRepository, KyselyUserRepository, KyselyQuotaRepository, KyselyPlayerProfileRepository, KyselyWorkspaceChallengeRepository, KyselyAssetRepository, runMigrations } from '@flow-app/infra-db';
 import { JobEventBridge } from './infrastructure/job-event-bridge.js';
 import { getSessionQueue } from './generation/jobs/enqueue-session.job.js';
 import { CleanupJob } from './infrastructure/cleanup-job.js';
@@ -29,6 +28,18 @@ import { ConsumeCreditsUseCase } from './application/usage/consume-credits.useca
 const config = validateConfig();
 
 const db = createDatabase(config.DATABASE_URL);
+
+// ── Auto-migrate database ──────────────────────────────────────────────────────
+const migrationsPath = path.resolve(root, '..', '..', 'packages', 'infra-db', 'migrations');
+try {
+  const applied = await runMigrations(db, migrationsPath, (msg) => logger.info(msg));
+  if (applied.length > 0) {
+    logger.info({ count: applied.length, files: applied }, 'migrations_applied');
+  }
+} catch (err) {
+  logger.error({ err }, 'migrations_failed');
+  process.exit(1);
+}
 const sessionRepo = new KyselySessionRepository(db);
 const workspaceRepo = new KyselyWorkspaceRepository(db);
 const conversationRepo = new KyselyConversationRepository(db);

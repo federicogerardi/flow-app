@@ -1,4 +1,5 @@
 export { createDatabase } from './database';
+export { runMigrations } from './migrate';
 export { KyselySessionRepository } from './repositories/session-repository';
 export { KyselyWorkspaceRepository } from './repositories/workspace-repository';
 export { KyselyConversationRepository } from './repositories/conversation-repository';
