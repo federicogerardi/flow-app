@@ -35,7 +35,6 @@ export function AssetCoverageBar({ workspaceId }: AssetCoverageBarProps) {
   );
 
   const assets = data?.assets ?? [];
-  const presentTypes = new Set(assets.map((a) => a.assetType));
 
   return (
     <Box>
@@ -44,11 +43,13 @@ export function AssetCoverageBar({ workspaceId }: AssetCoverageBarProps) {
       </Typography>
       <Stack spacing={1}>
         {COVERABLE_TYPES.map((type) => {
-          const present = presentTypes.has(type);
+          const matchingAssets = assets.filter((a) => a.assetType === type);
+          const present = matchingAssets.length > 0;
+          const count = matchingAssets.length;
           return (
             <Stack key={type} direction="row" alignItems="center" spacing={1.5}>
               <Typography variant="caption" sx={{ width: 100, flexShrink: 0, fontSize: '0.7rem' }}>
-                {ASSET_LABELS[type]}
+                {ASSET_LABELS[type]}{count > 1 ? ` (${count})` : ''}
               </Typography>
               <LinearProgress
                 variant="determinate"

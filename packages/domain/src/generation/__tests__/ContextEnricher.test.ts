@@ -34,7 +34,7 @@ describe('ContextEnricher', () => {
       previousResults: [],
       acquisitionData: makeData({
         userInputs: { topic: 'AI trends' },
-        resolvedAssets: new Map([['logo', 'https://cdn.example.com/logo.png']]),
+        resolvedAssets: new Map([['logo', ['https://cdn.example.com/logo.png']]]),
       }),
     });
 
@@ -103,12 +103,57 @@ describe('ContextEnricher', () => {
       step: makeStep(),
       previousResults: [],
       acquisitionData: makeData({
-        resolvedAssets: new Map([['brand-guide', 'https://cdn.example.com/guide.pdf']]),
+        resolvedAssets: new Map([['brand-guide', ['https://cdn.example.com/guide.pdf']]]),
       }),
     });
 
     expect(result).toContain('[Asset - brand-guide]');
     expect(result).toContain('https://cdn.example.com/guide.pdf');
+  });
+
+  it('should format multiple assets of same type with index labels', () => {
+    const result = enricher.enrich({
+      step: makeStep(),
+      previousResults: [],
+      acquisitionData: makeData({
+        resolvedAssets: new Map([['persona', ['Persona A content', 'Persona B content', 'Persona C content']]]),
+      }),
+    });
+
+    expect(result).toContain('[Asset - persona #1]\nPersona A content');
+    expect(result).toContain('[Asset - persona #2]\nPersona B content');
+    expect(result).toContain('[Asset - persona #3]\nPersona C content');
+    expect(result).not.toContain('[Asset - persona]\n');
+  });
+
+  it('should format single asset without index label', () => {
+    const result = enricher.enrich({
+      step: makeStep(),
+      previousResults: [],
+      acquisitionData: makeData({
+        resolvedAssets: new Map([['brief', ['Single brief content']]]),
+      }),
+    });
+
+    expect(result).toContain('[Asset - brief]\nSingle brief content');
+    expect(result).not.toContain('#1');
+  });
+
+  it('should handle mixed single and multi assets', () => {
+    const result = enricher.enrich({
+      step: makeStep(),
+      previousResults: [],
+      acquisitionData: makeData({
+        resolvedAssets: new Map([
+          ['brief', ['Brief content']],
+          ['persona', ['Persona 1', 'Persona 2']],
+        ]),
+      }),
+    });
+
+    expect(result).toContain('[Asset - brief]\nBrief content');
+    expect(result).toContain('[Asset - persona #1]\nPersona 1');
+    expect(result).toContain('[Asset - persona #2]\nPersona 2');
   });
 
   it('should include API data for hybrid steps with matching sources', () => {

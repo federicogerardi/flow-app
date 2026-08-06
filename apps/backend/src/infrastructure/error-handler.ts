@@ -27,6 +27,7 @@ export class ErrorMapper {
         case 'SESSION_NOT_FOUND':
         case 'WORKSPACE_NOT_FOUND':
         case 'ARTIFACT_NOT_FOUND':
+        case 'ASSET_NOT_FOUND':
         case 'CONVERSATION_NOT_FOUND':
           return 404;
         case 'ASSET_TYPE_EXISTS':

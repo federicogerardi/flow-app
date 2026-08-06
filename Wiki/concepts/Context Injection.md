@@ -138,8 +138,15 @@ class InjectionContext {
     }
 
     // Resolved workspace assets → asset:* slots
-    for (const [assetType, content] of acquisition.resolvedAssets.entries()) {
-      ctx.set('asset', assetType, content.value);
+    // Multi-asset: each type maps to string[] — join with separator for slot resolution
+    for (const [assetType, contents] of acquisition.resolvedAssets.entries()) {
+      if (contents.length === 1) {
+        ctx.set('asset', assetType, contents[0]);
+      } else {
+        for (let i = 0; i < contents.length; i++) {
+          ctx.set('asset', `${assetType}#${i + 1}`, contents[i]);
+        }
+      }
     }
 
     // Uploaded files → file:* slots

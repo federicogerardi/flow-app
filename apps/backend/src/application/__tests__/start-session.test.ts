@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ToolKey, InvalidToolKeyError, type SessionRepository } from '@flow-app/domain';
+import { ToolKey, InvalidToolKeyError, type SessionRepository, type AssetResolver } from '@flow-app/domain';
 import { StartSessionUseCase, ReadinessError } from '../generation/start-session.usecase';
 
 function createSessionRepo() {
@@ -16,13 +16,22 @@ function createSessionRepo() {
   } as unknown as SessionRepository;
 }
 
+function createAssetResolver(overrides: Partial<AssetResolver> = {}): AssetResolver {
+  return {
+    resolve: vi.fn(async () => new Map()),
+    ...overrides,
+  } as unknown as AssetResolver;
+}
+
 describe('StartSessionUseCase', () => {
   let sessionRepo: SessionRepository;
+  let assetResolver: AssetResolver;
   let useCase: StartSessionUseCase;
 
   beforeEach(() => {
     sessionRepo = createSessionRepo();
-    useCase = new StartSessionUseCase(sessionRepo);
+    assetResolver = createAssetResolver();
+    useCase = new StartSessionUseCase(sessionRepo, assetResolver);
   });
 
   const validCmd = {
@@ -49,6 +58,7 @@ describe('StartSessionUseCase', () => {
     expect(result.session.userId).toBe('user-1');
     expect(result.toolKey).toBe('blog-post');
     expect(result.stepCount).toBe(3);
+    expect(result.resolvedAssets).toBeInstanceOf(Map);
   });
 
   it('idempotency key match returns existing session (replayed: true)', async () => {
@@ -64,6 +74,8 @@ describe('StartSessionUseCase', () => {
 
     expect(result.replayed).toBe(true);
     expect(result.session).toBe(existingSession);
+    expect(result.resolvedAssets).toBeInstanceOf(Map);
+    expect(result.resolvedAssets.size).toBe(0);
     expect(sessionRepo.save).not.toHaveBeenCalled();
     expect(sessionRepo.saveIdempotencyKey).not.toHaveBeenCalled();
   });
@@ -100,5 +112,40 @@ describe('StartSessionUseCase', () => {
       retryable: true,
     });
     expect(sessionRepo.save).not.toHaveBeenCalled();
+  });
+
+  it('calls assetResolver.resolve unconditionally', async () => {
+    vi.mocked(sessionRepo.findByIdempotencyKeyHash).mockResolvedValue(null);
+
+    await useCase.execute(validCmd);
+
+    expect(assetResolver.resolve).toHaveBeenCalledWith('ws-1', expect.anything(), undefined);
+  });
+
+  it('passes selectedAssets to assetResolver', async () => {
+    vi.mocked(sessionRepo.findByIdempotencyKeyHash).mockResolvedValue(null);
+    vi.mocked(assetResolver.resolve).mockResolvedValue(new Map([['persona', ['P1', 'P2']]]));
+
+    const cmd = {
+      ...validCmd,
+      inputs: {
+        text: { topic: 'AI' },
+        selectedAssets: ['a1', 'a2'],
+      },
+    };
+
+    const result = await useCase.execute(cmd);
+
+    expect(assetResolver.resolve).toHaveBeenCalledWith('ws-1', expect.anything(), ['a1', 'a2']);
+    expect(result.resolvedAssets.get('persona')).toEqual(['P1', 'P2']);
+  });
+
+  it('populates resolvedAssets in acquisitionData for readiness check', async () => {
+    vi.mocked(sessionRepo.findByIdempotencyKeyHash).mockResolvedValue(null);
+    vi.mocked(assetResolver.resolve).mockResolvedValue(new Map([['brand-voice', ['BV content']]]));
+
+    const result = await useCase.execute(validCmd);
+
+    expect(result.resolvedAssets.get('brand-voice')).toEqual(['BV content']);
   });
 });

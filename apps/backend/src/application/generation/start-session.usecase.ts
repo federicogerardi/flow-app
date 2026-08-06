@@ -6,6 +6,7 @@ import {
   ToolKey,
   type SessionRepository,
   type AcquisitionData,
+  type AssetResolver,
   DomainError,
 } from '@flow-app/domain';
 
@@ -41,10 +42,14 @@ export interface StartSessionResult {
   toolKey: string;
   stepCount: number;
   replayed: boolean;
+  resolvedAssets: Map<string, string[]>;
 }
 
 export class StartSessionUseCase {
-  constructor(private readonly sessionRepo: SessionRepository) {}
+  constructor(
+    private readonly sessionRepo: SessionRepository,
+    private readonly assetResolver: AssetResolver,
+  ) {}
 
   async execute(cmd: StartSessionCommand): Promise<StartSessionResult> {
     const idempotencyHash = this.computeHash(cmd.userId, cmd.workspaceId, cmd.toolKey, cmd.inputs);
@@ -56,11 +61,19 @@ export class StartSessionUseCase {
         toolKey: existing.toolKey.value,
         stepCount: getTool(existing.toolKey)?.steps.length ?? 0,
         replayed: true,
+        resolvedAssets: new Map(),
       };
     }
 
     const tool = getTool(ToolKey.from(cmd.toolKey));
     if (!tool) throw new ToolNotFoundError(cmd.toolKey);
+
+    // BA-C4/FE-C4: resolve assets unconditionally
+    const resolvedAssets = await this.assetResolver.resolve(
+      cmd.workspaceId,
+      tool,
+      cmd.inputs.selectedAssets,
+    );
 
     const acquisitionData: AcquisitionData = {
       userInputs: cmd.inputs.text ?? {},
@@ -68,7 +81,7 @@ export class StartSessionUseCase {
         (cmd.inputs.files ?? []).map((f) => [f.key, f.content]),
       ),
       apiResponses: [],
-      resolvedAssets: new Map(),
+      resolvedAssets,
     };
 
     const policy = ReadinessPolicy.from(tool);
@@ -92,6 +105,7 @@ export class StartSessionUseCase {
       toolKey: cmd.toolKey,
       stepCount: tool.steps.length,
       replayed: false,
+      resolvedAssets,
     };
   }
 

@@ -53,7 +53,7 @@ date_updated: 2026-08-06
 | [[Achievements & Badges]] | high | 4 |
 | [[ArtifactContent]] | high | 3 |
 | [[Asset Promotion]] | high | 5 |
-| [[AssetResolver]] | high | 4 |
+| [[AssetResolver]] | high | 5 |
 | [[Auth Dependencies]] | high | 8 |
 | [[Auth Middleware]] | high | 5 |
 | [[Brief Tool - Prompt Architecture]] | high | 3 |
@@ -151,4 +151,5 @@ date_updated: 2026-08-06
 | [[synthesis/phase-11-testing-plan]] | Phase 11 implementation plan — 76 test files, 6 sub-phases, DDD guardrails, wiki-vs-code scope exclusion | 2026-08-03 |
 | [[synthesis/usage-quota-implementation-plan]] | Usage & Quota domain implementation — 13 new files, 7 modified, aggregate + VOs + repository + wiring | 2026-08-04 |
 | [[synthesis/frontend-gap-analysis-2026-08-04]] | Frontend operational gap analysis — 28 missing components, 7 execution tracks, sprint roadmap | 2026-08-04 |
+| [[synthesis/multi-asset-implementation-plan]] | Multi-asset promotion — 22 steps across 7 phases + 6 new test files + 7 updated | 2026-08-06 |
 | [[overview]] | High-level synthesis (v3) | 2026-08-04 |

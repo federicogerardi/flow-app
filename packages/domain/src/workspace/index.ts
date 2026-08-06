@@ -11,7 +11,7 @@ export { AssetSource, InvalidAssetSourceError } from './value-objects/AssetSourc
 export type { AssetSourceValue } from './value-objects/AssetSource';
 export type { WorkspaceRepository } from './repositories/WorkspaceRepository';
 export type { AssetRepository } from './repositories/AssetRepository';
-export { AssetResolver, MissingRequiredAssetError } from './domain-services/AssetResolver';
+export { AssetResolver, MissingRequiredAssetError, InvalidAssetSelectionError } from './domain-services/AssetResolver';
 export {
   NotWorkspaceOwnerError,
   NotAWorkspaceMemberError,

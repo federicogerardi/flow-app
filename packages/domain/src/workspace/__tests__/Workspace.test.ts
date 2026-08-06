@@ -10,6 +10,9 @@ import {
   CannotRemoveOwnerError,
   NotAnActiveMemberError,
 } from '../errors';
+import { Asset } from '../entities/Asset';
+import { AssetType } from '../value-objects/AssetType';
+import { AssetSource } from '../value-objects/AssetSource';
 
 describe('Workspace', () => {
   const ownerId = 'owner-1';
@@ -288,6 +291,112 @@ describe('Workspace', () => {
       const vBefore = workspace.version;
       workspace.changeMemberRole(memberId, MembershipRole.Viewer, ownerId);
       expect(workspace.version).toBe(vBefore + 1);
+    });
+  });
+
+  describe('addAsset', () => {
+    it('should add asset to workspace and increment version', () => {
+      const workspace = createWorkspace();
+      const asset = Asset.create({
+        workspaceId: workspace.workspaceId,
+        assetType: AssetType.from('persona'),
+        source: AssetSource.Generated,
+        content: 'Persona content',
+        sourceSessionId: 'sess-1',
+        sourceArtifactId: 'art-1',
+      });
+      const vBefore = workspace.version;
+      workspace.addAsset(asset);
+      expect(workspace.assets).toHaveLength(1);
+      expect(workspace.version).toBe(vBefore + 1);
+    });
+  });
+
+  describe('getAssetsByType', () => {
+    it('should return empty array when no assets match', () => {
+      const workspace = createWorkspace();
+      expect(workspace.getAssetsByType(AssetType.from('persona'))).toEqual([]);
+    });
+
+    it('should return all assets of matching type', () => {
+      const workspace = createWorkspace();
+      const persona1 = Asset.create({
+        workspaceId: workspace.workspaceId,
+        assetType: AssetType.from('persona'),
+        source: AssetSource.Generated,
+        content: 'Persona 1',
+        sourceSessionId: 'sess-1',
+        sourceArtifactId: 'art-1',
+      });
+      const persona2 = Asset.create({
+        workspaceId: workspace.workspaceId,
+        assetType: AssetType.from('persona'),
+        source: AssetSource.Generated,
+        content: 'Persona 2',
+        sourceSessionId: 'sess-2',
+        sourceArtifactId: 'art-2',
+      });
+      workspace.addAsset(persona1);
+      workspace.addAsset(persona2);
+      expect(workspace.getAssetsByType(AssetType.from('persona'))).toHaveLength(2);
+    });
+
+    it('should return assets only of requested type', () => {
+      const workspace = createWorkspace();
+      workspace.addAsset(Asset.create({
+        workspaceId: workspace.workspaceId,
+        assetType: AssetType.from('persona'),
+        source: AssetSource.Generated,
+        content: 'Persona',
+        sourceSessionId: 'sess-1',
+        sourceArtifactId: 'art-1',
+      }));
+      workspace.addAsset(Asset.create({
+        workspaceId: workspace.workspaceId,
+        assetType: AssetType.from('brief'),
+        source: AssetSource.Generated,
+        content: 'Brief',
+        sourceSessionId: 'sess-2',
+        sourceArtifactId: 'art-2',
+      }));
+      expect(workspace.getAssetsByType(AssetType.from('persona'))).toHaveLength(1);
+      expect(workspace.getAssetsByType(AssetType.from('brief'))).toHaveLength(1);
+      expect(workspace.getAssetsByType(AssetType.from('angle'))).toHaveLength(0);
+    });
+  });
+
+  describe('reconstitute with assets', () => {
+    it('should accept assets parameter', () => {
+      const now = new Date();
+      const ownerMembership = WorkspaceMembership.reconstitute(
+        ownerId, 'ws-1', MembershipRole.Owner, MembershipStatus.Active, ownerId, now, now,
+      );
+      const asset = Asset.reconstitute(
+        'asset-1', 'ws-1', AssetType.from('persona'), AssetSource.Generated,
+        'content', null, null, now, now,
+      );
+      const workspace = Workspace.reconstitute('ws-1', ownerId, 'WS', now, now, 1, [ownerMembership], [asset]);
+      expect(workspace.assets).toHaveLength(1);
+    });
+  });
+
+  describe('getAssetByType (deprecated)', () => {
+    it('should still return first matching asset', () => {
+      const workspace = createWorkspace();
+      workspace.addAsset(Asset.create({
+        workspaceId: workspace.workspaceId,
+        assetType: AssetType.from('persona'),
+        source: AssetSource.Generated,
+        content: 'Persona',
+        sourceSessionId: 'sess-1',
+        sourceArtifactId: 'art-1',
+      }));
+      expect(workspace.getAssetByType(AssetType.from('persona'))).not.toBeNull();
+    });
+
+    it('should return null when no match', () => {
+      const workspace = createWorkspace();
+      expect(workspace.getAssetByType(AssetType.from('persona'))).toBeNull();
     });
   });
 });

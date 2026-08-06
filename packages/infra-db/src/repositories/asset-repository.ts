@@ -50,26 +50,27 @@ export class KyselyAssetRepository implements AssetRepository {
     );
   }
 
-  async findByWorkspaceAndType(workspaceId: string, assetType: AssetType): Promise<Asset | null> {
-    const row = await this.db
+  async findByWorkspaceAndType(workspaceId: string, assetType: AssetType): Promise<Asset[]> {
+    const rows = await this.db
       .selectFrom('assets')
       .where('workspace_id', '=', workspaceId)
       .where('asset_type', '=', assetType.value)
       .selectAll()
-      .executeTakeFirst();
+      .orderBy('created_at', 'desc')
+      .execute();
 
-    if (!row) return null;
-
-    return Asset.reconstitute(
-      row.id,
-      row.workspace_id,
-      AssetType.from(row.asset_type),
-      AssetSource.from(row.source),
-      row.content,
-      row.source_ref,
-      null,
-      row.created_at,
-      row.updated_at,
+    return rows.map((r) =>
+      Asset.reconstitute(
+        r.id,
+        r.workspace_id,
+        AssetType.from(r.asset_type),
+        AssetSource.from(r.source),
+        r.content,
+        r.source_ref,
+        null,
+        r.created_at,
+        r.updated_at,
+      ),
     );
   }
 
@@ -85,10 +86,9 @@ export class KyselyAssetRepository implements AssetRepository {
         content: asset.content,
       })
       .onConflict((oc) =>
-        oc.columns(['workspace_id', 'asset_type']).doUpdateSet({
+        oc.columns(['workspace_id', 'asset_type', 'source_ref']).doUpdateSet({
           content: asset.content,
           source: asset.source.value,
-          source_ref: asset.sourceArtifactId,
           updated_at: asset.updatedAt,
         }),
       )

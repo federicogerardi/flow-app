@@ -54,6 +54,8 @@ Content tools (`landing-funnel`, `video-script-long-form`, `blog-post`, etc.) an
 - Only the last step produces a promotable Artifact
 - Promotion creates a **new** Asset — the original Artifact remains in the Session
 - An Asset with `source = 'generated'` must track `sourceRef` to the original Artifact
+- **Multi-asset idempotency (F2 fix)**: promoting the same artifact twice returns the same `assetId` — the use case pre-checks by `sourceArtifactId` before calling `Asset.create()`. Different artifacts of the same type produce different rows (new DB constraint: `UNIQUE(workspace_id, asset_type, source_ref)`)
+- **F3 fix**: `PromoteToAssetResult` no longer includes `created: boolean` — it was dead code (API hardcoded `promoted: true`, frontend never read it)
 
 ## Implementation Status (2026-08-06)
 

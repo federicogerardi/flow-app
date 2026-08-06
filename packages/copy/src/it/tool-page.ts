@@ -57,4 +57,9 @@ export const toolPage = {
     maxFileSize:      '(max {size}MB)',
     creditCost:       '{count} crediti',
   },
+  assets: {
+    emptyState:       'Nessun asset di tipo "{type}" disponibile. Creane uno dal workspace.',
+    selectOne:        'Seleziona un asset',
+    selectMultiple:   'Seleziona uno o più asset',
+  },
 } as const;

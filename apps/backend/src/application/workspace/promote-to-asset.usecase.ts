@@ -46,7 +46,6 @@ export interface PromoteToAssetResult {
   assetId: string;
   assetType: string;
   workspaceId: string;
-  created: boolean;
 }
 
 export class PromoteToAssetUseCase {
@@ -86,10 +85,21 @@ export class PromoteToAssetUseCase {
       throw new NotAWorkspaceMemberError(cmd.userId, cmd.workspaceId);
     }
 
-    // 7. Check if asset already exists for this workspace+type (idempotency for retries)
-    const existing = await this.assetRepo.findByWorkspaceAndType(cmd.workspaceId, assetType);
+    // 7. Idempotency: check if this exact artifact was already promoted (F2 fix)
+    const allAssets = await this.assetRepo.findByWorkspace(cmd.workspaceId);
+    const existingMatch = allAssets.find(
+      (a) => a.assetType.equals(assetType) && a.sourceArtifactId === cmd.artifactId,
+    );
 
-    // 8. Create or update asset
+    if (existingMatch) {
+      return {
+        assetId: existingMatch.assetId,
+        assetType: assetType.value,
+        workspaceId: cmd.workspaceId,
+      };
+    }
+
+    // 8. Create new asset — ON CONFLICT (workspace_id, asset_type, source_ref) handles concurrent retries
     const asset = Asset.create({
       workspaceId: cmd.workspaceId,
       assetType,
@@ -105,7 +115,6 @@ export class PromoteToAssetUseCase {
       assetId: asset.assetId,
       assetType: assetType.value,
       workspaceId: cmd.workspaceId,
-      created: existing === null,
     };
   }
 }

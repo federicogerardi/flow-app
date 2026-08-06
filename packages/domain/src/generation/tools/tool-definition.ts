@@ -23,6 +23,7 @@ export interface FileInput {
 export interface AssetInput {
   assetType: string;
   required: boolean;
+  multiple?: boolean;
 }
 
 export interface ApiCallInput {

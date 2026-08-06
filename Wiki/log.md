@@ -12,6 +12,142 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-06] impl | Multi-Asset Promotion — 22 steps, 7 phases, all complete
+
+Implemented [[synthesis/multi-asset-implementation-plan]] on branch `feature/multi-asset-promotion`. 12 commits from `dev`.
+
+**Phase 1 — Domain Foundation** (3 files):
+- `AssetInput.multiple?: boolean` added to `tool-definition.ts`
+- `AcquisitionData.resolvedAssets` changed from `Map<string, string>` to `Map<string, string[]>`
+- `ContextEnricher` updated: single asset → `[Asset - type]`, multi → `[Asset - type #1]...[Asset - type #2]`
+
+**Phase 2 — Database** (2 files):
+- Migration `011_multi_asset.sql`: drops `uq_assets_workspace_type`, adds `uq_assets_workspace_type_source` + partial index for NULL source_ref
+- `KyselyAssetRepository.findByWorkspaceAndType` returns `Asset[]` (was `Asset | null`), `save()` ON CONFLICT uses new 3-column constraint
+
+**Phase 3 — Workspace Domain** (2 files):
+- `Workspace.getAssetsByType()` returns `Asset[]`, old `getAssetByType()` deprecated
+- `AssetResolver.resolve()` returns `Map<string, string[]>`, supports `selectedAssetIds` filtering, F1 fix (`InvalidAssetSelectionError`)
+
+**Phase 4 — Application Layer** (2 files):
+- `PromoteToAssetUseCase` refactored: F2 fix (idempotency via `sourceArtifactId` match), F3 fix (removed `created: boolean`)
+- `StartSessionUseCase` accepts `AssetResolver`, resolves assets unconditionally, adds `resolvedAssets` to result
+
+**Phase 5 — Backend API + Worker** (4 files):
+- `listTools` response includes `assets[]` with `multiple` field
+- `startSession` converts `resolvedAssets` Map to Record, skips enqueue on replayed (BA-C5)
+- `SessionJobData.resolvedAssets` changed to `Record<string, string[]>`
+- `ErrorMapper` adds `ASSET_NOT_FOUND` → 404
+
+**Phase 6 — Frontend** (5 files):
+- `AssetInput` type added to `tool-inputs.ts`
+- `fetchToolDefinitions` returns `assetInputs`
+- `AssetPicker` component created (radio/checkbox per asset type)
+- `ToolPageLayout` manages `selectedAssets` state, passes to `startSession`
+- `ReadinessSnapshot` shows asset readiness rows with count labels
+- `AssetCoverageBar` shows count labels for multi-asset types
+- `AssetDTO` updated to include `content`
+
+**Phase 7 — Copy + DI** (1 file):
+- 3 new copy keys: `toolPage.assets.emptyState`, `selectOne`, `selectMultiple`
+- DI wiring verified (AssetResolver created in createGenerationRoutes)
+
+**Tests**: 490/472 domain, 138/138 backend, TypeScript clean across all packages.
+
+**Wiki pages updated**: [[AssetResolver]], [[Asset Promotion]], [[ReadinessPolicy]], [[Context Injection]], [[Workspace & Assets]], [[Asset]], [[Workspace]], [[overview]], [[multi-asset-implementation-plan]], [[log]], [[index]].
+
+## [2026-08-06] review | test coverage audit — 6 new test files, 5 updated
+
+**Test gap analysis**: 7/13 source files in the plan have NO test coverage. 5 have existing tests needing updates. 1 (KnowledgePanel) is dead code and skipped.
+
+**New test files to create** (6):
+- `packages/domain/.../tool-definition.test.ts` — AssetInput shape validation
+- `packages/infra-db/.../asset-repository.spec.ts` — findByWorkspaceAndType (array), upsert behavior
+- `packages/domain/.../AssetResolver.test.ts` — resolve, MissingRequiredAssetError, InvalidAssetSelectionError (F1)
+- `apps/backend/.../promote-to-asset.test.ts` — idempotency (F2), error cases
+- `apps/frontend/.../AssetPicker.test.tsx` — radio/checkbox modes, exclusivePerType
+- `apps/frontend/.../ReadinessSnapshot.test.tsx` — asset readiness rows with count
+
+**Existing test files to update** (5):
+- `ReadinessPolicy.test.ts` — multi-asset evaluation (4 new tests)
+- `ContextEnricher.test.ts` — multi-asset labeling (3 new tests)
+- `Workspace.test.ts` — addAsset, getAssetsByType, reconstitute with assets (5 new tests)
+- `start-session.test.ts` — selectedAssets passthrough, auto-resolve (3 new tests)
+- `session-worker.test.ts` — SessionJobData Record<string, string[]> (1 update)
+
+**Existing files with new cases** (2):
+- `generation.spec.ts` — listTools includes assets, startSession skipped on replay (3 new tests)
+- `error-handler.test.ts` — ASSET_NOT_FOUND → 404 (1 new test)
+
+**Estimated**: ~600 new test lines. Baseline: all 644 existing tests must pass after every phase.
+
+## [2026-08-06] review | cross-validation: backend-architect + frontend-engineer — 15 fixes integrated
+
+**Both reviewers**: APPROVED WITH CHANGES. 4 blockers, 7 medium, 3 low.
+
+**Cross-review finding** (both found independently): `StartSessionUseCase` must always call `AssetResolver.resolve()` — not gated on `selectedAssets.length > 0`. Otherwise required-asset tools fail readiness when no explicit selection is made.
+
+**Backend fixes integrated** (BA-C1 to BA-C5):
+- BA-C1: `ASSET_NOT_FOUND` added to `ErrorMapper` → 404 (new Step 13)
+- BA-C2: `resolvedAssets` added to `StartSessionResult` interface (Step 9)
+- BA-C3: `PromoteToAssetUseCase` F2 fix specified as `findByWorkspace()` + in-memory `sourceArtifactId` filter (Step 8)
+- BA-C4: partial unique index for NULL `source_ref` in migration 011 (Step 4)
+- BA-C5: skip `enqueueSession()` on replayed path (Step 11)
+
+**Frontend fixes integrated** (FE-C1 to FE-C10):
+- FE-C1: `AssetPicker` extracted as shared component — not inline in SetupPanel (Step 15)
+- FE-C2: data fetching only in `ToolPageLayout`, `workspaceAssets` passed as prop (Step 16)
+- FE-C3: `selectedByType: Map<string, number>` pre-computed with `useMemo` (Step 16)
+- FE-C4: same as BA-C4 cross-review (Step 9)
+- FE-C5: stale `selectedAssets` filtered on SWR revalidate (Step 16)
+- FE-C6: 6 new copy keys — `selectOne`, `selectAtLeastOne`, `noneAvailable`, `assetsSelected`/`assetsSelectedOne`/`assetsRequired` (Step 20)
+- FE-C7: AssetCoverageBar count overflow acceptable at B2B scale (Step 19 note)
+- FE-C8: `KnowledgePanel` confirmed dead code (0 imports) — Step 17 replaced with defer-to-AssetPicker note
+- FE-C9: SWR key collision between AssetList and ToolPageLayout documented as intentional cache sharing (Step 16 note)
+- FE-C10: `selectedAssets` reset on tool change alongside `setFiles({})` (Step 16)
+
+**Updated Architecture Changes**: 10 entries (was 7) — added `StartSessionResult`, `ErrorMapper`, `AssetPicker`
+
+## [2026-08-06] review | type-design audit: 3 findings (2 medium, 1 low) integrated into plan
+
+**F1** — `AssetResolver` silently drops invalid `selectedAssetIds` → added `InvalidAssetSelectionError` validation in Step 7
+**F2** — `PromoteToAssetUseCase` returns wrong `assetId` on UPSERT (`Asset.create()` UUID ≠ DB row ID) → pre-check by `source_ref` in Step 8
+**F3** — `created: boolean` dead code → removed from `PromoteToAssetResult` in Step 8
+
+**Verified type invariants**: `Map<string, string[]>` clean, `AssetInput.multiple` orthogonal to `required`, `ReadinessPolicy` defensive, no over-engineered VOs needed
+
+## [2026-08-06] decision | multi-asset: 5 pre-implementation decisions resolved
+
+**D1**: `resolvedAssets` type always `Map<string, string[]>` — controlled break, 3 consumers all in plan
+**D2**: Explicit selection only — no auto-resolve. Per-type config via `multiple` flag: `false` = radio (single), `true` = checkboxes (multi). Required assets block submit; optional accept 0-n
+**D3**: `AssetResolver.resolve()` without `selectedAssetIds` → returns all assets of each type
+**D4**: `multiple: false` + 2+ same-type assets in workspace → radio button UI, no domain error
+**D5**: `Workspace._assets` kept as-is (snapshot read-only, no dual-write)
+
+Updated `Wiki/synthesis/multi-asset-implementation-plan.md` with decision table + selection UX matrix
+
+## [2026-08-06] plan | multi-asset promotion — complete implementation plan
+
+**Context**: Enable tools to consume multiple promoted assets of the same type (e.g. 3 buyer personas). Full gate validation against all 19 DDD rules: 3 blocking gates (DB constraint, type change, resolver return type), 4 design gates (readiness semantics, promotion overwrite, AssetInput type, context enrichment), 0 architectural blockers.
+
+**Wiki changes**:
+- `Wiki/synthesis/multi-asset-implementation-plan.md` — new page: 21 steps across 7 phases covering domain, DB migration, backend, frontend, copy module, DI, contracts
+- `Wiki/index.md` — added synthesis entry
+- `Wiki/log.md` — this entry
+
+**Plan structure**:
+- Phase 1: Domain Foundation (3 files) — `AssetInput.multiple`, `AcquisitionData` type, `ContextEnricher`
+- Phase 2: Database (2 files) — migration 011, repository ON CONFLICT change
+- Phase 3: Workspace Domain (2 files) — `getAssetsByType()`, `AssetResolver`
+- Phase 4: Application Layer (2 files) — `PromoteToAssetUseCase`, `StartSessionUseCase`
+- Phase 5: Backend API + Worker (3 files) — `listTools`, `acquisitionData`, `SessionJobData`
+- Phase 6: Frontend (6 files) — `SetupPanel` asset picker, `ToolPageLayout` wiring, `ReadinessSnapshot`, `KnowledgePanel` fix, `AssetCoverageBar` count
+- Phase 7: Copy + DI + Contracts (3 files)
+
+**Gate validation**: 3 blocking (G1–G3), 4 design (G4–G7), 12 compliant (Rules 1,2,4,6–14,17–19), 1 pre-existing (Rule 3 violation in `Workspace.rename()`)
+
+**Cross-references**: [[DDD Domain Design Rules]], [[Creating a New Tool]], [[ReadinessPolicy]], [[Centralized Copy Modules]]
+
 ## [2026-08-06] docs | howto: Creating a New Tool — step-by-step guide
 
 **Context**: After implementing the `brief` tool and fixing 19 copy module violations, a reusable guide was needed for adding future tools without rediscovering the pattern each time.

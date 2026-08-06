@@ -5,7 +5,7 @@ import { PromoteToAssetUseCase } from '../application/workspace/promote-to-asset
 import { getAuthUser } from '../middleware/auth-types.js';
 import { enqueueSession } from '../generation/jobs/enqueue-session.job.js';
 import type { SessionRepository, WorkspaceRepository, AssetRepository } from '@flow-app/domain';
-import { toolRegistry } from '@flow-app/domain';
+import { AssetResolver, toolRegistry } from '@flow-app/domain';
 import type { DB } from '@flow-app/infra-db';
 import type { SSEPayload } from '../infrastructure/job-event-bridge.js';
 
@@ -15,7 +15,8 @@ export function createGenerationRoutes(
   assetRepo: AssetRepository,
   db: Kysely<DB>,
 ) {
-  const startSessionUC = new StartSessionUseCase(sessionRepo);
+  const assetResolver = new AssetResolver(workspaceRepo);
+  const startSessionUC = new StartSessionUseCase(sessionRepo, assetResolver);
   const promoteToAssetUC = new PromoteToAssetUseCase(sessionRepo, workspaceRepo, assetRepo);
 
   return {
@@ -42,6 +43,11 @@ export function createGenerationRoutes(
             required: f.required,
             description: f.description,
             maxSizeMb: f.maxSizeMb,
+          })) ?? [],
+          assets: tool.acquisition.assets?.map((a) => ({
+            assetType: a.assetType,
+            required: a.required,
+            multiple: a.multiple ?? false,
           })) ?? [],
         },
         produces: tool.produces,
@@ -201,18 +207,27 @@ export function createGenerationRoutes(
           inputs: inputs ?? {},
         });
 
-        // Build serializable acquisition data for the worker job
-        const acquisitionData = {
-          userInputs: inputs?.text ?? {},
-          fileContents: Object.fromEntries(
-            (inputs?.files as Array<{ key: string; content: string }> | undefined ?? [])
-              .map((f) => [f.key, f.content]),
-          ),
-          apiResponses: [],
-          resolvedAssets: {} as Record<string, string>,
-        };
+        // BA-C5: skip enqueue on replayed sessions
+        if (!result.replayed) {
+          // Convert Map<string, string[]> to Record for BullMQ serialization
+          const resolvedAssetsRecord: Record<string, string[]> = {};
+          for (const [type, contents] of result.resolvedAssets.entries()) {
+            resolvedAssetsRecord[type] = contents;
+          }
 
-        await enqueueSession(result.session.sessionId, acquisitionData);
+          // Build serializable acquisition data for the worker job
+          const acquisitionData = {
+            userInputs: inputs?.text ?? {},
+            fileContents: Object.fromEntries(
+              (inputs?.files as Array<{ key: string; content: string }> | undefined ?? [])
+                .map((f) => [f.key, f.content]),
+            ),
+            apiResponses: [],
+            resolvedAssets: resolvedAssetsRecord,
+          };
+
+          await enqueueSession(result.session.sessionId, acquisitionData);
+        }
 
         const statusCode = result.replayed ? 200 : 201;
         res.status(statusCode).json({

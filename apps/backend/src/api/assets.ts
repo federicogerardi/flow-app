@@ -17,6 +17,7 @@ export function createAssetRoutes(assetRepo: AssetRepository) {
           workspaceId: a.workspaceId,
           assetType: a.assetType.value,
           source: a.source.value,
+          content: a.content,
           createdAt: a.createdAt.toISOString(),
           updatedAt: a.updatedAt.toISOString(),
         })),
