@@ -12,6 +12,16 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-06] decision | multi-asset: 5 pre-implementation decisions resolved
+
+**D1**: `resolvedAssets` type always `Map<string, string[]>` — controlled break, 3 consumers all in plan
+**D2**: Explicit selection only — no auto-resolve. Per-type config via `multiple` flag: `false` = radio (single), `true` = checkboxes (multi). Required assets block submit; optional accept 0-n
+**D3**: `AssetResolver.resolve()` without `selectedAssetIds` → returns all assets of each type
+**D4**: `multiple: false` + 2+ same-type assets in workspace → radio button UI, no domain error
+**D5**: `Workspace._assets` kept as-is (snapshot read-only, no dual-write)
+
+Updated `Wiki/synthesis/multi-asset-implementation-plan.md` with decision table + selection UX matrix
+
 ## [2026-08-06] plan | multi-asset promotion — complete implementation plan
 
 **Context**: Enable tools to consume multiple promoted assets of the same type (e.g. 3 buyer personas). Full gate validation against all 19 DDD rules: 3 blocking gates (DB constraint, type change, resolver return type), 4 design gates (readiness semantics, promotion overwrite, AssetInput type, context enrichment), 0 architectural blockers.

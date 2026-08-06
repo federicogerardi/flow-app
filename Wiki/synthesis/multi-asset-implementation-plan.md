@@ -14,7 +14,27 @@ confidence: high
 ## Overview
 Enable tools to consume multiple promoted assets of the same type (e.g. 3 buyer personas) instead of the current 1:1 constraint. Changes span domain types, DB schema, backend resolution, and frontend asset selection UI. The feature is backwards-compatible — existing tools with single-asset inputs continue to work unchanged.
 
+## Pre-Implementation Decisions (resolved 2026-08-06)
+
+| # | Decision | Choice | Rationale |
+|---|----------|--------|-----------|
+| D1 | `resolvedAssets` type: always `Map<string, string[]>`? | **Yes** — single assets become `[content]` | Break is controlled: 3 consumers, all in plan |
+| D2 | Asset selection: explicit or auto-resolve? | **Explicit only** — user must select. Per-type config via `multiple` flag on `AssetInput` | `multiple: false` = radio (single-select, e.g. brief). `multiple: true` = checkboxes (multi-select, e.g. personas). Required assets block submit until selected; optional assets accept 0-n |
+| D3 | `AssetResolver.resolve()` without `selectedAssetIds`: return all or one? | **All** — `Map<string, string[]>` supports natively | All consumers updated; no legacy code to protect |
+| D4 | `multiple: false` + 2+ assets of same type in workspace: error or radio? | **Radio button UI** — domain doesn't limit, UI enforces single-select | Simple: resolver returns all, UI filters to at most 1 via selectedAssetIds |
+| D5 | `Workspace._assets`: keep, align, or deprecate? | **Keep as-is** — snapshot read-only | No dual-write. `PromoteToAssetUseCase` persists via `AssetRepository`; workspace reloads on next fetch |
+
 ## Requirements
+
+**Selection UX per asset type** (D2):
+
+| `multiple` | `required` | UI Component | Submit blocked if |
+|-----------|-----------|-------------|-------------------|
+| `false` | `true` | Radio button (1 only) | No selection |
+| `false` | `false` | Radio button (0-1) | Never |
+| `true` | `true` | Checkboxes (≥1) | No selection |
+| `true` | `false` | Checkboxes (0-n) | Never |
+
 - `AssetInput` supports `multiple: true` flag — allows N assets of same type
 - `ReadinessPolicy` enforces `required` + `multiple` correctly (at least 1 when required, 0 when optional)
 - DB constraint `UNIQUE (workspace_id, asset_type)` replaced with `UNIQUE (workspace_id, asset_type, source_ref)` — multiple same-type assets allowed, dedup by artifact source
@@ -22,7 +42,7 @@ Enable tools to consume multiple promoted assets of the same type (e.g. 3 buyer 
 - `AssetResolver` returns `Map<string, string[]>` when `multiple: true`
 - `ContextEnricher` injects multiple assets of same type with index labels
 - `StartSessionUseCase` resolves `selectedAssets` from the request through `AssetResolver`
-- Frontend `SetupPanel` gains an asset picker with multi-checkbox support
+- Frontend `SetupPanel` gains an asset picker with radio/checkbox support per type
 - `ToolPageLayout` manages `selectedAssets` state and includes them in `startSession()`
 
 ## Architecture Changes
@@ -33,7 +53,7 @@ Enable tools to consume multiple promoted assets of the same type (e.g. 3 buyer 
 - **Modified entity method**: `Workspace.getAssetByType()` → `getAssetsByType()` (`packages/domain/.../Workspace.ts:174`) — returns `Asset[]` instead of `Asset | null`
 - **Modified repository method**: `AssetRepository.findByWorkspaceAndType()` → `findByWorkspaceAndType()` (`packages/domain/.../AssetRepository.ts:7`) — returns `Asset[]`
 - **New migration**: `011_multi_asset.sql` — drops old unique constraint, creates new one
-- **New UI component**: Asset picker section inside `SetupPanel` — checkbox grid per asset type
+- **New UI component**: Asset picker section inside `SetupPanel` — radio buttons for single-select types, checkboxes for multi-select types. Controlled by `AssetInput.multiple` flag per type
 
 ## Implementation Steps
 
@@ -161,13 +181,13 @@ Enable tools to consume multiple promoted assets of the same type (e.g. 3 buyer 
     - Action: Add a new `"Workspace Assets"` section below file inputs. For each `assetDef`:
       - Fetch workspace assets via `useSWR('assets-${workspaceId}', () => api.listAssets(workspaceId))` — add `workspaceId` prop to `SetupPanelProps`
       - Filter assets by `assetDef.assetType`
-      - Render checkboxes (if `multiple: true`) or radio buttons (if `multiple: false`)
+      - Render **radio buttons** if `multiple: false` (single select, e.g. brief, brand-voice) or **checkboxes** if `multiple: true` (multi select, e.g. personas)
       - Show asset metadata: type label + creation date
       - If no assets of type exist: show CTA button linking to the tool that generates that asset (use `ASSET_TOOL_MAP` from `AssetCoverageBar`)
       - Add `selectedAssets: string[]` and `onAssetChange: (ids: string[]) => void` props
-    - Why: Core UI for multi-asset selection — this is the user-facing feature
+      - For radio (single) types: selecting one automatically deselects any previously selected of same type (standard radio behavior, or filter by type in onChange)
+    - Why: Core UI for multi-asset selection — this is the user-facing feature. Per-type `multiple` flag controls the interaction model
     - Dependencies: Step 13 (needs `assetDef` from API)
-    - Risk: High — new component, must handle loading, empty, error, multi-select states. ~150-200 lines of new code
 
 15. **Add asset readiness to `ReadinessSnapshot`** (File: `apps/frontend/src/components/tool/ReadinessSnapshot.tsx`)
     - Action:
