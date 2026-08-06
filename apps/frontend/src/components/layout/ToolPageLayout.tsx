@@ -17,6 +17,16 @@ import type { TextInput } from '../../tool-inputs';
 import { copy } from '@flow-app/copy';
 import { useState } from 'react';
 
+/** Fetch tool metadata including creditCost (H8) */
+async function fetchToolMeta(toolKey: string): Promise<{ creditCost: number }> {
+  const base = (import.meta.env.VITE_API_URL as string) || '';
+  const resp = await fetch(`${base}/api/tools`, { credentials: 'include' });
+  if (!resp.ok) return { creditCost: 1 };
+  const { tools } = await resp.json() as { tools: Array<{ toolKey: string; creditCost: number }> };
+  const tool = tools.find((t) => t.toolKey === toolKey);
+  return { creditCost: tool?.creditCost ?? 1 };
+}
+
 interface ToolPageLayoutProps {
   workspaceId: string;
   toolKey: string;
@@ -27,6 +37,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
   const [state, send] = useMachine(toolPageMachine);
   const [toolDef, setToolDef] = useState<TextInput[]>([]);
   const [loadingTool, setLoadingTool] = useState(true);
+  const [creditCost, setCreditCost] = useState(1);
   const { setBreadcrumbs } = useBreadcrumbs();
 
   const phase = state.value as string;
@@ -42,11 +53,17 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
     ]);
   }, [workspaceId, title, setBreadcrumbs]);
 
-  // Load tool definition on mount
+  // Load tool definition + credit cost on mount
   useEffect(() => {
     setLoadingTool(true);
-    fetchToolInputs(toolKey)
-      .then(setToolDef)
+    Promise.all([
+      fetchToolInputs(toolKey),
+      fetchToolMeta(toolKey),
+    ])
+      .then(([def, meta]) => {
+        setToolDef(def);
+        setCreditCost(meta.creditCost);
+      })
       .finally(() => setLoadingTool(false));
   }, [toolKey]);
 
@@ -124,14 +141,19 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
                   />
                 </Box>
                 <ReadinessSnapshot inputs={inputs} toolDef={toolDef} />
-                <Button
-                  variant="contained"
-                  onClick={handleSubmit}
-                  disabled={requiredMissing}
-                  size="large"
-                >
-                  {copy.t('toolPage.cta.submit')}
-                </Button>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
+                  <Button
+                    variant="contained"
+                    onClick={handleSubmit}
+                    disabled={requiredMissing}
+                    size="large"
+                  >
+                    {copy.t('toolPage.cta.submit')}
+                  </Button>
+                  <Typography variant="body2" color="text.secondary">
+                    {creditCost} credit{creditCost !== 1 ? 's' : ''}
+                  </Typography>
+                </Box>
               </>
             )}
           </CardContent>

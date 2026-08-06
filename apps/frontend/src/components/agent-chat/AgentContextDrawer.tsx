@@ -1,10 +1,31 @@
-import { Drawer, Box, Typography, IconButton, List, ListItem, ListItemText, Chip } from '@mui/material';
+import { Drawer, Box, Typography, IconButton, List, ListItem, ListItemText, Chip, Link } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import HistoryIcon from '@mui/icons-material/History';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import { useNavigate } from 'react-router';
 import useSWR from 'swr';
 import { api } from '../../api/client';
 import { statusColorMap } from '../../shared/statusColors';
+
+const EXPECTED_ASSET_TYPES = ['brief', 'brand-voice', 'persona', 'angle', 'ad-copy'] as const;
+
+const ASSET_LABELS: Record<string, string> = {
+  'brief': 'Brief',
+  'brand-voice': 'Brand Voice',
+  'persona': 'Persona',
+  'angle': 'Angle',
+  'ad-copy': 'Ad Copy',
+};
+
+const ASSET_TOOL_MAP: Record<string, string> = {
+  'brief': 'brief',
+  'brand-voice': 'brand-voice',
+  'persona': 'buyer-persona',
+  'angle': 'marketing-angle',
+  'ad-copy': 'ad-copy',
+};
 
 interface AgentContextDrawerProps {
   open: boolean;
@@ -13,6 +34,8 @@ interface AgentContextDrawerProps {
 }
 
 export function AgentContextDrawer({ open, onClose, workspaceId }: AgentContextDrawerProps) {
+  const navigate = useNavigate();
+
   const { data: assetsData } = useSWR(
     open ? `assets-${workspaceId}-ctx` : null,
     () => api.listAssets(workspaceId),
@@ -23,6 +46,7 @@ export function AgentContextDrawer({ open, onClose, workspaceId }: AgentContextD
   );
 
   const assets = assetsData?.assets ?? [];
+  const presentTypes = new Set(assets.map((a) => a.assetType));
   const sessions = sessionsData?.data ?? [];
 
   return (
@@ -33,21 +57,62 @@ export function AgentContextDrawer({ open, onClose, workspaceId }: AgentContextD
           <IconButton onClick={onClose} size="small"><CloseIcon /></IconButton>
         </Box>
 
-        {/* Assets */}
+        {/* Assets (M10) — per-type with preview/deeplink */}
         <Box sx={{ mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <InventoryIcon fontSize="small" color="action" />
             <Typography variant="subtitle2" fontWeight={600}>Workspace Assets</Typography>
           </Box>
-          {assets.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">No assets yet</Typography>
-          ) : (
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-              {assets.map((a) => (
-                <Chip key={a.id} label={a.assetType} size="small" variant="outlined" />
-              ))}
-            </Box>
-          )}
+          <List dense disablePadding>
+            {EXPECTED_ASSET_TYPES.map((type) => {
+              const present = presentTypes.has(type);
+              return (
+                <ListItem key={type} disablePadding sx={{ mb: 0.5 }}>
+                  <ListItemText
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        {present ? (
+                          <CheckCircleIcon color="success" sx={{ fontSize: 14 }} />
+                        ) : (
+                          <AddCircleOutlineIcon color="disabled" sx={{ fontSize: 14 }} />
+                        )}
+                        <Typography variant="body2" fontWeight={500} fontSize="0.8rem">
+                          {ASSET_LABELS[type]}
+                        </Typography>
+                      </Box>
+                    }
+                    primaryTypographyProps={{ variant: 'body2', fontSize: '0.8rem' }}
+                  />
+                  {present ? (
+                    <Link
+                      component="button"
+                      variant="caption"
+                      onClick={() => {
+                        onClose();
+                        navigate(`/workspaces/${workspaceId}/assets`);
+                      }}
+                      underline="hover"
+                      sx={{ fontSize: '0.7rem' }}
+                    >
+                      View →
+                    </Link>
+                  ) : (
+                    <Chip
+                      label="Generate →"
+                      size="small"
+                      variant="outlined"
+                      color="primary"
+                      onClick={() => {
+                        onClose();
+                        navigate(`/workspaces/${workspaceId}/tools/${ASSET_TOOL_MAP[type]}`);
+                      }}
+                      sx={{ height: 22, fontSize: '0.65rem', cursor: 'pointer' }}
+                    />
+                  )}
+                </ListItem>
+              );
+            })}
+          </List>
         </Box>
 
         {/* Recent Sessions */}
