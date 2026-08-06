@@ -51,3 +51,4 @@ pgdata/
 *.seed
 *.pid.lock
 .obsidian/workspace.json
+.DS_Store
