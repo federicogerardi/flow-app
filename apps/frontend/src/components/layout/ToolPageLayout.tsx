@@ -53,7 +53,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
   const [localSessionId, setLocalSessionId] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const [localErrorCode, setLocalErrorCode] = useState<string | null>(null);
-  const [phaseOverride, setPhaseOverride] = useState<'running' | 'completed' | 'failed' | null>(null);
+  const [phaseOverride, setPhaseOverride] = useState<'running' | 'completed' | 'failed' | 'cancelled' | null>(null);
 
   const phase = phaseOverride ?? (state.value as string);
   const { inputs } = state.context;
@@ -186,7 +186,18 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
 
       setLocalSessionId(result.session.id);
       setSubmitting(false);
-      setPhaseOverride('running');
+// If replayed and session is already terminal, skip the "running" phase
+      if (result.replayed) {
+        const s = result.session.status;
+        if (s === 'completed' || s === 'failed' || s === 'cancelled') {
+          setPhaseOverride(s);
+        } else {
+          // Non-terminal: will be re-enqueued by backend
+          setPhaseOverride('running');
+        }
+      } else {
+        setPhaseOverride('running');
+      }
     } catch (err) {
       setSubmitting(false);
       if (err instanceof ApiClientError) {
@@ -326,6 +337,21 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
           <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
             <Button variant="outlined" onClick={() => { send({ type: 'RESET' }); setPhaseOverride(null); setLocalSessionId(null); setSubmitting(false); }}>
               {copy.t('shared.actions.retry')}
+            </Button>
+            <Button variant="outlined" onClick={() => navigate(`/workspaces/${workspaceId}`)}>
+              {copy.t('workspace.nav.backToWorkspace')}
+            </Button>
+          </Box>
+        </>
+      )}
+
+      {/* Phase: cancelled */}
+      {phase === 'cancelled' && (
+        <>
+          <ErrorState message="La generazione è stata annullata." onRetry={() => { send({ type: 'RESET' }); setPhaseOverride(null); setLocalSessionId(null); setSubmitting(false); }} />
+          <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+            <Button variant="contained" onClick={() => { send({ type: 'RESET' }); setPhaseOverride(null); setLocalSessionId(null); setSubmitting(false); }}>
+              {copy.t('toolPage.cta.new')}
             </Button>
             <Button variant="outlined" onClick={() => navigate(`/workspaces/${workspaceId}`)}>
               {copy.t('workspace.nav.backToWorkspace')}

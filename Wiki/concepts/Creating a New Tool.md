@@ -5,7 +5,7 @@ tags:
   - wiki/generation
   - wiki/howto
 date_updated: 2026-08-06
-source_count: 5
+source_count: 7
 confidence: high
 ---
 
@@ -181,6 +181,18 @@ export const toolRegistry: Record<ToolKeyValue, ToolDefinition> = {
 
 > **Important**: Replace the existing stub in `toolRegistry` instead of adding a duplicate. Many tool keys currently map to `blogPostTool` as a placeholder — this must be replaced with your real definition.
 
+### Asset Tools — Special Considerations
+
+Asset tools that **consume** other assets (e.g., `buyer-persona` requires `brief`) have additional requirements beyond the template above:
+
+| Requirement | Detail |
+|-------------|--------|
+| **SetupPanel auto-selection** | If only one asset of the required type exists in the workspace, `ToolPageLayout` auto-selects it. The user sees a pre-checked radio button, no manual selection needed |
+| **No text inputs = zero idempotency variance** | If the tool has no `userText` fields, the idempotency hash depends solely on `selectedAssetIds`. Selecting the same asset always produces the same hash → subsequent submissions return 200 (replayed). Users must delete the stale idempotency key or change asset selection to get a fresh session |
+| **Asset tool without `userText`** | Set `userText: []` in the domain definition and `TOOL_INPUTS: []` in the frontend fallback. `ReadinessSnapshot` detects this and shows `noInputsRequired` or `assetsOnly` copy |
+| **Workspace assets must be loaded** | `KyselyWorkspaceRepository.findById()` must eagerly load the `assets` table. If assets are not loaded, `AssetResolver.resolve()` rejects all `selectedAssetIds` as invalid (empty `workspace.assets` array) |
+| **Frontend cancelled state** | Add `'cancelled'` to `phaseOverride` state type and provide a render block. Replayed cancelled sessions must show the cancelled UI, not "running" |
+
 ### Field Reference
 
 | Field | Type | Required | Notes |
@@ -216,12 +228,25 @@ export const toolRegistry: Record<ToolKeyValue, ToolDefinition> = {
 
 ### Model Tier Selection
 
-| Tier | Model | Use for |
-|------|-------|---------|
-| `premium` | GPT-4o / Claude 3.5 Sonnet | Creative synthesis, final output generation |
-| `balanced` | GPT-4o Mini / Claude 3 Haiku | Structured extraction, intermediate steps |
-| `light` | GPT-3.5 Turbo | Simple classification, low-stakes formatting |
-| `search` | Perplexity / Gemini | AI overview analysis, web-augmented steps |
+Model IDs are defined in `apps/backend/src/infrastructure/model-registry.ts`. Verify all model IDs against OpenRouter before deploying:
+
+```bash
+curl -s https://openrouter.ai/api/v1/models | python3 -c "
+import json, sys
+for m in json.load(sys.stdin)['data']:
+    if 'claude' in m['id'] or 'gpt-4' in m['id'] or 'gemini' in m['id'] or 'maverick' in m['id']:
+        print(m['id'])
+"
+```
+
+| Tier | Primary Model | Fallback | Use for |
+|------|-------------|----------|---------|
+| `premium` | `anthropic/claude-sonnet-5` | `openai/gpt-4o` | Creative synthesis, final output generation |
+| `balanced` | `openai/gpt-4o-mini` | `google/gemini-2.5-flash` | Structured extraction, intermediate steps (default) |
+| `light` | `google/gemini-2.5-flash-lite` | `meta-llama/llama-4-maverick` | Simple classification, low-stakes formatting |
+| `search` | `google/gemini-2.5-pro` | `perplexity/sonar-reasoning-pro` | AI overview analysis, web-augmented steps |
+
+> **⚠️ Model deprecation**: OpenRouter model IDs change frequently. Model IDs that worked 3 months ago may return 400 today. Always run the verification command above before deploying a new tool, and update `model-registry.ts` if any model ID is invalid.
 
 ---
 
@@ -444,7 +469,13 @@ Before merging, verify each layer:
 | Required file in `tool-inputs.ts` but optional in domain | Readiness mismatch between FE fallback and API | Keep `required` values in sync |
 | Hardcoded Italian strings in component | Violates [[Centralized Copy Modules]] | Move to `packages/copy/src/it/` |
 | Missing anti-hallucination rules | LLM fabricates data | Add guardrails to system prompt |
-| Wrong model tier | Expensive model for simple extraction or weak model for creative synthesis | Review [[Global Deterministic Model Matrix]] |
+| Wrong model tier | Expensive model for simple extraction or weak model for creative synthesis | Review model tier table above |
+| **Invalid model ID** | Worker `llm_generate_primary_failed: 400 ... is not a valid model ID` | Run OpenRouter model verification command above; model IDs change frequently |
+| **Workspace assets not loaded** | `InvalidAssetSelectionError: [...] not found in workspace` on every session start | `KyselyWorkspaceRepository.findById` must query `assets` table and pass results to `Workspace.reconstitute()` |
+| **Asset-only tool replay loop** | `POST → 200` every time, never fresh `201` | Tool with no `userText` has zero idempotency variance — same asset = same hash. Delete stale idempotency keys or change asset selection |
+| **`cancelled` phase not handled** | FE stuck in "running" after replayed cancelled session | Add `'cancelled'` to `phaseOverride` state type + render block in `ToolPageLayout` |
+| **Missing `isTerminal()` on mock** | Idempotent replay test fails with TypeError | Test mock's `status` object needs `isTerminal: () => true/false` |
+| **`ON CONFLICT` on wrong column** | `duplicate key violates "assets_pkey"` on rename | `KyselyAssetRepository.save()` must use `ON CONFLICT (id)` not `(workspace_id, asset_type, source_ref)` |
 
 ---
 
@@ -462,6 +493,8 @@ Before merging, verify each layer:
 
 - [[Tool as Static Configuration]] — ToolDefinition structure, naming convention, registry
 - [[Tool UX Architecture]] — Generic SetupPanel, FeedbackPanel, DX for adding tools
-- [[Brief Tool - Prompt Architecture]] — Reference implementation (complete tool)
+- [[Brief Tool - Prompt Architecture]] — Reference implementation (content tool)
 - [[Content Generation]] — Unified tool model, acquisition → elaboration → output
 - [[Centralized Copy Modules]] — No hardcoded strings governance
+- [[Persona Generator - Prompt Architecture]] — Reference implementation (asset tool consuming assets)
+- [[log]] — 2026-08-06 buyer-persona: lessons learned (idempotency, models, workspace assets, cancelled phase)

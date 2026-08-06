@@ -247,7 +247,7 @@ describe('Generation Routes', () => {
         sessionId: 's-existing',
         toolKey: { value: 'blog-post' },
         workspaceId: 'ws-1',
-        status: { toString: () => 'completed' },
+        status: { toString: () => 'completed', isTerminal: () => true },
       };
       sessionRepo.findByIdempotencyKeyHash.mockResolvedValue(existingSession);
 

@@ -54,6 +54,17 @@ export class StartSessionUseCase {
   async execute(cmd: StartSessionCommand): Promise<StartSessionResult> {
     const idempotencyHash = this.computeHash(cmd.userId, cmd.workspaceId, cmd.toolKey, cmd.inputs);
 
+    const tool = getTool(ToolKey.from(cmd.toolKey));
+    if (!tool) throw new ToolNotFoundError(cmd.toolKey);
+
+    // Resolve assets unconditionally — needed for both fresh and replayed sessions
+    const resolvedAssets = await this.assetResolver.resolve(
+      cmd.workspaceId,
+      tool,
+      cmd.inputs.selectedAssets,
+    );
+
+    // Check for existing session (idempotency)
     const existing = await this.sessionRepo.findByIdempotencyKeyHash(idempotencyHash);
     if (existing) {
       return {
@@ -61,20 +72,11 @@ export class StartSessionUseCase {
         toolKey: existing.toolKey.value,
         stepCount: getTool(existing.toolKey)?.steps.length ?? 0,
         replayed: true,
-        resolvedAssets: new Map(),
+        resolvedAssets,
       };
     }
 
-    const tool = getTool(ToolKey.from(cmd.toolKey));
-    if (!tool) throw new ToolNotFoundError(cmd.toolKey);
-
-    // BA-C4/FE-C4: resolve assets unconditionally
-    const resolvedAssets = await this.assetResolver.resolve(
-      cmd.workspaceId,
-      tool,
-      cmd.inputs.selectedAssets,
-    );
-
+    // Fresh session: validate readiness and create
     const acquisitionData: AcquisitionData = {
       userInputs: cmd.inputs.text ?? {},
       fileContents: Object.fromEntries(

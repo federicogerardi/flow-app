@@ -133,7 +133,7 @@ const buyerPersonaTool: ToolDefinition = {
       prompt: {
         templateId: 'buyer-persona/personas-generation',
         version: '1.0.0',
-        model: ModelTier.Premium,
+        model: ModelTier.Balanced,
         components: ['output-plain-text/v1', 'italian-formal/v1'],
       },
       execution: { timeoutMs: 120000, maxRetries: 2 },

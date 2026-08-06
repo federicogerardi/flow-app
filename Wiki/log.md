@@ -3456,3 +3456,21 @@ vite build    →  2.43s ✅
 ```
 
 **Wiki updated**: [[Asset]], [[Asset Promotion]], [[Workspace & Assets]], [[log]] (this entry).
+
+## [2026-08-06] fix | Buyer-persona tool — 7 bug fixes enabling end-to-end generation
+
+Buyer-persona tool now generates successfully: `extraction` (3.2s, 2.7K tokens) → `personas-generation` (13.8s, 5.5K tokens) → completed (18.4s total).
+
+**7 bugs fixed across 4 layers:**
+
+| # | Layer | Bug | Fix |
+|---|-------|-----|-----|
+| 1 | Infra-db | `KyselyWorkspaceRepository.findById()` didn't load assets → `AssetResolver` rejected all `selectedAssetIds` | Query `assets` table, pass to `Workspace.reconstitute()` |
+| 2 | Infra-db | `KyselyAssetRepository.save()` ON CONFLICT target `(workspace_id, asset_type, source_ref)` didn't match PK `id` → rename failed with `assets_pkey` violation | Changed to `ON CONFLICT (id)` |
+| 3 | Backend | `getSession` `IN` clause used `'__none__'` sentinel for empty `artifactIds` → PostgreSQL UUID cast error | Skip query when `artifactIds` is empty |
+| 4 | Backend | `startSession` response hardcoded `status: 'queued'` even for replayed sessions in terminal state → FE stuck in SSE polling | Return actual `result.session.status.toString()` |
+| 5 | Backend | `StartSessionUseCase` returned `resolvedAssets: new Map()` on replay, and BA-C5 skipped enqueue unconditionally → worker never retried stuck sessions | Move asset resolution before idempotency check; skip enqueue only for terminal replayed sessions |
+| 6 | Frontend | Replayed sessions in `cancelled` state not handled → FE stuck in "running" | Add `'cancelled'` to `phaseOverride` type + render block |
+| 7 | App config | Model IDs stale (`claude-sonnet-4-20250514`, `gemini-2.0-flash-001`, etc.) → LLM gateway returned 400 | Updated `model-registry.ts` with current OpenRouter model IDs, `buyer-persona` step 2 → `ModelTier.Balanced` |
+
+**Wiki updated**: [[Creating a New Tool]] — expanded with Asset Tool checklist, verified model tier table, 6 new pitfalls, buyer-persona reference.
