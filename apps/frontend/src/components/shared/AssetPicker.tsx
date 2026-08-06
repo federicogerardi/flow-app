@@ -1,11 +1,13 @@
-import { Box, Typography, FormControlLabel, Checkbox, Radio, RadioGroup, FormLabel, Stack, FormControl } from '@mui/material';
+import { Box, Typography, FormControlLabel, Checkbox, Radio, RadioGroup, FormLabel, Stack, FormControl, Button } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 import type { AssetInput } from '../../tool-inputs';
 import { copy } from '@flow-app/copy';
 
 interface WorkspaceAsset {
   id: string;
   assetType: string;
-  content: string;
+  name: string | null;
+  createdAt: string;
 }
 
 interface AssetPickerProps {
@@ -14,6 +16,10 @@ interface AssetPickerProps {
   selectedAssets: string[];
   onSelectionChange: (selectedIds: string[]) => void;
   disabled?: boolean;
+  /** Called when user clicks CTA to create a missing asset. Receives the assetType. */
+  onCreateAsset?: (assetType: string) => void;
+  /** Human-readable label per asset type (e.g., { brief: 'Brief' }) */
+  assetLabels?: Record<string, string>;
 }
 
 export function AssetPicker({
@@ -22,6 +28,8 @@ export function AssetPicker({
   selectedAssets,
   onSelectionChange,
   disabled = false,
+  onCreateAsset,
+  assetLabels = {},
 }: AssetPickerProps) {
   if (assetDef.length === 0) return null;
 
@@ -31,15 +39,26 @@ export function AssetPicker({
         const matchingAssets = workspaceAssets.filter((a) => a.assetType === def.assetType);
 
         if (matchingAssets.length === 0) {
+          const label = assetLabels[def.assetType] ?? def.assetType;
           return (
             <FormControl key={def.assetType} disabled={disabled}>
               <FormLabel sx={{ mb: 0.5, fontSize: '0.75rem', fontWeight: 500 }}>
-                {def.assetType}
+                {label}
                 {def.required && ' *'}
               </FormLabel>
-              <Typography variant="body2" color="text.secondary">
-                {copy.t('toolPage.assets.emptyState', { type: def.assetType })}
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                {copy.t('toolPage.assets.emptyState', { type: label })}
               </Typography>
+              {onCreateAsset && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<AddIcon />}
+                  onClick={() => onCreateAsset(def.assetType)}
+                >
+                  {copy.t('toolPage.assets.createAssetCta', { type: label })}
+                </Button>
+              )}
             </FormControl>
           );
         }
@@ -71,10 +90,14 @@ export function AssetPicker({
                         />
                       }
                       label={
-                        <Typography variant="body2" noWrap sx={{ maxWidth: 300 }}>
-                          {asset.content.slice(0, 80)}
-                          {asset.content.length > 80 ? '...' : ''}
-                        </Typography>
+                        <Box>
+                          <Typography variant="body2" noWrap sx={{ maxWidth: 300 }}>
+                            {asset.name ?? (assetLabels[asset.assetType] ?? asset.assetType)}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {new Date(asset.createdAt).toLocaleDateString()}
+                          </Typography>
+                        </Box>
                       }
                     />
                   );
@@ -116,10 +139,14 @@ export function AssetPicker({
                   value={asset.id}
                   control={<Radio size="small" />}
                   label={
-                    <Typography variant="body2" noWrap sx={{ maxWidth: 300 }}>
-                      {asset.content.slice(0, 80)}
-                      {asset.content.length > 80 ? '...' : ''}
-                    </Typography>
+                    <Box>
+                      <Typography variant="body2" noWrap sx={{ maxWidth: 300 }}>
+                        {asset.name ?? (assetLabels[asset.assetType] ?? asset.assetType)}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {new Date(asset.createdAt).toLocaleDateString()}
+                      </Typography>
+                    </Box>
                   }
                 />
               ))}

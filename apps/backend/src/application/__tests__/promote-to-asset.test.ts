@@ -140,6 +140,7 @@ describe('PromoteToAssetUseCase', () => {
       'content',
       null,
       'art-1',
+      null,
       new Date(),
       new Date(),
     );

@@ -11,6 +11,7 @@ export class Asset {
     readonly content: string,
     readonly sourceSessionId: string | null,
     readonly sourceArtifactId: string | null,
+    readonly name: string | null,
     readonly createdAt: Date,
     readonly updatedAt: Date,
   ) {}
@@ -22,6 +23,7 @@ export class Asset {
     content: string;
     sourceSessionId?: string;
     sourceArtifactId?: string;
+    name?: string | null;
   }): Asset {
     return new Asset(
       randomUUID(),
@@ -31,6 +33,7 @@ export class Asset {
       params.content,
       params.sourceSessionId ?? null,
       params.sourceArtifactId ?? null,
+      params.name?.trim() || null,
       new Date(),
       new Date(),
     );
@@ -44,17 +47,26 @@ export class Asset {
     content: string,
     sourceSessionId: string | null,
     sourceArtifactId: string | null,
+    name: string | null,
     createdAt: Date,
     updatedAt: Date,
   ): Asset {
-    return new Asset(assetId, workspaceId, assetType, source, content, sourceSessionId, sourceArtifactId, createdAt, updatedAt);
+    return new Asset(assetId, workspaceId, assetType, source, content, sourceSessionId, sourceArtifactId, name, createdAt, updatedAt);
   }
 
   withContent(newContent: string): Asset {
     return new Asset(
       this.assetId, this.workspaceId, this.assetType, this.source,
       newContent, this.sourceSessionId, this.sourceArtifactId,
-      this.createdAt, new Date(),
+      this.name, this.createdAt, new Date(),
+    );
+  }
+
+  withName(newName: string | null): Asset {
+    return new Asset(
+      this.assetId, this.workspaceId, this.assetType, this.source,
+      this.content, this.sourceSessionId, this.sourceArtifactId,
+      newName?.trim() || null, this.createdAt, new Date(),
     );
   }
 }

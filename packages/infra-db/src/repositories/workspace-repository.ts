@@ -1,6 +1,6 @@
 import type { Kysely } from 'kysely';
 import type { DB } from '../types';
-import { Workspace, WorkspaceMembership, ConcurrencyError, MembershipRole, MembershipStatus, type WorkspaceRepository } from '@flow-app/domain';
+import { Workspace, WorkspaceMembership, ConcurrencyError, MembershipRole, MembershipStatus, Asset, AssetType, AssetSource, type WorkspaceRepository } from '@flow-app/domain';
 
 export class KyselyWorkspaceRepository implements WorkspaceRepository {
   constructor(private readonly db: Kysely<DB>) {}
@@ -53,6 +53,28 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
       .selectAll()
       .execute();
 
+    const assetRows = await this.db
+      .selectFrom('assets')
+      .where('workspace_id', '=', id)
+      .selectAll()
+      .orderBy('created_at', 'desc')
+      .execute();
+
+    const assets = assetRows.map((r) =>
+      Asset.reconstitute(
+        r.id,
+        r.workspace_id,
+        AssetType.from(r.asset_type),
+        AssetSource.from(r.source),
+        r.content,
+        r.source_ref,
+        null,
+        r.name ?? null,
+        r.created_at,
+        r.updated_at,
+      ),
+    );
+
     return Workspace.reconstitute(
       workspace.id,
       workspace.created_by,
@@ -71,6 +93,7 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
           m.joined_at,
         ),
       ),
+      assets,
     );
   }
 

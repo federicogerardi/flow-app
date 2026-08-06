@@ -98,6 +98,49 @@ const briefTool: ToolDefinition = {
   ],
 };
 
+const buyerPersonaTool: ToolDefinition = {
+  toolKey: 'buyer-persona',
+  name: 'Buyer Persona',
+  description: 'Genera buyer persona completi a partire da un brief — con dati supplementari opzionali',
+  creditCost: 1,
+  produces: 'persona',
+  defaultComponents: ['anti-hallucination/v1', 'output-plain-text/v1', 'italian-formal/v1'],
+  acquisition: {
+    assets: [
+      { assetType: 'brief', required: true },
+    ],
+    files: [
+      { key: 'instructions', label: 'Dati supplementari', accept: ['.txt', '.md', '.docx'], required: false, description: 'Opzionale: carica survey, competitor analysis, dati di mercato aggiuntivi' },
+    ],
+  },
+  steps: [
+    {
+      order: 1,
+      label: 'extraction',
+      enrichment: 'serial',
+      prompt: {
+        templateId: 'buyer-persona/extraction',
+        version: '1.0.0',
+        model: ModelTier.Balanced,
+        components: ['output-json/v1'],
+      },
+      execution: { timeoutMs: 60000, maxRetries: 2 },
+    },
+    {
+      order: 2,
+      label: 'personas-generation',
+      enrichment: 'serial',
+      prompt: {
+        templateId: 'buyer-persona/personas-generation',
+        version: '1.0.0',
+        model: ModelTier.Balanced,
+        components: ['output-plain-text/v1', 'italian-formal/v1'],
+      },
+      execution: { timeoutMs: 120000, maxRetries: 2 },
+    },
+  ],
+};
+
 export const toolRegistry: Record<ToolKeyValue, ToolDefinition> = {
   'blog-post': blogPostTool,
   'brief': briefTool,
@@ -107,7 +150,7 @@ export const toolRegistry: Record<ToolKeyValue, ToolDefinition> = {
   'video-description': blogPostTool,
   'ad-copy': blogPostTool,
   'brand-voice': blogPostTool,
-  'buyer-persona': blogPostTool,
+  'buyer-persona': buyerPersonaTool,
   'marketing-angle': blogPostTool,
   'ai-overview-analysis': blogPostTool,
 };

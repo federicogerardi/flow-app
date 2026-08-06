@@ -7,7 +7,6 @@ import { copy } from '@flow-app/copy';
 interface WorkspaceAsset {
   id: string;
   assetType: string;
-  content: string;
 }
 
 interface ReadinessSnapshotProps {

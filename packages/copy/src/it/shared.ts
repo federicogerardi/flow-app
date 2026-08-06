@@ -8,6 +8,7 @@ export const shared = {
     retry:     'Riprova',
     download:  'Scarica',
     promote:   'Promuovi ad asset',
+    rename:    'Rinomina',
     viewAsset: 'Vedi asset',
     close:     'Chiudi',
     send:      'Invia',

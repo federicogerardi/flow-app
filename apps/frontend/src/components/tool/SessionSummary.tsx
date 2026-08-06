@@ -82,10 +82,10 @@ interface SessionSummaryProps {
 
 export function SessionSummary({ artifacts, workspaceId, produces }: SessionSummaryProps) {
   const navigate = useNavigate();
-  const [toast, setToast] = useState<{ open: boolean; assetId?: string; assetType?: string }>({ open: false });
+  const [toast, setToast] = useState<{ open: boolean; assetId?: string; assetType?: string; assetName?: string | null }>({ open: false });
 
-  const handlePromoted = (assetId: string, assetType: string) => {
-    setToast({ open: true, assetId, assetType });
+  const handlePromoted = (assetId: string, assetType: string, name: string | null) => {
+    setToast({ open: true, assetId, assetType, assetName: name });
   };
 
   if (!artifacts || artifacts.length === 0) return null;
@@ -190,7 +190,9 @@ export function SessionSummary({ artifacts, workspaceId, produces }: SessionSumm
           ) : undefined
         }
       >
-        {copy.t('notifications.asset.promotedWithType', { type: toast.assetType ?? '' })}
+        {toast.assetName
+            ? copy.t('notifications.asset.promotedWithName', { name: toast.assetName })
+            : copy.t('notifications.asset.promotedWithType', { type: toast.assetType ?? '' })}
       </Alert>
     </Snackbar>
     </>

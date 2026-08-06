@@ -1,18 +1,15 @@
 import { Box, Typography, Card, CardContent, IconButton, Tooltip, CardActionArea } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import { useState } from 'react';
 import useSWR from 'swr';
 import { useNavigate } from 'react-router';
 import { api } from '../../api/client';
 import { LoadingSkeleton } from '../LoadingSkeleton';
 import { EmptyState } from '../EmptyState';
-
-const ASSET_TYPE_LABELS: Record<string, string> = {
-  'brief': 'Brief',
-  'brand-voice': 'Brand Voice',
-  'persona': 'Buyer Persona',
-  'angle': 'Marketing Angle',
-  'ad-copy': 'Ad Copy',
-};
+import { RenameAssetDialog } from './RenameAssetDialog';
+import { ASSET_TYPE_LABELS } from '../../constants/assets';
+import { copy } from '@flow-app/copy';
 
 interface AssetListProps {
   workspaceId: string;
@@ -25,6 +22,12 @@ export function AssetList({ workspaceId, onDelete }: AssetListProps) {
     `assets-${workspaceId}`,
     () => api.listAssets(workspaceId),
   );
+
+  const [renameAsset, setRenameAsset] = useState<{
+    id: string;
+    name: string | null;
+    assetType: string;
+  } | null>(null);
 
   if (isLoading) return <LoadingSkeleton />;
 
@@ -41,32 +44,70 @@ export function AssetList({ workspaceId, onDelete }: AssetListProps) {
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-      {assets.map((a) => (
-        <Card key={a.id} variant="outlined">
-          <CardActionArea onClick={() => navigate(`/workspaces/${workspaceId}/assets/${a.id}`)}>
-            <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.5, '&:last-child': { pb: 1.5 } }}>
-              <Box>
-                <Typography variant="body1" fontWeight={600}>
-                  {ASSET_TYPE_LABELS[a.assetType] ?? a.assetType}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {a.source} · {new Date(a.createdAt).toLocaleDateString()}
-                </Typography>
-              </Box>
-              <Tooltip title="Delete asset">
-                <IconButton
-                  size="small"
-                  onClick={(e) => { e.stopPropagation(); handleDelete(a.id); }}
-                  aria-label="Delete asset"
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </CardContent>
-          </CardActionArea>
-        </Card>
-      ))}
-    </Box>
+    <>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        {assets.map((a) => {
+          const typeLabel = ASSET_TYPE_LABELS[a.assetType] ?? a.assetType;
+          const primaryText = a.name ?? typeLabel;
+          const secondaryParts = [a.name ? typeLabel : '', a.source, new Date(a.createdAt).toLocaleDateString()].filter(Boolean);
+          const secondaryText = secondaryParts.join(' · ');
+
+          return (
+            <Card key={a.id} variant="outlined">
+              <CardActionArea onClick={() => navigate(`/workspaces/${workspaceId}/assets/${a.id}`)}>
+                <CardContent sx={{
+                  display: 'flex', justifyContent: 'space-between',
+                  alignItems: 'center', py: 1.5, '&:last-child': { pb: 1.5 },
+                }}>
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Typography variant="body1" fontWeight={600} noWrap>
+                      {primaryText}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {secondaryText}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0, ml: 1 }}>
+                    <Tooltip title={copy.t('shared.actions.rename')}>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRenameAsset({ id: a.id, name: a.name ?? null, assetType: a.assetType });
+                        }}
+                        aria-label={copy.t('shared.actions.rename')}
+                      >
+                        <EditOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title={copy.t('shared.actions.delete')}>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => { e.stopPropagation(); handleDelete(a.id); }}
+                        aria-label={copy.t('shared.actions.delete')}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </CardContent>
+              </CardActionArea>
+            </Card>
+          );
+        })}
+      </Box>
+
+      {renameAsset && (
+        <RenameAssetDialog
+          open={!!renameAsset}
+          onClose={() => setRenameAsset(null)}
+          workspaceId={workspaceId}
+          assetId={renameAsset.id}
+          currentName={renameAsset.name}
+          assetType={renameAsset.assetType}
+          onRenamed={() => mutate()}
+        />
+      )}
+    </>
   );
 }

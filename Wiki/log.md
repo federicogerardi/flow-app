@@ -12,7 +12,76 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
-## [2026-08-06] impl | Multi-Asset Promotion — 22 steps, 7 phases, all complete
+## [2026-08-06] impl | Persona Generator — domain + backend implementation complete
+
+Implemented `buyerPersonaTool` on branch `feature/buyer-persona-fe-readiness`. Replaced `blogPostTool` stub in `toolRegistry` with real 2-step asset tool.
+
+**Domain** (1 file):
+- `packages/domain/src/generation/tools/index.ts`: `buyerPersonaTool` definition — `produces: 'persona'`, `acquisition.assets: [{ assetType: 'brief', required: true }]`, optional file upload (`instructions`), 2-step pipeline (extraction → personas-generation)
+
+**Prompt templates** (4 new files):
+- `apps/backend/src/prompts/buyer-persona/extraction/versions/1.0.0/system.md` — Market Research Data Extractor, 5-field JSON, anti-hallucination, good/bad examples
+- `apps/backend/src/prompts/buyer-persona/extraction/versions/1.0.0/user.md` — extract from brief asset + optional file
+- `apps/backend/src/prompts/buyer-persona/personas-generation/versions/1.0.0/system.md` — Buyer Persona Specialist, 10-section persona, Persona Naming Convention, safe inference taxonomy
+- `apps/backend/src/prompts/buyer-persona/personas-generation/versions/1.0.0/user.md` — generate persona from extraction JSON
+
+**Verification**:
+```
+tsc --noEmit  →  domain ✅  backend ✅  frontend ✅
+vitest        →  720/720 (72 files) ✅
+```
+
+**Wiki updated**: [[Persona Generator - Prompt Architecture]] — status → ✅ complete, implementation table added.
+
+Applied all FE gaps identified by the UI design audit for `buyer-persona` tool. Zero architecture changes — all local fixes to existing components.
+
+**Files modified (6)**:
+1. `apps/frontend/src/components/tool/SetupPanel.tsx` — W1: added `assetDef` prop, differentiated empty-state (noInputsRequired vs assetsOnly)
+2. `apps/frontend/src/components/layout/ToolPageLayout.tsx` — W2: auto-select single asset; W3: wire `onCreateAsset` + `assetLabels` to AssetPicker; W5: `stepCount` state from API
+3. `apps/frontend/src/components/shared/AssetPicker.tsx` — W3: `Button` CTA in empty state with `onCreateAsset` callback + `assetLabels` prop
+4. `apps/frontend/src/components/workspace/AssetCoverageBar.tsx` — export `ASSET_LABELS` and `ASSET_TOOL_MAP` (consumed by ToolPageLayout + AssetPicker)
+5. `apps/frontend/src/tool-inputs.ts` — W7: `buyer-persona` text inputs → `[]`, added file fallback
+6. `packages/copy/src/it/tool-page.ts` — W4: added `readiness.assetsOnly`, `assets.createAssetCta`, `assets.autoSelected`
+
+**Verification**: `npx tsc --noEmit` in `apps/frontend` ✅ zero errors.
+
+**Wiki updated**: [[Persona Generator - Prompt Architecture]] — added Frontend Readiness section with fix table.
+
+Revised acquisition model: replaced `userText + required file` with `assets: brief (required) + files (optional)`.
+
+**Rationale**: The persona is a derived asset, not a standalone creation. Consuming the brief anchors every demographic claim in verified business context. The optional file allows supplemental research data (surveys, competitor analysis) for deeper specificity. Aligns with the Asset → Content pipeline: `brief → persona → content tools`.
+
+**Wiki pages updated (2)**:
+1. `Wiki/sources/personas-generator.md` — updated "What It Is" + Step 1 description to reflect brief-based extraction
+2. `Wiki/concepts/Persona Generator - Prompt Architecture.md` — updated architecture diagram, Step 1 description, Acquisition Model section, ToolDefinition block, implementation checklist, Key Differences table, Comparison with stub
+
+**Updated ToolDefinition snippet**:
+```typescript
+acquisition: {
+  assets: [{ assetType: 'brief', required: true }],      // mandatory
+  files: [{ key: 'instructions', required: false, ... }], // optional
+}
+```
+
+Loaded perimeter for `buyer-persona` tool from `Wiki/sources/personas-generator/` prompt prototypes. Tool specifications defined in wiki.
+
+**Wiki pages created (2)**:
+1. `Wiki/sources/personas-generator.md` — source summary of 2 prompt prototypes (extraction + personas-generation)
+2. `Wiki/concepts/Persona Generator - Prompt Architecture.md` — concept page: architecture, downstream-first design, Persona Naming Convention, safe inference taxonomy, planned ToolDefinition, implementation checklist
+
+**Wiki pages updated (2)**:
+3. `Wiki/index.md` — added `sources/personas-generator` to Processed Sources, added `Persona Generator - Prompt Architecture` to Concepts
+4. `Wiki/log.md` — this entry
+
+**State assessment**:
+- `ToolKey.buyer-persona`: ✅ already registered
+- `AssetType.persona`: ✅ already registered
+- `toolRegistry['buyer-persona']`: ❌ stub (maps to `blogPostTool` at line 110)
+- prompt templates on disk: ❌ none (directory `apps/backend/src/prompts/buyer-persona/` does not exist)
+- frontend inputs: ❌ uses `DEFAULT_INPUTS`, no file inputs
+
+**Implementation scope** (Asset tool, 2 steps): 4 new prompt files + 2 modified files = 6 code changes total.
+See [[Persona Generator - Prompt Architecture#Implementation Checklist]] for the full checklist.
 
 Implemented [[synthesis/multi-asset-implementation-plan]] on branch `feature/multi-asset-promotion`. 12 commits from `dev`.
 
@@ -3330,3 +3399,78 @@ Closed all 3 remaining backend gaps identified in the overview audit. 11 files c
 3. [[SessionPage]] — NEW concept page documenting component structure, state guards, duration calc, cancel, breadcrumbs, dependencies, and the bug fix
 4. [[Wiki/index.md]] — added `SessionPage` to Concepts table
 5. `Wiki/log.md` — this entry
+
+## [2026-08-06] feat | Asset name field — domain + DB + backend + frontend (promote dialog + rename dialog)
+
+Implemented optional `name: string | null` field on [[Asset]]s with two UX touchpoints: a promote dialog for naming on creation, and a rename dialog for editing from the asset list.
+
+**Domain** (`packages/domain/src/workspace/entities/Asset.ts`):
+- `name: string | null` added to constructor, `create()`, `reconstitute()`
+- `create()` accepts `name?: string | null`, auto-trims whitespace
+- `withName(newName: string | null)`: new immutability method, preserves other fields
+- `withContent()` preserves existing `name`
+
+**Database** (2 files):
+- Migration `012_asset_name.sql`: `ALTER TABLE assets ADD COLUMN name VARCHAR(255)` — nullable for backward compatibility
+- `AssetsTable`: added `name: string | null`
+
+**Kysely repository** (`asset-repository.ts`):
+- All 3 `reconstitute()` call sites pass `r.name ?? null`
+- `save()` includes `name` in VALUES and `doUpdateSet`
+
+**Contracts** (`asset.dto.ts`):
+- `AssetDTO.name: string | null`
+
+**Backend API** (3 files):
+- `POST /api/artifacts/:id/promote`: accepts `{ workspaceId, name? }`, returns `{ ..., name }`
+- `PUT /api/workspaces/:wid/assets/:aid`: now accepts `{ content?, name? }` — PATCH semantics
+- All asset response shapes (list/detail/create) include `name`
+- `PromoteToAssetUseCase`: command accepts `name?: string`, result includes `name: string | null`, idempotency preserves name
+
+**Frontend components** (7 files):
+- `PromoteDialog.tsx` (**NEW**): MUI Dialog with type-specific placeholder (e.g. "Decision Maker B2B"), optional name input, loading/error states, Enter=submit
+- `PromoteButton.tsx`: simplified — opens dialog instead of direct API call. States: `idle` → `done` (no more loading/error inline)
+- `RenameAssetDialog.tsx` (**NEW**): triggered from AssetList edit icon, pre-filled with current name, calls `api.updateAsset({ name })`
+- `AssetList.tsx`: card title now `name ?? typeLabel`; secondary line shows type when name present; edit icon (✎) triggers RenameDialog
+- `AssetDetailPage.tsx`: header + breadcrumbs use `asset.name ?? typeLabel`; type chip shown alongside source chip when name exists
+- `AssetPicker.tsx`: labels prefer `asset.name`, show content snippet as secondary line when name exists; `WorkspaceAsset` interface updated
+- `SessionSummary.tsx`: toast shows `"{name}" promosso ad asset` when name present, type fallback otherwise
+- `ToolPageLayout.tsx`: `workspaceAssets` state type updated to include `name`
+
+**Shared constants** (`constants/assets.ts` — NEW):
+- `ASSET_TYPE_LABELS`: centralised from AssetList + AssetDetailPage duplicates
+- `ASSET_NAME_PLACEHOLDERS`: per-type smart placeholder examples
+
+**Copy keys** (4 files, ~10 new strings):
+- `shared.actions.rename` = 'Rinomina'
+- `notifications.asset.promotedWithName` = '"{name}" promosso ad asset'
+- `notifications.asset.renamed` = 'Asset rinominato'
+- `toolPage.promote.*` (title, nameFieldLabel, namePlaceholder, nameHelperText, confirmCta, saving)
+- `workspace.assets.renameTitle` = 'Rinomina asset', `renameLabel` = 'Nome'
+
+**Verification**:
+```
+tsc --noEmit  →  5 packages ✅
+vitest        →  720/720 (72 files) ✅
+vite build    →  2.43s ✅
+```
+
+**Wiki updated**: [[Asset]], [[Asset Promotion]], [[Workspace & Assets]], [[log]] (this entry).
+
+## [2026-08-06] fix | Buyer-persona tool — 7 bug fixes enabling end-to-end generation
+
+Buyer-persona tool now generates successfully: `extraction` (3.2s, 2.7K tokens) → `personas-generation` (13.8s, 5.5K tokens) → completed (18.4s total).
+
+**7 bugs fixed across 4 layers:**
+
+| # | Layer | Bug | Fix |
+|---|-------|-----|-----|
+| 1 | Infra-db | `KyselyWorkspaceRepository.findById()` didn't load assets → `AssetResolver` rejected all `selectedAssetIds` | Query `assets` table, pass to `Workspace.reconstitute()` |
+| 2 | Infra-db | `KyselyAssetRepository.save()` ON CONFLICT target `(workspace_id, asset_type, source_ref)` didn't match PK `id` → rename failed with `assets_pkey` violation | Changed to `ON CONFLICT (id)` |
+| 3 | Backend | `getSession` `IN` clause used `'__none__'` sentinel for empty `artifactIds` → PostgreSQL UUID cast error | Skip query when `artifactIds` is empty |
+| 4 | Backend | `startSession` response hardcoded `status: 'queued'` even for replayed sessions in terminal state → FE stuck in SSE polling | Return actual `result.session.status.toString()` |
+| 5 | Backend | `StartSessionUseCase` returned `resolvedAssets: new Map()` on replay, and BA-C5 skipped enqueue unconditionally → worker never retried stuck sessions | Move asset resolution before idempotency check; skip enqueue only for terminal replayed sessions |
+| 6 | Frontend | Replayed sessions in `cancelled` state not handled → FE stuck in "running" | Add `'cancelled'` to `phaseOverride` type + render block |
+| 7 | App config | Model IDs stale (`claude-sonnet-4-20250514`, `gemini-2.0-flash-001`, etc.) → LLM gateway returned 400 | Updated `model-registry.ts` with current OpenRouter model IDs, `buyer-persona` step 2 → `ModelTier.Balanced` |
+
+**Wiki updated**: [[Creating a New Tool]] — expanded with Asset Tool checklist, verified model tier table, 6 new pitfalls, buyer-persona reference.

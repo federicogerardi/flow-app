@@ -17,6 +17,7 @@ import type { TextInput, FileInput, AssetInput } from '../../tool-inputs';
 import { copy } from '@flow-app/copy';
 import { useState } from 'react';
 import { AssetPicker } from '../shared/AssetPicker';
+import { ASSET_LABELS, ASSET_TOOL_MAP } from '../workspace/AssetCoverageBar';
 
 /** Read file content as text for API submission */
 function readFileContent(file: File): Promise<string> {
@@ -39,11 +40,12 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
   const [toolDef, setToolDef] = useState<TextInput[]>([]);
   const [fileDef, setFileDef] = useState<FileInput[]>([]);
   const [assetDef, setAssetDef] = useState<AssetInput[]>([]);
-  const [workspaceAssets, setWorkspaceAssets] = useState<Array<{ id: string; assetType: string; content: string }>>([]);
+  const [workspaceAssets, setWorkspaceAssets] = useState<Array<{ id: string; assetType: string; name: string | null; createdAt: string }>>([]);
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
   const [files, setFiles] = useState<Record<string, File>>({});
   const [loadingTool, setLoadingTool] = useState(true);
   const [creditCost, setCreditCost] = useState(1);
+  const [stepCount, setStepCount] = useState(1);
   const { setBreadcrumbs } = useBreadcrumbs();
 
   // Local state for submission/running/completed/failed — bypass XState async transition issue
@@ -51,7 +53,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
   const [localSessionId, setLocalSessionId] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const [localErrorCode, setLocalErrorCode] = useState<string | null>(null);
-  const [phaseOverride, setPhaseOverride] = useState<'running' | 'completed' | 'failed' | null>(null);
+  const [phaseOverride, setPhaseOverride] = useState<'running' | 'completed' | 'failed' | 'cancelled' | null>(null);
 
   const phase = phaseOverride ?? (state.value as string);
   const { inputs } = state.context;
@@ -89,10 +91,25 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
         setFileDef(defs.fileInputs);
         setAssetDef(defs.assetInputs);
         setCreditCost(defs.creditCost);
+        setStepCount(defs.stepCount);
         setWorkspaceAssets(assetsData.assets ?? []);
       })
       .finally(() => setLoadingTool(false));
   }, [toolKey]);
+
+  // Auto-select single asset when exactly one matching asset exists for a required single-select type.
+  // Avoids unnecessary click when there's only one option (e.g., workspace has exactly one brief).
+  useEffect(() => {
+    if (loadingTool) return;
+    for (const def of assetDef) {
+      if (def.required && !def.multiple) {
+        const matching = workspaceAssets.filter((a) => a.assetType === def.assetType);
+        if (matching.length === 1 && !selectedAssets.includes(matching[0].id)) {
+          setSelectedAssets((prev) => [...prev, matching[0].id]);
+        }
+      }
+    }
+  }, [assetDef, workspaceAssets, loadingTool]);
 
   // SSE session tracking when running
   const { session, progress } = useSession(
@@ -169,7 +186,18 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
 
       setLocalSessionId(result.session.id);
       setSubmitting(false);
-      setPhaseOverride('running');
+// If replayed and session is already terminal, skip the "running" phase
+      if (result.replayed) {
+        const s = result.session.status;
+        if (s === 'completed' || s === 'failed' || s === 'cancelled') {
+          setPhaseOverride(s);
+        } else {
+          // Non-terminal: will be re-enqueued by backend
+          setPhaseOverride('running');
+        }
+      } else {
+        setPhaseOverride('running');
+      }
     } catch (err) {
       setSubmitting(false);
       if (err instanceof ApiClientError) {
@@ -211,16 +239,24 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
                     fileDef={fileDef.length > 0 ? fileDef : undefined}
                     files={files}
                     onFileChange={handleFileChange}
+                    assetDef={assetDef.length > 0 ? assetDef : undefined}
                   />
                 </Box>
                 {assetDef.length > 0 && (
                   <Box sx={{ mb: 3 }}>
-                    <AssetPicker
-                      assetDef={assetDef}
-                      workspaceAssets={workspaceAssets}
-                      selectedAssets={selectedAssets}
-                      onSelectionChange={setSelectedAssets}
-                    />
+<AssetPicker
+                    assetDef={assetDef}
+                    workspaceAssets={workspaceAssets}
+                    selectedAssets={selectedAssets}
+                    onSelectionChange={setSelectedAssets}
+                    onCreateAsset={(assetType) => {
+                      const toolKey = ASSET_TOOL_MAP[assetType];
+                      if (toolKey) {
+                        navigate(`/workspaces/${workspaceId}/tools/${toolKey}`);
+                      }
+                    }}
+                    assetLabels={ASSET_LABELS}
+                  />
                   </Box>
                 )}
                 <ReadinessSnapshot
@@ -277,8 +313,8 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
         <>
           <CompletionBanner
             durationSeconds={0}
-            stepCount={toolDef.length || 1}
-            creditCost={1}
+            stepCount={stepCount}
+            creditCost={creditCost}
           />
           {session?.artifacts && (
             <SessionSummary artifacts={session.artifacts} workspaceId={workspaceId} produces={session.produces} />
@@ -301,6 +337,21 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
           <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
             <Button variant="outlined" onClick={() => { send({ type: 'RESET' }); setPhaseOverride(null); setLocalSessionId(null); setSubmitting(false); }}>
               {copy.t('shared.actions.retry')}
+            </Button>
+            <Button variant="outlined" onClick={() => navigate(`/workspaces/${workspaceId}`)}>
+              {copy.t('workspace.nav.backToWorkspace')}
+            </Button>
+          </Box>
+        </>
+      )}
+
+      {/* Phase: cancelled */}
+      {phase === 'cancelled' && (
+        <>
+          <ErrorState message="La generazione è stata annullata." onRetry={() => { send({ type: 'RESET' }); setPhaseOverride(null); setLocalSessionId(null); setSubmitting(false); }} />
+          <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+            <Button variant="contained" onClick={() => { send({ type: 'RESET' }); setPhaseOverride(null); setLocalSessionId(null); setSubmitting(false); }}>
+              {copy.t('toolPage.cta.new')}
             </Button>
             <Button variant="outlined" onClick={() => navigate(`/workspaces/${workspaceId}`)}>
               {copy.t('workspace.nav.backToWorkspace')}

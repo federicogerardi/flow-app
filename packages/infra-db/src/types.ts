@@ -56,6 +56,7 @@ export interface AssetsTable {
   id: string;
   workspace_id: string;
   asset_type: string;
+  name: string | null;
   source: string;
   source_ref: string | null;
   content: string;

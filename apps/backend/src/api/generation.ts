@@ -168,7 +168,7 @@ export function createGenerationRoutes(
     promoteArtifact: async (req: Request, res: Response, next: NextFunction) => {
       try {
         const artifactId = req.params.id as string;
-        const { workspaceId } = req.body as { workspaceId: string };
+        const { workspaceId, name } = req.body as { workspaceId: string; name?: string };
 
         const user = getAuthUser(req);
         if (!user) {
@@ -181,12 +181,14 @@ export function createGenerationRoutes(
           userId: user.sub,
           workspaceId,
           artifactId,
+          name,
         });
 
         res.status(201).json({
           artifactId,
           assetType: result.assetType,
           assetId: result.assetId,
+          name: result.name,
           promoted: true,
         });
       } catch (error) {
@@ -207,8 +209,9 @@ export function createGenerationRoutes(
           inputs: inputs ?? {},
         });
 
-        // BA-C5: skip enqueue on replayed sessions
-        if (!result.replayed) {
+        // Enqueue worker job for fresh sessions and non-terminal replayed sessions
+        // (Replayed sessions stuck in ready/queued/running need a fresh worker job)
+        if (!result.replayed || !result.session.status.isTerminal()) {
           // Convert Map<string, string[]> to Record for BullMQ serialization
           const resolvedAssetsRecord: Record<string, string[]> = {};
           for (const [type, contents] of result.resolvedAssets.entries()) {
@@ -235,9 +238,9 @@ export function createGenerationRoutes(
             id: result.session.sessionId,
             toolKey: result.toolKey,
             workspaceId: result.session.workspaceId,
-            status: 'queued',
+            status: result.session.status.toString(),
             stepCount: result.stepCount,
-            createdAt: new Date().toISOString(),
+            createdAt: result.session.startedAt?.toISOString() ?? new Date().toISOString(),
           },
           replayed: result.replayed,
         });
@@ -265,12 +268,14 @@ export function createGenerationRoutes(
 
         // Fetch promoted assets for this session's artifacts (for persistent "Promoted" state)
         const artifactIds = artifactRows.map((a) => a.id);
-        const promotedAssets = await db
-          .selectFrom('assets')
-          .where('source', '=', 'generated')
-          .where('source_ref', 'in', artifactIds.length > 0 ? artifactIds : ['__none__'])
-          .select(['id', 'source_ref'])
-          .execute();
+        const promotedAssets = artifactIds.length > 0
+          ? await db
+              .selectFrom('assets')
+              .where('source', '=', 'generated')
+              .where('source_ref', 'in', artifactIds)
+              .select(['id', 'source_ref'])
+              .execute()
+          : [];
 
         const promotedMap = new Map<string, string>();
         for (const pa of promotedAssets) {

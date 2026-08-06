@@ -57,13 +57,16 @@ const TOOL_INPUTS: Record<string, TextInput[]> = {
   'ad-copy': AD_COPY_INPUTS,
   'brief': BRIEF_INPUTS,
   'brand-voice': DEFAULT_INPUTS,
-  'buyer-persona': DEFAULT_INPUTS,
+  'buyer-persona': [],   // no text inputs — uses brief asset + optional file
   'marketing-angle': DEFAULT_INPUTS,
   'ai-overview-analysis': DEFAULT_INPUTS,
 };
 
 const TOOL_FILES: Record<string, FileInput[]> = {
   'brief': BRIEF_FILES,
+  'buyer-persona': [
+    { key: 'instructions', label: 'Dati supplementari', accept: ['.txt', '.md', '.docx'], required: false, description: 'Opzionale: survey, competitor analysis...' },
+  ],
 };
 
 export function getToolInputs(toolKey: string): TextInput[] {
