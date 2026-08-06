@@ -12,6 +12,17 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-06] docs | howto: Creating a New Tool — step-by-step guide
+
+**Context**: After implementing the `brief` tool and fixing 19 copy module violations, a reusable guide was needed for adding future tools without rediscovering the pattern each time.
+
+**Wiki changes**:
+- `Wiki/concepts/Creating a New Tool.md` — new page: decision tree, 6-step checklist, code templates for content/asset/analysis tools, field reference, model tier guide, prompt template conventions, common pitfalls, file count per tool type
+- `Wiki/index.md` — added concept entry
+- `Wiki/log.md` — this entry
+
+**Cross-references**: [[Tool as Static Configuration]], [[Tool UX Architecture]], [[Brief Tool - Prompt Architecture]], [[Content Generation]], [[Centralized Copy Modules]]
+
 ## [2026-08-06] refactor | brief: remove company+product text inputs → file extraction
 
 **Context**: `company` and `product` were redundant text inputs in `briefTool.acquisition.userText` — both values already present in the uploaded briefing file. Extracting them from the file eliminates data duplication and simplifies the SetupPanel to a single `objective` field.

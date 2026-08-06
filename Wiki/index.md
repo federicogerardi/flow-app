@@ -63,6 +63,7 @@ date_updated: 2026-08-06
 | [[Concurrency & Conflict Policy]] | high | 8 |
 | [[Content Generation]] | high | 5 |
 | [[Contracts Package]] | high | 5 |
+| [[Creating a New Tool]] | high | 5 |
 | [[Context Injection]] | high | 6 |
 | [[CrawlData]] | high | 2 |
 | [[Database Schema]] | high | 9 |
