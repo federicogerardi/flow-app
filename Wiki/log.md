@@ -12,6 +12,31 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-06] review | test coverage audit — 6 new test files, 5 updated
+
+**Test gap analysis**: 7/13 source files in the plan have NO test coverage. 5 have existing tests needing updates. 1 (KnowledgePanel) is dead code and skipped.
+
+**New test files to create** (6):
+- `packages/domain/.../tool-definition.test.ts` — AssetInput shape validation
+- `packages/infra-db/.../asset-repository.spec.ts` — findByWorkspaceAndType (array), upsert behavior
+- `packages/domain/.../AssetResolver.test.ts` — resolve, MissingRequiredAssetError, InvalidAssetSelectionError (F1)
+- `apps/backend/.../promote-to-asset.test.ts` — idempotency (F2), error cases
+- `apps/frontend/.../AssetPicker.test.tsx` — radio/checkbox modes, exclusivePerType
+- `apps/frontend/.../ReadinessSnapshot.test.tsx` — asset readiness rows with count
+
+**Existing test files to update** (5):
+- `ReadinessPolicy.test.ts` — multi-asset evaluation (4 new tests)
+- `ContextEnricher.test.ts` — multi-asset labeling (3 new tests)
+- `Workspace.test.ts` — addAsset, getAssetsByType, reconstitute with assets (5 new tests)
+- `start-session.test.ts` — selectedAssets passthrough, auto-resolve (3 new tests)
+- `session-worker.test.ts` — SessionJobData Record<string, string[]> (1 update)
+
+**Existing files with new cases** (2):
+- `generation.spec.ts` — listTools includes assets, startSession skipped on replay (3 new tests)
+- `error-handler.test.ts` — ASSET_NOT_FOUND → 404 (1 new test)
+
+**Estimated**: ~600 new test lines. Baseline: all 644 existing tests must pass after every phase.
+
 ## [2026-08-06] review | cross-validation: backend-architect + frontend-engineer — 15 fixes integrated
 
 **Both reviewers**: APPROVED WITH CHANGES. 4 blockers, 7 medium, 3 low.

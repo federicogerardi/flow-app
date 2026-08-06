@@ -40,6 +40,15 @@ Three findings from invariant + encapsulation analysis:
 - `ReadinessPolicy` is defensive: `.get(type) ?? []` handles missing Map keys gracefully
 - No new class VOs needed — `AssetSelection` as a class would add ceremony without invariants; `string[]` is sufficient for the selected-asset-IDs use case
 
+## Cross-Validation Reports (2026-08-06)
+
+| Review | Verdict | Blockers | Medium | Low |
+|--------|---------|----------|--------|-----|
+| Type Design Audit | ✅ Approved | 0 | 3 (F1-F3) | 0 |
+| Backend Architect | ✅ Approved with changes | 2 (BA-C1, BA-C2) | 3 (BA-C3 to BA-C5) | 3 |
+| Frontend Engineer | ✅ Approved with changes | 2 (FE-C1, FE-C4) | 4 (FE-C2, FE-C3, FE-C5, FE-C6) | 4 |
+| **Total** | **All resolved** | **15 fixes integrated** | | |
+
 ## Requirements
 
 **Selection UX per asset type** (D2):
@@ -339,6 +348,83 @@ Three findings from invariant + encapsulation analysis:
 22. **Verify `StartSessionRequest` contract** (File: `packages/contracts/src/generation/start-session.dto.ts`)
     - Action: No change needed — `selectedAssets?: string[]` already exists at line 6
     - Why: Contract was forward-designed for this feature
+
+## Test Coverage Plan
+
+Each step in the implementation plan has a corresponding test requirement. The codebase currently has **644 vitest tests** — the baseline must pass after every phase.
+
+### Test Baseline Before Starting
+
+```bash
+cd packages/domain && npx vitest run       # domain unit tests
+cd apps/backend && npx vitest run          # backend + integration tests
+cd apps/frontend && npx vitest run          # frontend component tests
+cd packages/infra-db && npx vitest run      # infra repository tests
+```
+
+### Test Files by Phase
+
+#### Phase 1 (Domain Foundation)
+
+| Step | Source File | Test File | Action | Tests to Add |
+|------|------------|-----------|--------|-------------|
+| 1 | `tool-definition.ts` | ❌ Missing | **CREATE** `generation/__tests__/tool-definition.test.ts` | Verify `AssetInput` shape with `multiple: true/false`; verify `ToolDefinition.acquisition.assets` array parsing |
+| 2 | `ReadinessPolicy.ts` | ✅ `ReadinessPolicy.test.ts` (137 lines) | **UPDATE** | 4 new: single `resolvedAssets` as `[content]` array, multi as `['c1','c2']`, empty array for missing required, empty Map for all-missing. Fix `makeData()` helper to accept `Map<string, string[]>`
+| 3 | `ContextEnricher.ts` | ✅ `ContextEnricher.test.ts` (169 lines) | **UPDATE** | 3 new: multi-asset formatting `[Asset - persona #1]...[Asset - persona #2]`, single asset still works (single-element array), mixed types |
+
+#### Phase 2 (Database)
+
+| 4 | Migration `011` | — | **MANUAL** | Run `SELECT COUNT(*) FROM assets WHERE source_ref IS NULL GROUP BY workspace_id, asset_type HAVING COUNT(*) > 1` before migration; verify constraint after |
+| 5 | `KyselyAssetRepository` | ❌ Missing | **CREATE** `infra-db/__tests__/asset-repository.spec.ts` | 6: `findByWorkspaceAndType` returns `Asset[]`, empty array for unknown type, `save()` upsert by new constraint, `save()` insert when new, `delete()`, `findByWorkspace` with multiple same-type assets |
+
+#### Phase 3 (Workspace Domain)
+
+| 6 | `Workspace.ts` | ✅ `Workspace.test.ts` (293 lines) | **NEW tests** | 5: `addAsset()` adds to `_assets`, `getAssetsByType()` returns `Asset[]` for matches, `getAssetsByType()` returns `[]` for no match, `reconstitute()` with `assets` parameter, `getAssetByType()` deprecation wrapper forwards to new method |
+| 7 | `AssetResolver.ts` | ❌ Missing | **CREATE** `workspace/__tests__/AssetResolver.test.ts` | 8: resolve required asset from workspace, `MissingRequiredAssetError` when required absent, skip optional absent, `WorkspaceNotFoundError`, empty `acquisition.assets`, `selectedAssetIds` filter, `InvalidAssetSelectionError` for invalid IDs (F1), multi-asset returns `Map<string, string[]>`
+
+#### Phase 4 (Application)
+
+| 8 | `promote-to-asset.usecase.ts` | ❌ Missing | **CREATE** `application/__tests__/promote-to-asset.test.ts` | 8: successful promotion, same artifact twice → same `assetId` (F2), different artifacts same type → different `assetId`s, `ArtifactNotFoundError`, `SessionNotCompletedError`, `ToolNotPromotableError`, `WorkspaceNotFoundError`, `NotAWorkspaceMemberError` |
+| 9 | `start-session.usecase.ts` | ✅ `start-session.test.ts` (104 lines) | **UPDATE** | 3 new: `selectedAssets` passed through → `resolvedAssets` populated, no `selectedAssets` → all workspace assets auto-resolved (BA-C4), replay with assets → no new resolution. Update `StartSessionResult` type assertions |
+
+#### Phase 5 (Backend API + Worker)
+
+| 10 | `listTools` in `generation.ts` | ✅ `generation.spec.ts` (306 lines) | **NEW tests** | 1: `listTools` response includes `acquisition.assets[]` with `multiple` field |
+| 11 | `startSession` in `generation.ts` | ✅ same file | **UPDATE** | 2: `resolvedAssets` forwarded to worker job, skipped enqueue on `replayed: true` (BA-C5) |
+| 12 | `session-worker.ts` | ✅ `session-worker.test.ts` (225 lines) | **UPDATE** | 1: `SessionJobData.resolvedAssets` accepts `Record<string, string[]>` |
+| 13 | `error-handler.ts` | ✅ `error-handler.test.ts` (183 lines) | **NEW case** | 1: `ASSET_NOT_FOUND` → 404 (BA-C1) |
+
+#### Phase 6 (Frontend)
+
+| 14 | `fetchToolDefinitions` | ❌ Missing | Covered by SetupPanel test |
+| 15 | `AssetPicker.tsx` | ❌ NEW component | **CREATE** `components/__tests__/AssetPicker.test.tsx` | 6: renders radio for `multiple:false`, checkboxes for `multiple:true`, empty state + CTA link, required label, selection callback, `exclusivePerType` single-select enforcement |
+| 16 | `ToolPageLayout.tsx` | ❌ Missing | Covered by integration test |
+| 17 | `KnowledgePanel.tsx` | — | **No change** (dead code, skip) |
+| 18 | `ReadinessSnapshot.tsx` | ❌ Missing | **CREATE** `components/__tests__/ReadinessSnapshot.test.tsx` | 4: shows asset readiness row with count, ✅ for satisfied required, ❌ for unsatisfied required, no row for optional |
+| 19 | `AssetCoverageBar.tsx` | ❌ Missing | **UPDATE existing** if any — otherwise manual visual |
+
+#### Phase 7 (Copy + DI)
+
+| 20 | Copy keys | — | **MANUAL** | Verify all 11 new keys resolve via `copy.t()` |
+| 21 | DI wiring | — | Covered by `generation.spec.ts` (constructor injected) |
+| 22 | Contract | — | **No change** |
+
+### Test Summary
+
+| Category | Count | Details |
+|----------|-------|---------|
+| **NEW test files** | **6** | `tool-definition`, `asset-repository`, `AssetResolver`, `promote-to-asset`, `AssetPicker`, `ReadinessSnapshot` |
+| **EXISTING files — UPDATED** | **5** | `ReadinessPolicy`, `ContextEnricher`, `Workspace`, `start-session`, `session-worker` |
+| **EXISTING files — NEW cases in existing** | **2** | `generation.spec.ts` (listTools + startSession), `error-handler.test.ts` (new error code) |
+| **MANUAL verification** | **2** | DB migration pre-check, copy key resolution |
+| **Estimated new test lines** | **~600** | ~15 tests/avg for new files + ~10 updates to existing |
+
+### Backward Compat Tests (Run After Each Phase)
+
+After every phase, verify these 3 invariants still hold:
+1. Existing `brief` tool (no `assets` in acquisition) — `startSession` with text + file → 201
+2. Existing single-asset workspace (3 assets, one per type) — `listAssets` → 3 results
+3. All 644 existing vitest tests pass with `npx vitest run` across all packages
 
 ## Testing Strategy
 
