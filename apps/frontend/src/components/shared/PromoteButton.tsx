@@ -32,7 +32,7 @@ export function PromoteButton({ artifactId, workspaceId, produces, promotedAsset
         startIcon={<CheckCircleIcon />}
         disabled
       >
-        Promoted
+        {copy.t('notifications.asset.promoted')}
       </Button>
     );
   }
@@ -58,7 +58,7 @@ export function PromoteButton({ artifactId, workspaceId, produces, promotedAsset
         disabled={state === 'loading'}
         color={state === 'error' ? 'error' : 'primary'}
       >
-        {state === 'loading' ? '...' : state === 'error' ? 'Retry' : copy.t('shared.actions.promote')}
+        {state === 'loading' ? '...' : state === 'error' ? copy.t('shared.actions.retry') : copy.t('shared.actions.promote')}
       </Button>
     </Tooltip>
   );

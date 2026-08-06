@@ -48,7 +48,7 @@ function ElapsedTimer({ startedAt }: { startedAt: number }) {
   );
 }
 
-function StepIndicator({ index, isCompleted, isActive }: { index: number; isCompleted: boolean; isActive: boolean }) {
+function StepIndicator({ index, isCompleted, isActive, total }: { index: number; isCompleted: boolean; isActive: boolean; total: number }) {
   return (
     <Box
       sx={{
@@ -94,7 +94,7 @@ function StepIndicator({ index, isCompleted, isActive }: { index: number; isComp
           fontWeight={isActive ? 600 : 400}
           color={isCompleted ? 'success.main' : isActive ? 'text.primary' : 'text.disabled'}
         >
-          {copy.t('toolPage.progress.stepLabel', { current: String(index + 1), total: String(index + 1) })}
+          {copy.t('toolPage.progress.stepLabel', { current: String(index + 1), total: String(total) })}
         </Typography>
       </Box>
     </Box>
@@ -152,6 +152,7 @@ export function FeedbackPanel({ progress, status }: FeedbackPanelProps) {
             index={i}
             isCompleted={i < progress.current}
             isActive={i === progress.current}
+            total={progress.total}
           />
         ))}
       </Stack>

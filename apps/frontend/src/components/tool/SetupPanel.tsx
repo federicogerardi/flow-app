@@ -1,6 +1,7 @@
 import { TextField, MenuItem, Box, Typography, TextareaAutosize, FormControl, FormLabel, Button, Paper, useTheme } from '@mui/material';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import type { TextInput as ToolTextInput, FileInput as ToolFileInput } from '../../tool-inputs';
+import { copy } from '@flow-app/copy';
 
 interface SetupPanelProps {
   inputs: Record<string, string>;
@@ -112,11 +113,11 @@ export function SetupPanel({ inputs, toolDef, onChange, disabled = false, fileDe
                     />
                     <UploadFileIcon color="action" sx={{ fontSize: 32, mb: 1 }} />
                     <Typography variant="body2" color="text.secondary">
-                      Click to upload or drag and drop
+                      {copy.t('toolPage.config.fileUploadHint')}
                     </Typography>
                     <Typography variant="caption" color="text.disabled">
-                      Accepted: {fileInput.accept.join(', ')}
-                      {fileInput.maxSizeMb && ` (max ${fileInput.maxSizeMb}MB)`}
+                      {copy.t('toolPage.config.acceptedFormats', { formats: fileInput.accept.join(', ') })}
+                      {fileInput.maxSizeMb && ` ${copy.t('toolPage.config.maxFileSize', { size: String(fileInput.maxSizeMb) })}`}
                     </Typography>
                   </Paper>
                 ) : (
@@ -134,7 +135,7 @@ export function SetupPanel({ inputs, toolDef, onChange, disabled = false, fileDe
                         color="error"
                         onClick={() => onFileChange?.(fileInput.key, null)}
                       >
-                        Remove
+                        {copy.t('shared.actions.remove')}
                       </Button>
                     )}
                   </Paper>
@@ -152,7 +153,7 @@ export function SetupPanel({ inputs, toolDef, onChange, disabled = false, fileDe
 
       {toolDef.length === 0 && !fileDef?.length && (
         <Typography variant="body2" color="text.secondary">
-          No inputs required. You can start the generation directly.
+          {copy.t('toolPage.readiness.noInputsRequired')}
         </Typography>
       )}
     </Box>

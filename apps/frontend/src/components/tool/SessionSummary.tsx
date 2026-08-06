@@ -55,19 +55,19 @@ function ArtifactDownloadMenu({ artifactId, content, index }: { artifactId: stri
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
         <MenuItem onClick={() => handleDownload('md')}>
           <ListItemIcon><DescriptionIcon fontSize="small" /></ListItemIcon>
-          <ListItemText>Markdown (.md)</ListItemText>
+          <ListItemText>{copy.t('toolPage.download.formatLabel', { format: copy.t('toolPage.download.formatMd'), ext: 'md' })}</ListItemText>
         </MenuItem>
         <MenuItem onClick={() => handleDownload('txt')}>
           <ListItemIcon><TextSnippetIcon fontSize="small" /></ListItemIcon>
-          <ListItemText>Plain Text (.txt)</ListItemText>
+          <ListItemText>{copy.t('toolPage.download.formatLabel', { format: copy.t('toolPage.download.formatTxt'), ext: 'txt' })}</ListItemText>
         </MenuItem>
         <MenuItem onClick={() => handleDownload('docx')} disabled>
           <ListItemIcon><ArticleIcon fontSize="small" /></ListItemIcon>
-          <ListItemText>Word (.docx) — coming soon</ListItemText>
+          <ListItemText>{copy.t('toolPage.download.formatDisabled', { format: copy.t('toolPage.download.formatDocx'), ext: 'docx' })}</ListItemText>
         </MenuItem>
         <MenuItem onClick={() => handleDownload('pdf')} disabled>
           <ListItemIcon><PictureAsPdfIcon fontSize="small" /></ListItemIcon>
-          <ListItemText>PDF (.pdf) — coming soon</ListItemText>
+          <ListItemText>{copy.t('toolPage.download.formatDisabled', { format: copy.t('toolPage.download.formatPdf'), ext: 'pdf' })}</ListItemText>
         </MenuItem>
       </Menu>
     </>
@@ -98,7 +98,7 @@ export function SessionSummary({ artifacts, workspaceId, produces }: SessionSumm
           {copy.t('toolPage.progress.completed')}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {artifacts.length} {artifacts.length === 1 ? 'step' : 'steps'}
+          {copy.t('toolPage.progress.stepCount', { count: String(artifacts.length) })}
         </Typography>
       </Box>
       <Divider />
@@ -107,7 +107,7 @@ export function SessionSummary({ artifacts, workspaceId, produces }: SessionSumm
           <Box key={artifact.id ?? i} sx={{ mb: i < artifacts.length - 1 ? 3 : 0 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
               <Typography variant="subtitle2" color="text.secondary" fontWeight={600}>
-                Step {artifact.stepNumber}
+                {copy.t('toolPage.progress.artifactLabel', { number: String(artifact.stepNumber) })}
               </Typography>
               <Box sx={{ display: 'flex', gap: 0.5 }}>
                 <ArtifactDownloadMenu
@@ -185,12 +185,12 @@ export function SessionSummary({ artifacts, workspaceId, produces }: SessionSumm
               size="small"
               onClick={() => navigate(`/workspaces/${workspaceId}/assets/${toast.assetId}`)}
             >
-              Vedi asset →
+              {copy.t('shared.actions.viewAsset')} →
             </Button>
           ) : undefined
         }
       >
-        Asset &ldquo;{toast.assetType ?? ''}&rdquo; promosso
+        {copy.t('notifications.asset.promotedWithType', { type: toast.assetType ?? '' })}
       </Alert>
     </Snackbar>
     </>

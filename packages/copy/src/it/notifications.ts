@@ -6,9 +6,10 @@ export const notifications = {
     cancelled: 'Generazione annullata',
   },
   asset: {
-    promoted:   'Promosso ad asset',
-    created:    'Asset creato',
-    deleted:    'Asset eliminato',
+    promoted:         'Promosso ad asset',
+    promotedWithType: 'Asset "{type}" promosso',
+    created:          'Asset creato',
+    deleted:          'Asset eliminato',
   },
   auth: {
     loggedIn:  'Accesso effettuato',

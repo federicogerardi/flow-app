@@ -1,4 +1,5 @@
 import { Box, Typography, Stack, keyframes } from '@mui/material';
+import { copy } from '@flow-app/copy';
 
 const celebrate = keyframes`
   0% { transform: scale(0.9); opacity: 0; }
@@ -36,10 +37,10 @@ export function CompletionBanner({ durationSeconds, stepCount, creditCost }: Com
         <Typography variant="h5" component="span">✅</Typography>
         <Stack>
           <Typography variant="h6" fontWeight={700}>
-            Completed in {formatDuration(durationSeconds)}
+            {copy.t('toolPage.progress.completedIn', { duration: formatDuration(durationSeconds) })}
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.9 }}>
-            {stepCount} step{stepCount !== 1 ? 's' : ''} · {creditCost} credit{creditCost !== 1 ? 's' : ''}
+            {copy.t('toolPage.progress.stepCountSummary', { count: String(stepCount) })} · {copy.t('toolPage.progress.creditCostSummary', { count: String(creditCost) })}
           </Typography>
         </Stack>
       </Stack>

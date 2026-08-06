@@ -98,7 +98,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
     }
     if (session?.status === 'failed' && phaseOverride === 'running') {
       setPhaseOverride('failed');
-      setLocalError('Session failed');
+      setLocalError(copy.t('toolPage.progress.failed'));
     }
   }, [session?.status, phaseOverride]);
 
@@ -212,7 +212,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
                     {copy.t('toolPage.cta.submit')}
                   </Button>
                   <Typography variant="body2" color="text.secondary">
-                    {creditCost} credit{creditCost !== 1 ? 's' : ''}
+                    {copy.t('toolPage.config.creditCost', { count: String(creditCost) })}
                   </Typography>
                 </Box>
               </>
@@ -255,10 +255,10 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
           )}
            <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
             <Button variant="outlined" onClick={() => { send({ type: 'RESET' }); setPhaseOverride(null); setLocalSessionId(null); setSubmitting(false); }}>
-              New Generation
+              {copy.t('toolPage.cta.new')}
             </Button>
             <Button variant="outlined" onClick={() => navigate(`/workspaces/${workspaceId}`)}>
-              Back to Workspace
+              {copy.t('workspace.nav.backToWorkspace')}
             </Button>
           </Box>
         </>
@@ -270,10 +270,10 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
           {(displayError && !displayErrorCode) && <ErrorState message={displayError} onRetry={() => send({ type: 'SUBMIT' })} />}
           <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
             <Button variant="outlined" onClick={() => { send({ type: 'RESET' }); setPhaseOverride(null); setLocalSessionId(null); setSubmitting(false); }}>
-              Try Again
+              {copy.t('shared.actions.retry')}
             </Button>
             <Button variant="outlined" onClick={() => navigate(`/workspaces/${workspaceId}`)}>
-              Back to Workspace
+              {copy.t('workspace.nav.backToWorkspace')}
             </Button>
           </Box>
         </>
