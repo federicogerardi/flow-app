@@ -11,7 +11,7 @@ interface StepProgress {
 export function useSession(sessionId: string | null) {
   const [session, setSession] = useState<SessionDTO | null>(null);
   const [progress, setProgress] = useState<StepProgress | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {

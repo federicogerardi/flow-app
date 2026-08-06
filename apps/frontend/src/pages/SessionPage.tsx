@@ -54,8 +54,8 @@ export default function SessionPage() {
   };
 
   // Compute duration
-  const startedAt = (session as unknown as { startedAt?: string | null }).startedAt ?? null;
-  const completedAt = (session as unknown as { completedAt?: string | null }).completedAt ?? null;
+  const startedAt = session?.startedAt ?? null;
+  const completedAt = session?.completedAt ?? null;
   const durationMs = startedAt && completedAt
     ? new Date(completedAt).getTime() - new Date(startedAt).getTime()
     : null;

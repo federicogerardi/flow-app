@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/infrastructure
-date_updated: 2026-07-31
+date_updated: 2026-08-06
 source_count: 4
 confidence: high
 ---
@@ -234,18 +234,26 @@ import { sseClient } from './sse-client';
 
 // Hook for a single session with SSE progress
 function useSession(sessionId: string | null) {
-  const [session, setSession] = useState<SessionDetailDTO | null>(null);
+  const [session, setSession] = useState<SessionDTO | null>(null);
   const [progress, setProgress] = useState<StepProgress | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     if (!sessionId) return;
 
-    // Initial load
-    api.getSession(sessionId).then(setSession);
+    setLoading(true);
+    setError(null);
+
+    // Initial load (with error handling)
+    api.getSession(sessionId)
+      .then(setSession)
+      .catch(setError)
+      .finally(() => setLoading(false));
 
     // SSE for real-time updates
     const unsubscribe = sseClient.connect(sessionId, {
-      onStep: (data) => setProgress(data.data.progress),
+      onStep: (data) => setProgress(data.progress as StepProgress),
       onCompleted: () => api.getSession(sessionId).then(setSession),
       onFailed: () => api.getSession(sessionId).then(setSession),
     });
@@ -253,7 +261,7 @@ function useSession(sessionId: string | null) {
     return unsubscribe;
   }, [sessionId]);
 
-  return { session, progress };
+  return { session, progress, loading, error };
 }
 
 // Hook for workspace listing

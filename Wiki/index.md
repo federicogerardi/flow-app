@@ -2,7 +2,7 @@
 type: index
 tags:
   - wiki/index
-date_updated: 2026-08-04
+date_updated: 2026-08-06
 ---
 
 # Wiki Index — Flow App
@@ -101,6 +101,7 @@ date_updated: 2026-08-04
 | [[Seed Data]] | high | 2 |
 | [[Session List - Live Status]] | high | 5 |
 | [[Session Machine (XState v5)]] | high | 4 |
+| [[SessionPage]] | high | 5 |
 | [[Secure SDLC Controls]] | high | 7 |
 | [[Testing Strategy]] | high | 3 |
 | [[Tool as Static Configuration]] | high | 4 |

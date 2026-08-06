@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/architecture
-date_updated: 2026-08-04
+date_updated: 2026-08-06
 source_count: 9
 confidence: high
 ---
@@ -112,7 +112,7 @@ AppShell
 | `/` | Redirect to first workspace or empty state | — |
 | `/workspaces/:id` | Workspace dashboard | `WorkspaceDashboard` |
 | `/workspaces/:id/tools/:toolKey` | Tool page | `ToolPageLayout` |
-| `/workspaces/:id/sessions/:sessionId` | Session detail | `SessionSummary` (full page) |
+| `/workspaces/:id/sessions/:sessionId` | Session detail | `SessionPage` |
 | `/admin/*` | Admin pages | Admin shell |
 
 ---

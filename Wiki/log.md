@@ -2938,3 +2938,22 @@ Closed all 3 remaining backend gaps identified in the overview audit. 11 files c
 - `Wiki/log.md`: this entry.
 
 5 wiki files updated: `Wiki/synthesis/usage-quota-implementation-plan.md` (status already completed), `Wiki/overview.md` (status refresh), `Wiki/log.md` (this entry).
+
+## [2026-08-06] audit | Wiki alignment — SessionPage + useSession hook bug
+
+**Context**: user reported crash when opening `sessions/[id]` in frontend — `TypeError: can't access property "startedAt", session is null`. No `GET /api/sessions/:id` request reached the backend, indicating the component crashed before `useEffect` could fire the API call.
+
+**Root cause**: two bugs combined:
+1. `useSession` in `hooks.ts` initialized `loading` to `false` — no guard on first render with `session = null`
+2. `SessionPage` lines 57-58 accessed `(session as unknown as ...).startedAt` with no null protection, crashing on first render before the `if (loading)` guard was reached
+
+**Code fix**:
+- `apps/frontend/src/api/hooks.ts`: `loading` initialized to `true`
+- `apps/frontend/src/pages/SessionPage.tsx`: replaced unsafe type cast with `session?.startedAt ?? null`
+
+**Wiki updates (5 pages)**:
+1. [[Frontend Architecture]] — route table: `SessionSummary` → `SessionPage`
+2. [[API Client + SSE Client]] — `useSession` hook code updated with `loading`/`error` states + `.catch()`
+3. [[SessionPage]] — NEW concept page documenting component structure, state guards, duration calc, cancel, breadcrumbs, dependencies, and the bug fix
+4. [[Wiki/index.md]] — added `SessionPage` to Concepts table
+5. `Wiki/log.md` — this entry
