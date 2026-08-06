@@ -12,6 +12,14 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-06] review | type-design audit: 3 findings (2 medium, 1 low) integrated into plan
+
+**F1** — `AssetResolver` silently drops invalid `selectedAssetIds` → added `InvalidAssetSelectionError` validation in Step 7
+**F2** — `PromoteToAssetUseCase` returns wrong `assetId` on UPSERT (`Asset.create()` UUID ≠ DB row ID) → pre-check by `source_ref` in Step 8
+**F3** — `created: boolean` dead code → removed from `PromoteToAssetResult` in Step 8
+
+**Verified type invariants**: `Map<string, string[]>` clean, `AssetInput.multiple` orthogonal to `required`, `ReadinessPolicy` defensive, no over-engineered VOs needed
+
 ## [2026-08-06] decision | multi-asset: 5 pre-implementation decisions resolved
 
 **D1**: `resolvedAssets` type always `Map<string, string[]>` — controlled break, 3 consumers all in plan

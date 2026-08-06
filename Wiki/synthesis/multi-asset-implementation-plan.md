@@ -24,6 +24,22 @@ Enable tools to consume multiple promoted assets of the same type (e.g. 3 buyer 
 | D4 | `multiple: false` + 2+ assets of same type in workspace: error or radio? | **Radio button UI** — domain doesn't limit, UI enforces single-select | Simple: resolver returns all, UI filters to at most 1 via selectedAssetIds |
 | D5 | `Workspace._assets`: keep, align, or deprecate? | **Keep as-is** — snapshot read-only | No dual-write. `PromoteToAssetUseCase` persists via `AssetRepository`; workspace reloads on next fetch |
 
+## Type Design Review (2026-08-06)
+
+Three findings from invariant + encapsulation analysis:
+
+| # | Finding | Severity | Fix integrated in |
+|---|---------|----------|-------------------|
+| **F1** | `AssetResolver` silently drops invalid `selectedAssetIds` — no error if caller passes non-existent asset IDs | Medium | Step 7: validate IDs, throw `InvalidAssetSelectionError` |
+| **F2** | `PromoteToAssetUseCase` returns wrong `assetId` on UPSERT — `Asset.create()` generates new UUID but DB keeps existing row's ID | Medium | Step 8: pre-check by `source_ref` before `Asset.create()`, return existing data on match |
+| **F3** | `created: boolean` field dead code — API hardcodes `promoted: true`, frontend never reads it | Low | Step 8: remove from `PromoteToAssetResult` |
+
+**Type invariants verified**:
+- `Map<string, string[]>` eliminates null/undefined ambiguity — empty array means "no assets of this type". All 3 consumers (`ReadinessPolicy`, `AssetResolver`, `ContextEnricher`) updated
+- `AssetInput.multiple` is orthogonal to `required` — all 4 combinations are valid states. No discriminated union needed
+- `ReadinessPolicy` is defensive: `.get(type) ?? []` handles missing Map keys gracefully
+- No new class VOs needed — `AssetSelection` as a class would add ceremony without invariants; `string[]` is sufficient for the selected-asset-IDs use case
+
 ## Requirements
 
 **Selection UX per asset type** (D2):
@@ -53,6 +69,7 @@ Enable tools to consume multiple promoted assets of the same type (e.g. 3 buyer 
 - **Modified entity method**: `Workspace.getAssetByType()` → `getAssetsByType()` (`packages/domain/.../Workspace.ts:174`) — returns `Asset[]` instead of `Asset | null`
 - **Modified repository method**: `AssetRepository.findByWorkspaceAndType()` → `findByWorkspaceAndType()` (`packages/domain/.../AssetRepository.ts:7`) — returns `Asset[]`
 - **New migration**: `011_multi_asset.sql` — drops old unique constraint, creates new one
+- **New error class**: `InvalidAssetSelectionError` (`packages/domain/.../AssetResolver.ts`) — thrown when `selectedAssetIds` contains IDs not found in workspace assets
 - **New UI component**: Asset picker section inside `SetupPanel` — radio buttons for single-select types, checkboxes for multi-select types. Controlled by `AssetInput.multiple` flag per type
 
 ## Implementation Steps
@@ -106,23 +123,26 @@ Enable tools to consume multiple promoted assets of the same type (e.g. 3 buyer 
    - Risk: Low — method rename, callers are in `AssetResolver` (already being changed) and `PromoteToAssetUseCase`
 
 7. **Update `AssetResolver.resolve()` for multi-asset** (File: `packages/domain/src/workspace/domain-services/AssetResolver.ts`)
-   - Action:
-     - Change return type from `Promise<Map<string, string>>` to `Promise<Map<string, string[]>>`
-     - Add optional `selectedAssetIds?: string[]` parameter — if provided, filter assets by those IDs
-     - Iterate `getAssetsByType(type)` (now returning `Asset[]`) instead of `getAssetByType(type)`
-     - For each matching asset, push content into the array for that type
-     - Throw `MissingRequiredAssetError` only if `mapping.required && assets.length === 0`
-   - Why: Domain service is the single entry point for resolving workspace assets into session context
-   - Dependencies: Steps 2, 6
-   - Risk: Low — existing callers pass a single asset per type, array behavior is backward-compatible
+    - Action:
+      - Change return type from `Promise<Map<string, string>>` to `Promise<Map<string, string[]>>`
+      - Add optional `selectedAssetIds?: string[]` parameter — if provided, filter assets by those IDs
+      - **F1 fix**: If `selectedAssetIds` is provided, validate every ID exists among the workspace assets of the declared types. Throw `InvalidAssetSelectionError` (extends `DomainError`, code `ASSET_NOT_FOUND`, `retryable: false`) for any ID that doesn't match. This prevents silent asset drops from API misuse or stale selections
+      - Iterate `getAssetsByType(type)` (now returning `Asset[]`) instead of `getAssetByType(type)`
+      - For each matching asset, push content into the array for that type
+      - Throw `MissingRequiredAssetError` only if `mapping.required && assets.length === 0`
+    - Why: Domain service is the single entry point for resolving workspace assets into session context. Validation at this boundary catches bugs early
+    - Dependencies: Steps 2, 6
 
 ### Phase 4: Application Layer (2 files)
 
-8. **Update `PromoteToAssetUseCase` — remove overwrite** (File: `apps/backend/src/application/workspace/promote-to-asset.usecase.ts`)
-   - Action: Remove lines 88-90 (`findByWorkspaceAndType` check for existing). The ON CONFLICT in the repository now handles dedup by `source_ref`, so the use case no longer needs to check-and-overwrite
-   - Why: Multi-asset means multiple same-type assets can coexist. The DB UPSERT on `(workspace_id, asset_type, source_ref)` already guarantees idempotency per artifact
-   - Dependencies: Step 5 (repository ON CONFLICT change)
-   - Risk: Low — removing code, not adding. Idempotency moves from application to persistence layer
+8. **Update `PromoteToAssetUseCase` — remove overwrite, fix idempotency** (File: `apps/backend/src/application/workspace/promote-to-asset.usecase.ts`)
+    - Action:
+      - **F2 fix (assetId mismatch)**: Before `Asset.create()`, query existing assets of this type and check if THIS artifact was already promoted by matching `sourceArtifactId === cmd.artifactId`. If found, return the existing asset's data immediately (idempotent — same request → same assetId). This prevents the `Asset.create()` UUID from diverging from the actual DB row on UPSERT
+      - **F3 fix (dead code)**: Remove `created: boolean` from `PromoteToAssetResult` — it is never consumed by the API handler (which hardcodes `promoted: true`) or the frontend
+      - Remove the old `findByWorkspaceAndType` check (line 90) that was used only for the `created` flag
+      - If asset is new (no existing match on `source_ref`): `Asset.create()` → `assetRepo.save()`. The ON CONFLICT `(workspace_id, asset_type, source_ref)` handles concurrent retries at DB level
+    - Why: Multi-asset means multiple same-type assets can coexist. The existing check was for overwrite detection — now replaced by source_ref matching for idempotency. The assetId mismatch bug (F2) becomes visible with multi-asset because different artifacts of the same type produce different rows
+    - Dependencies: Step 5 (repository ON CONFLICT change to include `source_ref`)
 
 9. **Update `StartSessionUseCase` — resolve assets** (File: `apps/backend/src/application/generation/start-session.usecase.ts`)
    - Action:
@@ -252,16 +272,22 @@ Enable tools to consume multiple promoted assets of the same type (e.g. 3 buyer 
 
 ### Unit Tests
 - `ReadinessPolicy.evaluate()` with multi-asset: required + multiple → at least 1, optional + multiple → 0 is OK
+- `ReadinessPolicy.evaluate()` with empty resolvedAssets Map → missing for all required types
 - `AssetResolver.resolve()` with `multiple: true` → returns `Map<string, string[]>`
-- `AssetResolver.resolve()` with `multiple: false` (backward compat) → returns `Map<string, string[]>` with single-element arrays (or keep old behavior?)
-- `ContextEnricher.enrich()` with multi-asset input → nested labels in output
+- `AssetResolver.resolve()` with `multiple: false` → returns `Map<string, string[]>` with single-element arrays
+- **F1 test**: `AssetResolver.resolve()` with invalid `selectedAssetIds` (non-existent IDs) → throws `InvalidAssetSelectionError`
+- **F1 test**: `AssetResolver.resolve()` with valid `selectedAssetIds` → returns only those assets
+- `ContextEnricher.enrich()` with multi-asset input → nested labels in output (`[Asset - persona #1]`, `[Asset - persona #2]`)
 - `Workspace.getAssetsByType()` → `Asset[]` for multiple same-type assets
+- `Workspace.getAssetsByType()` → `[]` for type with no assets
 
 ### Integration Tests
 - `StartSessionUseCase` with `selectedAssets` → resolves and populates `acquisitionData`
 - `StartSessionUseCase` without `selectedAssets` (old tools) → empty `resolvedAssets`, backward compat
 - `PromoteToAssetUseCase` — promoting two different personas → two rows in DB
-- `PromoteToAssetUseCase` — promoting same artifact twice → idempotent (same row, updated content)
+- **F2 test**: `PromoteToAssetUseCase` — promoting same artifact twice → returns same `assetId` both times (idempotency)
+- **F2 test**: `PromoteToAssetUseCase` — promoting artifact A then artifact B (same type) → two different `assetId`s, both rows in DB
+- **F3 test**: API promote response no longer includes `created` or `promoted` field → verify frontend still works (it never used them)
 
 ### E2E Tests
 - Workspace with 0 personas → tool page shows "Genera Persona" CTA
