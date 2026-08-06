@@ -48,6 +48,10 @@ export interface AppDeps {
 export function createApp(deps: AppDeps) {
   const app = express();
 
+  // Trust the Railway reverse proxy so express-rate-limit can read the real client IP
+  // from the X-Forwarded-For header.
+  app.set('trust proxy', 1);
+
   app.locals.eventBridge = deps.eventBridge;
 
   app.use(helmet());
