@@ -99,7 +99,7 @@ export function AppShell() {
 
   const navItems = [
     { label: copy.t('workspace.nav.home'), icon: <DashboardIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}` : '/dashboard' },
-    { label: copy.t('workspace.nav.sessions'), icon: <PlayCircleIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}` : '/dashboard' },
+    { label: copy.t('workspace.nav.sessions'), icon: <PlayCircleIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/sessions` : '/dashboard' },
     { label: copy.t('workspace.nav.assets'), icon: <InventoryIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/assets` : '/dashboard' },
     { label: copy.t('workspace.nav.team'), icon: <PeopleIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/team` : '/dashboard' },
   ];
