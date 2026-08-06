@@ -244,7 +244,7 @@ class ApiClient {
   }
 
   async getAsset(workspaceId: string, assetId: string) {
-    return this.request<AssetDTO & { content: string }>('GET', `/api/workspaces/${workspaceId}/assets/${assetId}`);
+    return this.request<AssetDTO>('GET', `/api/workspaces/${workspaceId}/assets/${assetId}`);
   }
 
   async updateAsset(workspaceId: string, assetId: string, content: string) {
