@@ -56,6 +56,25 @@ git checkout -b feature/<scope>-<short-name>
 
 **Regola**: se il branch corrente è `main` o `staging`, STOPPARE e chiedere conferma prima di procedere.
 
+### Wiki Alignment Before Commit
+
+**Ogni commit di codice deve essere preceduto dall'allineamento del Wiki.** Il codice non deve mai essere pushato se il Wiki (`Wiki/`) non riflette le attività svolte nello stage corrente.
+
+**Pre-commit checklist:**
+
+1. Verificare che tutte le modifiche al codice abbiano un corrispettivo nel Wiki:
+   - Nuove entità/aggregate → pagina in `Wiki/entities/` o aggiornamento di pagina esistente
+   - Nuovi concetti/pattern → pagina in `Wiki/concepts/` o aggiornamento di pagina esistente
+   - Modifiche architetturali → aggiornamento di `Wiki/overview.md`
+   - Nuove dipendenze/infrastruttura → aggiornamento delle pagine concettuali rilevanti
+2. Aggiornare `Wiki/index.md` se sono state aggiunte/modificate pagine
+3. Aggiornare `Wiki/log.md` con un'entrata che riepiloga le modifiche wiki effettuate
+4. Eseguire `qmd update && qmd embed` per aggiornare l'indice di ricerca
+
+**Regola**: se `git status` mostra modifiche al codice senza corrispondenti modifiche in `Wiki/`, il commit è bloccante. Il Wiki deve essere allineato prima del push.
+
+**Eccezioni**: modifiche puramente cosmetiche (formattazione, typo nei commenti, rename locali senza impatto architetturale) possono essere committate senza aggiornamento Wiki. In caso di dubbio, allineare il Wiki.
+
 ---
 
 ## Linguistic Separation Policy
