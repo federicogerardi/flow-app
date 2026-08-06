@@ -12,6 +12,50 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-06] impl | Multi-Asset Promotion — 22 steps, 7 phases, all complete
+
+Implemented [[synthesis/multi-asset-implementation-plan]] on branch `feature/multi-asset-promotion`. 12 commits from `dev`.
+
+**Phase 1 — Domain Foundation** (3 files):
+- `AssetInput.multiple?: boolean` added to `tool-definition.ts`
+- `AcquisitionData.resolvedAssets` changed from `Map<string, string>` to `Map<string, string[]>`
+- `ContextEnricher` updated: single asset → `[Asset - type]`, multi → `[Asset - type #1]...[Asset - type #2]`
+
+**Phase 2 — Database** (2 files):
+- Migration `011_multi_asset.sql`: drops `uq_assets_workspace_type`, adds `uq_assets_workspace_type_source` + partial index for NULL source_ref
+- `KyselyAssetRepository.findByWorkspaceAndType` returns `Asset[]` (was `Asset | null`), `save()` ON CONFLICT uses new 3-column constraint
+
+**Phase 3 — Workspace Domain** (2 files):
+- `Workspace.getAssetsByType()` returns `Asset[]`, old `getAssetByType()` deprecated
+- `AssetResolver.resolve()` returns `Map<string, string[]>`, supports `selectedAssetIds` filtering, F1 fix (`InvalidAssetSelectionError`)
+
+**Phase 4 — Application Layer** (2 files):
+- `PromoteToAssetUseCase` refactored: F2 fix (idempotency via `sourceArtifactId` match), F3 fix (removed `created: boolean`)
+- `StartSessionUseCase` accepts `AssetResolver`, resolves assets unconditionally, adds `resolvedAssets` to result
+
+**Phase 5 — Backend API + Worker** (4 files):
+- `listTools` response includes `assets[]` with `multiple` field
+- `startSession` converts `resolvedAssets` Map to Record, skips enqueue on replayed (BA-C5)
+- `SessionJobData.resolvedAssets` changed to `Record<string, string[]>`
+- `ErrorMapper` adds `ASSET_NOT_FOUND` → 404
+
+**Phase 6 — Frontend** (5 files):
+- `AssetInput` type added to `tool-inputs.ts`
+- `fetchToolDefinitions` returns `assetInputs`
+- `AssetPicker` component created (radio/checkbox per asset type)
+- `ToolPageLayout` manages `selectedAssets` state, passes to `startSession`
+- `ReadinessSnapshot` shows asset readiness rows with count labels
+- `AssetCoverageBar` shows count labels for multi-asset types
+- `AssetDTO` updated to include `content`
+
+**Phase 7 — Copy + DI** (1 file):
+- 3 new copy keys: `toolPage.assets.emptyState`, `selectOne`, `selectMultiple`
+- DI wiring verified (AssetResolver created in createGenerationRoutes)
+
+**Tests**: 490/472 domain, 138/138 backend, TypeScript clean across all packages.
+
+**Wiki pages updated**: [[AssetResolver]], [[Asset Promotion]], [[ReadinessPolicy]], [[Context Injection]], [[Workspace & Assets]], [[Asset]], [[Workspace]], [[overview]], [[multi-asset-implementation-plan]], [[log]], [[index]].
+
 ## [2026-08-06] review | test coverage audit — 6 new test files, 5 updated
 
 **Test gap analysis**: 7/13 source files in the plan have NO test coverage. 5 have existing tests needing updates. 1 (KnowledgePanel) is dead code and skipped.

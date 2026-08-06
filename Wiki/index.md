@@ -53,7 +53,7 @@ date_updated: 2026-08-06
 | [[Achievements & Badges]] | high | 4 |
 | [[ArtifactContent]] | high | 3 |
 | [[Asset Promotion]] | high | 5 |
-| [[AssetResolver]] | high | 4 |
+| [[AssetResolver]] | high | 5 |
 | [[Auth Dependencies]] | high | 8 |
 | [[Auth Middleware]] | high | 5 |
 | [[Brief Tool - Prompt Architecture]] | high | 3 |

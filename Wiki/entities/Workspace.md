@@ -4,8 +4,8 @@ tags:
   - wiki/entity
   - wiki/workspace
   - wiki/sharing
-date_updated: 2026-08-02
-source_count: 7
+date_updated: 2026-08-06
+source_count: 8
 ---
 
 # Workspace
@@ -13,7 +13,7 @@ source_count: 7
 > Aggregate Root — [[Workspace & Assets]] context  
 > **v2 (2026-08-01)**: Multi-member via [[WorkspaceMembership]]. Single-owner model retired.
 >
-> **⚠️ Implementation status (2026-08-02):** The `addAsset()` and asset management methods shown below are aspirational — the current Workspace entity has no `_assets` array or asset domain logic. Assets exist only as DB tables (migration 003). Methods that do exist in code are marked with ✅; aspirational methods with 🔴. `UserId` references are `string` in code, not a branded VO.
+> **✅ Implementation status (2026-08-06):** The `addAsset()` and `getAssetsByType()` methods are implemented. `_assets` is a `ReadonlyArray<Asset>` on the Workspace entity. Multiple assets of the same type are supported (multi-asset feature). `UserId` references are `string` in code, not a branded VO.
 
 ## Definition
 
@@ -38,25 +38,36 @@ From [[Workspace Sharing]]: an **owner** creates and controls the workspace, **e
 - **Ownership**: The creating user (`createdBy`) is automatically the initial `owner`
 - **Member uniqueness**: A [[User]] cannot have duplicate memberships in the same workspace — enforced by `inviteMember()` check + DB composite PK
 - **Owner protection**: Cannot remove or demote the owner — enforced by `removeMember()` and `changeRole()`
-- **Asset uniqueness**: At most one [[Asset]] per `AssetType` per Workspace — enforced by `addAsset()`
-- **Asset traceability**: An [[Asset]] with `source = 'generated'` must have a valid `sourceRef` (traceability to original [[Artifact]]) — enforced by `addAsset()` 🔴
+- **Asset traceability**: An [[Asset]] with `source = 'generated'` must have a valid `sourceRef` (traceability to original [[Artifact]]) — enforced by `addAsset()` ✅
+- **Asset deduplication**: Multiple assets of the same type are allowed. Deduplication by `source_ref` (DB constraint: `UNIQUE(workspace_id, asset_type, source_ref)`). Manual assets (NULL source_ref) have a partial unique index. ✅
 - **Cascade delete**: Deleting a Workspace cascades to all contained Assets and Memberships (database: `ON DELETE CASCADE`)
 
 ## Methods
 
-### Asset Management (v1, unchanged)
+### Asset Management (v2, multi-asset)
 
 ### `addAsset()`
 
 ```typescript
-// 🔴 Aspirational — not implemented. No _assets array exists on Workspace.
-addAsset(
-  content: AssetContent,
-  assetType: AssetType,
-  source: AssetSource,
-  sourceRef?: string,         // required when source === 'generated'
-  addedBy?: string,           // only owner or editor
-): Asset { ... }
+// ✅ Implemented — pushes to _assets, increments version
+addAsset(asset: Asset): void {
+  this._assets.push(asset);
+  this._version++;
+}
+```
+
+### `getAssetsByType()`
+
+```typescript
+// ✅ Implemented — returns all assets matching the type
+getAssetsByType(assetType: AssetType): Asset[] {
+  return this._assets.filter(a => a.assetType.equals(assetType));
+}
+
+// @deprecated — returns first match only
+getAssetByType(assetType: AssetType): Asset | null {
+  return this._assets.find(a => a.assetType.equals(assetType)) ?? null;
+}
 ```
 
 ### Membership Management (v2) ✅

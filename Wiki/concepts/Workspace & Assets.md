@@ -3,8 +3,8 @@ type: concept
 tags:
   - wiki/concept
   - wiki/workspace
-date_updated: 2026-08-01
-source_count: 5
+date_updated: 2026-08-06
+source_count: 6
 confidence: high
 ---
 
@@ -73,7 +73,7 @@ interface WorkspaceRepository {
 
 ## Invariants
 
-- One [[Asset]] per `AssetType` per [[Workspace]]
+- Multiple [[Asset]]s of the same `AssetType` per [[Workspace]] are allowed — deduplication by `source_ref` (DB constraint: `UNIQUE(workspace_id, asset_type, source_ref)`). Manual assets (NULL source_ref) have a partial unique index to prevent accidental duplicates.
 - `Asset.source = 'generated'` requires valid `sourceRef` to original [[Artifact]]
 - A Workspace has exactly one active owner membership
 - Workspace deletion cascades to all Assets
@@ -85,3 +85,4 @@ interface WorkspaceRepository {
 - [[sources/USER-STORIES]] — US-W01 to US-W06, US-AS01 to US-AS08
 - [[sources/APP-CONCEPT]] — Knowledge Panel, AssetFieldMapping
 - [[Workspace Sharing]] — membership-based access model
+- [[synthesis/multi-asset-implementation-plan]] — migration 011, multi-asset constraint

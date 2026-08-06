@@ -3,7 +3,7 @@ type: synthesis
 tags:
   - wiki/synthesis
   - wiki/overview
-date_updated: 2026-08-04
+date_updated: 2026-08-06
 ---
 
 # Overview — Flow App
@@ -101,10 +101,11 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 | Phase 12 — Usage & Quota Wiring | ✅ | `ConsumeCreditsUseCase` (optimistic retry), session worker integration, `GET /api/usage/credits` |
 | Phase 13 — Gamification | ✅ | 50 files: 2 aggregates, 9 VOs, 22 badges, 5 challenges, BullMQ pipeline, 5 API endpoints |
 | **Brief Tool** | ✅ | 2-step extraction→generation pipeline, 11-section Italian output, FileUpload, SSE completion, smoke test passed |
+| **Multi-Asset Promotion** | ✅ | Tools can consume N assets of same type (e.g. 3 personas). 22 steps across 7 phases: `AssetInput.multiple`, `Map<string, string[]>`, migration 011, `AssetResolver` + `selectedAssetIds`, `PromoteToAssetUseCase` idempotency, `AssetPicker` UI component, 490 domain + 138 backend tests. |
 
 ### No Planned Phases
 
-All phases through 13 + the Brief Tool are fully implemented and smoke-tested.
+All phases through 13 + the Brief Tool + Multi-Asset Promotion are fully implemented and smoke-tested.
 
 ### Remaining Stubs
 

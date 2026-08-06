@@ -11,6 +11,8 @@ confidence: high
 
 # Implementation Plan: Multi-Asset Promotion
 
+> **✅ IMPLEMENTED** (2026-08-06) — All 22 steps across 7 phases completed on branch `feature/multi-asset-promotion`. 12 commits. 490/490 domain tests, 138/138 backend tests, TypeScript clean.
+
 ## Overview
 Enable tools to consume multiple promoted assets of the same type (e.g. 3 buyer personas) instead of the current 1:1 constraint. Changes span domain types, DB schema, backend resolution, and frontend asset selection UI. The feature is backwards-compatible — existing tools with single-asset inputs continue to work unchanged.
 
