@@ -67,6 +67,9 @@ Content tools (`landing-funnel`, `video-script-long-form`, `blog-post`, etc.) an
 | `assetType` derivation from `tool.produces` | ✅ | `AssetType.from(tool.produces)` — domain-driven, not from request body |
 | `AssetRepository.save()` with provenance | ✅ | `sourceSessionId` + `sourceArtifactId` tracked |
 | `PromoteButton` persistent state | ✅ | `promotedAssetId` in session detail response → button starts in "done" state across page refreshes |
+| Toast notification post-promotion | ✅ | MUI Snackbar + Alert with "Vedi asset →" link to AssetDetailPage |
+| `AssetDetailPage` | ✅ | `/workspaces/:wid/assets/:aid` — full markdown content view (same render as SessionSummary) |
+| `AssetList` click-to-detail | ✅ | Cards navigate to AssetDetailPage, delete stopPropagation-protected |
 | EventBus wiring (`SessionCompleted → PromoteToAssetUseCase`) | 🔴 | Use case invoked via API handler, not via `eventBus.subscribe()` |
 | `AssetCreated` domain event on promotion | 🔴 | Not published — `Workspace.addAsset()` doesn't emit events |
 

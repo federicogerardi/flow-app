@@ -12,6 +12,32 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-06] feat | AssetDetailPage + toast notification + AssetList navigation
+
+**Context**: [[Asset Promotion]] was working but users had no way to view promoted asset content without returning to the session. Also missing: feedback after promotion and navigation from asset list to detail.
+
+**Changes** (6 files):
+
+| File | Change |
+|------|--------|
+| `pages/AssetDetailPage.tsx` | **NEW** — full markdown content view at `/workspaces/:wid/assets/:aid`. Metadata: type, source, creation date. CTA "Usa in una generazione" → navigates to tool. Same ReactMarkdown styling as SessionSummary. |
+| `App.tsx` | Lazy import + route `/workspaces/:wid/assets/:aid` |
+| `components/workspace/AssetList.tsx` | Cards clickable via `CardActionArea` → navigate to AssetDetailPage. Delete `stopPropagation`. |
+| `components/tool/SessionSummary.tsx` | Fragment wrapper + MUI Snackbar/Alert with "Vedi asset →" link. Appears bottom-right on promotion, auto-dismiss 6s. |
+| `components/shared/PromoteButton.tsx` | `onPromoted` now passes `(assetId, assetType)` for toast |
+| `api/client.ts` | `promoteArtifact` return type includes `assetId` |
+
+**User flow**:
+```
+Session → Click "Promuovi ad asset" → green "Promoted" + toast "✅ Asset 'brief' promosso [Vedi asset →]"
+  → Click "Vedi asset" → AssetDetailPage (full markdown, metadata, "Usa in una generazione" CTA)
+  → Or: Workspace → Assets → click card → AssetDetailPage
+```
+
+**Verification**: TypeScript 0 errors (5 packages). Tests 616/616 pass.
+
+**Wiki updated**: [[UX Wireframes]], [[Frontend Architecture]], [[Asset Promotion]], [[log]].
+
 ## [2026-08-06] impl | Promote to Asset — use case, API, frontend
 
 **Context**: [[Asset Promotion]] was documented but the `POST /api/artifacts/:id/promote` handler was raw SQL bypassing the domain layer. No `Asset.create()`, no `AssetType` validation, no workspace authorization, no provenance tracking.

@@ -11,7 +11,7 @@ interface PromoteButtonProps {
   produces?: string;
   /** If already promoted, the Asset UUID. Causes the button to render in "done" state on mount. */
   promotedAssetId?: string | null;
-  onPromoted?: () => void;
+  onPromoted?: (assetId: string, assetType: string) => void;
 }
 
 export function PromoteButton({ artifactId, workspaceId, produces, promotedAssetId, onPromoted }: PromoteButtonProps) {
@@ -40,9 +40,9 @@ export function PromoteButton({ artifactId, workspaceId, produces, promotedAsset
   const handlePromote = async () => {
     setState('loading');
     try {
-      await api.promoteArtifact(artifactId, workspaceId);
+      const result = await api.promoteArtifact(artifactId, workspaceId);
       setState('done');
-      onPromoted?.();
+      onPromoted?.(result.assetId, result.assetType);
     } catch {
       setState('error');
     }

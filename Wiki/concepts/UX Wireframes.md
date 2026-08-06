@@ -48,6 +48,7 @@ The following decisions from [[Frontend Architecture]] are **preserved and exten
 | Route | View |
 |-------|------|
 | `/workspaces/:id/assets` | Full-page AssetList |
+| `/workspaces/:id/assets/:assetId` | Asset detail — full content view (markdown) |
 | `/workspaces/:id/sessions` | Full-page SessionList |
 | `/workspaces/:id/team` | Team Hub (Agent Chat entry) |
 | `/workspaces/:id/conversations/:conversationId` | Conversation View |

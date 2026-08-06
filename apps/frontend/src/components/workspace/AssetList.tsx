@@ -1,6 +1,7 @@
-import { Box, Typography, Card, CardContent, IconButton, Tooltip } from '@mui/material';
+import { Box, Typography, Card, CardContent, IconButton, Tooltip, CardActionArea } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import useSWR from 'swr';
+import { useNavigate } from 'react-router';
 import { api } from '../../api/client';
 import { LoadingSkeleton } from '../LoadingSkeleton';
 import { EmptyState } from '../EmptyState';
@@ -19,6 +20,7 @@ interface AssetListProps {
 }
 
 export function AssetList({ workspaceId, onDelete }: AssetListProps) {
+  const navigate = useNavigate();
   const { data, isLoading, mutate } = useSWR(
     `assets-${workspaceId}`,
     () => api.listAssets(workspaceId),
@@ -42,21 +44,27 @@ export function AssetList({ workspaceId, onDelete }: AssetListProps) {
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
       {assets.map((a) => (
         <Card key={a.id} variant="outlined">
-          <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.5, '&:last-child': { pb: 1.5 } }}>
-            <Box>
-              <Typography variant="body1" fontWeight={600}>
-                {ASSET_TYPE_LABELS[a.assetType] ?? a.assetType}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {a.source} · {new Date(a.createdAt).toLocaleDateString()}
-              </Typography>
-            </Box>
-            <Tooltip title="Delete asset">
-              <IconButton size="small" onClick={() => handleDelete(a.id)} aria-label="Delete asset">
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </CardContent>
+          <CardActionArea onClick={() => navigate(`/workspaces/${workspaceId}/assets/${a.id}`)}>
+            <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.5, '&:last-child': { pb: 1.5 } }}>
+              <Box>
+                <Typography variant="body1" fontWeight={600}>
+                  {ASSET_TYPE_LABELS[a.assetType] ?? a.assetType}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {a.source} · {new Date(a.createdAt).toLocaleDateString()}
+                </Typography>
+              </Box>
+              <Tooltip title="Delete asset">
+                <IconButton
+                  size="small"
+                  onClick={(e) => { e.stopPropagation(); handleDelete(a.id); }}
+                  aria-label="Delete asset"
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </CardContent>
+          </CardActionArea>
         </Card>
       ))}
     </Box>

@@ -15,6 +15,7 @@ const ToolPage = lazy(() => import('./pages/ToolPage'));
 const SessionPage = lazy(() => import('./pages/SessionPage'));
 const ConversationPage = lazy(() => import('./pages/ConversationPage'));
 const AssetsPage = lazy(() => import('./pages/AssetsPage'));
+const AssetDetailPage = lazy(() => import('./pages/AssetDetailPage'));
 const SessionsPage = lazy(() => import('./pages/SessionsPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -62,6 +63,7 @@ function AppRoutes() {
           <Route path="/workspaces/:workspaceId/conversations/:conversationId" element={<ErrorBoundary><Suspense fallback={<LoadingSkeleton />}><ConversationPage /></Suspense></ErrorBoundary>} />
           <Route path="/workspaces/:workspaceId/team" element={<ErrorBoundary><Suspense fallback={<LoadingSkeleton />}><TeamHub /></Suspense></ErrorBoundary>} />
           <Route path="/workspaces/:workspaceId/assets" element={<ErrorBoundary><Suspense fallback={<LoadingSkeleton />}><AssetsPage /></Suspense></ErrorBoundary>} />
+          <Route path="/workspaces/:workspaceId/assets/:assetId" element={<ErrorBoundary><Suspense fallback={<LoadingSkeleton />}><AssetDetailPage /></Suspense></ErrorBoundary>} />
           <Route path="/profile" element={<ErrorBoundary><Suspense fallback={<LoadingSkeleton />}><ProfilePage /></Suspense></ErrorBoundary>} />
         </Route>
       </Route>

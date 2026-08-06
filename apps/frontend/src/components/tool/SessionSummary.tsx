@@ -1,4 +1,4 @@
-import { Box, Typography, Divider, Card, IconButton, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
+import { Box, Typography, Divider, Card, IconButton, Menu, MenuItem, ListItemIcon, ListItemText, Snackbar, Alert, Button } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import DescriptionIcon from '@mui/icons-material/Description';
 import TextSnippetIcon from '@mui/icons-material/TextSnippet';
@@ -10,6 +10,7 @@ import { copy } from '@flow-app/copy';
 import { PromoteButton } from '../shared/PromoteButton';
 import type { ArtifactDTO } from '../../api/client';
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 
 function downloadFile(content: string, filename: string, mimeType: string) {
   const blob = new Blob([content], { type: mimeType });
@@ -80,9 +81,17 @@ interface SessionSummaryProps {
 }
 
 export function SessionSummary({ artifacts, workspaceId, produces }: SessionSummaryProps) {
+  const navigate = useNavigate();
+  const [toast, setToast] = useState<{ open: boolean; assetId?: string; assetType?: string }>({ open: false });
+
+  const handlePromoted = (assetId: string, assetType: string) => {
+    setToast({ open: true, assetId, assetType });
+  };
+
   if (!artifacts || artifacts.length === 0) return null;
 
   return (
+    <>
     <Card>
       <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h3">
@@ -111,6 +120,7 @@ export function SessionSummary({ artifacts, workspaceId, produces }: SessionSumm
                   workspaceId={workspaceId ?? ''}
                   produces={produces}
                   promotedAssetId={artifact.promotedAssetId}
+                  onPromoted={handlePromoted}
                 />
               </Box>
             </Box>
@@ -158,5 +168,31 @@ export function SessionSummary({ artifacts, workspaceId, produces }: SessionSumm
         ))}
       </Box>
     </Card>
+    <Snackbar
+      open={toast.open}
+      autoHideDuration={6000}
+      onClose={() => setToast({ open: false })}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+    >
+      <Alert
+        severity="success"
+        variant="filled"
+        onClose={() => setToast({ open: false })}
+        action={
+          toast.assetId ? (
+            <Button
+              color="inherit"
+              size="small"
+              onClick={() => navigate(`/workspaces/${workspaceId}/assets/${toast.assetId}`)}
+            >
+              Vedi asset →
+            </Button>
+          ) : undefined
+        }
+      >
+        Asset &ldquo;{toast.assetType ?? ''}&rdquo; promosso
+      </Alert>
+    </Snackbar>
+    </>
   );
 }

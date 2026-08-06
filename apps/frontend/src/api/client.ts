@@ -126,7 +126,7 @@ class ApiClient {
   }
 
   async promoteArtifact(artifactId: string, workspaceId: string) {
-    return this.request<{ artifactId: string; assetType: string; promoted: boolean }>(
+    return this.request<{ artifactId: string; assetType: string; assetId: string; promoted: boolean }>(
       'POST',
       `/api/artifacts/${artifactId}/promote`,
       { workspaceId },

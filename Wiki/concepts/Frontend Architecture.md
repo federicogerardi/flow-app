@@ -54,7 +54,7 @@ apps/frontend/src/components/
 │   ├── WorkspaceCard.tsx          # Card in dashboard grid
 │   ├── WorkspaceForm.tsx          # Create/edit dialog
 │   ├── SessionList.tsx            # Live session tracking (queued/running/completed/failed)
-│   └── AssetList.tsx              # Knowledge Panel asset grid
+│   └── AssetList.tsx              # Knowledge Panel asset grid (clickable → AssetDetailPage)
 │
 ├── tool/                          # 5 components
 │   ├── SetupPanel.tsx             # Generic input panel — adapts to ToolDefinition
@@ -113,6 +113,8 @@ AppShell
 | `/workspaces/:id` | Workspace dashboard | `WorkspaceDashboard` |
 | `/workspaces/:id/tools/:toolKey` | Tool page | `ToolPageLayout` |
 | `/workspaces/:id/sessions/:sessionId` | Session detail | `SessionPage` |
+| `/workspaces/:id/assets` | Asset list (Knowledge Panel) | `AssetsPage` |
+| `/workspaces/:id/assets/:assetId` | Asset detail — full content view | `AssetDetailPage` |
 | `/admin/*` | Admin pages | Admin shell |
 
 ---
