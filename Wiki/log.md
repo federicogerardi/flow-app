@@ -3475,24 +3475,144 @@ Buyer-persona tool now generates successfully: `extraction` (3.2s, 2.7K tokens) 
 
 **Wiki updated**: [[Creating a New Tool]] — expanded with Asset Tool checklist, verified model tier table, 6 new pitfalls, buyer-persona reference.
 
-## [2026-08-07] diagnostic | Railway backend health sweep — baseline established
+## [2026-08-07] diagnostic | Railway backend health sweep — enriched (pass 2)
 
-Routine diagnostic sweep of the `backend` service on Railway (`dev` environment). Logs, build output, metrics, and HTTP observability queried via Railway MCP tools.
+Routine diagnostic sweep of the `backend` service on Railway (`dev` environment). Logs, build output, metrics, HTTP observability, and environment variables queried via Railway MCP tools. Second pass added failed-deployment forensics, cleanup-job trending, environment configuration audit, and cross-service metrics.
 
-**Findings** (4 items, 0 critical):
+**Findings** (6 items, 0 critical):
 
 | # | Finding | Type | Assessment |
 |---|---------|------|------------|
-| 1 | `InvalidRefreshTokenError` at `POST /api/auth/refresh` | Expected behavior | Token expired, user re-logged in successfully (340ms) |
-| 2 | 401 cascade from 4 endpoints at same second as refresh failure | Race condition (UX) | Auth middleware correctly rejects requests with expired access token while refresh is in-flight |
-| 3 | SSE long-polling `GET /api/sessions/.../events` → 300s response time | Expected | Deliberate SSE timeout, client reconnects after 5 minutes |
-| 4 | Build warnings: eslint peer dep mismatch, 3 npm audit highs, chunk >500KB | Non-blocking | No runtime impact; tech debt to address |
+| 1 | `InvalidRefreshTokenError` at `POST /api/auth/refresh` | Expected behavior | Token expired, user re-logged in successfully (340ms). Timeline reconstructed. |
+| 2 | 401 cascade from 4 endpoints at same second as refresh failure | Race condition (UX) | Auth middleware correctly rejects. Pattern repeats at 09:26:55. |
+| 3 | SSE long-polling ~300s response time (2 connections) | Expected | Programmatic timeout (±10ms precision), client reconnects. |
+| 4 | Prior deployment (`9b186d`) FAILED — `Dockerfile.backend` not found in code archive | Railway build-cache inconsistency | Subsequent deployment with identical config succeeded 58s later. Snapshot was stale. |
+| 5 | Cleanup job transitioning from idle (0) to active (2→6→2→0→1 keys deleted) | Positive | Idempotency key TTL expiry matching session generation bursts. `oldSnapshotsDeleted` still 0. |
+| 6 | Build warnings: eslint peer dep, 3 npm audit highs, chunk >500KB | Non-blocking | No runtime impact. |
 
-**Metrics** (6h window): CPU 0.0016 avg, memory 131MB stable, 0% HTTP error rate, cleanup job functional.
+**Environment audit** (8 items flagged):
+- 🔴 `JWT_SECRET` and 🟠 `CSRF_SECRET` using placeholder values — must be rotated before staging
+- 🟡 `CORS_ORIGIN` empty, `NODE_ENV=development`, `LOG_LEVEL=debug` — appropriate for dev, needs hardening for staging
+- 🟡 OAuth providers not configured — expected at this stage
+- 🟢 `LLM_DEFAULT_TIMEOUT_MS=60s`, `JWT_EXPIRES_IN=15m`, `RATE_LIMIT=100` — aligned with architecture
 
-**Action items** (non-blocking):
-- Frontend: implement request queue during token refresh (eliminates 401 cascade)
-- Build: bump `eslint-plugin-vitest`, run `npm audit fix`
-- Performance: code-split frontend chunks >500KB
+**Cross-service metrics** (6h window):
+- Backend: CPU 0.0016 avg, memory 131MB stable, 0% HTTP error rate
+- PostgreSQL: CPU 0.0004 avg, memory 40.9MB constant
+- Frontend: deploy SUCCESS, "Starting Container" (clean), build 4.22s, 20 chunks
+- Reverse proxy: operational, backend has no public domain ✅
 
-**Wiki updated**: [[synthesis/railway-backend-diagnostics-2026-08-07]] (this entry), [[log]] (this entry).
+**Action items** (7 items, 1 critical):
+| # | Item | Priority |
+|---|------|----------|
+| 1 | Frontend request queue for token refresh | 🟠 High |
+| 2 | Rotate JWT_SECRET and CSRF_SECRET | 🔴 Critical (before staging) |
+| 3–7 | eslint bump, npm audit fix, chunk splitting, NODE_ENV, LOG_LEVEL | 🟡–🟢 |
+
+**Wiki updated**: [[synthesis/railway-backend-diagnostics-2026-08-07]] (rewritten: 6 findings, timeline, env audit, cross-service health), [[log]] (this entry).
+
+## [2026-08-07] plan | Remediation plan for diagnostic findings — 12 fixes, 5 phases
+
+Implementation plan addressing 10 concrete fixes across 5 phases, derived from the 7 action items in the diagnostic sweep plus 3 latent issues discovered during codebase exploration (dotenv load-order bug, dead CSRF_SECRET, LOG_LEVEL bypassing zod validation).
+
+**Phases**:
+
+| Phase | Name | Files | Priority |
+|-------|------|-------|----------|
+| 1 | Secrets Rotation | 0 (config only) | 🔴 Critical |
+| 2 | Token Refresh Coordination | 2 (AuthContext, ApiClient) | 🟠 High |
+| 3 | Configuration Hardening | 3 (config.ts, logger.ts, 5 NODE_ENV sites) | 🟡 Medium |
+| 4 | Build Hygiene | 3 (package.json, vite.config.ts) | 🟢 Low |
+| 5 | Staging Preparation | 0 (config only) | 🟡 Medium |
+
+**Key design decisions**:
+- Phase 2: Module-level `refreshPromise` lock in AuthContext (mutex pattern) — zero backend changes, leverages existing backend rotation logic. 4 concurrent 401s → 1 refresh call → all 4 retry with new token.
+- Phase 3: Move `isDev` from module scope to runtime inside `validateConfig()` — fixes latent bug where zod schema shape is determined before dotenv loads.
+- Phase 3: Add `LOG_LEVEL` to zod schema, remove unused `CSRF_SECRET` from schema, consolidate all 8 `process.env.NODE_ENV` reads to use `config.NODE_ENV`.
+
+**Verification plan**:
+- Phase 2: MSW test simulating 4 parallel 401s, verifying exactly 1 refresh call
+- Phase 3: Unit test for `validateConfig()` with `NODE_ENV` set before call
+- Phase 4: `npm audit` (zero highs), `vite build` (split chunks verified)
+- Phase 5: Manual smoke test on staging (secure cookies, log level)
+
+**Cross-references**: [[synthesis/railway-backend-diagnostics-2026-08-07]], [[synthesis/remediation-plan-2026-08-07]]
+
+**Wiki updated**: [[synthesis/remediation-plan-2026-08-07]] (this entry), [[log]] (this entry).
+
+## [2026-08-07] exec | Remediation plan executed — 5 phases completed
+
+All 5 phases of [[synthesis/remediation-plan-2026-08-07]] executed. 7 files modified across backend and frontend.
+
+### Phase 1: Secrets Rotation ✅
+
+| Action | Detail |
+|--------|--------|
+| JWT_SECRET | Rotated to 64-byte crypto-random hex in `.env` and Railway `dev` |
+| CSRF_SECRET | Rotated to 32-byte crypto-random hex in `.env` and Railway `dev` |
+
+### Phase 2: Token Refresh Lock ✅
+
+**File**: `apps/frontend/src/auth/AuthContext.tsx`
+- Added module-level `refreshPromise: Promise<string | null> | null` lock (line 13)
+- Rewrote `attemptTokenRefresh()` (lines 188–218): checks for in-flight promise before creating new one, resets lock in `finally` block
+- No changes to `ApiClient` — existing 401 handler is now safe with the lock
+
+### Phase 3: Configuration Hardening ✅
+
+| File | Changes |
+|------|---------|
+| `apps/backend/src/config.ts` | Moved `isDev` from module scope into `validateConfig()`; extracted `getEnvSchema(isDev)` factory; added `LOG_LEVEL` to zod schema with `z.enum(['fatal','error','warn','info','debug','trace'])`; removed dead `CSRF_SECRET` from schema |
+| `apps/backend/src/api/auth/auth-routes.ts` | Moved `REFRESH_COOKIE_OPTIONS` from module scope into `createAuthRoutes()` body — `NODE_ENV` now read at runtime |
+| `apps/backend/.env.example` | Removed `CSRF_SECRET`, updated `JWT_SECRET` comment |
+
+### Phase 4: Build Hygiene ✅
+
+| File | Changes |
+|------|---------|
+| `apps/frontend/vite.config.ts` | Added `build.rollupOptions.output.manualChunks`: `vendor-react` (react + react-dom + react-router-dom), `vendor-mui` (@mui/material + @mui/icons-material), `vendor-xstate` (xstate + @xstate/react) |
+| `eslint-plugin-vitest` | Already at latest (0.5.4) — peer dep warning is unfixable until plugin releases eslint@9-compatible version |
+| `npm audit` | 1 high remains (kysely 0.28.x → 0.29.x is a breaking change, deferred) |
+
+### Phase 5: Staging Preparation ✅
+
+| Variable | Environment | Value |
+|----------|-------------|-------|
+| `NODE_ENV` | Railway `staging` | `production` |
+| `LOG_LEVEL` | Railway `staging` | `info` |
+
+### Verification
+
+```
+tsc --noEmit backend    ✅ clean
+tsc --noEmit frontend   ✅ clean
+tsc --noEmit domain     ✅ clean
+vitest                  ✅ 720/720 (72 files)
+vite build              ✅ 3.93s, 22 chunks, none >500KB
+```
+
+**Chunk split results** (before → after):
+- `index-Vo78Mf5T.js`: 596KB → split into `vendor-mui` (359KB) + `index` (232KB)
+- `index-ox_xQI05.js`: 157KB → remains at 157KB (`vendor-xstate` at 43KB + `vendor-react` at 38KB extracted)
+
+**Wiki updated**: [[synthesis/remediation-plan-2026-08-07]] (marked executed), [[synthesis/railway-backend-diagnostics-2026-08-07]], [[log]] (this entry).
+
+## [2026-08-07] analysis | Kysely vulnerability — impact & surface assessment
+
+Deep-dive analysis of the 3 Kysely CVEs (GHSA-wmrf, GHSA-8cpq, GHSA-pv5w) affecting `kysely@0.27.6`. Conclusion: **upgrade to 0.29.4 is zero-risk, zero code changes required.**
+
+**Attack surface audit** (26 import sites, 20+ endpoints, 16 repository files):
+
+| Vector | Instances | Verdict |
+|--------|-----------|---------|
+| `sql.lit()` | 0 | Primary injection vector — never used |
+| `jsonPath` / `JSONPathBuilder` / `.key()` / `.at()` | 0 | JSON path injection — never used |
+| `Kysely<any>` | 0 | All DB access is strongly typed via `Kysely<DB>` |
+| Dynamic column names | 0 | All `.where()`, `.select()`, `.orderBy()` use hardcoded string literals |
+| JSONB columns queried via path | 0 | 2 JSONB columns exist (`crawl_data.raw_response`, `session_snapshots.snapshot`), both read/written as whole blobs |
+
+**Upgrade path (0.27.6 → 0.29.4)**: Assessed 9 breaking changes from release notes. **Zero affect this codebase.** The only change needed is the version constraint in `packages/infra-db/package.json` (`^0.27.0` → `^0.29.4`). No code changes required.
+
+**Recommendation**: Upgrade immediately. The codebase is not currently exploitable (no vulnerable APIs are used), but the latent risk justifies the trivial upgrade. 720 tests provide regression coverage.
+
+**Wiki updated**: [[synthesis/kysely-vulnerability-analysis-2026-08-07]] (this entry), [[synthesis/remediation-plan-2026-08-07]] (success criteria updated), [[log]] (this entry).

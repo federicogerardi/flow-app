@@ -17,13 +17,6 @@ const loginSchema = z.object({
 });
 
 const REFRESH_COOKIE = 'refresh_token';
-const REFRESH_COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict' as const,
-  path: '/api/auth',
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-};
 
 export function createAuthRoutes(
   authService: AuthService,
@@ -33,6 +26,14 @@ export function createAuthRoutes(
 ) {
   const router = Router();
   const loginRateLimiter = createAuthRateLimiter(authRateLimitWindowMs, authRateLimitMaxAttempts);
+
+  const refreshCookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict' as const,
+    path: '/api/auth',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  };
 
   // POST /api/auth/register
   router.post('/register', async (req: Request, res: Response, next: NextFunction) => {
@@ -52,7 +53,7 @@ export function createAuthRoutes(
 
       const result = await authService.register(body.data.email, body.data.password);
 
-      res.cookie(REFRESH_COOKIE, result.refreshToken, REFRESH_COOKIE_OPTIONS);
+      res.cookie(REFRESH_COOKIE, result.refreshToken, refreshCookieOptions);
       res.status(201).json({
         user: result.user,
         accessToken: result.accessToken,
@@ -81,7 +82,7 @@ export function createAuthRoutes(
 
       const result = await authService.login(body.data.email, body.data.password);
 
-      res.cookie(REFRESH_COOKIE, result.refreshToken, REFRESH_COOKIE_OPTIONS);
+      res.cookie(REFRESH_COOKIE, result.refreshToken, refreshCookieOptions);
       res.json({
         user: result.user,
         accessToken: result.accessToken,
@@ -109,7 +110,7 @@ export function createAuthRoutes(
 
       const result = await authService.refresh(refreshToken);
 
-      res.cookie(REFRESH_COOKIE, result.refreshToken, REFRESH_COOKIE_OPTIONS);
+      res.cookie(REFRESH_COOKIE, result.refreshToken, refreshCookieOptions);
       res.json({
         user: result.user,
         accessToken: result.accessToken,
@@ -193,7 +194,7 @@ export function createAuthRoutes(
         return;
       }
 
-      res.cookie(REFRESH_COOKIE, authResult.refreshToken, REFRESH_COOKIE_OPTIONS);
+      res.cookie(REFRESH_COOKIE, authResult.refreshToken, refreshCookieOptions);
       res.setHeader('Cache-Control', 'no-store');
       res.setHeader('Referrer-Policy', 'no-referrer');
       const frontendUrl = process.env.CORS_ORIGIN ?? 'http://localhost:5173';

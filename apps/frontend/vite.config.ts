@@ -6,6 +6,17 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            'vendor-mui': ['@mui/material', '@mui/icons-material'],
+            'vendor-xstate': ['xstate', '@xstate/react'],
+          },
+        },
+      },
+    },
     server: {
       port: 5173,
       proxy: {

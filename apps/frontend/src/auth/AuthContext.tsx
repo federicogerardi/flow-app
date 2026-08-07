@@ -10,6 +10,7 @@ import {
 // ── Token Store (module-level, never localStorage) ──────────────────────────
 
 let inMemoryToken: string | null = null;
+let refreshPromise: Promise<string | null> | null = null;
 
 export function getAccessToken(): string | null {
   return inMemoryToken;
@@ -185,18 +186,32 @@ export function useAuth(): AuthContextValue {
 // ── Refresh helper (used by API client interceptor) ─────────────────────────
 
 export async function attemptTokenRefresh(): Promise<boolean> {
+  if (refreshPromise) {
+    const token = await refreshPromise;
+    return token !== null;
+  }
+
+  refreshPromise = (async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (!response.ok) return null;
+
+      const data: AuthResponse = await response.json();
+      setAccessToken(data.accessToken);
+      return data.accessToken;
+    } catch {
+      return null;
+    }
+  })();
+
   try {
-    const response = await fetch(`${API_BASE}/api/auth/refresh`, {
-      method: 'POST',
-      credentials: 'include',
-    });
-
-    if (!response.ok) return false;
-
-    const data: AuthResponse = await response.json();
-    setAccessToken(data.accessToken);
-    return true;
-  } catch {
-    return false;
+    const token = await refreshPromise;
+    return token !== null;
+  } finally {
+    refreshPromise = null;
   }
 }

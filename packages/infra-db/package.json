@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@flow-app/domain": "*",
-    "kysely": "^0.27.0",
+    "kysely": "^0.29.4",
     "pg": "^8.13.0"
   },
   "devDependencies": {

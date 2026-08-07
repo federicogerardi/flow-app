@@ -1,39 +1,43 @@
 import { z } from 'zod';
 
-const isDev = process.env.NODE_ENV === 'development';
+function getEnvSchema(isDev: boolean) {
+  return z.object({
+    DATABASE_URL: z.string().url(),
+    REDIS_URL: isDev
+      ? z.string().url().optional().default('redis://localhost:6379')
+      : z.string().url(),
+    OPENROUTER_API_KEY: isDev
+      ? z.string().optional().default('sk-or-v1-dev-placeholder')
+      : z.string().min(1),
+    OPENROUTER_BASE_URL: z.string().url().default('https://openrouter.ai/api/v1'),
+    OPENROUTER_APP_NAME: z.string().default('flow-app'),
+    LLM_DEFAULT_TIMEOUT_MS: z.coerce.number().default(60_000),
+    JWT_SECRET: z.string().min(32),
+    JWT_EXPIRES_IN: z.string().default('15m'),
+    REFRESH_TOKEN_EXPIRES_IN_SECONDS: z.coerce.number().default(604800),
+    LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default(
+      isDev ? 'debug' : 'info',
+    ),
+    GOOGLE_CLIENT_ID: z.string().optional(),
+    GOOGLE_CLIENT_SECRET: z.string().optional(),
+    GITHUB_CLIENT_ID: z.string().optional(),
+    GITHUB_CLIENT_SECRET: z.string().optional(),
+    AUTH_RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900000),
+    AUTH_RATE_LIMIT_MAX_ATTEMPTS: z.coerce.number().default(5),
+    SEED_USER_ID: z.string().uuid().default('00000000-0000-0000-0000-000000000001'),
+    PORT: z.coerce.number().default(3000),
+    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+    CORS_ORIGIN: z.string().default('http://localhost:5173'),
+    RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
+    RATE_LIMIT_MAX_REQUESTS: z.coerce.number().default(100),
+  });
+}
 
-const envSchema = z.object({
-  DATABASE_URL: z.string().url(),
-  REDIS_URL: isDev
-    ? z.string().url().optional().default('redis://localhost:6379')
-    : z.string().url(),
-  OPENROUTER_API_KEY: isDev
-    ? z.string().optional().default('sk-or-v1-dev-placeholder')
-    : z.string().min(1),
-  OPENROUTER_BASE_URL: z.string().url().default('https://openrouter.ai/api/v1'),
-  OPENROUTER_APP_NAME: z.string().default('flow-app'),
-  LLM_DEFAULT_TIMEOUT_MS: z.coerce.number().default(60_000),
-  JWT_SECRET: z.string().min(32),
-  JWT_EXPIRES_IN: z.string().default('15m'),
-  REFRESH_TOKEN_EXPIRES_IN_SECONDS: z.coerce.number().default(604800),
-  CSRF_SECRET: z.string().min(16),
-  GOOGLE_CLIENT_ID: z.string().optional(),
-  GOOGLE_CLIENT_SECRET: z.string().optional(),
-  GITHUB_CLIENT_ID: z.string().optional(),
-  GITHUB_CLIENT_SECRET: z.string().optional(),
-  AUTH_RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900000),
-  AUTH_RATE_LIMIT_MAX_ATTEMPTS: z.coerce.number().default(5),
-  SEED_USER_ID: z.string().uuid().default('00000000-0000-0000-0000-000000000001'),
-  PORT: z.coerce.number().default(3000),
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  CORS_ORIGIN: z.string().default('http://localhost:5173'),
-  RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
-  RATE_LIMIT_MAX_REQUESTS: z.coerce.number().default(100),
-});
-
-export type Env = z.infer<typeof envSchema>;
+export type Env = z.infer<ReturnType<typeof getEnvSchema>>;
 
 export function validateConfig(): Env {
+  const isDev = process.env.NODE_ENV === 'development';
+  const envSchema = getEnvSchema(isDev);
   const result = envSchema.safeParse(process.env);
 
   if (!result.success) {
