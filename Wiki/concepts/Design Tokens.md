@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/ux
-date_updated: 2026-07-31
-source_count: 6
+date_updated: 2026-08-07
+source_count: 7
 confidence: high
 ---
 
@@ -622,3 +622,4 @@ function AppThemeProvider({ children }: { children: React.ReactNode }) {
 - [[ToolPage Machine (XState v5)]] — CTA enable/disable states
 - [[Session List - Live Status]] — card state colours (queued/running/completed/failed)
 - [[sources/PRD]] — FR-U07 (dark/light mode), FR-U09 (accessibility WCAG 2.1 AA)
+- [[synthesis/ui-design-summary-2026-08-07]] — comprehensive UI design reference for backend handoff

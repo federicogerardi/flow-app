@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/architecture
-date_updated: 2026-08-02
-source_count: 8
+date_updated: 2026-08-07
+source_count: 9
 confidence: high
 ---
 
@@ -828,3 +828,4 @@ function PromoteButton({ sessionId, artifactId, assetType, workspaceId, onPromot
 - [[Design Tokens]] — visual tokens consumed by all components
 - [[Agent Chat UX]] — 6 new agent-chat components (wireframes, props, interactions)
 - [[Gamification UX]] — 8 new gamification components (sidebar zone, level-up, badges, toast system)
+- [[synthesis/ui-design-summary-2026-08-07]] — comprehensive UI design reference for backend handoff

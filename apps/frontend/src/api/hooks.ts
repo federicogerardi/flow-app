@@ -1,12 +1,22 @@
 import { useState, useEffect } from 'react';
 import { api } from './client.js';
 import type { SessionDTO, WorkspaceDTO } from './client.js';
+import type { SessionListItemDTO } from '@flow-app/contracts';
 import { sseClient } from './sse-client.js';
 
 interface StepProgress {
   current: number;
   total: number;
+  label?: string;
 }
+
+export type LiveSession = SessionListItemDTO & {
+  currentStepIndex?: number;
+  currentStepLabel?: string;
+  elapsedSeconds?: number;
+  lastArtifactPreview?: string;
+  errorMessage?: string;
+};
 
 export function useSession(sessionId: string | null) {
   const [session, setSession] = useState<SessionDTO | null>(null);
@@ -34,6 +44,86 @@ export function useSession(sessionId: string | null) {
   }, [sessionId]);
 
   return { session, progress, loading, error };
+}
+
+/**
+ * Hook for live session tracking with SSE + API catch-up.
+ * Subscribes to SSE events for real-time updates, with API fallback for cross-tab resilience.
+ */
+export function useLiveSession(sessionId: string | null) {
+  const [liveSession, setLiveSession] = useState<LiveSession | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // API catch-up on mount
+  useEffect(() => {
+    if (!sessionId) {
+      setLiveSession(null);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    api.getSession(sessionId)
+      .then((session) => {
+        setLiveSession({
+          id: session.id,
+          toolKey: session.toolKey,
+          workspaceId: session.workspaceId,
+          status: session.status,
+          stepCount: session.stepCount,
+          createdAt: session.createdAt,
+        });
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+
+    // SSE subscription for live updates
+    const unsubscribe = sseClient.connect(sessionId, {
+      onStep: (data) => {
+        const progress = data.progress as StepProgress;
+        setLiveSession((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            currentStepIndex: progress.current,
+            currentStepLabel: progress.label,
+            lastArtifactPreview: (data.artifact as Record<string, unknown>)?.content
+              ? String((data.artifact as Record<string, unknown>).content).slice(0, 150)
+              : prev.lastArtifactPreview,
+          };
+        });
+      },
+      onCompleted: () => {
+        // Fetch final state from API
+        api.getSession(sessionId).then((session) => {
+          setLiveSession((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              status: session.status,
+              completedAt: session.completedAt ?? undefined,
+            };
+          });
+        });
+      },
+      onFailed: () => {
+        api.getSession(sessionId).then((session) => {
+          setLiveSession((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              status: session.status,
+              errorMessage: 'Session failed',
+            };
+          });
+        });
+      },
+    });
+
+    return unsubscribe;
+  }, [sessionId]);
+
+  return { liveSession, loading };
 }
 
 export function useWorkspaces() {

@@ -18,6 +18,8 @@ const AssetsPage = lazy(() => import('./pages/AssetsPage'));
 const AssetDetailPage = lazy(() => import('./pages/AssetDetailPage'));
 const SessionsPage = lazy(() => import('./pages/SessionsPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const TemplatesPage = lazy(() => import('./pages/TemplatesPage'));
+const AuditPage = lazy(() => import('./pages/AuditPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 
@@ -65,6 +67,8 @@ function AppRoutes() {
           <Route path="/workspaces/:workspaceId/assets" element={<ErrorBoundary><Suspense fallback={<LoadingSkeleton />}><AssetsPage /></Suspense></ErrorBoundary>} />
           <Route path="/workspaces/:workspaceId/assets/:assetId" element={<ErrorBoundary><Suspense fallback={<LoadingSkeleton />}><AssetDetailPage /></Suspense></ErrorBoundary>} />
           <Route path="/profile" element={<ErrorBoundary><Suspense fallback={<LoadingSkeleton />}><ProfilePage /></Suspense></ErrorBoundary>} />
+          <Route path="/templates" element={<ErrorBoundary><Suspense fallback={<LoadingSkeleton variant="dashboard" />}><TemplatesPage /></Suspense></ErrorBoundary>} />
+          <Route path="/audit" element={<ErrorBoundary><Suspense fallback={<LoadingSkeleton variant="dashboard" />}><AuditPage /></Suspense></ErrorBoundary>} />
         </Route>
       </Route>
 

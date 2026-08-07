@@ -5,8 +5,8 @@ tags:
   - wiki/gamification
   - wiki/ux
   - wiki/frontend
-date_updated: 2026-08-01
-source_count: 6
+date_updated: 2026-08-07
+source_count: 7
 confidence: high
 ---
 
@@ -362,3 +362,4 @@ Toast border color matches the rarity tier. Badge cards on the profile page show
 - [[Gamification#Workspace Gamification]] — Challenges and leaderboard
 - [[UX Wireframes]] — Sidebar layout and notification patterns
 - [[Design Tokens]] — Accent colors, gradients, animation tokens
+- [[synthesis/ui-design-summary-2026-08-07]] — comprehensive UI design reference for backend handoff

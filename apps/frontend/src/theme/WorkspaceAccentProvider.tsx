@@ -16,12 +16,20 @@ const AccentContext = createContext<AccentContextValue>({
   setAccent: () => {},
 });
 
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 export function WorkspaceAccentProvider({ children }: { children: ReactNode }) {
   const [accent, setAccentState] = useState<string>(WORKSPACE_ACCENTS[0]);
 
   const setAccent = useCallback((color: string) => {
     setAccentState(color);
     document.documentElement.style.setProperty('--workspace-accent', color);
+    document.documentElement.style.setProperty('--workspace-accent-light', hexToRgba(color, 0.12));
   }, []);
 
   return (

@@ -6,7 +6,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { useNavigate } from 'react-router';
 import useSWR from 'swr';
-import { api } from '../../api/client';
+import { api, type AgentDTO } from '../../api/client';
 import { statusColorMap } from '../../shared/statusColors';
 
 const EXPECTED_ASSET_TYPES = ['brief', 'brand-voice', 'persona', 'angle', 'ad-copy'] as const;
@@ -31,9 +31,11 @@ interface AgentContextDrawerProps {
   open: boolean;
   onClose: () => void;
   workspaceId: string;
+  /** When provided, filters context to this agent's relevant assets */
+  agent?: AgentDTO | null;
 }
 
-export function AgentContextDrawer({ open, onClose, workspaceId }: AgentContextDrawerProps) {
+export function AgentContextDrawer({ open, onClose, workspaceId, agent }: AgentContextDrawerProps) {
   const navigate = useNavigate();
 
   const { data: assetsData } = useSWR(
@@ -49,22 +51,35 @@ export function AgentContextDrawer({ open, onClose, workspaceId }: AgentContextD
   const presentTypes = new Set(assets.map((a) => a.assetType));
   const sessions = sessionsData?.data ?? [];
 
+  // Filter asset types when agent is provided
+  const filteredAssetTypes = agent
+    ? EXPECTED_ASSET_TYPES.filter((_type) => {
+        // Show assets relevant to the agent's tools
+        // For now, show all — can be refined with agent.capabilities mapping
+        return true;
+      })
+    : [...EXPECTED_ASSET_TYPES];
+
   return (
-    <Drawer anchor="right" open={open} onClose={onClose}>
+    <Drawer anchor="right" open={open} onClose={onClose} aria-labelledby="context-drawer-title">
       <Box sx={{ width: 320, p: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6" fontWeight={600}>Context</Typography>
-          <IconButton onClick={onClose} size="small"><CloseIcon /></IconButton>
+          <Typography variant="h6" fontWeight={600} id="context-drawer-title">
+            {agent ? `${agent.name} Context` : 'Context'}
+          </Typography>
+          <IconButton onClick={onClose} size="small" aria-label="Close context drawer">
+            <CloseIcon />
+          </IconButton>
         </Box>
 
         {/* Assets (M10) — per-type with preview/deeplink */}
         <Box sx={{ mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-            <InventoryIcon fontSize="small" color="action" />
+            <InventoryIcon fontSize="small" color="action" aria-hidden="true" />
             <Typography variant="subtitle2" fontWeight={600}>Workspace Assets</Typography>
           </Box>
           <List dense disablePadding>
-            {EXPECTED_ASSET_TYPES.map((type) => {
+            {filteredAssetTypes.map((type) => {
               const present = presentTypes.has(type);
               return (
                 <ListItem key={type} disablePadding sx={{ mb: 0.5 }}>
@@ -72,9 +87,9 @@ export function AgentContextDrawer({ open, onClose, workspaceId }: AgentContextD
                     primary={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         {present ? (
-                          <CheckCircleIcon color="success" sx={{ fontSize: 14 }} />
+                          <CheckCircleIcon color="success" sx={{ fontSize: 14 }} aria-hidden="true" />
                         ) : (
-                          <AddCircleOutlineIcon color="disabled" sx={{ fontSize: 14 }} />
+                          <AddCircleOutlineIcon color="disabled" sx={{ fontSize: 14 }} aria-hidden="true" />
                         )}
                         <Typography variant="body2" fontWeight={500} fontSize="0.8rem">
                           {ASSET_LABELS[type]}
@@ -118,7 +133,7 @@ export function AgentContextDrawer({ open, onClose, workspaceId }: AgentContextD
         {/* Recent Sessions */}
         <Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-            <HistoryIcon fontSize="small" color="action" />
+            <HistoryIcon fontSize="small" color="action" aria-hidden="true" />
             <Typography variant="subtitle2" fontWeight={600}>Recent Sessions</Typography>
           </Box>
           {sessions.length === 0 ? (

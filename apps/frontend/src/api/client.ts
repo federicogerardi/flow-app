@@ -254,6 +254,23 @@ class ApiClient {
   async deleteAsset(workspaceId: string, assetId: string) {
     return this.request<void>('DELETE', `/api/workspaces/${workspaceId}/assets/${assetId}`);
   }
+
+  // ── Workspace Activity & Challenges ────────────────────────────────────────
+
+  async getWorkspaceActivity(workspaceId: string) {
+    return this.request<{ activeUsers: Array<{ name: string; lastAction: string; actionType: string }> }>(
+      'GET',
+      `/api/workspaces/${workspaceId}/activity`,
+    );
+  }
+
+  async voteChallenge(workspaceId: string, challengeId: string, vote: string) {
+    return this.request<{ voted: boolean }>(
+      'POST',
+      `/api/workspaces/${workspaceId}/challenges/vote`,
+      { challengeId, vote },
+    );
+  }
 }
 
 export const api = new ApiClient();

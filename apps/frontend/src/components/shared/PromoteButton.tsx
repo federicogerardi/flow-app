@@ -1,9 +1,9 @@
-import { Button, Tooltip } from '@mui/material';
+import { Button, Tooltip, Box, Typography } from '@mui/material';
 import { useState } from 'react';
 import PushPinIcon from '@mui/icons-material/PushPin';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { copy } from '@flow-app/copy';
-import { PromoteDialog } from './PromoteDialog';
+import { api } from '../../api/client';
 
 interface PromoteButtonProps {
   artifactId: string;
@@ -15,10 +15,9 @@ interface PromoteButtonProps {
 }
 
 export function PromoteButton({ artifactId, workspaceId, produces, promotedAssetId, onPromoted }: PromoteButtonProps) {
-  const [state, setState] = useState<'idle' | 'done'>(
+  const [state, setState] = useState<'idle' | 'confirming' | 'promoting' | 'done'>(
     promotedAssetId ? 'done' : 'idle',
   );
-  const [dialogOpen, setDialogOpen] = useState(false);
 
   if (!produces) return null;
 
@@ -36,30 +35,45 @@ export function PromoteButton({ artifactId, workspaceId, produces, promotedAsset
     );
   }
 
-  return (
-    <>
-      <Tooltip title={copy.t('shared.actions.promote')}>
+  if (state === 'confirming') {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Typography variant="caption" color="text.secondary">
+          Promote to asset?
+        </Typography>
         <Button
-          variant="outlined"
           size="small"
-          startIcon={<PushPinIcon />}
-          onClick={() => setDialogOpen(true)}
+          variant="contained"
+          onClick={async () => {
+            setState('promoting');
+            try {
+              const result = await api.promoteArtifact(artifactId, workspaceId);
+              setState('done');
+              onPromoted?.(result.assetId, result.assetType, result.name);
+            } catch {
+              setState('idle');
+            }
+          }}
         >
-          {copy.t('shared.actions.promote')}
+          {copy.t('shared.actions.confirm')}
         </Button>
-      </Tooltip>
+        <Button size="small" variant="text" onClick={() => setState('idle')}>
+          {copy.t('shared.actions.cancel')}
+        </Button>
+      </Box>
+    );
+  }
 
-      <PromoteDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        artifactId={artifactId}
-        workspaceId={workspaceId}
-        assetType={produces}
-        onPromoted={(assetId, assetType, name) => {
-          setState('done');
-          onPromoted?.(assetId, assetType, name);
-        }}
-      />
-    </>
+  return (
+    <Tooltip title={copy.t('shared.actions.promote')}>
+      <Button
+        variant="contained"
+        size="small"
+        startIcon={<PushPinIcon />}
+        onClick={() => setState('confirming')}
+      >
+        {copy.t('shared.actions.promote')}
+      </Button>
+    </Tooltip>
   );
 }

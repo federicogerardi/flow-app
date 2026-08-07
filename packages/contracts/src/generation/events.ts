@@ -1,6 +1,9 @@
+import type { ArtifactDTO } from './session.dto';
+
 export interface StepProgress {
   current: number;
   total: number;
+  label?: string;
 }
 
 export type SSEEvent =
@@ -15,6 +18,7 @@ export type SSEEvent =
         stepNumber: number;
         stepLabel: string;
         progress: StepProgress;
+        artifact: ArtifactDTO;  // artifact content for live preview
       };
     }
   | {
@@ -22,7 +26,7 @@ export type SSEEvent =
       data: {
         sessionId: string;
         status: 'completed';
-        finalArtifactId: string;
+        finalArtifact: ArtifactDTO;  // full artifact object (was finalArtifactId: string)
         completedAt: string;
       };
     }

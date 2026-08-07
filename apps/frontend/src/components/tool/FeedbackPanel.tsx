@@ -3,6 +3,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import { copy } from '@flow-app/copy';
 import { useEffect, useState, useRef } from 'react';
+import type { ArtifactDTO } from '../../api/client';
 
 const slideInFade = keyframes`
   from { transform: translateX(-8px); opacity: 0; }
@@ -22,6 +23,8 @@ interface StepProgressData {
 interface FeedbackPanelProps {
   progress: StepProgressData | null;
   status: string;
+  /** Artifact content for live previews during generation */
+  artifacts?: ArtifactDTO[];
 }
 
 function ElapsedTimer({ startedAt }: { startedAt: number }) {
@@ -48,7 +51,7 @@ function ElapsedTimer({ startedAt }: { startedAt: number }) {
   );
 }
 
-function StepIndicator({ index, isCompleted, isActive, total }: { index: number; isCompleted: boolean; isActive: boolean; total: number }) {
+function StepIndicator({ index, isCompleted, isActive, total, artifactPreview }: { index: number; isCompleted: boolean; isActive: boolean; total: number; artifactPreview?: string }) {
   return (
     <Box
       sx={{
@@ -96,12 +99,21 @@ function StepIndicator({ index, isCompleted, isActive, total }: { index: number;
         >
           {copy.t('toolPage.progress.stepLabel', { current: String(index + 1), total: String(total) })}
         </Typography>
+        {isCompleted && artifactPreview && (
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: 'block', fontStyle: 'italic', mt: 0.25, animation: `${slideInFade} 300ms ease-out` }}
+          >
+            {artifactPreview}
+          </Typography>
+        )}
       </Box>
     </Box>
   );
 }
 
-export function FeedbackPanel({ progress, status }: FeedbackPanelProps) {
+export function FeedbackPanel({ progress, status, artifacts = [] }: FeedbackPanelProps) {
   const [startedAt] = useState(() => Date.now());
 
   if (status === 'completed' || status === 'failed') {
@@ -146,15 +158,19 @@ export function FeedbackPanel({ progress, status }: FeedbackPanelProps) {
       </Box>
 
       <Stack spacing={0.5}>
-        {Array.from({ length: progress.total }, (_, i) => (
-          <StepIndicator
-            key={i}
-            index={i}
-            isCompleted={i < progress.current}
-            isActive={i === progress.current}
-            total={progress.total}
-          />
-        ))}
+        {Array.from({ length: progress.total }, (_, i) => {
+          const artifact = artifacts.find((a) => a.stepNumber === i + 1);
+          return (
+            <StepIndicator
+              key={i}
+              index={i}
+              isCompleted={i < progress.current}
+              isActive={i === progress.current}
+              total={progress.total}
+              artifactPreview={artifact?.content?.slice(0, 150)}
+            />
+          );
+        })}
       </Stack>
     </Box>
   );

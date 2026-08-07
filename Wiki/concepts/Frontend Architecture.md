@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/architecture
-date_updated: 2026-08-06
-source_count: 9
+date_updated: 2026-08-07
+source_count: 10
 confidence: high
 ---
 
@@ -298,3 +298,4 @@ function WorkspaceDashboard() {
 - [[Session List - Live Status]] — Cross-tab SSE, live session cards
 - [[synthesis/code-review-2026-08-02]] — Multi-agent review including frontend findings (C3, C4, C5, C7, C8)
 - [[synthesis/frontend-gap-analysis-2026-08-04]] — Operational gap analysis: 28 missing components, 7 execution tracks
+- [[synthesis/ui-design-summary-2026-08-07]] — comprehensive UI design reference for backend handoff

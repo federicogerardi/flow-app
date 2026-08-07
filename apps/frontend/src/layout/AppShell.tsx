@@ -6,6 +6,7 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import PeopleIcon from '@mui/icons-material/People';
 import DescriptionIcon from '@mui/icons-material/Description';
 import HistoryIcon from '@mui/icons-material/History';
+import BoltIcon from '@mui/icons-material/Bolt';
 import AddIcon from '@mui/icons-material/Add';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -99,14 +100,15 @@ export function AppShell() {
 
   const navItems = [
     { label: copy.t('workspace.nav.home'), icon: <DashboardIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}` : '/dashboard' },
+    { label: 'Tools', icon: <BoltIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/tools/blog-post` : '/dashboard' },
     { label: copy.t('workspace.nav.sessions'), icon: <PlayCircleIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/sessions` : '/dashboard' },
     { label: copy.t('workspace.nav.assets'), icon: <InventoryIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/assets` : '/dashboard' },
     { label: copy.t('workspace.nav.team'), icon: <PeopleIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/team` : '/dashboard' },
   ];
 
   const secondaryItems = [
-    { label: copy.t('workspace.nav.templates'), icon: <DescriptionIcon />, path: '#', disabled: true },
-    { label: copy.t('workspace.nav.audit'), icon: <HistoryIcon />, path: '#', disabled: true },
+    { label: copy.t('workspace.nav.templates'), icon: <DescriptionIcon />, path: '/templates' },
+    { label: copy.t('workspace.nav.audit'), icon: <HistoryIcon />, path: '/audit' },
   ];
 
   return (

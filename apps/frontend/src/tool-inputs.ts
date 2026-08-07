@@ -23,6 +23,17 @@ export interface AssetInput {
   multiple: boolean;
 }
 
+export interface ToolDefinition {
+  key: string;
+  label: string;
+  textInputs: TextInput[];
+  fileInputs: FileInput[];
+  assetInputs: AssetInput[];
+  creditCost: number;
+  stepCount: number;
+  produces?: string;
+}
+
 const BLOG_POST_INPUTS: TextInput[] = [
   { key: 'topic', label: 'Topic', required: true, type: 'short' },
   { key: 'language', label: 'Language', required: false, type: 'select', options: ['it', 'en'], placeholder: 'it' },

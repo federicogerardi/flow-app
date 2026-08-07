@@ -30,7 +30,18 @@ export interface SessionListItemDTO {
   workspaceId: string;
   status: SessionStatusDTO;
   stepCount: number;
+  currentStepIndex?: number;        // when running
+  currentStepLabel?: string;        // when running
+  queuePosition?: number;           // when queued
+  lastArtifactId?: string;
+  lastArtifactPreview?: string;     // first 150 chars
+  elapsedSeconds?: number;          // running sessions
+  durationSeconds?: number;         // completed sessions
+  errorMessage?: string;            // failed sessions
+  failedAtStep?: number;            // failed sessions
+  isPromotable?: boolean;           // tool.produces !== undefined
   createdAt: string;
+  completedAt?: string | null;
 }
 
 export interface ArtifactListItemDTO {

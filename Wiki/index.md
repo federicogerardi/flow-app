@@ -161,4 +161,8 @@ date_updated: 2026-08-07
 | [[synthesis/remediation-plan-2026-08-07]] | Remediation plan for diagnostic findings — 12 fixes across 5 phases | 2026-08-07 |
 | [[synthesis/railway-backend-diagnostics-2026-08-07]] | Railway backend health sweep — 4 findings (0 critical), metrics baseline, action items | 2026-08-07 |
 | [[synthesis/multi-asset-implementation-plan]] | Multi-asset promotion — 22 steps across 7 phases + 6 new test files + 7 updated | 2026-08-06 |
+| [[UX Spec Summary-2026-08-07]] | Comprehensive UX Design Summary — 9 sections consolidating all UX wiki specs for backend architecture handoff | 2026-08-07 |
+| [[synthesis/ui-design-summary-2026-08-07]] | UI Design Summary — full-stack design reference: 37-component inventory with status, complete design tokens, layout architecture, component props/interfaces/MUI internals/state bindings, gamification visual system, WCAG 2.1 AA requirements, implementation priority | 2026-08-07 |
+| [[synthesis/frontend-drift-report-2026-08-07]] | Frontend drift report — 91 files examined, 15 critical + 12 high drifts: XState skeletal, missing variants, DTO gaps, SSE contract mismatch | 2026-08-07 |
+| [[synthesis/frontend-drift-remediation-plan-2026-08-07]] | Frontend drift remediation plan — 27 findings across 8 phases, 40+ files, phased dependency chain | 2026-08-07 |
 | [[overview]] | High-level synthesis (v3) | 2026-08-04 |

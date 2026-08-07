@@ -14,9 +14,11 @@ interface ChatMessageBubbleProps {
   modelUsed?: string | null;
   createdAt?: string;
   isStreaming?: boolean;
+  /** Per-agent emoji from AgentDefinition. Falls back to 🤖 */
+  agentEmoji?: string;
 }
 
-export function ChatMessageBubble({ role, content, tokensUsed, modelUsed, createdAt, isStreaming = false }: ChatMessageBubbleProps) {
+export function ChatMessageBubble({ role, content, tokensUsed, modelUsed, createdAt, isStreaming = false, agentEmoji }: ChatMessageBubbleProps) {
   const isUser = role === 'user';
 
   return (
@@ -44,7 +46,7 @@ export function ChatMessageBubble({ role, content, tokensUsed, modelUsed, create
           }}
           aria-hidden="true"
         >
-          🤖
+          {agentEmoji ?? '🤖'}
         </Box>
       )}
 
@@ -55,7 +57,8 @@ export function ChatMessageBubble({ role, content, tokensUsed, modelUsed, create
             py: 1.5,
             // Spec: asymmetric border-radius per role
             borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-            bgcolor: isUser ? 'primary.main' : 'background.paper',
+            // Use workspace accent light for user bubbles with fallback
+            bgcolor: isUser ? 'var(--workspace-accent-light, primary.main)' : 'background.paper',
             color: isUser ? 'primary.contrastText' : 'text.primary',
             border: isUser ? 'none' : '1px solid',
             borderColor: isUser ? 'transparent' : 'divider',

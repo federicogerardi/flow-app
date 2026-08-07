@@ -21,6 +21,27 @@ interface ReadinessSnapshotProps {
   workspaceAssets?: WorkspaceAsset[];
 }
 
+function ReadinessIcon({ isReady }: { isReady: boolean }) {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'color 400ms ease, transform 400ms ease',
+        color: isReady ? 'success.main' : 'error.main',
+        transform: isReady ? 'scale(1.1)' : 'scale(1)',
+      }}
+    >
+      {isReady ? (
+        <CheckCircleIcon color="success" fontSize="small" />
+      ) : (
+        <CancelIcon color="error" fontSize="small" />
+      )}
+    </Box>
+  );
+}
+
 export function ReadinessSnapshot({
   inputs,
   toolDef,
@@ -52,14 +73,10 @@ export function ReadinessSnapshot({
         {toolDef
           .filter((f) => f.required)
           .map((field) => {
-            const hasValue = inputs[field.key]?.trim();
+            const hasValue = !!inputs[field.key]?.trim();
             return (
               <Box key={`text:${field.key}`} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {hasValue ? (
-                  <CheckCircleIcon color="success" fontSize="small" />
-                ) : (
-                  <CancelIcon color="error" fontSize="small" />
-                )}
+                <ReadinessIcon isReady={hasValue} />
                 <Typography
                   variant="body2"
                   color={hasValue ? 'text.primary' : 'error.main'}
@@ -77,11 +94,7 @@ export function ReadinessSnapshot({
             const hasFile = !!files[field.key];
             return (
               <Box key={`file:${field.key}`} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {hasFile ? (
-                  <CheckCircleIcon color="success" fontSize="small" />
-                ) : (
-                  <CancelIcon color="error" fontSize="small" />
-                )}
+                <ReadinessIcon isReady={hasFile} />
                 <Typography
                   variant="body2"
                   color={hasFile ? 'text.primary' : 'error.main'}
@@ -102,11 +115,7 @@ export function ReadinessSnapshot({
             const label = `${def.assetType}${matching.length > 1 ? ` (${selected.length}/${matching.length})` : ''}`;
             return (
               <Box key={`asset:${def.assetType}`} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {hasAssets ? (
-                  <CheckCircleIcon color="success" fontSize="small" />
-                ) : (
-                  <CancelIcon color="error" fontSize="small" />
-                )}
+                <ReadinessIcon isReady={hasAssets} />
                 <Typography
                   variant="body2"
                   color={hasAssets ? 'text.primary' : 'error.main'}

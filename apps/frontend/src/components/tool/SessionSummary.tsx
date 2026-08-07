@@ -41,9 +41,14 @@ function ArtifactDownloadMenu({ artifactId, content, index }: { artifactId: stri
         downloadFile(content, `step-${index + 1}-${shortId}.txt`, 'text/plain;charset=utf-8');
         break;
       case 'docx':
-      case 'pdf':
-        // Requires server-side conversion — deferred
+      case 'pdf': {
+        // Server-side conversion — fetch blob and trigger download
+        const a = document.createElement('a');
+        a.href = `/api/artifacts/${artifactId}/download?format=${format}`;
+        a.download = `step-${index + 1}-${shortId}.${format}`;
+        a.click();
         break;
+      }
     }
   };
 
@@ -61,13 +66,13 @@ function ArtifactDownloadMenu({ artifactId, content, index }: { artifactId: stri
           <ListItemIcon><TextSnippetIcon fontSize="small" /></ListItemIcon>
           <ListItemText>{copy.t('toolPage.download.formatLabel', { format: copy.t('toolPage.download.formatTxt'), ext: 'txt' })}</ListItemText>
         </MenuItem>
-        <MenuItem onClick={() => handleDownload('docx')} disabled>
+        <MenuItem onClick={() => handleDownload('docx')}>
           <ListItemIcon><ArticleIcon fontSize="small" /></ListItemIcon>
-          <ListItemText>{copy.t('toolPage.download.formatDisabled', { format: copy.t('toolPage.download.formatDocx'), ext: 'docx' })}</ListItemText>
+          <ListItemText>{copy.t('toolPage.download.formatLabel', { format: copy.t('toolPage.download.formatDocx'), ext: 'docx' })}</ListItemText>
         </MenuItem>
-        <MenuItem onClick={() => handleDownload('pdf')} disabled>
+        <MenuItem onClick={() => handleDownload('pdf')}>
           <ListItemIcon><PictureAsPdfIcon fontSize="small" /></ListItemIcon>
-          <ListItemText>{copy.t('toolPage.download.formatDisabled', { format: copy.t('toolPage.download.formatPdf'), ext: 'pdf' })}</ListItemText>
+          <ListItemText>{copy.t('toolPage.download.formatLabel', { format: copy.t('toolPage.download.formatPdf'), ext: 'pdf' })}</ListItemText>
         </MenuItem>
       </Menu>
     </>

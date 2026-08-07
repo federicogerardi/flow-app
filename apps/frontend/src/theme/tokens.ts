@@ -35,6 +35,33 @@ const tokens = {
   },
 };
 
+// ── Rarity Tokens (light mode) ────────────────────────────────────────────────
+export const rarity = {
+  common:    { border: '#9CA3AF', bg: '#F3F4F6', text: '#374151' },
+  rare:      { border: '#3B82F6', bg: '#EFF6FF', text: '#1E40AF' },
+  epic:      { border: '#7C3AED', bg: '#F5F3FF', text: '#5B21B6' },
+  legendary: { border: '#D97706', bg: '#FFFBEB', text: '#92400E' },
+} as const;
+
+export const rarityDark = {
+  common:    { border: '#6B7280', bg: '#1F2937', text: '#D1D5DB' },
+  rare:      { border: '#3B82F6', bg: '#1E3A5F', text: '#93C5FD' },
+  epic:      { border: '#7C3AED', bg: '#3B1F6E', text: '#C4B5FD' },
+  legendary: { border: '#D97706', bg: '#451A03', text: '#FCD34D' },
+} as const;
+
+// ── Gradient Tokens ───────────────────────────────────────────────────────────
+export const gradients = {
+  brand:      'linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)',
+  completion: 'linear-gradient(135deg, #059669 0%, #0891B2 100%)',
+  hero:       'linear-gradient(135deg, #1E40AF 0%, #6D28D9 100%)',
+} as const;
+
+// ── Shadow Tokens ─────────────────────────────────────────────────────────────
+export const shadows = {
+  accent: '0 0 0 3px var(--workspace-accent-light, rgba(37, 99, 235, 0.12))',
+} as const;
+
 export const theme = createTheme(tokens);
 
 export const darkTheme = createTheme({

@@ -33,6 +33,11 @@ function XPBar({ profile }: { profile: PlayerProfileDTO }) {
         value={Math.min(profile.levelProgress, 100)}
         color={profile.levelProgress >= 80 ? 'success' : 'primary'}
         sx={{ height: 6, borderRadius: 3, bgcolor: 'action.hover' }}
+        role="progressbar"
+        aria-valuenow={profile.xpTotal}
+        aria-valuemin={0}
+        aria-valuemax={profile.nextLevelXP}
+        aria-label={`XP: ${profile.xpTotal} of ${profile.nextLevelXP}`}
       />
     </Box>
   );
@@ -42,12 +47,13 @@ function StreakBadge({ currentStreak, longestStreak }: { currentStreak: number; 
   return (
     <Tooltip title={`Longest streak: ${longestStreak} days`}>
       <Chip
-        icon={<WhatshotIcon sx={{ fontSize: 16 }} />}
+        icon={<WhatshotIcon sx={{ fontSize: 16 }} aria-hidden="true" />}
         label={`${currentStreak}`}
         size="small"
         color={currentStreak >= 7 ? 'warning' : 'default'}
         variant="outlined"
         sx={{ height: 24, fontWeight: 600 }}
+        aria-label={`Streak: ${currentStreak} giorni`}
       />
     </Tooltip>
   );
@@ -84,7 +90,7 @@ export function GamificationZone() {
       onClick={() => navigate('/profile')}
       role="button"
       tabIndex={0}
-      aria-label="View player profile"
+      aria-label={`Player profile: Level ${profile.level} ${profile.levelLabel}, ${profile.xpTotal} XP, ${profile.currentStreak}-day streak, ${profile.badges.length} badges`}
       onKeyDown={(e) => { if (e.key === 'Enter') navigate('/profile'); }}
     >
       <LevelBadge profile={profile} />
@@ -92,7 +98,7 @@ export function GamificationZone() {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <StreakBadge currentStreak={profile.currentStreak} longestStreak={profile.longestStreak} />
         <Typography variant="caption" color="text.secondary">
-          {profile.badges.length} badges
+          🏅 {profile.badges.length}
         </Typography>
       </Box>
     </Box>

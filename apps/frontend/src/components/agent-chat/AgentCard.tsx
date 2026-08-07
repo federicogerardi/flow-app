@@ -4,14 +4,27 @@ interface AgentCardProps {
   agentKey: string;
   name: string;
   role: string;
+  description?: string;
   capabilities: string[];
   onClick: () => void;
 }
 
-export function AgentCard({ name, role, capabilities, onClick }: AgentCardProps) {
+export function AgentCard({ name, role, description, capabilities, onClick }: AgentCardProps) {
   return (
-    <Card>
-      <CardActionArea onClick={onClick} sx={{ p: 2, height: '100%' }}>
+    <Card
+      sx={{
+        transition: 'box-shadow 200ms ease, transform 200ms ease',
+        '&:hover': {
+          transform: 'translateY(-3px)',
+          boxShadow: 'var(--shadow-accent, 0 4px 12px rgba(37, 99, 235, 0.2))',
+        },
+      }}
+    >
+      <CardActionArea
+        onClick={onClick}
+        sx={{ p: 2, height: '100%' }}
+        aria-label={`${name}, ${role}${description ? `. ${description}` : ''}`}
+      >
         <CardContent sx={{ '&:last-child': { pb: 2 }, p: '0 !important' }}>
           <Typography variant="h5" fontWeight={600} sx={{ mb: 0.5 }}>
             {name}

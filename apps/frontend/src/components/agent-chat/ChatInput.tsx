@@ -87,6 +87,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
           variant="contained"
           onClick={handleSend}
           disabled={disabled || sending || !newMessage.trim() || isOverLimit}
+          aria-label="Invia messaggio"
         >
           {sending ? '...' : copy.t('shared.actions.send')}
         </Button>
