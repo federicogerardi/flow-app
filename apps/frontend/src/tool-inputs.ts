@@ -58,7 +58,7 @@ const TOOL_INPUTS: Record<string, TextInput[]> = {
   'brief': BRIEF_INPUTS,
   'brand-voice': DEFAULT_INPUTS,
   'buyer-persona': [],   // no text inputs — uses brief asset + optional file
-  'marketing-angle': DEFAULT_INPUTS,
+  'marketing-angle': [],   // no text inputs — uses brief + persona assets
   'ai-overview-analysis': DEFAULT_INPUTS,
 };
 

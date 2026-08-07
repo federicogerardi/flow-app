@@ -2,7 +2,7 @@
 type: log
 tags:
   - wiki/log
-date_updated: 2026-08-06
+date_updated: 2026-08-07
 ---
 
 # Wiki Operation Log
@@ -11,6 +11,34 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Cmd+P → "View operation history"
 - Or open from Settings → Auto Maintenance → Operation History
 ---
+
+## [2026-08-07] ingest + impl-plan | Angle Generator prompts ingested + ToolDefinition planned
+
+Ingested the 5 prototype prompt files from `Wiki/sources/angle-generator/` and created the [[Angle Generator - Prompt Architecture]] wiki page with full implementation plan.
+
+**Source analysis** (5 prototype steps):
+- `prompt_root.md` — System-level methodology: PDA Framework, 5 awareness levels, 4 decision parameters (ROI, differentiation, ease, credibility)
+- `prompt_extraction.md` — Awareness evidence extraction from brief + personas
+- `prompt_context_and_angle_matrix.md` — Context map + angle matrix (10-15 angles)
+- `prompt_angle_prioritization.md` — Scoring model (1-5 × 4 params = /20) + top-3 ranking
+- `prompt_creative_activation.md` — Creative activation: headlines, copy guidelines, CTA
+
+**Architecture decision**: consolidated 4-step prototype → 3-step Flow App pipeline:
+1. `extraction` (balanced) — awareness evidence map + angle candidates → JSON
+2. `angle-matrix` (premium) — context map + angle matrix + scoring + top 3
+3. `creative-activation` (premium) — top 3 creative foundations → Italian markdown
+
+**Tool characteristics**:
+- `toolKey: 'marketing-angle'` — consumes `brief` (1) + `persona` (N) → produces `angle`
+- `creditCost: 2` — 3 steps, 2 premium models
+- `userText: []` — zero text inputs, all context from workspace assets
+- Multi-asset: `persona` with `multiple: true`
+
+**Wiki pages created/modified**:
+- Created: `Wiki/concepts/Angle Generator - Prompt Architecture.md`
+- Modified: `Wiki/index.md` (concept added to catalog)
+- Modified: `Wiki/overview.md` (Tool Catalog: `marketing-angle` → 🟡 Planned)
+- Modified: `Wiki/log.md` (this entry)
 
 ## [2026-08-06] impl | Persona Generator — domain + backend implementation complete
 
