@@ -130,19 +130,48 @@ describe('DashboardPage', () => {
           data: [
             {
               id: 'session-1',
-              toolKey: 'Blog Post',
-              status: 'completed',
+              toolKey: 'blog-post',
+              workspaceId: 'ws-1',
+              status: 'running',
+              stepCount: 5,
+              currentStepIndex: 2,
+              currentStepLabel: 'Generating...',
+              elapsedSeconds: 30,
               createdAt: '2024-01-15T10:30:00Z',
             },
             {
               id: 'session-2',
-              toolKey: 'Landing Page',
-              status: 'failed',
+              toolKey: 'landing-page',
+              workspaceId: 'ws-1',
+              status: 'completed',
+              stepCount: 3,
+              durationSeconds: 120,
               createdAt: '2024-01-16T14:00:00Z',
             },
+            {
+              id: 'session-3',
+              toolKey: 'brief',
+              workspaceId: 'ws-1',
+              status: 'failed',
+              stepCount: 4,
+              errorMessage: 'LLM timeout',
+              failedAtStep: 2,
+              createdAt: '2024-01-17T09:00:00Z',
+            },
           ],
-          total: 2,
+          total: 3,
         },
+        isLoading: false,
+        error: undefined,
+      },
+      // Provide SWR keys for AssetCoverageBar and WorkspaceMembers to prevent loading states
+      'assets-ws-1-coverage': {
+        data: { assets: [] },
+        isLoading: false,
+        error: undefined,
+      },
+      'members-ws-1': {
+        data: [],
         isLoading: false,
         error: undefined,
       },
@@ -150,11 +179,23 @@ describe('DashboardPage', () => {
 
     renderDashboard('ws-1');
 
+    // Session list section title should be visible
     expect(screen.getByText('workspace.dashboard.recentSessions')).toBeDefined();
-    expect(screen.getAllByText('Blog Post').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Landing Page')).toBeDefined();
+
+    // Session list tabs should be visible (always rendered with badge counts)
+    expect(screen.getByText('In Progress')).toBeDefined();
     expect(screen.getByText('Completed')).toBeDefined();
     expect(screen.getByText('Failed')).toBeDefined();
+
+    // Default tab is "in-progress" — running card should be visible
+    // Running card transforms toolKey kebab-case → Title Case
+    // Note: Blog Post also appears in the tools grid (ToolCard) — use getAllByText
+    expect(screen.getAllByText('Blog Post').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Running')).toBeDefined();
+
+    // Tools grid should render all tool cards (always rendered, separate from sessions)
+    // Note: ToolCard renders "📄 Landing Page" (emoji prefix) — use regex matcher
+    expect(screen.getByText(/Landing Page/)).toBeDefined();
   });
 
   it('navigates to tool page on tool card click', () => {

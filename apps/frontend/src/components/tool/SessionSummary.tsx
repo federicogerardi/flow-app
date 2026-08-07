@@ -83,15 +83,32 @@ interface SessionSummaryProps {
   artifacts: ArtifactDTO[];
   workspaceId?: string;
   produces?: string;
+  stepCount?: number;
 }
 
-export function SessionSummary({ artifacts, workspaceId, produces }: SessionSummaryProps) {
+export function SessionSummary({ artifacts, workspaceId, produces, stepCount }: SessionSummaryProps) {
   const navigate = useNavigate();
   const [toast, setToast] = useState<{ open: boolean; assetId?: string; assetType?: string; assetName?: string | null }>({ open: false });
 
   const handlePromoted = (assetId: string, assetType: string, name: string | null) => {
     setToast({ open: true, assetId, assetType, assetName: name });
   };
+
+  // Deduplicate artifacts by stepNumber — keep the LAST artifact for each step.
+  // This handles backend retries that may create duplicate artifacts with different UUIDs
+  // for the same stepNumber.
+  const deduplicated = artifacts.reduce<ArtifactDTO[]>((acc, a) => {
+    const existingIndex = acc.findIndex((existing) => existing.stepNumber === a.stepNumber);
+    if (existingIndex >= 0) {
+      // Replace with the latest artifact (preserve order)
+      acc[existingIndex] = a;
+    } else {
+      acc.push(a);
+    }
+    return acc;
+  }, []);
+
+  const displayStepCount = stepCount ?? deduplicated.length;
 
   if (!artifacts || artifacts.length === 0) return null;
 
@@ -103,16 +120,20 @@ export function SessionSummary({ artifacts, workspaceId, produces }: SessionSumm
           {copy.t('toolPage.progress.completed')}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {copy.t('toolPage.progress.stepCount', { count: String(artifacts.length) })}
+          {copy.t('toolPage.progress.stepCount', { count: String(displayStepCount) })}
         </Typography>
       </Box>
       <Divider />
       <Box sx={{ p: 2 }}>
-        {artifacts.map((artifact, i) => (
-          <Box key={artifact.id ?? i} sx={{ mb: i < artifacts.length - 1 ? 3 : 0 }}>
+        {deduplicated.map((artifact, i) => {
+          // Normalise stepNumber: backend may produce 0-based step numbers;
+          // always display 1-based.
+          const displayNumber = artifact.stepNumber > 0 ? artifact.stepNumber : i + 1;
+          return (
+          <Box key={artifact.id ?? i} sx={{ mb: i < deduplicated.length - 1 ? 3 : 0 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
               <Typography variant="subtitle2" color="text.secondary" fontWeight={600}>
-                {copy.t('toolPage.progress.artifactLabel', { number: String(artifact.stepNumber) })}
+                {copy.t('toolPage.progress.artifactLabel', { number: String(displayNumber) })}
               </Typography>
               <Box sx={{ display: 'flex', gap: 0.5 }}>
                 <ArtifactDownloadMenu
@@ -170,7 +191,7 @@ export function SessionSummary({ artifacts, workspaceId, produces }: SessionSumm
               </Box>
             </Card>
           </Box>
-        ))}
+        )})}
       </Box>
     </Card>
     <Snackbar

@@ -153,10 +153,15 @@ export default function SessionPage() {
         <>
           <CompletionBanner
             durationSeconds={durationMs ? Math.round(durationMs / 1000) : 0}
-            stepCount={session.artifacts.length}
+            stepCount={session.stepCount}
             creditCost={1}
           />
-          <SessionSummary artifacts={session.artifacts} workspaceId={workspaceId} produces={session.produces} />
+          <SessionSummary
+            artifacts={session.artifacts}
+            workspaceId={workspaceId}
+            produces={session.produces}
+            stepCount={session.stepCount}
+          />
         </>
       )}
     </Box>
