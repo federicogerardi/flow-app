@@ -20,6 +20,7 @@ date_updated: 2026-08-07
 | prompt_extraction.md, prompt_brief_generation.md | [[sources/brief-generator]] | 2026-08-06 |
 | prompt_extraction.md, prompt_personas_generation.md | [[sources/personas-generator]] | 2026-08-06 |
 | prompt_root.md, prompt_extraction.md, prompt_context_and_angle_matrix.md, prompt_angle_prioritization.md, prompt_creative_activation.md | [[sources/angle-generator]] | 2026-08-07 |
+| prompt_extraction.md, prompt_context_generation.md, prompt_ads_generation.md | [[sources/meta-ads]] | 2026-08-07 |
 
 ## Entities
 
@@ -92,6 +93,7 @@ date_updated: 2026-08-07
 | [[LLM Gateway - OpenRouter]] | high | 6 |
 | [[Logging Strategy]] | high | 4 |
 | [[Maintenance Log]] | high | 2 |
+| [[Meta Ads - Prompt Architecture]] | high | 3 |
 | [[Migration Tooling]] | high | 2 |
 | [[Persona Generator - Prompt Architecture]] | high | 4 |
 | [[Progressive Context Enrichment]] | high | 2 |

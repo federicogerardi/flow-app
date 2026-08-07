@@ -43,7 +43,7 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 | `video-script-long-form` | Long-form video script (6 steps) |
 | `video-description` | Video description |
 | `blog-post` | SEO blog article |
-| `ad-copy` | Ad copy |
+| `ad-copy` | Ad copy | 🟡 Planned — 3-step cluster→angle→awareness. Meta Ads specialization. |
 
 ### Asset
 | toolKey | Produced AssetType |
@@ -112,7 +112,7 @@ All phases through 13 + the Brief Tool + Multi-Asset Promotion are fully impleme
 | Gap | Status |
 |-----|--------|
 | **Credits auto-create** | ✅ Fixed — migration 009 (`version` column on `quotas`) was missing on Railway. Applied manually + auto-migration runner now ensures all migrations run on every deploy. [[Migration Tooling]] |
-| **7 other tool definitions** | 🟡 Stubs — `landing-funnel`, `landing-page`, `video-script-long-form`, `video-description`, `ad-copy`, `brand-voice`, `ai-overview-analysis` all map to `blogPostTool`. Only `brief` and `buyer-persona` have real definitions. `marketing-angle` is planned ([[Angle Generator - Prompt Architecture]]). |
+| **6 other tool definitions** | 🟡 Stubs — `landing-funnel`, `landing-page`, `video-script-long-form`, `video-description`, `brand-voice`, `ai-overview-analysis` all map to `blogPostTool`. `brief` and `buyer-persona` have real definitions. `marketing-angle` is implemented. `ad-copy` is planned ([[Meta Ads - Prompt Architecture]]). |
 | **CrawlData value object** | 🟡 Implemented in domain layer (`CrawlData.create()` / `reconstitute()`). `ai-overview-analysis` session worker integration still pending. |
 | **Worker deployment** | ✅ Fixed — worker now runs inline in `server.ts` (same process as API). `worker-process.ts` retained as standalone reference. Verified on Railway: pending sessions auto-picked and completed on deploy. |
 

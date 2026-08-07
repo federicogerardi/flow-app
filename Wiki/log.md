@@ -12,6 +12,34 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-07] ingest | Meta Ads prompts ingested + ToolDefinition planned
+
+Ingested the 3 prototype prompt files from `Wiki/sources/meta-ads/` and created the [[Meta Ads - Prompt Architecture]] wiki page with implementation plan.
+
+**Source analysis** (3 prototype steps):
+- `prompt_extraction.md` — 13-field ad context extraction in English
+- `prompt_context_generation.md` — Cluster-based strategy canvas with 3 audience clusters, brand facts bank, objection handling matrix
+- `prompt_ads_generation.md` — Cluster → angle → awareness system with user-selectable copy length (short/medium/long)
+
+**Tool characteristics**:
+- `toolKey: 'ad-copy'` — replaces `blogPostTool` stub
+- 3-step pipeline: extraction (balanced) → context-generation (premium) → ads-generation (premium, 180s timeout)
+- Content tool (not asset) — terminal step in brief→persona→angle→ad-copy pipeline
+- Inputs: `audience`, `goal`, `tone`, `copyLength` text inputs + optional brief + optional personas
+- Output: 3 clusters × 2 angles × 3 awareness levels = 18 ad variants
+
+**Key design decisions**:
+- Platform scope: Meta-specific (not platform-agnostic). The cluster/angle/awareness system and Primary Text/Headline/Description format are Meta Ads native. Google/LinkedIn/TikTok have different ad formats.
+- Awareness model: 3 levels (Problem/Solution/Product Aware) vs angle generator's 5 — appropriate for direct-response ad copy
+- LF8 psychological triggers framework referenced in prototype but undefined — defer until defined
+
+**Wiki pages created/modified**:
+- Created: `Wiki/sources/meta-ads.md` (source summary)
+- Created: `Wiki/concepts/Meta Ads - Prompt Architecture.md` (concept page)
+- Modified: `Wiki/index.md` (source + concept added to catalogs)
+- Modified: `Wiki/overview.md` (ad-copy → Planned, stubs count updated)
+- Modified: `Wiki/log.md` (this entry)
+
 ## [2026-08-07] ingest + impl-plan | Angle Generator prompts ingested + ToolDefinition planned
 
 Ingested the 5 prototype prompt files from `Wiki/sources/angle-generator/` and created the [[Angle Generator - Prompt Architecture]] wiki page with full implementation plan.
@@ -30,7 +58,7 @@ Ingested the 5 prototype prompt files from `Wiki/sources/angle-generator/` and c
 
 **Tool characteristics**:
 - `toolKey: 'marketing-angle'` — consumes `brief` (1) + `persona` (N) → produces `angle`
-- `creditCost: 2` — 3 steps, 2 premium models
+- `creditCost: 1`
 - `userText: []` — zero text inputs, all context from workspace assets
 - Multi-asset: `persona` with `multiple: true`
 
