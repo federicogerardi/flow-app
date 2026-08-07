@@ -225,5 +225,5 @@ An open question (see [[prompting-mechanics-proposal#open-questions|proposal]]):
 - [[Context Injection]] — Slot syntax used within template text
 - [[LLM Gateway - OpenRouter]] — Prompt loading and validation at startup
 - [[Application Services]] — ProcessStepUseCase integration point
-- [[Progressive Context Enrichment]] — Slot `{{slot:step:N}}` for previous step outputs
+- [[Content Generation#progressive-context-enrichment|Progressive Context Enrichment]] — Slot `{{slot:step:N}}` for previous step outputs
 - [[prompting-mechanics-proposal]] — Overall architecture proposal (synthesis)

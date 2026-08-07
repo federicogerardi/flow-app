@@ -3,8 +3,8 @@ type: concept
 tags:
   - wiki/concept
   - wiki/generation
-date_updated: 2026-08-07
-source_count: 5
+date_updated: 2026-08-08
+source_count: 7
 confidence: high
 ---
 
@@ -101,6 +101,77 @@ interface SessionRepository {
 }
 ```
 
+## Progressive Context Enrichment
+
+The output of each step becomes part of the input context for the next step. Each step builds on the accumulated work of all previous steps, progressively enriching the LLM prompt until the `final` [[Artifact]] contains the complete chain of reasoning and generation.
+
+```
+Step 1 (extraction)  →  Artifact A (intermediate)
+                          ↓ context for Step 2
+Step 2 (generation)  →  Artifact B (intermediate)
+                          ↓ context for Step 3
+Step 3 (generation)  →  Artifact C (final)
+                          ↓
+                     C contains the accumulated work of A + B + C
+```
+
+The `ContextEnricher` domain service in `packages/domain` assembles the enriched context for each step:
+
+```typescript
+class ContextEnricher {
+  enrich(
+    step: WorkflowStep,
+    previousArtifacts: Artifact[],
+    resolvedAssets: Map<AssetType, AssetContent>,
+    userInput: GenerationInput
+  ): EnrichedContext {
+    // Merges: previous step outputs + injected Assets + user input
+    // Returns a structured context object for the LLM prompt
+  }
+}
+```
+
+Why it matters:
+- **No context loss**: the final artifact encapsulates all reasoning
+- **Deterministic chain**: same inputs → same enrichment path → predictable outputs
+- **UI simplicity**: user sees only the final artifact. Intermediate artifacts are hidden
+- **Asset injection point**: resolved [[Asset]]s (brand-voice, persona) are injected here, ensuring brand coherence
+
+## CrawlData Value Object
+
+`CrawlData` is an immutable Value Object representing the raw response from an external API call configured in a tool's acquisition phase. It is persisted permanently for replay, audit, and cache — avoiding redundant API calls for the same query within TTL.
+
+```typescript
+class CrawlData {
+  constructor(
+    readonly source: string,                     // 'serpapi', 'people_also_ask', 'ai_overview'
+    readonly rawResponse: Record<string, unknown>, // raw JSON from the API
+    readonly fetchedAt: DateTime,
+    readonly expiresAt: DateTime | null,          // cache TTL
+  ) {}
+
+  get isExpired(): boolean { ... }
+}
+```
+
+Flow:
+
+```
+Acquisition Phase                     Elaboration Phase
+─────────────────                     ─────────────────
+API call → CrawlData ──┐              Step 2 (hybrid)
+(persisted)             │              ├── output Step 1
+                        └──injected───▶├── CrawlData (raw API)
+                                       └── LLM prompt analyzes both
+```
+
+Purposes:
+| Purpose | Description |
+|---------|-------------|
+| **Replay** | Re-process the same data without calling the API again |
+| **Audit** | Trace what the system saw when producing an artifact |
+| **Cache** | Avoid redundant API calls within TTL (`cache.ttlSeconds`) |
+
 ## Cross-Context Interactions
 
 | Direction | Context | Pattern |
@@ -111,8 +182,8 @@ interface SessionRepository {
 
 ## Sources
 
-- [[sources/APP-CONCEPT]] — Tool catalog, architecture
+- [[sources/APP-CONCEPT]] — Tool catalog, architecture, crawling phase
 - [[sources/PRD]] — FR-W01 to FR-W09
-- [[sources/STARTUP]] — Domain rules
-- [[sources/USER-STORIES]] — All tool epics
+- [[sources/STARTUP]] — Domain rules, Progressive Context Enrichment definition
+- [[sources/USER-STORIES]] — All tool epics, US-GE08, US-GE09
 - [[Global Deterministic Model Matrix]] — Per-step model assignment contract

@@ -358,7 +358,7 @@ Toast border color matches the rarity tier. Badge cards on the profile page show
 
 - [[Gamification]] — Domain model and architecture
 - [[PlayerProfile]] — Aggregate root providing XP, level, streak data
-- [[Achievements & Badges]] — Badge catalog and progress tracking
+- [[Gamification#achievements-badges|Achievements & Badges]] — Badge catalog
 - [[Gamification#Workspace Gamification]] — Challenges and leaderboard
 - [[UX Wireframes]] — Sidebar layout and notification patterns
 - [[Design Tokens]] — Accent colors, gradients, animation tokens

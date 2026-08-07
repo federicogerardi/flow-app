@@ -3,8 +3,8 @@ type: entity
 tags:
   - wiki/entity
   - wiki/generation
-date_updated: 2026-08-02
-source_count: 4
+date_updated: 2026-08-08
+source_count: 5
 ---
 
 # Artifact
@@ -116,6 +116,41 @@ pending → generating → completed
 
 No other transitions are allowed: `pending` cannot go directly to `completed`, `failed` is terminal.
 
+## ArtifactContent Value Object
+
+`ArtifactContent` is an immutable value object that wraps the raw textual content produced by a step. It has no identity of its own — it exists only as a property of [[Artifact]].
+
+```typescript
+// packages/domain/src/generation/value-objects/ArtifactContent.ts
+
+class ArtifactContent {
+  static readonly MAX_SIZE_BYTES = 500_000; // 500KB
+
+  private constructor(readonly value: string) {}
+
+  static from(raw: string): ArtifactContent {
+    if (raw.length > ArtifactContent.MAX_SIZE_BYTES) {
+      throw new ValidationError(
+        `Artifact content exceeds ${ArtifactContent.MAX_SIZE_BYTES / 1000}KB limit`,
+      );
+    }
+    return new ArtifactContent(raw);
+  }
+
+  preview(maxChars: number = 500): string {
+    return this.value.slice(0, maxChars);
+  }
+}
+```
+
+> **Type-design audit (2026-07-31)**: Previously the 500KB limit was "enforced at application layer before persistence." This was a domain invariant leak — the VO itself must reject oversized content so that any consumer (test, CLI, worker) is protected, not just the HTTP application layer.
+
+Constraints:
+- Max **500KB** (≈125,000 words) — enforced at domain level in the VO constructor
+- Immutable — any modification produces a new `ArtifactContent`
+- The preview (first 500 characters) is derived: `ArtifactContent.preview()`
+- Persisted in `artifacts.content` (TEXT) and `session_snapshots.snapshot` (JSONB)
+
 ## Key Distinction
 
 **Artifact ≠ Asset**:
@@ -130,3 +165,4 @@ Only the final Artifact (last step) is promotable via [[Asset Promotion]].
 - [[sources/APP-CONCEPT]] — Tool catalog
 - [[sources/PRD]] — FR-W01, FR-A04
 - [[sources/USER-STORIES]] — US-AS07
+- [[Database Schema]] — Table `artifacts.content` and 500KB limit

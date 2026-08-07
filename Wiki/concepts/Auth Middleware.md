@@ -20,11 +20,7 @@ Authentication is a **cross-cutting concern** — middleware verifies the token 
 
 ## Token Flow
 
-```
-Login/Register → accessToken (JWT, 15min) + refreshToken (opaque, 7d, httpOnly cookie)
-Every request  → Authorization: Bearer <accessToken>
-Token expired  → POST /auth/refresh → new accessToken
-```
+Token flow, JWT strategy, and refresh mechanics are owned by [[Auth Dependencies]]. See [[Auth Dependencies#Strategy JWT + Refresh Tokens]] for the full specification.
 
 ---
 

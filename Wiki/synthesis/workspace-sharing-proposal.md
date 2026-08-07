@@ -10,6 +10,8 @@ date_updated: 2026-08-01
 
 # Workspace Sharing — Architecture Proposal
 
+> **Archived** — superseded by [[Workspace Sharing]]. This page is retained as a decision record (Option A/B/C evaluation). For the canonical documentation, see [[Workspace Sharing]] which includes the full permission matrix, role definitions, domain enforcement, middleware, and notification delivery.
+
 > Synthesis of the multi-user workspace sharing design. Extends [[Workspace & Assets]] with membership-based access control.
 
 ## Summary

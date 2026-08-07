@@ -64,35 +64,7 @@ XState v5 lives in the **application layer** (`apps/backend`), not in the domain
 
 ## Example: Session Machine
 
-```typescript
-const sessionMachine = createMachine({
-  id: 'session',
-  initial: 'draft',
-  states: {
-    draft:   { on: { CONFIGURE: 'ready' } },
-    ready:   { on: { QUEUE: 'queued' } },
-    queued:  { on: { WORKER_PICKUP: 'running' } },
-    running: {
-      initial: 'executingStep',
-      states: {
-        executingStep: {
-          invoke: { src: 'executeStep' },  // → calls LLM/parser/crawler
-          onDone: { target: 'stepCompleted' },
-          onError: { target: '#session.failed' }
-        },
-        stepCompleted: {
-          always: [
-            { target: '#session.completed', guard: 'isLastStep' },
-            { target: 'executingStep' }  // loop to next step
-          ]
-        }
-      }
-    },
-    completed: { type: 'final' },
-    failed:    { type: 'final' },
-  }
-});
-```
+For the complete machine definition with all states, guards, actors, and context, see [[Session Machine (XState v5)]].
 
 ## Frontend Symmetry
 

@@ -21,7 +21,7 @@ An `Achievement` represents a badge unlocked by a player at a specific moment. E
 
 - A player **unlocks** a badge when they meet the achievement condition
 - A badge has a **tier** (common, rare, epic, legendary) and a **rarity**
-- Unlocking a badge may award a **credit bonus** (see [[Achievements & Badges]])
+- Unlocking a badge may award a **credit bonus** (see [[Gamification#achievements-badges|Achievements & Badges]])
 
 ## Structure
 
@@ -93,4 +93,4 @@ class PlayerProfile {
 
 - [[Gamification]] — Parent bounded context
 - [[PlayerProfile]] — Parent aggregate root
-- [[Achievements & Badges]] — Badge catalog and credit rewards
+- [[Gamification#achievements-badges|Achievements & Badges]] — Badge catalog

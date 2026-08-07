@@ -99,7 +99,7 @@ CREATE INDEX idx_artifacts_session_id ON artifacts(session_id);
 |--------|------|-------|
 | `session_id` | `UUID FK → sessions CASCADE` | Artifacts die with their Session |
 | `step_number` | `INTEGER` | Position in step sequence (1-based) |
-| `content` | `TEXT` | Immutable generated content ([[ArtifactContent]] VO) |
+| `content` | `TEXT` | Immutable generated content ([[Artifact#artifactcontent-value-object|ArtifactContent]] VO) |
 | `status` | `artifact_status` | Lifecycle of generation |
 
 **Role is positional**: no `artifact_role` column. The last `step_number` in a Session is the final Artifact. Query: `SELECT * FROM artifacts WHERE session_id = $1 ORDER BY step_number DESC LIMIT 1`.

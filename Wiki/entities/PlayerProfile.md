@@ -224,6 +224,6 @@ interface PlayerProfileRepository {
 ## Sources
 
 - [[Gamification]] — Parent bounded context
-- [[Achievements & Badges]] — Badge catalog reference
+- [[Gamification#achievements-badges|Achievements & Badges]] — Badge catalog reference
 - [[Gamification#Workspace Gamification]] — Leaderboard consumes seasonal XP
 - [[Auth Dependencies]] — Shared UserId

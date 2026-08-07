@@ -10,6 +10,8 @@ date_updated: 2026-08-01
 
 # Prompting Mechanics — Architecture Proposal
 
+> **Archived design proposal** — canonical documentation now lives in the three dedicated concept pages: [[Prompt Versioning]], [[Prompt Components]], and [[Context Injection]]. The directory structure is also documented in [[packages-domain Structure#Prompting]]. This page is retained for historical context (migration path, open questions).
+
 > Synthesis of the three prompting mechanics: versioning, unified components, and context injection. All extensions live within `packages/domain/src/generation/prompting/`.
 
 ## Summary

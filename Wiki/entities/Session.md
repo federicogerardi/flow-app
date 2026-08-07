@@ -3,8 +3,8 @@ type: entity
 tags:
   - wiki/entity
   - wiki/generation
-date_updated: 2026-08-07
-source_count: 7
+date_updated: 2026-08-08
+source_count: 8
 ---
 
 # Session
@@ -19,7 +19,7 @@ source_count: 7
 > - `_artifacts: Artifact[]` exists on the Session entity (artifacts are loaded via `findById()` inner-join)
 > - `createdAt: Date` is an immutable `readonly` field added 2026-08-07 — derived from DB column `created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`
 >
-> These are tracked as [[rule-4-vo-debt|Rule 4 VO debt]] and [[phase-9-implementation-plan|Phase 9 remediation plan]]. The wiki page retains the target design for reference.
+> These are tracked as [[synthesis/phase-9-implementation-plan|Phase 9 VO conversion plan]]. The wiki page retains the target design for reference.
 
 ## Definition
 
@@ -198,7 +198,7 @@ export class InvalidSessionStateError extends DomainError {
 
 > **Implementation notes (2026-08-02):**
 > - IDs are `string`, not branded VO classes. `SessionId`/`WorkspaceId`/`UserId` do not exist as domain types.
-> - `SessionStatus` is a `type` alias (`'draft' | 'ready' | ...`), not a class. Tracked in [[rule-4-vo-debt]].
+> - `SessionStatus` is a `type` alias (`'draft' | 'ready' | ...`), not a class. Tracked in the [[synthesis/phase-9-implementation-plan|Phase 9 plan]].
 > - `apply()` accepts `{ type: SessionEventType; [key: string]: unknown }` with per-field casts — not a strongly-typed discriminated union.
 > - Domain events are plain objects `{ eventType, occurredAt, aggregateId }` — no typed payload classes.
 > - No `_artifacts` array on the aggregate. Artifacts are queried separately from the DB artifact table.
@@ -228,10 +228,39 @@ export class InvalidSessionStateError extends DomainError {
 - Contains [[Artifact]] entities (one per step, last = final deliverable)
 - Triggers [[Asset Promotion]] on completion
 
+## Repository
+
+```typescript
+export interface SessionRepository {
+  findById(id: string): Promise<Session | null>;
+  findByArtifactId(artifactId: string): Promise<Session | null>;
+  findByIdempotencyKeyHash(hash: string): Promise<Session | null>;
+  findByWorkspace(workspaceId: string, filters?: SessionFilters): Promise<Session[]>;
+  findAll(filters?: SessionFilters): Promise<Session[]>;
+  findLastArtifactsBySessionIds(sessionIds: string[]): Promise<Map<string, Artifact>>;
+  save(session: Session): Promise<void>;
+  saveWithLock(session: Session, expectedVersion: number): Promise<void>;
+  saveIdempotencyKey(hash: string, sessionId: string): Promise<void>;
+  saveSnapshot(sessionId: string, snapshot: string): Promise<void>;
+  loadSnapshot(sessionId: string): Promise<string | null>;
+}
+```
+
+Key design decisions:
+- `save()` persists ONLY the aggregate root (`sessions` table) and its owned entities (`artifacts` table) — per [[DDD Domain Design Rules#Rule 5 — Repository save persists ONLY the aggregate root and its owned entities|Rule 5]].
+- `saveIdempotencyKey()` is a separate cross-cutting method — not a side-effect inside `save()`.
+- `saveWithLock()` uses optimistic locking (`WHERE version = expectedVersion`), throws `ConcurrencyError` on 0 rows updated.
+- `saveSnapshot()` / `loadSnapshot()` support crash recovery for long-running XState workers.
+- `findLastArtifactsBySessionIds()` batch-queries the last artifact per session within the aggregate boundary.
+- Implemented by `KyselySessionRepository` in `packages/infra-db/src/repositories/session-repository.ts`.
+
 ## Sources
 
 - [[sources/APP-CONCEPT]] — Tool catalog, architecture, BE-Driven workflow
 - [[sources/PRD]] — Functional requirements FR-W01 to FR-W09
 - [[sources/STARTUP]] — Domain definitions, Artifact vs Asset
 - [[sources/USER-STORIES]] — US-T01 to US-T10, US-GF01 to US-GF09
-- [[rule-4-vo-debt]] — Pre-existing VO type alias debt affecting this entity
+- [[synthesis/phase-9-implementation-plan]] — VO type alias conversion plan affecting this entity
+- [[DDD Domain Design Rules]] — Repository design rules
+- [[BullMQ Worker Wiring]] — Worker integration
+- [[Idempotency]] — Idempotency key patterns

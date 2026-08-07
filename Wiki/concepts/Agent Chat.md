@@ -45,9 +45,9 @@ Forcing Agent Chat into Content Generation would break the unified tool model. I
 | [[Conversation]] | Aggregate Root — the chat session |
 | [[Message]] | A single message in the conversation (user, agent, or system) |
 
-## Agent Catalog
+## Agent Overview
 
-Seven agents, each modeled on a classic marketing agency role:
+Seven agents modeled on classic marketing agency roles. For the full `AgentDefinition` with system prompts and capabilities, see [[Agent Personas]].
 
 | Agent Key | Role | Essence |
 |-----------|------|---------|
@@ -167,4 +167,4 @@ Agent Chat **never writes** to Workspace or Generation. It is a read-only consum
 - [[PromptComposer]] — Assembly of agent system prompt + context
 - [[LLM Gateway - OpenRouter]] — Streaming LLM calls
 - [[Workspace Sharing]] — Permission model for workspace-scoped agents
-- [[synthesis/agent-chat-proposal]] — Full architecture proposal and design decisions
+- [[Agent Personas]] — Full agent definitions and system prompts

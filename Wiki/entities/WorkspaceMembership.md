@@ -169,5 +169,5 @@ class Workspace {
 ## Sources
 
 - [[Workspace Sharing]] — Concept page for the sharing feature
-- [[Workspace Permissions]] — Permission matrix and enforcement
+- [[Workspace Sharing#permission-matrix|Workspace Permissions]] — Permission matrix
 - [[Workspace]] — Parent aggregate root

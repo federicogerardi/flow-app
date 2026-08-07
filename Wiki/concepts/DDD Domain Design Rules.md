@@ -204,7 +204,7 @@ export class MembershipRole {
 | identity | `UserRole` | admin, member | `isAdmin`, `isMember`, `equals()` |
 | identity | `UserStatus` | active, disabled | `isActive`, `isDisabled`, `equals()` |
 
-**Known debt**: 8 type aliases remain unconverted. See [[synthesis/rule-4-vo-debt|Rule 4 VO Debt]] for the catalog and [[synthesis/phase-9-implementation-plan|Phase 9 plan]] for the conversion roadmap.
+**Known debt**: 8 type aliases remain unconverted. See [[synthesis/phase-9-implementation-plan|Phase 9 plan]] for the catalog and conversion roadmap.
 
 **Checklist before writing domain code:**
 - [ ] Every value with a finite set of valid states is a class, not a type alias
@@ -225,14 +225,14 @@ async save(session: Session): Promise<void> {
   await this.db.insertInto('idempotency_keys').values(...).execute(); // ← side-effect
 }
 
-// ✅ CORRECT — separate methods (from [[SessionRepository]])
+// ✅ CORRECT — separate methods (from SessionRepository interface, see [[Session#repository]])
 async save(session: Session): Promise<void> { /* sessions table + artifacts only */ }
 async saveIdempotencyKey(hash: string, sessionId: string): Promise<void> { /* idempotency_keys table */ }
 ```
 
 **Rationale**: the `save()` method name is generic — consumers expect it to persist the aggregate's owned entity graph. Adding unrelated persistence (idempotency keys, event publishing, audit logs) as side-effects violates the principle of least surprise and makes refactoring dangerous.
 
-**Implemented in**: `SessionRepository` interface ([[SessionRepository]]):
+**Implemented in**: `SessionRepository` interface (see [[Session#repository]]):
 
 ```typescript
 export interface SessionRepository {
@@ -473,7 +473,7 @@ export interface AggregateRepository {
 
 **Optimistic locking**: `saveWithLock()` takes `expectedVersion` and the repository checks `WHERE version = ?`. If `numUpdatedRows === 0`, it throws `ConcurrencyError extends DomainError`.
 
-**Implemented repository interfaces**: [[SessionRepository]], [[WorkspaceRepository]], `ConversationRepository`, `UserRepository`.
+**Implemented repository interfaces**: `SessionRepository` (see [[Session#repository]]), `WorkspaceRepository` (see [[Workspace#repository]]), `ConversationRepository`, `UserRepository`.
 
 **Checklist before writing repository code:**
 - [ ] Interface lives in `packages/domain/src/<context>/repositories/`
@@ -697,7 +697,7 @@ POST   /api/workspaces/:id/transfer-ownership → requireWorkspaceRole('owner')
 
 **Admin bypass**: users with `role === 'admin'` skip workspace-level permission checks entirely — handled in middleware, not domain.
 
-**Implemented in**: [[Workspace]] (domain: `assertIsOwner()`, `isMember()`, `canEdit()`, `canView()`), [[Workspace Permissions]] (middleware: `requireWorkspaceRole()`).
+**Implemented in**: [[Workspace]] (domain: `assertIsOwner()`, `isMember()`, `canEdit()`, `canView()`), [[Workspace Sharing#domain-enforcement|Workspace Permissions]] (middleware: `requireWorkspaceRole()`).
 
 ---
 
@@ -995,7 +995,7 @@ Drift between domain and infrastructure is the most common source of production 
 These rules are enforced by:
 1. **CLAUDE.md** — agent system prompt includes all 6 core rules as mandatory checks
 2. **Code review** — [[synthesis/code-review-2026-08-02]] identified 4 DDD violations (H1–H3, H10). All resolved via [[synthesis/high-fix-plan-2026-08-02]] (✅).
-3. **Phase 9 remediation** — [[synthesis/rule-4-vo-debt|8 type-alias VOs]] converted to classes, zero `throw new Error` in domain, zero `as any` in domain files
+3. **Phase 9 remediation** — 8 type-alias VOs converted to classes, zero `throw new Error` in domain, zero `as any` in domain files. See [[synthesis/phase-9-implementation-plan]].
 4. **CI** — typecheck (`tsc --noEmit`) runs on every PR; domain errors without proper `DomainError` extension cause compile failures
 
 ### Quick reference: anti-patterns to avoid
@@ -1024,10 +1024,9 @@ These rules are enforced by:
 - [[synthesis/code-review-2026-08-02]] — 41 findings including 4 DDD violations (H1–H3, H10)
 - [[synthesis/high-fix-plan-2026-08-02]] — Remediation plan for H1–H10
 - [[synthesis/critical-fix-plan-2026-08-02]] — Critical findings remediation (C1–C8)
-- [[synthesis/rule-4-vo-debt]] — 8 type-alias VOs catalogued with conversion roadmap
-- [[synthesis/phase-9-implementation-plan]] — Phase 9 DDD remediation targets
-- [[Session Machine (XState v5)]] — Domain-owned state machine, startup validation (Pattern 13, 19)
-- [[Workspace Permissions]] — Two-layer enforcement, permission matrix (Pattern 14)
+- [[synthesis/phase-9-implementation-plan]] — Phase 9 remediation plan (VO conversion roadmap)
+- [[synthesis/code-review-2026-08-02]] — Multi-agent review triggering this governance schema
+- [[Workspace Sharing]] — Two-layer enforcement, permission matrix (Pattern 14)
 - [[ReadinessPolicy]] — VO as business rule encapsulation (Pattern 15)
 - [[Workspace Sharing]] — Aggregate transaction boundaries (Pattern 16)
 - [[BullMQ Worker Wiring]] — Snapshot-based crash recovery (Pattern 17)

@@ -1,4 +1,64 @@
 
+## [2026-08-08] simplify | Wiki remediation — 15 pages deleted, 6 merged, 6 cross-refs fixed
+
+Performed a comprehensive wiki simplification based on CLAUDE.md Wiki Content Rules audit. **~20 pages eliminated (-13%)**.
+
+### Tier 1 — Merges (content absorbed into canonical pages)
+
+| Absorbed page | Target page | Rationale |
+|---------------|-------------|-----------|
+| `concepts/Achievements & Badges.md` | `concepts/Gamification.md` | Split-page syndrome (3 pages on gamification); badge catalog + credit flow absorbed as `## Achievements & Badges` section |
+| `concepts/Workspace Permissions.md` | `concepts/Workspace Sharing.md` | Permission matrix duplicated in both pages (CLAUDE.md Rule 4 violation); role defs, domain/middleware enforcement, error types absorbed as sections |
+| `concepts/ArtifactContent.md` | `entities/Artifact.md` | Near-stub (54 body lines); VO owned by Artifact, absorbed as `## ArtifactContent Value Object` |
+| `concepts/Progressive Context Enrichment.md` | `concepts/Content Generation.md` | Near-stub (55 body lines); mechanism of the generation pipeline, absorbed as section |
+| `concepts/CrawlData.md` | `concepts/Content Generation.md` | Near-stub (56 body lines); VO owned by Content Generation, absorbed as section |
+| `concepts/Invitation Notification Delivery.md` | `concepts/Workspace Sharing.md` | Near-stub (55 body lines); sub-concern of invitation flow, absorbed as `## Notification Delivery` |
+| `entities/WorkspaceRepository.md` | `entities/Workspace.md` | Section test pass; repository interface absorbed as `## Repository` |
+| `entities/SessionRepository.md` | `entities/Session.md` | Section test pass; repository interface absorbed as `## Repository` |
+
+### Tier 2 — Deletions (resolved/orphan synthesis pages)
+
+**Deleted (8 pages)**:
+- `synthesis/agent-chat-proposal.md` — 0 inbound links; fully superseded by `concepts/Agent Chat.md`
+- `synthesis/gamification-proposal.md` — 1 inbound (index only); fully superseded by `concepts/Gamification.md`
+- `synthesis/backend-audit-gaps-improvements.md` — 0 inbound; all 12 findings closed
+- `synthesis/backend-frontend-startup-gaps.md` — 0 inbound; all items resolved
+- `synthesis/lint-report-2026-07-30.md` — 0 inbound; historical, findings applied
+- `synthesis/lint-report-2026-08-01-coherence.md` — 0 inbound; historical, findings applied
+- `synthesis/rule-4-vo-debt.md` — 100% covered by `phase-9-implementation-plan.md`
+
+**Archived (1 page)**:
+- `synthesis/workspace-sharing-proposal.md` — added `> **Archived**` header; retained as A/B/C decision record
+- `synthesis/prompting-mechanics-proposal.md` — added `> **Archived**` header; canonical docs in 3 concept pages
+
+### Tier 3 — Cross-reference fixes (6 pages)
+
+- `concepts/XState Integration.md` — replaced outdated inline Session Machine example with `[[Session Machine (XState v5)]]` cross-reference
+- `concepts/Auth Middleware.md` — replaced duplicate JWT token flow diagram with delegation to `[[Auth Dependencies#Strategy JWT + Refresh Tokens]]`
+- `concepts/Agent Chat.md` — renamed "Agent Catalog" → "Agent Overview", delegating to `[[Agent Personas]]`
+- `concepts/Gamification.md` — removed duplicate badge tier table (now in the absorbed Achievements & Badges section)
+- `entities/Achievement.md` — `[[Achievements & Badges]]` → `[[Gamification#achievements-badges]]`
+- `entities/PlayerProfile.md` — same fix
+- `entities/WorkspaceMembership.md` — `[[Workspace Permissions]]` → `[[Workspace Sharing#permission-matrix]]`
+- `concepts/Gamification UX.md` — same Achievement fix
+- `concepts/Prompt Versioning.md` — `[[Progressive Context Enrichment]]` → `[[Content Generation#progressive-context-enrichment]]`
+- `concepts/Context Injection.md` — same fix
+- `concepts/Database Schema.md` — `[[ArtifactContent]]` → `[[Artifact#artifactcontent-value-object]]`
+- `concepts/DDD Domain Design Rules.md` — 4 broken links fixed (rule-4-vo-debt, SessionRepository, WorkspaceRepository, Workspace Permissions)
+- `entities/Workspace.md` — `[[rule-4-vo-debt]]` → `[[synthesis/phase-9-implementation-plan]]`
+- `entities/Session.md` — same fix (2 occurrences)
+
+### Index updates
+
+- `Wiki/index.md`: removed 6 deleted concepts, 2 deleted entities, 8 deleted synthesis pages
+- Fixed `[[UX Spec Summary-2026-08-07]]` → `[[synthesis/UX Spec Summary-2026-08-07]]`
+- Updated date to 2026-08-08
+
+### Net reduction
+
+**Before**: 80 concepts, 13 entities, 39 synthesis = ~155 files in Wiki/
+**After**: 74 concepts, 11 entities, 28 synthesis = ~135 files (-13%)
+
 ## [2026-08-08] fix | pre-existing DashboardPage session-cards test
 
 Fixed the only pre-existing test failure in `apps/frontend/src/pages/__tests__/DashboardPage.test.tsx` (`renders session cards when sessions exist`).

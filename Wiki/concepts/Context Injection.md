@@ -302,5 +302,5 @@ This means the user sees missing slots **before** clicking Generate — not afte
 - [[Prompt Components]] — Components use the same slot syntax for dynamic content
 - [[PromptComposer]] — Domain service that resolves slots during composition
 - [[ReadinessPolicy]] — Pre-flight validation of slot availability
-- [[Progressive Context Enrichment]] — Step N slots resolve to step N-1 artifact content
+- [[Content Generation#progressive-context-enrichment|Progressive Context Enrichment]] — Step N slots resolve to step N-1 artifact content
 - [[prompting-mechanics-proposal]] — Overall architecture proposal (synthesis)

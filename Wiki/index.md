@@ -2,7 +2,7 @@
 type: index
 tags:
   - wiki/index
-date_updated: 2026-08-07
+date_updated: 2026-08-08
 ---
 
 # Wiki Index — Flow App
@@ -37,8 +37,6 @@ date_updated: 2026-08-07
 | [[PlayerProfile]] | Gamification | Aggregate Root | 4 |
 | [[Achievement]] | Gamification | Entity | 3 |
 | [[Quota]] | Usage & Quota | Aggregate Root | 2 |
-| [[SessionRepository]] | Content Generation | Repository Interface | 3 |
-| [[WorkspaceRepository]] | Workspace & Assets | Repository Interface | 3 |
 
 ## Concepts
 
@@ -54,8 +52,6 @@ date_updated: 2026-08-07
 | [[Agent Personas]] | high | 4 |
 | [[Angle Generator - Prompt Architecture]] | high | 6 |
 | [[Application Services]] | high | 4 |
-| [[Achievements & Badges]] | high | 4 |
-| [[ArtifactContent]] | high | 3 |
 | [[Asset Promotion]] | high | 5 |
 | [[AssetResolver]] | high | 5 |
 | [[Auth Dependencies]] | high | 8 |
@@ -69,7 +65,6 @@ date_updated: 2026-08-07
 | [[Contracts Package]] | high | 5 |
 | [[Creating a New Tool]] | high | 5 |
 | [[Context Injection]] | high | 6 |
-| [[CrawlData]] | high | 2 |
 | [[Database Schema]] | high | 9 |
 | [[DDD Domain Design Rules]] | high | 20 |
 | [[Dependency Injection Setup]] | high | 4 |
@@ -88,7 +83,6 @@ date_updated: 2026-08-07
 | [[Global Deterministic Model Matrix]] | high | 5 |
 | [[Health Check - Deep]] | high | 4 |
 | [[Idempotency]] | high | 8 |
-| [[Invitation Notification Delivery]] | high | 4 |
 | [[Job Queue - Monitoring and Stability]] | high | 4 |
 | [[LLM Gateway - OpenRouter]] | high | 6 |
 | [[Logging Strategy]] | high | 4 |
@@ -96,7 +90,6 @@ date_updated: 2026-08-07
 | [[Meta Ads - Prompt Architecture]] | high | 3 |
 | [[Migration Tooling]] | high | 2 |
 | [[Persona Generator - Prompt Architecture]] | high | 4 |
-| [[Progressive Context Enrichment]] | high | 2 |
 | [[Project Dependencies]] | high | 4 |
 | [[Project Brand Persona]] | high | 5 |
 | [[Prompt Admin API]] | high | 5 |
@@ -121,7 +114,6 @@ date_updated: 2026-08-07
 | [[UX Wireframes]] | high | 6 |
 | [[Workspace & Assets]] | high | 5 |
 | [[Workspace Sharing]] | high | 5 |
-| [[Workspace Permissions]] | high | 5 |
 | [[XState Integration]] | high | 4 |
 | [[packages-domain Structure]] | high | 5 |
 
@@ -129,21 +121,13 @@ date_updated: 2026-08-07
 
 | Page | Description | Date Filed |
 |------|-------------|------------|
-| [[synthesis/backend-audit-gaps-improvements]] | Backend audit — 12 findings, all closed | 2026-07-30 |
-| [[synthesis/backend-frontend-startup-gaps]] | Backend→Frontend startup gap analysis (15 items) | 2026-08-01 |
-| [[synthesis/lint-report-2026-07-30]] | Wiki health-check — 0 orphans, 0 broken links | 2026-07-30 |
-| [[synthesis/prompting-mechanics-proposal]] | Prompting mechanics architecture — versioning, components, context injection | 2026-08-01 |
-| [[synthesis/workspace-sharing-proposal]] | Workspace sharing architecture — membership, permissions, invitations | 2026-08-01 |
+| [[synthesis/workspace-sharing-proposal]] | Archived — workspace sharing architecture decision record | 2026-08-01 |
 | [[synthesis/deployment-patterns-phase-10]] | Deployment patterns — reverse proxy, build-time vs runtime URL, lessons learned | 2026-08-02 |
-
-| [[synthesis/agent-chat-proposal]] | Agent chat architecture — 7 agents, conversational context, SSE streaming | 2026-08-01 |
-| [[synthesis/gamification-proposal]] | Gamification overlay — XP, badges, leaderboards, seasons, workspace health | 2026-08-01 |
+| [[synthesis/prompting-mechanics-proposal]] | Archived — prompting mechanics architecture (migration path preserved) | 2026-08-01 |
 | [[synthesis/project-model-multi-dimension-audit-2026-08-01]] | Project model governance audit — 4 areas, coverage assessment, maturity score, priority gaps | 2026-08-01 |
-| [[synthesis/lint-report-2026-08-01-coherence]] | Coherence lint — structural pass, queued-state drift closed | 2026-08-01 |
 | [[synthesis/implementation-roadmap-2026-08-01]] | Rational development roadmap — phase plan from bootstrap to expansion tracks | 2026-08-01 |
 | [[synthesis/phase-8-real-auth-plan]] | Phase 8 implementation plan — Real Authentication (5 workstreams, 35 files) | 2026-08-02 |
 | [[synthesis/frontend-mvp-plan-2026-08-01]] | Frontend MVP plan — 13 components, 5 routes, 7-step execution | 2026-08-01 |
-| [[synthesis/rule-4-vo-debt]] | 8 type-alias VOs catalogued with conversion roadmap | 2026-08-02 |
 | [[synthesis/phase-9-architectural-targets]] | 11 VALIDATION + 5 STRUCTURAL gaps for Phase 9+ | 2026-08-02 |
 | [[synthesis/phase-9-implementation-plan]] | Phase 9 implementation plan — 11 gaps across 4 phases, ~12h | 2026-08-02 |
 | [[synthesis/code-review-2026-08-02]] | Multi-agent code review — phases 0–9, 41 findings (8 critical, 10 high, 18 medium, 5 low) | 2026-08-02 |
@@ -161,7 +145,7 @@ date_updated: 2026-08-07
 | [[synthesis/remediation-plan-2026-08-07]] | Remediation plan for diagnostic findings — 12 fixes across 5 phases | 2026-08-07 |
 | [[synthesis/railway-backend-diagnostics-2026-08-07]] | Railway backend health sweep — 4 findings (0 critical), metrics baseline, action items | 2026-08-07 |
 | [[synthesis/multi-asset-implementation-plan]] | Multi-asset promotion — 22 steps across 7 phases + 6 new test files + 7 updated | 2026-08-06 |
-| [[UX Spec Summary-2026-08-07]] | Comprehensive UX Design Summary — 9 sections consolidating all UX wiki specs for backend architecture handoff | 2026-08-07 |
+| [[synthesis/UX Spec Summary-2026-08-07]] | UX Design Summary — 9 sections consolidating UX wiki specs for backend architecture handoff | 2026-08-07 |
 | [[synthesis/ui-design-summary-2026-08-07]] | UI Design Summary — full-stack design reference: 37-component inventory with status, complete design tokens, layout architecture, component props/interfaces/MUI internals/state bindings, gamification visual system, WCAG 2.1 AA requirements, implementation priority | 2026-08-07 |
 | [[synthesis/frontend-drift-report-2026-08-07]] | Frontend drift report — 91 files examined, 15 critical + 12 high drifts: XState skeletal, missing variants, DTO gaps, SSE contract mismatch | 2026-08-07 |
 | [[synthesis/frontend-drift-remediation-plan-2026-08-07]] | Frontend drift remediation plan — 27 findings across 8 phases, 40+ files, phased dependency chain | 2026-08-07 |

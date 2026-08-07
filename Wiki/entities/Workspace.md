@@ -25,7 +25,7 @@ A `Workspace` is a named collaboration container that groups [[Asset]]s and [[Wo
 
 > "A named workspace shared by members that groups related assets."
 
-From [[Workspace Sharing]]: an **owner** creates and controls the workspace, **editors** modify assets and generate content, **viewers** have read-only access. See [[Workspace Permissions]] for the full matrix.
+From [[Workspace Sharing]]: an **owner** creates and controls the workspace, **editors** modify assets and generate content, **viewers** have read-only access. See [[Workspace Sharing#role-definitions|Role Definitions]] for the full permission matrix.
 
 ## Internal Entities
 
@@ -158,7 +158,7 @@ get memberships(): ReadonlyArray<WorkspaceMembership> {
 | `MembershipRole` | `type` alias: `'owner' \| 'editor' \| 'viewer'` | Role-based permissions (v2) |
 | `MembershipStatus` | `type` alias: `'invited' \| 'active'` | Membership lifecycle (v2) |
 
-> **Note**: `WorkspaceId`, `WorkspaceName`, `UserId` are `string` in code, not branded VO classes. `MembershipRole` and `MembershipStatus` are `type` aliases — tracked in [[rule-4-vo-debt]].
+> **Note**: `WorkspaceId`, `WorkspaceName`, `UserId` are `string` in code, not branded VO classes. `MembershipRole` and `MembershipStatus` are `type` aliases — tracked in the [[synthesis/phase-9-implementation-plan|Phase 9 VO conversion plan]].
 
 ## Domain Events (v2)
 
@@ -182,12 +182,32 @@ get memberships(): ReadonlyArray<WorkspaceMembership> {
 | → [[Auth Dependencies]] | Shared ID | References user IDs as `string` |
 | → [[Usage & Quota]] | None (by design) | Credits are consumed by `Session.userId`, not by workspace owner |
 
+## Repository
+
+```typescript
+export interface WorkspaceRepository {
+  findById(id: string): Promise<Workspace | null>;
+  findByMember(userId: string): Promise<Workspace[]>;
+  save(workspace: Workspace): Promise<void>;
+  saveWithLock(workspace: Workspace, expectedVersion: number): Promise<void>;
+  findMembership(workspaceId: string, userId: string): Promise<WorkspaceMembership | null>;
+  findPendingInvitations(userId: string): Promise<Workspace[]>;
+}
+```
+
+Key design decisions:
+- `save()` persists the workspace and its memberships in a single operation — per [[DDD Domain Design Rules#Rule 5 — Repository save persists ONLY the aggregate root and its owned entities|Rule 5]].
+- `saveWithLock()` uses optimistic locking (`WHERE version = expectedVersion`), throws `ConcurrencyError` on 0 rows updated.
+- `findByMember()` batch-loads memberships in 2 queries (not N+1).
+- Membership sync uses `Promise.all` for parallel inserts.
+- Implemented by `KyselyWorkspaceRepository` in `packages/infra-db/src/repositories/workspace-repository.ts`.
+
 ## Sources
 
 - [[sources/STARTUP]] — Original Workspace definition, Artifact vs Asset
 - [[sources/PRD]] — FR-A01 to FR-A05
 - [[sources/USER-STORIES]] — US-W01 to US-W06, US-AS01 to US-AS08
 - [[sources/APP-CONCEPT]] — Knowledge Panel, Asset auto-injection
-- [[Workspace Sharing]] — Multi-member feature overview (v2)
+- [[Workspace Sharing]] — Multi-member feature overview + full permission model (v2)
 - [[WorkspaceMembership]] — Membership entity (v2)
-- [[Workspace Permissions]] — Permission matrix (v2)
+- [[DDD Domain Design Rules]] — Repository design rules
