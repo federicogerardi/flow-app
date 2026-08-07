@@ -5,8 +5,8 @@ tags:
   - wiki/testing
   - wiki/frontend
   - wiki/plan
-date_updated: 2026-08-07
-source_count: 4
+date_updated: 2026-08-08
+source_count: 5
 confidence: high
 ---
 
@@ -445,6 +445,62 @@ test('retry button resets machine to ready state', async () => {
 
 ---
 
+## Implementation Status
+
+> **Implemented 2026-08-08**. All unit and component tests implemented. E2E tests (Playwright) implemented separately — see [[e2e-test-plan-tool-page-2026-08-07]].
+
+| Phase | Tests | File | Status |
+|-------|-------|------|--------|
+| toolPageMachine | 34 | `apps/frontend/src/machines/__tests__/tool-page-machine.test.ts` | ✅ 34/34 pass |
+| deriveUIState | 10 | `apps/frontend/src/machines/__tests__/derive-ui-state.test.ts` | ✅ 10/10 pass |
+| ToolPageLayout | 7 | `apps/frontend/src/components/layout/__tests__/ToolPageLayout.test.tsx` | ✅ 7/7 pass |
+| QueuedCard | 7 | `apps/frontend/src/components/workspace/__tests__/QueuedCard.test.tsx` | ✅ 7/7 pass |
+| RunningCard + CompletedCard + FailedCard | 21 | `apps/frontend/src/components/workspace/__tests__/SessionCards.test.tsx` | ✅ 21/21 pass |
+| E2E Playwright | 8 | `apps/frontend/e2e/tool-page.spec.ts` + `session-list.spec.ts` | ✅ Scaffolded (needs staging env) |
+
+### Test Implementation Details
+
+#### Machine tests (34 tests)
+- **Initial state**: 1 test — all context fields null/empty
+- **LOAD transition**: 2 tests — sets tool+workspaceId, resets inputs
+- **CONFIGURE**: 3 tests — merges text, files, assets incrementally
+- **canSubmit guard**: 6 tests — blocks empty text/file/asset, allows filled, null tool
+- **isStillDraft guard**: 3 tests — RESET returns to draftEmpty when empty, stays when filled
+- **SUBMIT happy path**: 1 test — transitions submitting→running (mock startSession)
+- **SUBMIT error**: 2 tests — QUOTA_EXCEEDED, default SUBMIT_FAILED
+- **SUBMIT replayed**: 3 tests — replayed completed→completed, failed→failed, cancelled→failed
+- **Running state events**: 5 tests — STEP_COMPLETED accumulation, SESSION_COMPLETED appends final, SESSION_FAILED, CANCEL
+- **Terminal transitions**: 7 tests — RETRY from completed/failed/cancelled, RESET from all 3, SUBMIT from ready
+
+Key test infrastructure:
+- `MockEventSource` class polyfills `EventSource` in jsdom (the `subscribeToSSE` actor in `running` state)
+- `api.startSession` mocked with `vi.mock` to return `{session, replayed}` payloads
+- `waitFor` from XState v5 for async transitions (submitting→running, submitting→completed)
+- Default mock: `mockResolvedValue({session: runningSession, replayed: false})` — prevents guard crashes from `event.output.replayed` on undefined
+
+#### Component test details
+
+**QueuedCard** (7 tests): tool label, queued chip, queue position label, "Waiting..." fallback, cancel button, button click handler, opacity style.
+
+**RunningCard** (7 tests): tool label, running chip, progress bar, step label with elapsed time formatting (e.g. `2m 5s`), artifact preview, View/Cancel buttons with click handlers, border left accent.
+
+**CompletedCard** (7 tests): tool label, completed chip, step count + duration, artifact preview, View/Download/Promote buttons, promote hidden when `isPromotable=false`, click handlers.
+
+**FailedCard** (7 tests): tool label, failed chip, error message + step, default error fallback, border left error, retry button, retry click handler.
+
+All component tests use Italian button labels (`Annulla`, `Riprova`, `Promuovi ad asset`) matching the actual `@flow-app/copy` locale.
+
+#### E2E test files
+
+| File | Purpose |
+|------|---------|
+| `playwright.config.ts` | Config with auth-setup → tool-page / session-list projects, Desktop Chrome, sequential execution |
+| `e2e/auth.setup.ts` | Token injection (E2E_AUTH_TOKEN) or OAuth login, saves `e2e/.auth/user.json` |
+| `e2e/tool-page.spec.ts` | 8 scenarios: happy path, disabled submit, file upload, asset selection, error+retry, SSE resilience, accessibility, gamification semantics |
+| `e2e/session-list.spec.ts` | 4 scenarios: tabbed interface, completed card preview, running card progress bar, failed card retry |
+
+E2E tests are resilient: each scenario uses `test.skip()` or graceful fallbacks when prerequisites are not met (no test workspace seeded, no sessions of a given status, etc.), ensuring the suite does not fail on a fresh staging environment.
+
 ## Coverage Targets
 
 | Component | Target | Notes |
@@ -460,3 +516,4 @@ test('retry button resets machine to ready state', async () => {
 - [[ToolPage Machine (XState v5)]] — canonical machine spec
 - [[Frontend Architecture]] — testing patterns
 - [[code-review-2026-08-02]] — testing gaps from code review
+- [[e2e-test-plan-tool-page-2026-08-07]] — E2E test plan

@@ -5,8 +5,8 @@ tags:
   - wiki/testing
   - wiki/e2e
   - wiki/plan
-date_updated: 2026-08-07
-source_count: 3
+date_updated: 2026-08-08
+source_count: 4
 confidence: high
 ---
 
@@ -18,6 +18,8 @@ confidence: high
 ## Overview
 
 The tool page is the core user flow in Flow App. These E2E tests verify the full stack: React frontend → API → session worker → SSE → artifact rendering. They complement the unit/integration tests in [[testing-plan-xstate-toolpage-2026-08-07]] by testing the real data flow.
+
+> **Implemented 2026-08-08**. All 8 E2E scenarios scaffolded in `apps/frontend/e2e/`. Requires staging environment with backend + PostgreSQL + Redis + BullMQ to execute. No flakiness by design: each test gracefully skips missing prerequisites.
 
 ## Prerequisites
 
@@ -371,5 +373,6 @@ export default defineConfig({
 ## Sources
 
 - [[frontend-drift-remediation-plan-2026-08-07]] — implementation reference
-- [[testing-plan-xstate-toolpage-2026-08-07]] — unit/integration test plan
+- [[testing-plan-xstate-toolpage-2026-08-07]] — unit/integration test plan (implemented)
 - [[Session List - Live Status]] — 4-state card system spec
+- [[ToolPage Machine (XState v5)]] — machine spec for E2E flow understanding

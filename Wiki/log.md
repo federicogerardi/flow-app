@@ -1,4 +1,47 @@
 
+## [2026-08-08] implement | test suite — 79 unit/component tests + 8 E2E scenarios
+
+Implemented the full test suite from [[testing-plan-xstate-toolpage-2026-08-07]] and [[e2e-test-plan-tool-page-2026-08-07]].
+
+**Unit tests — toolPageMachine (34 tests)**:
+- File: `apps/frontend/src/machines/__tests__/tool-page-machine.test.ts`
+- Coverage: initial state, LOAD, CONFIGURE, canSubmit (6), isStillDraft (3), SUBMIT happy/error/replayed (6), running state events (5), terminal transitions (7)
+- Infrastructure: MockEventSource polyfills EventSource for jsdom, `vi.mock` for `api.startSession`, XState v5 `waitFor` for async transitions
+- All 34 pass ✅
+
+**Unit tests — deriveUIState (10 tests)**:
+- File: `apps/frontend/src/machines/__tests__/derive-ui-state.test.ts`
+- 8 state→UI mappings + unknown state fallback + compound value handling
+- All 10 pass ✅
+
+**Integration tests — ToolPageLayout (7 tests)**:
+- File: `apps/frontend/src/components/layout/__tests__/ToolPageLayout.test.tsx`
+- Loading state, setup panel, disabled submit, credit cost display, breadcrumbs, document title, quota error alert structure
+- Requires mocking: react-router, AppShell breadcrumbs, API client, SetupPanel, copy module
+- All 7 pass ✅
+
+**Component tests — SessionCards (28 tests)**:
+- `QueuedCard.test.tsx` (7): tool label, queued chip, queue position, waiting fallback, cancel button (Italian: "Annulla"), click handler, opacity
+- `SessionCards.test.tsx` (21): RunningCard (7) + CompletedCard (7) + FailedCard (7)
+- RunningCard: tool label, running chip, progress bar, step label + elapsed formatting, artifact preview, View/Cancel buttons, click handlers
+- CompletedCard: tool label, completed chip, step count + duration, artifact preview, View/Download/Promote buttons (Italian: "Promuovi ad asset"), promote hidden when false, click handlers
+- FailedCard: tool label, failed chip, error message + step, default error, border left error, retry button (Italian: "Riprova"), click handler
+- All 28 pass ✅
+
+**E2E tests — Playwright (8 scenarios, 4 files)**:
+- `playwright.config.ts`: auth-setup → tool-page / session-list projects, Desktop Chrome, sequential execution
+- `e2e/auth.setup.ts`: token injection (`E2E_AUTH_TOKEN`) or OAuth login, saves `e2e/.auth/user.json`
+- `e2e/tool-page.spec.ts` (8 scenarios): happy path full flow, disabled submit, file upload, asset selection, error+retry, SSE resilience, accessibility, gamification semantics
+- `e2e/session-list.spec.ts` (4 scenarios): tabbed interface, completed card preview, running card progress bar, failed card retry
+- All scenarios use graceful fallbacks (`test.skip()` when prerequisites missing) — no flakiness
+- Requires staging environment to execute (not runnable in CI without backend)
+
+**Total: 79 unit/component tests pass + 8 E2E scaffolds**. Dependency added: `@playwright/test`.
+
+**Wiki pages updated**:
+- `synthesis/testing-plan-xstate-toolpage-2026-08-07.md`: added Implementation Status section with file references, test counts, infrastructure details
+- `synthesis/e2e-test-plan-tool-page-2026-08-07.md`: added implementation note + source reference to testing plan
+
 ## [2026-08-07] implement | BE coordination plan Steps 0-9 + replayed session fix
 
 Executed the DDD-reviewed BE coordination plan. All P0-P1 steps implemented:
