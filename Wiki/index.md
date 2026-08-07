@@ -165,4 +165,7 @@ date_updated: 2026-08-07
 | [[synthesis/ui-design-summary-2026-08-07]] | UI Design Summary — full-stack design reference: 37-component inventory with status, complete design tokens, layout architecture, component props/interfaces/MUI internals/state bindings, gamification visual system, WCAG 2.1 AA requirements, implementation priority | 2026-08-07 |
 | [[synthesis/frontend-drift-report-2026-08-07]] | Frontend drift report — 91 files examined, 15 critical + 12 high drifts: XState skeletal, missing variants, DTO gaps, SSE contract mismatch | 2026-08-07 |
 | [[synthesis/frontend-drift-remediation-plan-2026-08-07]] | Frontend drift remediation plan — 27 findings across 8 phases, 40+ files, phased dependency chain | 2026-08-07 |
+| [[synthesis/be-coordination-session-dto-2026-08-07]] | Backend coordination plan — 11 missing SessionListItemDTO fields, SSE payload fixes, 2 ghost endpoints, ~3h effort | 2026-08-07 |
+| [[synthesis/testing-plan-xstate-toolpage-2026-08-07]] | Testing plan — 20 unit tests for toolPageMachine, deriveUIState, integration tests for ToolPageLayout, session card component tests | 2026-08-07 |
+| [[synthesis/e2e-test-plan-tool-page-2026-08-07]] | E2E test plan — 7 Playwright scenarios: happy path, file upload, asset selection, failure+retry, session list, SSE resilience, accessibility | 2026-08-07 |
 | [[overview]] | High-level synthesis (v3) | 2026-08-04 |

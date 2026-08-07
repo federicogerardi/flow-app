@@ -1,4 +1,16 @@
 
+## [2026-08-07] plan | BE coordination, testing, E2E synthesis pages
+
+Created three synthesis pages to support the frontend drift remediation implementation:
+
+- **[[synthesis/be-coordination-session-dto-2026-08-07]]** — Backend coordination plan: 11 missing `SessionListItemDTO` fields, SSE payload fixes (`step_completed` missing artifact content, `session_completed` missing final artifact), 2 ghost endpoints (`GET /activity`, `POST /challenges/vote`). 11 implementation steps, ~3h effort, prioritized P0–P2.
+
+- **[[synthesis/testing-plan-xstate-toolpage-2026-08-07]]** — Unit + integration testing plan: 20 unit tests for `toolPageMachine` (state transitions, guards, actors, actions), `deriveUIState` (100% coverage), ToolPageLayout integration tests (8 scenarios), session card component tests. Vitest + @testing-library/react.
+
+- **[[synthesis/e2e-test-plan-tool-page-2026-08-07]]** — E2E testing plan: 7 Playwright scenarios covering the full tool page lifecycle (happy path, file upload, asset selection, failure+retry, session list 4-state cards, SSE resilience, accessibility). ~7h effort.
+
+Updated Wiki/index.md with all three new entries.
+
 ## [2026-08-07] implement | Frontend Drift Remediation — all 8 phases
 
 Implemented the complete [[synthesis/frontend-drift-remediation-plan-2026-08-07|remediation plan]] on branch `feature/frontend-drift-remediation`. All 27 drift findings addressed across 8 phases.
