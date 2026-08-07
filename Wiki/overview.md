@@ -3,7 +3,7 @@ type: synthesis
 tags:
   - wiki/synthesis
   - wiki/overview
-date_updated: 2026-08-06
+date_updated: 2026-08-08
 ---
 
 # Overview — Flow App
@@ -100,12 +100,15 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 | Phase 11.5 — Usage & Quota Domain | ✅ | Bounded context: 10 files, 40 tests, Kysely repository, optimistic locking |
 | Phase 12 — Usage & Quota Wiring | ✅ | `ConsumeCreditsUseCase` (optimistic retry), session worker integration, `GET /api/usage/credits` |
 | Phase 13 — Gamification | ✅ | 50 files: 2 aggregates, 9 VOs, 22 badges, 5 challenges, BullMQ pipeline, 5 API endpoints |
+| **Frontend Drift Remediation** | ✅ | 27 findings across 8 phases: XState v5 rewrite, SSEClient disconnect/reconnect, tool page machine, feedback panel, session list cards, session page, API contract alignment, UX polish. 40 files, +5013/-407 lines. |
+| **BE DTO Alignment** | ✅ | SessionListItemDTO extended 5→16 fields, SSE payloads with artifact content, `session_started`/`session_failed` events, replayed session transitions. 7 files: domain, infra-db, backend routes+worker, frontend machine+layout. |
+| **Test Suite — ToolPage** | ✅ | 79 unit/component tests (34 machine + 10 deriveUIState + 7 ToolPageLayout + 28 session cards) + 8 E2E Playwright scenarios. `@playwright/test` added. DashboardPage pre-existing test fixed. **140/140 pass.** |
 | **Brief Tool** | ✅ | 2-step extraction→generation pipeline, 11-section Italian output, FileUpload, SSE completion, smoke test passed |
 | **Multi-Asset Promotion** | ✅ | Tools can consume N assets of same type (e.g. 3 personas). 22 steps across 7 phases: `AssetInput.multiple`, `Map<string, string[]>`, migration 011, `AssetResolver` + `selectedAssetIds`, `PromoteToAssetUseCase` idempotency, `AssetPicker` UI component, 490 domain + 138 backend tests. |
 
 ### No Planned Phases
 
-All phases through 13 + the Brief Tool + Multi-Asset Promotion are fully implemented and smoke-tested.
+All phases through 13 + the Brief Tool + Multi-Asset Promotion + Frontend Drift Remediation + BE DTO Alignment + ToolPage Test Suite are fully implemented.
 
 ### Remaining Stubs
 

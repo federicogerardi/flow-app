@@ -1,4 +1,20 @@
 
+## [2026-08-08] fix | pre-existing DashboardPage session-cards test
+
+Fixed the only pre-existing test failure in `apps/frontend/src/pages/__tests__/DashboardPage.test.tsx` (`renders session cards when sessions exist`).
+
+Root causes (3):
+
+1. **Mock data shape wrong**: session mock used `toolKey: 'Blog Post'` (with space, not kebab-case) and `toolKey: 'Landing Page'`. Real toolKeys are kebab-case. Also missing required `workspaceId` and `stepCount` fields from `SessionListItemDTO`.
+
+2. **ToolCard renders emoji prefix**: `📄 Landing Page` — `getByText('Landing Page')` (exact match) fails. Must use regex `/Landing Page/`.
+
+3. **Tab-based SessionList**: `SessionList` defaults to "in-progress" tab. Completed/failed sessions are hidden behind their respective tabs. Old test asserted on invisible "Completed"/"Failed" text from session cards (not tab labels). Fixed by using running session in default tab + asserting tab labels (always visible).
+
+Also added SWR keys for `assets-ws-1-coverage` and `members-ws-1` to prevent AssetCoverageBar/WorkspaceMembers from rendering loading states.
+
+Result: **140/140 tests pass, 0 failures** (was 139/140 before fix).
+
 ## [2026-08-08] implement | test suite — 79 unit/component tests + 8 E2E scenarios
 
 Implemented the full test suite from [[testing-plan-xstate-toolpage-2026-08-07]] and [[e2e-test-plan-tool-page-2026-08-07]].
@@ -3986,3 +4002,28 @@ Created `synthesis/ui-design-summary-2026-08-07.md` — 7-section comprehensive 
 Updated `Wiki/index.md` — added synthesis entry to Synthesis table. Files modified: 2.
 
 Wiki updated: [[synthesis/ui-design-summary-2026-08-07]] (this entry), [[log]] (this entry).
+
+## [2026-08-08] fix | Session preview — duplicate artifacts & wrong step count
+
+Bug: dopo generazione, il `SessionSummary` mostrava più step del tool (+ "Step 0"), e il count mostrava `artifacts.length` invece del vero `stepCount` del tool.
+
+**Root cause (backend)**: BullMQ retry dopo crash parziale → worker non carica XState snapshot, ri-esegue da step 0, creando nuovi artifact con UUID diversi per lo stesso `stepNumber`. Il DB upsert è per PK (`id`), non per `(session_id, step_number)`. L'endpoint `GET /api/sessions/:id` legge dal DB senza `DISTINCT ON (step_number)`.
+
+**Root cause (frontend)**:
+- `SessionSummary.tsx:106`: `{copy.t('stepCount', { count: String(artifacts.length) })}` usava lunghezza array raw
+- `SessionSummary.tsx:115`: `artifact.stepNumber` esposto direttamente — alcuni artifact nel DB hanno `step_number = 0`
+- `SessionPage.tsx:156`: `stepCount={session.artifacts.length}` invece di `session.stepCount`
+- Nessuna deduplicazione lato frontend
+
+**Fix (frontend — 3 file)**:
+- `SessionSummary.tsx`: deduplica per `stepNumber` (tiene ultimo), aggiunge prop `stepCount?`, normalizza 0-based → 1-based per il label
+- `SessionPage.tsx`: passa `session.stepCount` a `CompletionBanner` + `SessionSummary`
+- `ToolPageLayout.tsx`: passa `tool?.stepCount` a `SessionSummary`
+
+**Backend fix raccomandato (non ancora implementato)**: caricare XState snapshot al retry, dedup in `Session._artifacts`, `ON CONFLICT (session_id, step_number)` nel repo, `DISTINCT ON (step_number)` nell'endpoint.
+
+TypeScript: ✅ compila. Test ToolPageLayout: 7/7 ✅.
+
+Files modified: `SessionSummary.tsx`, `SessionPage.tsx`, `ToolPageLayout.tsx`.
+
+Wiki updated: [[concepts/UI Component Map]] (SessionSummary props aggiornati), [[log]] (this entry).

@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/governance
-date_updated: 2026-08-04
-source_count: 4
+date_updated: 2026-08-08
+source_count: 5
 confidence: high
 ---
 
@@ -79,10 +79,29 @@ confidence: high
 | `jest` | Redundant — Vitest is Jest-compatible, faster, Vite-native |
 | `mocha` | Redundant |
 | `node:test` | Inconsistency — two runners, two pattern sets |
-| `cypress` / `playwright` | P2 — E2E testing is future scope |
+| `cypress` | Redundant — Playwright is now the E2E runner (see below) |
 | `sinon` | Redundant — `vi.spyOn` / `vi.fn` covers all mocking |
 | `chai` / `expect` | Built into Vitest |
 | `ts-mockito` / `ts-mock-imports` | Manual DI makes mocking trivial — no framework needed |
+
+### E2E: Playwright (added 2026-08-08)
+
+`@playwright/test` was added in [[testing-plan-xstate-toolpage-2026-08-07|ToolPage Test Suite]] for end-to-end testing of the tool page lifecycle.
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `@playwright/test` | latest | E2E runner — 8 scenarios in `apps/frontend/e2e/` |
+
+**Configuration**: `apps/frontend/playwright.config.ts`
+- Sequential execution (SSE tests are timing-sensitive)
+- Auth setup project → tool-page + session-list projects
+- Desktop Chrome, trace on retry, screenshot on failure
+- `E2E_BASE_URL` and `E2E_AUTH_TOKEN` env vars for CI
+
+**Scenarios** (see [[e2e-test-plan-tool-page-2026-08-07]]):
+- Happy path, file upload, asset selection, error+retry, SSE resilience, accessibility, session list cards, gamification semantics
+
+E2E tests are not run in CI — they require a staging environment with PostgreSQL + Redis + BullMQ worker.
 
 ---
 
@@ -99,7 +118,7 @@ export default defineWorkspace([
   'packages/domain',     // 415 unit tests — zero deps
   'packages/infra-db',  // 32 integration tests — PostgreSQL (fork pool, sequential)
   'apps/backend',        // 127 tests — use cases, middleware, API, workers
-  'apps/frontend',       // 60 tests — components, auth, pages (jsdom)
+  'apps/frontend',       // 140 tests (79 tool-page + 28 cards + 10 deriveUIState + 7 ToolPageLayout + 7 DashboardPage + 9 other) — jsdom
 ]);
 ```
 
@@ -274,8 +293,8 @@ Executed in [[synthesis/phase-11-testing-plan|Phase 11]]. From 1 test file (5 te
 | `packages/domain` | 32 | 415 | ≥ 60% lines, 50% branches |
 | `packages/infra-db` | 4 | 32 | ≥ 40% lines, 30% branches |
 | `apps/backend` | 18 | 127 | ≥ 30% lines, 20% branches |
-| `apps/frontend` | 12 | 60 | ≥ 30% lines, 20% branches |
-| **Total** | **66** | **~634** | |
+| `apps/frontend` | 17 | 140 | ≥ 30% lines, 20% branches |
+| **Total** | **71** | **~714** | |
 
 ### Test File Inventory
 
@@ -658,4 +677,6 @@ jobs:
 - [[sources/PRD]] — Test coverage targets (≥70% frontend, NFR-M03)
 - [[packages-domain Structure]] — Domain isolation for testability
 - [[Dependency Injection Setup]] — Manual DI enables trivial mocking
+- [[testing-plan-xstate-toolpage-2026-08-07]] — ToolPage test suite (79 unit/component tests implemented)
+- [[e2e-test-plan-tool-page-2026-08-07]] — Playwright E2E scenarios (8 scenarios scaffolded)
 - [[synthesis/phase-11-testing-plan]] — Phase 11 execution results (baseline established)
