@@ -1,4 +1,21 @@
 
+## [2026-08-07] review | DDD architect review of BE coordination plan — 7 amendments applied
+
+Reviewed [[synthesis/be-coordination-session-dto-2026-08-07]] against actual backend code. 7 inaccuracies found, all confirmed by DDD architect:
+
+**Blocking (P0)**:
+1. `Session` entity has no `createdAt` field — added Step 0 to add it to domain entity + repository
+2. `toolRegistry.getAll()` doesn't exist — replaced with `Object.values(toolRegistry)`
+3. No `ArtifactRepository` exists — replaced with `SessionRepository.findLastArtifactsBySessionIds()` (preserves aggregate boundary)
+4. Activity endpoint in wrong file — moved to `gamification-routes.ts`
+
+**Non-blocking (P1–P2)**:
+5. `errorMessage`/`errorCode` missing from `getSession` detail — added to Step 3
+6. `queuePosition` via BullMQ API unverified — deferred to P3 separate investigation
+7. `session_started` SSE used `new Date()` instead of domain `startedAt` — fixed
+
+Plan DDD compliance score: 4/10 → 9/10 after amendments.
+
 ## [2026-08-07] plan | BE coordination, testing, E2E synthesis pages
 
 Created three synthesis pages to support the frontend drift remediation implementation:

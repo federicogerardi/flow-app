@@ -14,6 +14,8 @@ confidence: high
 
 > Coordinates backend changes required by [[frontend-drift-remediation-plan-2026-08-07|Phase 3]] of the frontend drift remediation.
 > The frontend now expects 16 fields on `SessionListItemDTO` and artifact content in SSE events. The backend currently returns 5 fields and omits artifact data from SSE payloads.
+>
+> **DDD-reviewed 2026-08-07**: 7 inaccuracies found and corrected. Plan now includes Step 0 (domain entity `createdAt`), no `ArtifactRepository` creation (aggregate boundary preserved), all SSE timestamps use domain values. DDD compliance score: 9/10.
 
 ## Overview
 
@@ -63,28 +65,105 @@ The frontend drift remediation extended the contracts (`SessionListItemDTO`, `SS
 
 ## Implementation Steps
 
+### Step 0: Add `createdAt` to `Session` domain entity (DDD prerequisite)
+
+> **Review finding (2026-08-07)**: The `Session` entity has no `createdAt` field. The DB table has `created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`, but the domain ignores it. All API handlers use `s.startedAt?.toISOString() ?? new Date().toISOString()` — the fallback produces non-deterministic values for draft/queued sessions.
+
+**File 1**: `packages/domain/src/generation/entities/Session.ts`
+
+Add `createdAt` as an immutable readonly field:
+
+```typescript
+private constructor(
+  readonly sessionId: string,
+  readonly toolKey: ToolKey,
+  readonly workspaceId: string,
+  readonly userId: string,
+  readonly idempotencyKeyHash: string,
+  private _status: SessionStatus,
+  private _currentStepIndex: number,
+  private _startedAt: Date | null,
+  private _completedAt: Date | null,
+  private _errorCode: string | null,
+  private _errorMessage: string | null,
+  private _version: number,
+  private _artifacts: Artifact[],
+  readonly createdAt: Date,  // ← NEW: immutable creation timestamp
+) {}
+
+static create(
+  toolKey: ToolKey, workspaceId: string, userId: string,
+  idempotencyKeyHash: string,
+): Session {
+  return new Session(
+    randomUUID(), toolKey, workspaceId, userId, idempotencyKeyHash,
+    SessionStatus.Draft, 0, null, null, null, null, 1, [],
+    new Date(),  // ← captured at domain instantiation
+  );
+}
+
+static reconstitute(
+  sessionId: string, toolKey: ToolKey, workspaceId: string, userId: string,
+  idempotencyKeyHash: string, status: SessionStatus, currentStepIndex: number,
+  startedAt: Date | null, completedAt: Date | null, errorCode: string | null,
+  errorMessage: string | null, version: number, artifacts: Artifact[],
+  createdAt: Date,  // ← NEW parameter
+): Session {
+  return new Session(
+    sessionId, toolKey, workspaceId, userId, idempotencyKeyHash,
+    status, currentStepIndex, startedAt, completedAt,
+    errorCode, errorMessage, version, artifacts, createdAt,
+  );
+}
+```
+
+**File 2**: `packages/infra-db/src/repositories/session-repository.ts` — `findAll()` and `findById()`
+
+Pass `row.created_at` to `Session.reconstitute()`:
+
+```typescript
+// In findAll() — add createdAt as last parameter
+return Session.reconstitute(
+  row.id, ToolKey.from(row.tool_key), row.workspace_id, row.user_id,
+  row.idempotency_key_hash, SessionStatus.from(row.status),
+  row.current_step_index, row.started_at, row.completed_at,
+  row.error_code, row.error_message, row.version,
+  row.created_at,  // ← NEW
+);
+
+// Same for findById() — add row.created_at as last parameter
+```
+
+**After this step is complete**, continue to Step 1.
+
+**Risk**: Medium — 3 files, 3 call sites. All existing tests pass because `createdAt` is additive — no existing code accesses it yet.
+
 ### Step 1: Fix `createdAt` mapping in `listSessions` response
 
 **File**: `apps/backend/src/api/generation.ts` (line ~68)
 
+After Step 0, the domain entity has `createdAt`:
+
 ```typescript
-// ❌ Current
+// ❌ Current (and broken — non-deterministic for draft/queued)
 createdAt: s.startedAt?.toISOString() ?? new Date().toISOString(),
 
-// ✅ Correct
-createdAt: s.createdAt?.toISOString() ?? new Date().toISOString(),
+// ✅ Correct (after Step 0)
+createdAt: s.createdAt.toISOString(),  // never null — DB has NOT NULL DEFAULT NOW()
 ```
 
-**Risk**: Low — single field change. Verify `Session` entity exposes `createdAt` (it does via domain).
+**Risk**: Low — `createdAt` is now a guaranteed non-null domain field.
 
 ### Step 2: Populate `stepCount` from tool definition
 
 **File**: `apps/backend/src/api/generation.ts` (`listSessions` handler)
 
+`toolRegistry` is a plain `Record<ToolKeyValue, ToolDefinition>`, not a class:
+
 ```typescript
 // Load tool definitions once, map stepCount per session
-const toolDefs = await toolRegistry.getAll();
-const toolDefMap = new Map(toolDefs.map(t => [t.key, t]));
+const toolDefs = Object.values(toolRegistry);
+const toolDefMap = new Map(toolDefs.map(t => [t.toolKey, t]));
 
 data: sessions.map((s) => ({
   // ... existing fields
@@ -92,63 +171,115 @@ data: sessions.map((s) => ({
 }))
 ```
 
-**Risk**: Low — tool definitions are cached. `stepCount` is an optional field on `SessionListItemDTO`.
+**Risk**: Low — tool definitions are statically defined. No async needed.
 
-### Step 3: Populate `currentStepIndex`, `completedAt`, `errorMessage`, `failedAtStep`
+### Step 3: Populate `currentStepIndex`, `completedAt`, `errorMessage`, `failedAtStep` in both `listSessions` and `getSession`
 
-**File**: `apps/backend/src/api/generation.ts` (`listSessions` handler)
+**File**: `apps/backend/src/api/generation.ts` (`listSessions` AND `getSession` handlers)
 
-These fields already exist on the domain `Session` entity but are not mapped:
+These fields already exist on the domain `Session` entity but are not mapped in either endpoint:
 
+**`listSessions`** (Step 3a):
 ```typescript
 data: sessions.map((s) => ({
   // ... existing fields
   currentStepIndex: s.status.toString() === 'running' ? s.currentStepIndex : undefined,
   completedAt: s.completedAt?.toISOString() ?? undefined,
   errorMessage: s.status.toString() === 'failed' ? s.errorMessage : undefined,
+  errorCode: s.status.toString() === 'failed' ? s.errorCode : undefined,
   failedAtStep: s.status.toString() === 'failed' ? s.currentStepIndex : undefined,
 }))
 ```
 
-**Risk**: Low — domain fields already exist.
+**`getSession`** (Step 3b — detail endpoint also lacks these fields):
+```typescript
+// Add to the getSession response object:
+errorMessage: s.status.toString() === 'failed' ? s.errorMessage : undefined,
+errorCode: s.status.toString() === 'failed' ? s.errorCode : undefined,
+failedAtStep: s.status.toString() === 'failed' ? s.currentStepIndex : undefined,
+```
+
+**Risk**: Low — domain fields already exist on the entity. Both endpoints must expose them for consistency.
 
 ### Step 4: Populate `lastArtifactId`, `lastArtifactPreview`
 
 **File**: `apps/backend/src/api/generation.ts` (`listSessions` handler)
 
-Requires joining artifacts in the list query OR a separate batch query:
+**DDD constraint**: There is no `ArtifactRepository` — artifacts are owned entities of the Session aggregate (DDD Rule 5). Creating a separate repository would violate aggregate boundaries. Instead, add a read-optimized method to `SessionRepository`.
 
+**Option A — Add method to `SessionRepository` interface** (recommended):
+
+`packages/domain/src/generation/repositories/SessionRepository.ts`:
 ```typescript
-// Option A: Separate batch query (recommended — avoids N+1 on the main query)
+interface SessionRepository {
+  // ... existing methods
+  findLastArtifactsBySessionIds(sessionIds: string[]): Promise<Map<string, Artifact>>;
+}
+```
+
+`packages/infra-db/src/repositories/session-repository.ts`:
+```typescript
+async findLastArtifactsBySessionIds(sessionIds: string[]): Promise<Map<string, Artifact>> {
+  if (sessionIds.length === 0) return new Map();
+  const rows = await this.db
+    .selectFrom('artifacts')
+    .where('session_id', 'in', sessionIds)
+    .selectAll()
+    .orderBy('step_number', 'asc')
+    .execute();
+  
+  const map = new Map<string, Artifact>();
+  for (const r of rows) {
+    map.set(r.session_id, Artifact.reconstitute(
+      r.id, r.session_id, r.step_number, r.content,
+      ArtifactStatus.from(r.status), r.created_at,
+    ));
+  }
+  return map;
+}
+```
+
+**Option B — Raw Kysely in handler** (consistent with `getSession`):
+```typescript
 const sessionIds = sessions.map(s => s.sessionId);
-const lastArtifacts = await artifactRepo.findLastBySessionIds(sessionIds);
-const artifactMap = new Map(lastArtifacts.map(a => [a.sessionId, a]));
+const artifactRows = await db
+  .selectFrom('artifacts')
+  .where('session_id', 'in', sessionIds)
+  .selectAll()
+  .execute();
+const artifactMap = new Map<string, string>();
+for (const r of artifactRows) {
+  if (!artifactMap.has(r.session_id)) {
+    artifactMap.set(r.session_id, r.content?.slice(0, 150));
+  }
+}
 
 data: sessions.map((s) => ({
-  // ... existing fields
-  lastArtifactId: artifactMap.get(s.sessionId)?.id,
-  lastArtifactPreview: artifactMap.get(s.sessionId)?.content?.slice(0, 150),
+  lastArtifactId: [...] // map from artifactRows
+  lastArtifactPreview: artifactMap.get(s.sessionId),
 }))
 ```
 
-**Risk**: Medium — requires new `findLastBySessionIds` method on `ArtifactRepository`. Verify index on `artifacts(session_id, step_number)`.
+**Risk**: Medium — Option A adds a new repository method (preferred for DDD consistency). Option B is simpler but less testable.
 
 ### Step 5: Populate `isPromotable`
 
 **File**: `apps/backend/src/api/generation.ts` (`listSessions` handler)
 
+Uses the same `toolDefMap` from Step 2:
+
 ```typescript
 data: sessions.map((s) => ({
   // ... existing fields
-  isPromotable: !!toolDefMap.get(s.toolKey)?.produces,
+  isPromotable: !!(toolDefMap.get(s.toolKey)?.produces),
 }))
 ```
 
 **Risk**: Low — `produces` field exists on tool definitions.
 
-### Step 6: Populate `elapsedSeconds`, `durationSeconds`, `queuePosition`
+### Step 6: Populate `elapsedSeconds`, `durationSeconds`
 
-**`elapsedSeconds`**: Compute from `startedAt` for running sessions:
+**`elapsedSeconds`**: Compute from `createdAt` (or `startedAt`) for running sessions:
 ```typescript
 elapsedSeconds: s.status.toString() === 'running' && s.startedAt
   ? Math.floor((Date.now() - s.startedAt.getTime()) / 1000)
@@ -162,14 +293,18 @@ durationSeconds: s.completedAt && s.startedAt
   : undefined,
 ```
 
-**`queuePosition`**: Requires queue awareness. If BullMQ provides job position:
+**`queuePosition`**: DEFERRED to separate investigation.
+
+The DB has no `queue_position` column. BullMQ's `Queue.getJobs(['waiting'])` can compute position but requires inspecting how job IDs map to session IDs. This is a P3 task:
+
 ```typescript
-queuePosition: s.status.toString() === 'queued'
-  ? await jobQueue.getPosition(s.sessionId)
-  : undefined,
+// Separate investigation needed before this can be implemented:
+// const waitingJobs = await sessionQueue.getJobs(['waiting'], 0, 500);
+// const position = waitingJobs.findIndex(j => j.data.sessionId === s.sessionId);
+// queuePosition: s.status.toString() === 'queued' ? position : undefined,
 ```
 
-**Risk**: Medium — `queuePosition` depends on BullMQ API. `elapsedSeconds` is computed at request time (stale by 1 poll interval — acceptable for 30s poll).
+**Risk**: Low for elapsed/duration (simple math). Deferred for queuePosition.
 
 ### Step 7: Fix `step_completed` SSE payload
 
@@ -244,11 +379,14 @@ deps.eventBridge.publish(sessionId, {
 ### Step 9: Publish `session_started` and `session_failed` events
 
 **`session_started`**: Emit when the session transitions to `running` in the worker:
+
+**DDD note**: Use the domain entity's `startedAt`, not `new Date()` — the infra layer must not invent timestamps the domain already owns:
+
 ```typescript
 // At the start of worker execution, after session status = 'running'
 deps.eventBridge.publish(sessionId, {
   event: 'session_started',
-  data: { sessionId, status: 'running', startedAt: new Date().toISOString() },
+  data: { sessionId, status: 'running', startedAt: session.startedAt!.toISOString() },
 });
 ```
 
@@ -270,10 +408,13 @@ deps.eventBridge.publish(sessionId, {
 
 ### Step 10: Add `GET /api/workspaces/:id/activity` endpoint
 
-**File**: `apps/backend/src/api/workspaces.ts` (new handler)
+**File**: `apps/backend/src/api/gamification/gamification-routes.ts` (new handler)
+
+Gamification routes are mounted via `app.use(gamificationRoutes)`, not in `workspaces.ts`:
 
 ```typescript
-getActivity: async (req, res) => {
+// Add to the router
+router.get('/api/workspaces/:id/activity', async (req, res) => {
   const workspaceId = req.params.id;
   // Query recent session activity for the workspace
   const recentSessions = await sessionRepo.findAll({ workspaceId, limit: 10 });
@@ -281,11 +422,11 @@ getActivity: async (req, res) => {
     .filter(s => s.status.toString() === 'running' || s.status.toString() === 'completed')
     .map(s => ({
       name: s.userId, // TODO: resolve to display name
-      lastAction: s.startedAt?.toISOString() ?? s.createdAt?.toISOString(),
+      lastAction: s.startedAt?.toISOString() ?? s.createdAt.toISOString(),
       actionType: s.status.toString() === 'running' ? 'generating' : 'completed',
     }));
   res.json({ activeUsers });
-},
+});
 ```
 
 **Risk**: Low — read-only endpoint. Returns empty array if no activity.
@@ -329,19 +470,21 @@ GET /api/sessions/:id (detail)
 
 | Step | Effort | Impact | Priority |
 |------|--------|--------|----------|
-| 1. Fix createdAt | 5min | Correct timestamps | P0 |
+| 0. Add `createdAt` to domain entity | 30min | Foundation for correct timestamps | P0 |
+| 1. Fix createdAt in API | 5min | Correct timestamps (depends on Step 0) | P0 |
 | 2. stepCount | 15min | Card shows step count | P0 |
-| 3. currentStepIndex, completedAt, errorMessage | 15min | Card status info | P0 |
+| 3. currentStepIndex, completedAt, errorMessage, errorCode (list + detail) | 20min | Card status info + detail consistency | P0 |
 | 7. Fix step_completed SSE | 30min | Live progress + artifact preview | P0 |
 | 8. Fix session_completed SSE | 15min | Final artifact in SSE | P0 |
-| 9. Publish session_started/failed | 20min | SSE event coverage | P1 |
-| 4. lastArtifactId/Preview | 30min | Card artifact preview | P1 |
+| 9. Publish session_started/failed | 20min | SSE event coverage (use domain startedAt) | P1 |
+| 4. lastArtifactId/Preview (SessionRepository method) | 45min | Card artifact preview | P1 |
 | 5. isPromotable | 5min | Promote button on cards | P1 |
-| 6. elapsed/duration/queue | 30min | Time + queue display | P2 |
+| 6. elapsed/duration | 10min | Time display | P2 |
+| 6b. queuePosition (deferred) | TBD | Queue position — needs BullMQ investigation | P3 |
 | 10. GET /activity | 15min | Gamification UX | P2 |
 | 11. POST /challenges/vote | 10min | Gamification UX | P2 |
 
-**Total estimated effort**: ~3h
+**Total estimated effort**: ~3h (core) + deferred queuePosition investigation
 
 ## Testing
 
