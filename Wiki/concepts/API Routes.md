@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-08-02
+date_updated: 2026-08-07
 source_count: 4
 confidence: high
 ---
@@ -253,24 +253,25 @@ Starts a new generation session. Invokes [[Application Services|StartSessionUseC
 }
 ```
 
-**Response** `201`:
+**Response** `201` (or `200` for idempotent replay — see Errors):
 ```json
 {
   "session": {
     "id": "uuid",
     "toolKey": "blog-post",
     "workspaceId": "uuid",
-    "status": "ready",
+    "status": "queued",
     "stepCount": 3,
     "createdAt": "2026-07-30T00:00:00Z"
-  }
+  },
+  "replayed": false
 }
 ```
 
 **Errors**:
 - `404` tool not found
 - `422` readiness check failed → `{ error: { code: "READINESS_FAILED", message: "...", details: { missing: [...] } } }`
-- `200` idempotent replay → existing session returned (same shape as `201`)
+- `200` idempotent replay → existing session returned with `"replayed": true` (same shape as `201`)
 - `429` quota exceeded
 
 ### `GET /api/sessions`
@@ -287,12 +288,24 @@ Starts a new generation session. Invokes [[Application Services|StartSessionUseC
       "workspaceId": "uuid",
       "status": "completed",
       "stepCount": 3,
-      "createdAt": "2026-07-29T00:00:00Z"
+      "currentStepIndex": 3,
+      "completedAt": "2026-07-29T10:03:00Z",
+      "errorMessage": null,
+      "errorCode": null,
+      "failedAtStep": null,
+      "lastArtifactId": "uuid",
+      "lastArtifactPreview": "First 150 chars of the final artifact content...",
+      "elapsedSeconds": null,
+      "durationSeconds": 180,
+      "isPromotable": true,
+      "createdAt": "2026-07-29T10:00:00Z"
     }
   ],
   "total": 12
 }
 ```
+
+> **Implemented 2026-08-07**: The response was extended from 5 fields to 16 as part of the [[frontend-drift-remediation-plan-2026-08-07|frontend drift remediation]]. `lastArtifactId`/`lastArtifactPreview` are populated via `SessionRepository.findLastArtifactsBySessionIds()` (batch query, no separate ArtifactRepository). `elapsedSeconds`/`durationSeconds` are computed from `startedAt`/`completedAt`. `isPromotable` comes from the tool definition's `produces` field. `createdAt` is the domain entity's immutable creation timestamp (DB column `created_at`, never null).
 
 ### `GET /api/sessions/:id`
 
@@ -306,6 +319,10 @@ Starts a new generation session. Invokes [[Application Services|StartSessionUseC
   "currentStepIndex": 3,
   "startedAt": "2026-07-29T10:00:00Z",
   "completedAt": "2026-07-29T10:03:00Z",
+  "createdAt": "2026-07-29T10:00:00Z",
+  "errorMessage": null,
+  "errorCode": null,
+  "failedAtStep": null,
   "artifacts": [
     {
       "id": "uuid",
@@ -337,17 +354,19 @@ SSE stream for real-time progress. Connection stays open until session completes
 
 ```
 event: session_started
-data: {"sessionId":"uuid","status":"running","startedAt":"..."}
+data: {"sessionId":"uuid","status":"running","startedAt":"2026-07-29T10:00:00Z"}
 
 event: step_completed
-data: {"sessionId":"uuid","stepNumber":1,"stepLabel":"Briefing Analysis","progress":{"current":1,"total":3}}
+data: {"sessionId":"uuid","stepNumber":0,"stepLabel":"Briefing Analysis","progress":{"current":1,"total":3},"artifact":{"id":"uuid","stepNumber":1,"status":"completed","content":"# Extracted briefing...","sessionId":"uuid","createdAt":"..."}}
 
 event: step_completed
-data: {"sessionId":"uuid","stepNumber":2,"stepLabel":"Outline","progress":{"current":2,"total":3}}
+data: {"sessionId":"uuid","stepNumber":1,"stepLabel":"Outline","progress":{"current":2,"total":3},"artifact":{"id":"uuid","stepNumber":2,"status":"completed","content":"## 1. Introduction...","sessionId":"uuid","createdAt":"..."}}
 
 event: session_completed
-data: {"sessionId":"uuid","status":"completed","finalArtifactId":"uuid","completedAt":"..."}
+data: {"sessionId":"uuid","status":"completed","finalArtifact":{"id":"uuid","stepNumber":3,"status":"completed","content":"Final deliverable content...","sessionId":"uuid","createdAt":"..."},"completedAt":"2026-07-29T10:03:00Z"}
 ```
+
+> **Implemented 2026-08-07**: `step_completed` now includes `artifact` (with `id`, `content`, `stepNumber`, `status`) for live artifact previews. `session_completed` now includes `finalArtifact` (full object) and `completedAt`. `session_started` is published by the session worker after `WORKER_PICKUP` is applied, using the domain entity's `startedAt` timestamp. `session_failed` is published in the worker's catch block.
 
 **Error case**:
 ```

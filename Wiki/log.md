@@ -1,4 +1,38 @@
 
+## [2026-08-07] implement | BE coordination plan Steps 0-9 + replayed session fix
+
+Executed the DDD-reviewed BE coordination plan. All P0-P1 steps implemented:
+
+**Steps 0-6 — Domain + API layer (commit 0d0095c)**:
+- Step 0: Added `readonly createdAt: Date` to `Session` domain entity (constructor, `create()`, `reconstitute()`). Immutable field derived from DB `created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`. Fixes non-deterministic `?? new Date()` fallback for draft/queued sessions.
+- Step 1-3: Fixed API mappers — `listSessions` now returns 16-field `SessionListItemDTO`; `getSession` added `errorMessage`/`errorCode`/`failedAtStep`; all endpoints use `s.createdAt.toISOString()`.
+- Step 2: `stepCount` from `Object.values(toolRegistry)` (no async, plain Record).
+- Step 4: `lastArtifactId`/`lastArtifactPreview` via `SessionRepository.findLastArtifactsBySessionIds()` (batch query, no `ArtifactRepository` — preserves aggregate boundary).
+- Steps 5-6: `isPromotable` from tool `produces`; `elapsedSeconds`/`durationSeconds` computed from timestamps.
+- Added `findLastArtifactsBySessionIds()` to `SessionRepository` interface + `KyselySessionRepository`.
+
+**Steps 7-9 — SSE payloads (commit 0d0095c)**:
+- `step_completed`: now includes `stepLabel`, `progress {current,total}`, `artifact {id,content,stepNumber,status}`.
+- `session_completed`: now includes `finalArtifact {id,content,stepNumber,status}` + `completedAt`.
+- NEW `session_started`: published after `WORKER_PICKUP` using domain `session.startedAt`.
+- NEW `session_failed`: published in worker catch block with error `code`+`message`.
+
+**Replayed session fix (commit 450ae1e)**:
+- Machine `submitSession.onDone`: 3 guarded transitions — replayed+completed→completed, replayed+failed→failed, otherwise→running.
+- ToolPageLayout: fetches `GET /api/sessions/:id` for replayed completed sessions to load artifacts into `replayedDetail`.
+
+7 files changed across domain, infra-db, backend (routes + worker), frontend (machine + layout). All packages compile clean. Verified with `npm run dev` — no errors, 16-field response confirmed, SSE artifact payloads confirmed.
+
+**Wiki pages updated** (8 pages):
+- `entities/Session.md`: added `createdAt`, `_artifacts`, fixed Domain Events table (SessionStarted not emitted by domain entity)
+- `entities/SessionRepository.md`: added `findLastArtifactsBySessionIds` to interface
+- `concepts/API Routes.md`: fixed POST response (`"status":"queued"`), 16-field list response, detail error fields, SSE payloads with artifact content
+- `concepts/ToolPage Machine (XState v5).md`: added replayed session guarded transitions
+- `concepts/API Contract Baseline v1.md`: updated date
+- `concepts/Content Generation.md`: updated date
+- `concepts/Domain Events.md`: updated date
+- `concepts/Domain Events Catalog.md`: updated date
+
 ## [2026-08-07] review | DDD architect review of BE coordination plan — 7 amendments applied
 
 Reviewed [[synthesis/be-coordination-session-dto-2026-08-07]] against actual backend code. 7 inaccuracies found, all confirmed by DDD architect:

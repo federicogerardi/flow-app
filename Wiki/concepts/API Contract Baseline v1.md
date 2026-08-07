@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/backend
   - wiki/contracts
-date_updated: 2026-08-01
-source_count: 7
+date_updated: 2026-08-07
+source_count: 8
 confidence: high
 ---
 

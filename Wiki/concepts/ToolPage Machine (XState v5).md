@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/architecture
-date_updated: 2026-07-31
-source_count: 5
+date_updated: 2026-08-07
+source_count: 6
 confidence: high
 ---
 
@@ -298,16 +298,36 @@ export const toolPageMachine = setup({
     submitting: {
       invoke: {
         src: 'submitSession',
-        onDone: {
-          target: 'running',
-          actions: 'setSession',
-        },
+        onDone: [
+          {
+            target: 'completed',
+            guard: 'isReplayedCompleted',
+            actions: 'setSession',
+          },
+          {
+            target: 'failed',
+            guard: 'isReplayedFailed',
+            actions: ['setSession', 'setErrorFromReplay'],
+          },
+          {
+            target: 'running',
+            actions: 'setSession',
+          },
+        ],
         onError: {
           target: 'ready',             // stay ready — user can retry
           actions: setErrorFromEvent,
         },
       },
     },
+
+    // Special guards for idempotent replay (added 2026-08-07):
+    // - isReplayedCompleted: session was replayed AND status === 'completed'
+    //   → skip SSE, go directly to completed (ToolPageLayout fetches detail)
+    // - isReplayedFailed: session was replayed AND status IN ('failed','cancelled')
+    //   → skip SSE, go directly to failed with error from session state
+    // If neither guard matches (fresh session or non-terminal replayed session):
+    //   → go to running, invoke subscribeToSSE normally
 
     // 5. Generation in progress — SSE events drive transitions
     running: {

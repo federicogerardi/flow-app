@@ -3,20 +3,21 @@ type: entity
 tags:
   - wiki/entity
   - wiki/generation
-date_updated: 2026-08-02
-source_count: 5
+date_updated: 2026-08-07
+source_count: 7
 ---
 
 # Session
 
 > Aggregate Root — [[Content Generation]] context
 >
-> **⚠️ Implementation status (2026-08-02):** The code examples on this page represent the **target architecture** (classes, VOs, strongly-typed events). The current implementation is simpler:
+> **⚠️ Implementation status (2026-08-07):** The code examples on this page represent the **target architecture** (classes, VOs, strongly-typed events). The current implementation is simpler:
 > - IDs are `string`, not `SessionId`/`WorkspaceId`/`UserId` VOs
 > - Timestamps are `Date`, not `DateTime` VO
-> - `SessionStatus` is a `type` alias (`'draft' | 'ready' | ...`), not a class with `SessionStatus.Draft`/`.Ready` instances
-> - `apply()` accepts `{ type: SessionEventType; [key: string]: unknown }` with per-field casts, not the strongly-typed `SessionEvent` union shown below
-> - The `_artifacts` array doesn't exist on the current Session entity (artifacts are tracked via Artifact table)
+> - `SessionStatus` is a class (`SessionStatus.Draft`/`.Ready`/etc.) — implemented per Rule 4
+> - `apply()` accepts a typed `SessionEvent` union with per-field casts, validated against `SessionLifecycle.getValidTransition()`
+> - `_artifacts: Artifact[]` exists on the Session entity (artifacts are loaded via `findById()` inner-join)
+> - `createdAt: Date` is an immutable `readonly` field added 2026-08-07 — derived from DB column `created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`
 >
 > These are tracked as [[rule-4-vo-debt|Rule 4 VO debt]] and [[phase-9-implementation-plan|Phase 9 remediation plan]]. The wiki page retains the target design for reference.
 
@@ -94,6 +95,7 @@ export class Session {
   private _errorCode: string | null;
   private _errorMessage: string | null;
   private _version: number;
+  private _artifacts: Artifact[];
 
   private constructor(
     readonly sessionId: string,
@@ -108,6 +110,8 @@ export class Session {
     errorCode: string | null,
     errorMessage: string | null,
     version: number,
+    artifacts: Artifact[] = [],
+    readonly createdAt: Date = new Date(),
   ) { ... }
 
   static create(
@@ -117,7 +121,7 @@ export class Session {
     idempotencyKeyHash: string,
   ): Session {
     return new Session(randomUUID(), toolKey, workspaceId, userId,
-      idempotencyKeyHash, 'draft', 0, null, null, null, null, 1);
+      idempotencyKeyHash, 'draft', 0, null, null, null, null, 1, [], new Date());
   }
 
   static reconstitute(
@@ -125,10 +129,11 @@ export class Session {
     userId: string, idempotencyKeyHash: string, status: SessionStatus,
     currentStepIndex: number, startedAt: Date | null, completedAt: Date | null,
     errorCode: string | null, errorMessage: string | null, version: number,
+    artifacts: Artifact[] = [], createdAt: Date,
   ): Session {
     return new Session(sessionId, toolKey, workspaceId, userId,
       idempotencyKeyHash, status, currentStepIndex, startedAt, completedAt,
-      errorCode, errorMessage, version);
+      errorCode, errorMessage, version, artifacts, createdAt);
   }
 
   /**
@@ -178,6 +183,8 @@ export class Session {
   get errorCode(): string | null { return this._errorCode; }
   get errorMessage(): string | null { return this._errorMessage; }
   get version(): number { return this._version; }
+  get artifacts(): readonly Artifact[] { return this._artifacts; }
+  // createdAt is a readonly constructor field — auto-accessible (no getter needed)
 }
 
 export class InvalidSessionStateError extends DomainError {
@@ -204,12 +211,15 @@ export class InvalidSessionStateError extends DomainError {
 
 ## Domain Events Emitted
 
-| Event | Trigger | Consumers |
-|-------|---------|-----------|
-| `SessionStarted` | Transition to `running` | UI (SSE), Monitoring |
-| `StepCompleted` | Each artifact produced | UI progress, [[XState Integration|XState machine]] |
-| `SessionCompleted` | Final artifact created | [[Workspace & Assets]] (promotion), [[Usage & Quota]] (credits) |
-| `SessionFailed` | Error in any step | UI, Monitoring |
+> **Note**: `SessionStarted` is NOT emitted by the domain entity's `apply()` method (returns `null` for `WORKER_PICKUP`). It is published as an SSE event by the session worker layer after `WORKER_PICKUP` is applied and the session transitions to `running`.
+
+| Event | Trigger | Emitted by | Consumers |
+|-------|---------|------------|-----------|
+| `SessionCompleted` | `apply('COMPLETE')` | Domain entity | [[Workspace & Assets]] (promotion), [[Usage & Quota]] (credits) |
+| `SessionFailed` | `apply('FAIL')` | Domain entity | UI, Monitoring |
+| `SessionCancelled` | `apply('CANCEL')` | Domain entity | UI |
+| `SessionStarted` | Worker picks up job | SSE worker layer (not domain entity) | UI (SSE live status) |
+| `StepCompleted` | Each artifact produced | SSE worker layer (not domain entity) | UI progress, [[XState Integration|XState machine]] |
 
 ## Relationships
 

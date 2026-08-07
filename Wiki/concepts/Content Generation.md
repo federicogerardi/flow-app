@@ -3,7 +3,7 @@ type: concept
 tags:
   - wiki/concept
   - wiki/generation
-date_updated: 2026-08-01
+date_updated: 2026-08-07
 source_count: 5
 confidence: high
 ---

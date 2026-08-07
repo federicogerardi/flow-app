@@ -3,7 +3,7 @@ type: concept
 tags:
   - wiki/concept
   - wiki/architecture
-date_updated: 2026-08-01
+date_updated: 2026-08-07
 source_count: 4
 confidence: high
 ---

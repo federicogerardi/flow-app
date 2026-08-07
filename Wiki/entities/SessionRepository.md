@@ -4,8 +4,8 @@ tags:
   - wiki/entity
   - wiki/generation
   - wiki/repository
-date_updated: 2026-08-02
-source_count: 3
+date_updated: 2026-08-07
+source_count: 4
 ---
 
 # SessionRepository
@@ -17,8 +17,17 @@ Repository interface for the `Session` aggregate root. Defines persistence opera
 ```typescript
 export interface SessionRepository {
   findById(id: string): Promise<Session | null>;
+  findByArtifactId(artifactId: string): Promise<Session | null>;
   findByIdempotencyKeyHash(hash: string): Promise<Session | null>;
   findByWorkspace(workspaceId: string, filters?: SessionFilters): Promise<Session[]>;
+  findAll(filters?: SessionFilters): Promise<Session[]>;
+  /**
+   * Batch query: returns the last (highest step_number) artifact per session.
+   * Used by listSessions to populate lastArtifactId/lastArtifactPreview in SessionListItemDTO
+   * without creating a separate ArtifactRepository (preserves aggregate boundary — DDD Rule 5).
+   * Added 2026-08-07 for frontend drift remediation Phase 3.
+   */
+  findLastArtifactsBySessionIds(sessionIds: string[]): Promise<Map<string, Artifact>>;
   save(session: Session): Promise<void>;
   saveWithLock(session: Session, expectedVersion: number): Promise<void>;
   saveIdempotencyKey(hash: string, sessionId: string): Promise<void>;
