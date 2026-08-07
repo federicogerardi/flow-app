@@ -195,6 +195,64 @@ const marketingAngleTool: ToolDefinition = {
   ],
 };
 
+const adCopyTool: ToolDefinition = {
+  toolKey: 'ad-copy',
+  name: 'Meta Ads',
+  description: 'Genera copy per campagne Meta (Facebook/Instagram) con sistema cluster → angolo → awareness',
+  creditCost: 1,
+  defaultComponents: ['anti-hallucination/v1', 'output-plain-text/v1', 'italian-formal/v1'],
+  acquisition: {
+    userText: [
+      { key: 'goal', label: 'Campaign Goal', required: true, type: 'select', options: ['Awareness', 'Traffic', 'Engagement', 'Leads', 'Sales'] },
+      { key: 'tone', label: 'Tone', required: false, type: 'select', options: ['Professional', 'Casual', 'Urgente', 'Empatico', 'Autorevole'] },
+      { key: 'copyLength', label: 'Copy Length', required: true, type: 'select', options: ['short', 'medium', 'long'] },
+    ],
+    assets: [
+      { assetType: 'brief', required: true },
+      { assetType: 'persona', required: true, multiple: true },
+      { assetType: 'angle', required: false, multiple: true },
+    ],
+  },
+  steps: [
+    {
+      order: 1,
+      label: 'extraction',
+      enrichment: 'serial',
+      prompt: {
+        templateId: 'ad-copy/extraction',
+        version: '1.0.0',
+        model: ModelTier.Balanced,
+        components: ['output-json/v1'],
+      },
+      execution: { timeoutMs: 90000, maxRetries: 2 },
+    },
+    {
+      order: 2,
+      label: 'context-generation',
+      enrichment: 'serial',
+      prompt: {
+        templateId: 'ad-copy/context-generation',
+        version: '1.0.0',
+        model: ModelTier.Premium,
+        components: ['output-plain-text/v1', 'italian-formal/v1'],
+      },
+      execution: { timeoutMs: 120000, maxRetries: 2 },
+    },
+    {
+      order: 3,
+      label: 'ads-generation',
+      enrichment: 'serial',
+      prompt: {
+        templateId: 'ad-copy/ads-generation',
+        version: '1.0.0',
+        model: ModelTier.Premium,
+        components: ['output-plain-text/v1', 'italian-formal/v1'],
+      },
+      execution: { timeoutMs: 180000, maxRetries: 2 },
+    },
+  ],
+};
+
 export const toolRegistry: Record<ToolKeyValue, ToolDefinition> = {
   'blog-post': blogPostTool,
   'brief': briefTool,
@@ -202,7 +260,7 @@ export const toolRegistry: Record<ToolKeyValue, ToolDefinition> = {
   'landing-page': blogPostTool,
   'video-script-long-form': blogPostTool,
   'video-description': blogPostTool,
-  'ad-copy': blogPostTool,
+  'ad-copy': adCopyTool,
   'brand-voice': blogPostTool,
   'buyer-persona': buyerPersonaTool,
   'marketing-angle': marketingAngleTool,

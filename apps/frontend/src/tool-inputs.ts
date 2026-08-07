@@ -29,10 +29,9 @@ const BLOG_POST_INPUTS: TextInput[] = [
 ];
 
 const AD_COPY_INPUTS: TextInput[] = [
-  { key: 'platform', label: 'Platform', required: true, type: 'select', options: ['Meta', 'Google', 'LinkedIn', 'TikTok'] },
-  { key: 'audience', label: 'Target Audience', required: true, type: 'short' },
-  { key: 'goal', label: 'Campaign Goal', required: true, type: 'short' },
-  { key: 'tone', label: 'Tone', required: false, type: 'short', placeholder: 'Professional' },
+  { key: 'goal', label: 'Campaign Goal', required: true, type: 'select', options: ['Awareness', 'Traffic', 'Engagement', 'Leads', 'Sales'] },
+  { key: 'tone', label: 'Tone', required: false, type: 'select', options: ['Professional', 'Casual', 'Urgente', 'Empatico', 'Autorevole'] },
+  { key: 'copyLength', label: 'Copy Length', required: true, type: 'select', options: ['short', 'medium', 'long'] },
 ];
 
 const BRIEF_INPUTS: TextInput[] = [
