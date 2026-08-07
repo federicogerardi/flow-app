@@ -4027,3 +4027,15 @@ TypeScript: ✅ compila. Test ToolPageLayout: 7/7 ✅.
 Files modified: `SessionSummary.tsx`, `SessionPage.tsx`, `ToolPageLayout.tsx`.
 
 Wiki updated: [[concepts/UI Component Map]] (SessionSummary props aggiornati), [[log]] (this entry).
+
+### [2026-08-08] fix | SessionSummary dedup patch — phantom Step 0 not deduplicated
+
+The earlier fix deduplicated by raw `stepNumber`. But phantom artifacts have `stepNumber=0` while legitimate ones have `stepNumber=1` — `0 === 1` → false, both survive and both display as "Step 1" (because display normalises 0→1).
+
+**Fix**: dedup now uses `Math.max(1, stepNumber)` as the normalised key for both comparison and display. A `stepNumber=0` artifact and a `stepNumber=1` artifact collide on the same key → only the last one survives (the one with real content).
+
+TypeScript: ✅ compila. Test ToolPageLayout: 7/7 ✅.
+
+Files modified: `SessionSummary.tsx`.
+
+Wiki updated: [[log]] (this entry).

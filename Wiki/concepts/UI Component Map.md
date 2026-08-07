@@ -439,16 +439,18 @@ Final result view. Contains artifact preview and action buttons.
 
 ```typescript
 interface SessionSummaryProps {
-  session: SessionDetailDTO;
   artifacts: ArtifactDTO[];
-  tool: ToolDefinition;
-  onDownload: (artifactId: string, format: 'md' | 'txt' | 'docx' | 'pdf') => void;
-  onRetry: () => void;
-  onNewGeneration: () => void;
+  workspaceId?: string;
+  produces?: string;
+  stepCount?: number;              // expected tool step count — falls back to deduplicated.length
 }
 ```
 
-**Promote button rule:** `PromoteButton` is rendered if `tool.produces !== undefined`.  
+**Deduplication**: artifacts are deduplicated by normalised stepNumber (`Math.max(1, stepNumber)`, keeps the last artifact for each key). This normalisation ensures phantom `stepNumber=0` artifacts (from pre-init) collide with legitimate `stepNumber=1` artifacts, and handles backend retries that may create duplicate artifacts with different UUIDs for the same step.
+
+**Step number display**: uses the same `Math.max(1, stepNumber)` normalisation — always 1-based.
+
+**Promote button rule:** `PromoteButton` is rendered if `produces !== undefined`.  
 Promote button is **always** `variant="contained"` with `--workspace-accent`.
 
 ---

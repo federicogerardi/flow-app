@@ -94,11 +94,14 @@ export function SessionSummary({ artifacts, workspaceId, produces, stepCount }: 
     setToast({ open: true, assetId, assetType, assetName: name });
   };
 
-  // Deduplicate artifacts by stepNumber — keep the LAST artifact for each step.
-  // This handles backend retries that may create duplicate artifacts with different UUIDs
-  // for the same stepNumber.
+  // Deduplicate artifacts by normalised stepNumber — keep the LAST artifact for each step.
+  // Normalisation: stepNumber values of 0 (phantom/pre-init artifacts) are corrected
+  // to 1 so they collide with legitimate stepNumber=1 artifacts.
+  // This handles both backend retries (duplicate UUIDs) and phantom zero-step artifacts.
+  const normalise = (n: number) => Math.max(1, n);
   const deduplicated = artifacts.reduce<ArtifactDTO[]>((acc, a) => {
-    const existingIndex = acc.findIndex((existing) => existing.stepNumber === a.stepNumber);
+    const key = normalise(a.stepNumber);
+    const existingIndex = acc.findIndex((existing) => normalise(existing.stepNumber) === key);
     if (existingIndex >= 0) {
       // Replace with the latest artifact (preserve order)
       acc[existingIndex] = a;
@@ -126,9 +129,7 @@ export function SessionSummary({ artifacts, workspaceId, produces, stepCount }: 
       <Divider />
       <Box sx={{ p: 2 }}>
         {deduplicated.map((artifact, i) => {
-          // Normalise stepNumber: backend may produce 0-based step numbers;
-          // always display 1-based.
-          const displayNumber = artifact.stepNumber > 0 ? artifact.stepNumber : i + 1;
+          const displayNumber = normalise(artifact.stepNumber);
           return (
           <Box key={artifact.id ?? i} sx={{ mb: i < deduplicated.length - 1 ? 3 : 0 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
