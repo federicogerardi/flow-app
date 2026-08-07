@@ -12,6 +12,37 @@ Every ingest, lint run, and maintenance operation is recorded here automatically
 - Or open from Settings → Auto Maintenance → Operation History
 ---
 
+## [2026-08-07] impl | Meta Ads (ad-copy) — domain + backend + frontend complete
+
+Implemented `adCopyTool` on branch `feature/meta-ads-tool`. Replaced `blogPostTool` stub in `toolRegistry` with real 3-step content tool.
+
+**Domain** (1 file):
+- `packages/domain/src/generation/tools/index.ts`: `adCopyTool` definition — 3-step pipeline (extraction → context-generation → ads-generation), `creditCost: 1`, consumes `brief` (required) + `persona` (required, N) + `angle` (optional, N). All userText are selects (goal, tone, copyLength) — zero free-text inputs.
+
+**Prompt templates** (6 new files, extraction prompt hardened post-smoke-test):
+- `apps/backend/src/prompts/ad-copy/extraction/.../system.md` — JSON-first constraint, "ANY non-JSON output is failure", 10-field extraction
+- `apps/backend/src/prompts/ad-copy/extraction/.../user.md` — "EXTRACT — do NOT generate ads"
+- `apps/backend/src/prompts/ad-copy/context-generation/.../system.md` — Strategy canvas: 3 clusters × 2 angles, Brand Facts Bank, Objection Handling Matrix
+- `apps/backend/src/prompts/ad-copy/ads-generation/.../system.md` — Cluster → angle → awareness library, 3 copy lengths, Meta Ads format
+
+**Frontend** (1 file):
+- `apps/frontend/src/tool-inputs.ts`: `AD_COPY_INPUTS` updated — removed `platform`, `audience`; all 3 fields are selects (goal, tone, copyLength)
+
+**Smoke test**: session created → 3 steps completed → ✅
+- Step 1 (extraction): JSON 1,209 chars, all 10 fields extracted
+- Step 2 (context-generation): strategy canvas 9,200 chars, 3 clusters × 2 angles
+- Step 3 (ads-generation): ad library 14,157 chars, 3×2×3 = 18 ad variants (SHORT format)
+
+**Prompt fix (post smoke test)**: extraction prompt rewrote — JSON constraint moved to top with "ANY non-JSON is failure" guard. Before fix: LLM wrote ad copy in Italian instead of JSON. After fix: pure JSON output.
+
+**Verification**:
+```
+tsc --noEmit  →  domain ✅  backend ✅  frontend ✅
+vitest        →  688/688 ✅
+```
+
+**Wiki updated**: [[Meta Ads - Prompt Architecture]] — status → ✅ complete.
+
 ## [2026-08-07] ingest | Meta Ads prompts ingested + ToolDefinition planned
 
 Ingested the 3 prototype prompt files from `Wiki/sources/meta-ads/` and created the [[Meta Ads - Prompt Architecture]] wiki page with implementation plan.

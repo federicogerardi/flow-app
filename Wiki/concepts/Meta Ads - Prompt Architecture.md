@@ -7,7 +7,9 @@ tags:
 date_updated: 2026-08-07
 source_count: 3
 confidence: high
-implementation: planned
+implementation: complete
+frontend_ready: true
+smoke_test: passed
 ---
 
 # Meta Ads — Prompt Architecture
@@ -146,14 +148,13 @@ const adCopyTool: ToolDefinition = {
   defaultComponents: ['anti-hallucination/v1', 'output-plain-text/v1', 'italian-formal/v1'],
   acquisition: {
     userText: [
-      { key: 'audience', label: 'Target Audience', required: true, type: 'short' },
-      { key: 'goal', label: 'Campaign Goal', required: true, type: 'short' },
-      { key: 'tone', label: 'Tone', required: false, type: 'short', placeholder: 'Professional' },
+      { key: 'goal', label: 'Campaign Goal', required: true, type: 'select', options: ['Awareness', 'Traffic', 'Engagement', 'Leads', 'Sales'] },
+      { key: 'tone', label: 'Tone', required: false, type: 'select', options: ['Professional', 'Casual', 'Urgente', 'Empatico', 'Autorevole'] },
       { key: 'copyLength', label: 'Copy Length', required: true, type: 'select', options: ['short', 'medium', 'long'] },
     ],
     assets: [
       { assetType: 'brief', required: true },
-      { assetType: 'persona', required: false, multiple: true },
+      { assetType: 'persona', required: true, multiple: true },
       { assetType: 'angle', required: false, multiple: true },
     ],
   },
@@ -237,7 +238,7 @@ ad-copy/
 
 ### Domain
 - [ ] `adCopyTool` definition replaces `blogPostTool` stub in `toolRegistry`
-- [ ] `acquisition.userText`: `audience`, `goal`, `tone`, `copyLength` (replaces generic `topic`/`language`)
+- [ ] `acquisition.userText`: `goal`, `tone`, `copyLength` — all selects, no free-text inputs
 - [ ] `acquisition.assets`: `brief` (required), `persona` (optional, multiple), `angle` (optional, multiple)
 - [ ] `creditCost: 2` — 3 steps, 2 premium models
 - [ ] 3 steps: extraction (balanced) → context-generation (premium) → ads-generation (premium, 180s timeout)
@@ -277,7 +278,7 @@ ad-copy/
 | Output structure | Top 3 angles × creative activation | 3 clusters × 2 angles × 3 awareness levels |
 | Copy length | Fixed (creative foundations) | User-selectable (short/medium/long) |
 | Primary use | Strategic direction for content tools | Direct ad copy for Meta campaigns |
-| Consumes | brief (required) + personas (required) | brief (required) + personas (optional) + angles (optional) + userText |
+| Consumes | brief (required) + personas (required) | brief (required) + personas (required) + angles (optional) + 3 selects |
 
 ## Downstream Relationship
 
