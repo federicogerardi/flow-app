@@ -87,6 +87,8 @@ describe('Session', () => {
         null,
         null,
         5,
+        [],
+        new Date('2025-01-01'),
       );
 
       expect(session.sessionId).toBe('sess-1');

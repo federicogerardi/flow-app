@@ -66,14 +66,50 @@ export function createGenerationRoutes(
           ? await sessionRepo.findByWorkspace(workspaceId, { status, limit })
           : await sessionRepo.findAll({ status, limit });
 
+        // Batch load tool definitions for stepCount + isPromotable (Steps 2, 5)
+        const toolDefs = Object.values(toolRegistry);
+        const toolDefMap = new Map(toolDefs.map(t => [t.toolKey, t]));
+
+        // Batch load last artifacts for preview (Step 4)
+        const sessionIds = sessions.map(s => s.sessionId);
+        const lastArtifactMap = await sessionRepo.findLastArtifactsBySessionIds(sessionIds);
+
         return res.json({
-          data: sessions.map((s) => ({
-            id: s.sessionId,
-            toolKey: s.toolKey.toString(),
-            workspaceId: s.workspaceId,
-            status: s.status.toString(),
-            createdAt: s.startedAt?.toISOString() ?? new Date().toISOString(),
-          })),
+          data: sessions.map((s) => {
+            const tool = toolDefMap.get(s.toolKey.toString());
+            const status = s.status.toString();
+            const lastArtifact = lastArtifactMap.get(s.sessionId);
+            const isRunning = status === 'running';
+            const isFailed = status === 'failed';
+            const isCompleted = status === 'completed' || status === 'cancelled';
+
+            return {
+              id: s.sessionId,
+              toolKey: s.toolKey.toString(),
+              workspaceId: s.workspaceId,
+              status,
+              stepCount: tool?.steps?.length ?? 1,
+              // Step 3: status-dependent fields
+              currentStepIndex: isRunning ? s.currentStepIndex : undefined,
+              completedAt: s.completedAt?.toISOString() ?? undefined,
+              errorMessage: isFailed ? (s.errorMessage ?? undefined) : undefined,
+              errorCode: isFailed ? (s.errorCode ?? undefined) : undefined,
+              failedAtStep: isFailed ? s.currentStepIndex : undefined,
+              // Step 4: artifact preview
+              lastArtifactId: lastArtifact?.artifactId,
+              lastArtifactPreview: lastArtifact?.content?.slice(0, 150),
+              // Step 6: timing
+              elapsedSeconds: isRunning && s.startedAt
+                ? Math.floor((Date.now() - s.startedAt.getTime()) / 1000)
+                : undefined,
+              durationSeconds: isCompleted && s.startedAt && s.completedAt
+                ? Math.floor((s.completedAt.getTime() - s.startedAt.getTime()) / 1000)
+                : undefined,
+              // Step 5: promote action
+              isPromotable: !!(tool?.produces),
+              createdAt: s.createdAt.toISOString(),
+            };
+          }),
           total: sessions.length,
         });
       } catch (error) {
@@ -240,7 +276,7 @@ export function createGenerationRoutes(
             workspaceId: result.session.workspaceId,
             status: result.session.status.toString(),
             stepCount: result.stepCount,
-            createdAt: result.session.startedAt?.toISOString() ?? new Date().toISOString(),
+            createdAt: result.session.createdAt.toISOString(),
           },
           replayed: result.replayed,
         });
@@ -294,7 +330,10 @@ export function createGenerationRoutes(
           currentStepIndex: session.currentStepIndex,
           startedAt: session.startedAt?.toISOString() ?? null,
           completedAt: session.completedAt?.toISOString() ?? null,
-          createdAt: session.startedAt?.toISOString() ?? new Date().toISOString(),
+          createdAt: session.createdAt.toISOString(),
+          errorMessage: session.status.toString() === 'failed' ? (session.errorMessage ?? undefined) : undefined,
+          errorCode: session.status.toString() === 'failed' ? (session.errorCode ?? undefined) : undefined,
+          failedAtStep: session.status.toString() === 'failed' ? session.currentStepIndex : undefined,
           artifacts: artifactRows.map((a) => ({
             id: a.id,
             stepNumber: a.step_number,

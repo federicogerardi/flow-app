@@ -84,6 +84,7 @@ function makeCompletedSession() {
     null,
     1,
     [artifact],
+    new Date(),
   );
 }
 
@@ -170,6 +171,7 @@ describe('PromoteToAssetUseCase', () => {
     const session = Session.reconstitute(
       'sess-1', ToolKey.from('blog-post'), 'ws-1', 'user-1', 'hash-1',
       SessionStatus.Completed, 1, new Date(), new Date(), null, null, 1, [artifact],
+      new Date(),
     );
     vi.mocked(sessionRepo.findByArtifactId).mockResolvedValue(session);
 

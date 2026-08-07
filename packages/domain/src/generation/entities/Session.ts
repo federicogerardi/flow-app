@@ -30,6 +30,7 @@ export class Session {
     errorMessage: string | null,
     version: number,
     artifacts: Artifact[] = [],
+    readonly createdAt: Date = new Date(),
   ) {
     this._status = status;
     this._currentStepIndex = currentStepIndex;
@@ -60,6 +61,8 @@ export class Session {
       null,
       null,
       1,
+      [],
+      new Date(),
     );
   }
 
@@ -77,6 +80,7 @@ export class Session {
     errorMessage: string | null,
     version: number,
     artifacts: Artifact[] = [],
+    createdAt: Date,
   ): Session {
     return new Session(
       sessionId,
@@ -92,6 +96,7 @@ export class Session {
       errorMessage,
       version,
       artifacts,
+      createdAt,
     );
   }
 

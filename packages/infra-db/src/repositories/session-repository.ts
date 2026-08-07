@@ -5,6 +5,27 @@ import { Session, ConcurrencyError, SessionStatus, ToolKey, Artifact, ArtifactSt
 export class KyselySessionRepository implements SessionRepository {
   constructor(private readonly db: Kysely<DB>) {}
 
+  async findLastArtifactsBySessionIds(sessionIds: string[]): Promise<Map<string, Artifact>> {
+    if (sessionIds.length === 0) return new Map();
+
+    const rows = await this.db
+      .selectFrom('artifacts')
+      .where('session_id', 'in', sessionIds)
+      .selectAll()
+      .orderBy('step_number', 'asc')
+      .execute();
+
+    // Keep the highest step_number per session
+    const map = new Map<string, Artifact>();
+    for (const r of rows) {
+      map.set(r.session_id, Artifact.reconstitute(
+        r.id, r.session_id, r.step_number, r.content,
+        ArtifactStatus.from(r.status), r.created_at,
+      ));
+    }
+    return map;
+  }
+
   async findByArtifactId(artifactId: string): Promise<Session | null> {
     const artifactRow = await this.db
       .selectFrom('artifacts')
@@ -51,6 +72,7 @@ export class KyselySessionRepository implements SessionRepository {
       row.error_message,
       row.version,
       artifacts,
+      row.created_at,
     );
   }
 
@@ -78,6 +100,8 @@ export class KyselySessionRepository implements SessionRepository {
       row.error_code,
       row.error_message,
       row.version,
+      [],
+      row.created_at,
     );
   }
 
@@ -116,6 +140,8 @@ export class KyselySessionRepository implements SessionRepository {
         row.error_code,
         row.error_message,
         row.version,
+        [],
+        row.created_at,
       ),
     );
   }

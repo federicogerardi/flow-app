@@ -1,4 +1,5 @@
 import type { Session } from '../entities/Session';
+import type { Artifact } from '../entities/Artifact';
 
 export interface SessionFilters {
   workspaceId?: string;
@@ -17,6 +18,11 @@ export interface SessionRepository {
   findByIdempotencyKeyHash(hash: string): Promise<Session | null>;
   findByWorkspace(workspaceId: string, filters?: SessionFilters): Promise<Session[]>;
   findAll(filters?: SessionFilters): Promise<Session[]>;
+  /**
+   * Batch query: given an array of session IDs, returns the last (highest step_number)
+   * artifact per session. Read-optimized projection within the Session aggregate boundary.
+   */
+  findLastArtifactsBySessionIds(sessionIds: string[]): Promise<Map<string, Artifact>>;
   save(session: Session): Promise<void>;
   /**
    * Save with optimistic locking. Throws ConcurrencyError if version doesn't match.

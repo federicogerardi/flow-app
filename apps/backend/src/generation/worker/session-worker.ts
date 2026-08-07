@@ -152,18 +152,45 @@ async function processSessionJob(
       },
     });
 
+    // Publish session_started SSE event (Step 9)
+    deps.eventBridge.publish(sessionId, {
+      event: 'session_started',
+      data: {
+        sessionId,
+        status: 'running',
+        startedAt: session.startedAt!.toISOString(),
+      },
+    });
+
     const actor = createActor(machine, { input: { session, tool } });
 
     actor.subscribe((state) => {
       // Only publish step_completed during execution; session_completed
       // is published manually after the final DB persist below.
       if (state.value === 'completed' || state.value === 'failed') return;
+
+      const stepIndex = state.context.currentStepIndex;
+      const artifact = state.context.stepResults[state.context.stepResults.length - 1];
+      const stepDef = state.context.tool.steps[Math.min(stepIndex, state.context.tool.steps.length - 1)];
+
       deps.eventBridge.publish(sessionId, {
         event: 'step_completed',
         data: {
           sessionId,
-          status: state.value,
-          stepNumber: state.context.currentStepIndex ?? 0,
+          stepNumber: stepIndex,
+          stepLabel: stepDef?.label ?? `Step ${stepIndex + 1}`,
+          progress: {
+            current: stepIndex + 1,
+            total: state.context.tool.steps.length,
+          },
+          artifact: artifact ? {
+            id: artifact.artifactId,
+            stepNumber: artifact.stepNumber,
+            status: artifact.status.toString(),
+            createdAt: artifact.createdAt?.toISOString() ?? new Date().toISOString(),
+            sessionId: artifact.sessionId,
+            content: artifact.content,
+          } : null,
         },
       });
     });
@@ -197,9 +224,22 @@ async function processSessionJob(
     log.info({ status: session.status.toString(), version: session.version }, 'session_persisted');
 
     // Manually publish session_completed via SSE — after DB is consistent
+    const finalArtifact = session.artifacts[session.artifacts.length - 1];
     deps.eventBridge.publish(sessionId, {
       event: 'session_completed',
-      data: { sessionId, status: 'completed' },
+      data: {
+        sessionId,
+        status: 'completed',
+        finalArtifact: finalArtifact ? {
+          id: finalArtifact.artifactId,
+          stepNumber: finalArtifact.stepNumber,
+          status: finalArtifact.status.toString(),
+          createdAt: finalArtifact.createdAt?.toISOString() ?? new Date().toISOString(),
+          sessionId: finalArtifact.sessionId,
+          content: finalArtifact.content,
+        } : undefined,
+        completedAt: session.completedAt?.toISOString(),
+      },
     });
 
     // Gamification: award XP on successful session completion
@@ -245,6 +285,20 @@ async function processSessionJob(
       },
       'job_failed',
     );
+
+    // Publish session_failed via SSE (Step 9)
+    const errorCode = (error as { code?: string })?.code ?? 'UNKNOWN';
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    deps.eventBridge.publish(sessionId, {
+      event: 'session_failed',
+      data: {
+        sessionId,
+        status: 'failed',
+        failedAtStep: 0,
+        error: { code: errorCode, message: errorMessage },
+      },
+    });
+
     throw error;
   }
 }
