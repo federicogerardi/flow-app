@@ -23,18 +23,20 @@ The meta-ads generator is a **Content Tool** that produces Meta Ads copy across 
 ACQUISITION                     STEP 1 (extraction)        STEP 2 (context-gen)        STEP 3 (ads-generation)
 ────────────                    ────────────────────       ───────────────────────     ───────────────────────────
 ┌─────────────────┐             ┌──────────────────┐       ┌─────────────────────┐     ┌──────────────────────────┐
-│ brief asset      │──┐          │ Ad Context          │       │ Meta Ads              │     │ Meta Ads Copywriter       │
-│ (optional)       │  │          │ Extractor            │ MARK  │ Strategist            │     │                           │
+│ brief asset (1)  │──┐          │ Ad Context          │       │ Meta Ads              │     │ Meta Ads Copywriter       │
+│ (required)        │  │          │ Extractor            │ MARK  │ Strategist            │     │                           │
 └─────────────────┘  │          │                     │ DOWN  │                       │     │                           │
                      │ ┌──────┐ │ Input: brief +      │──────▶│ Input: extraction     │────▶│ Input: strategy canvas    │
-┌─────────────────┐  ├▶│Enricher│▶ personas + text     │       │ Output: strategy      │     │ + copy length format      │
-│ persona assets  │──┘ └──────┘ │ Output: structured   │       │ canvas (clusters,     │     │ Output: Meta Ads library   │
-│ (N, optional)   │             │ context (English)     │       │ angles, objections)   │     │ (Italian, Markdown)       │
-└─────────────────┘             └──────────────────┘       └─────────────────────┘     └──────────────────────────┘
+┌─────────────────┐  ├▶│Enricher│▶ personas + angles   │       │ Output: strategy      │     │ + copy length format      │
+│ persona assets  │──┘ └──────┘ │ + text inputs        │       │ canvas (clusters,     │     │ Output: Meta Ads library   │
+│ (N, optional)   │             │ Output: structured   │       │ angles, objections)   │     │ (Italian, Markdown)       │
+└─────────────────┘             │ context (English)     │       └─────────────────────┘     └──────────────────────────┘
+┌─────────────────┐             └──────────────────┘
+│ angle assets    │
+│ (N, optional)   │
 
 ┌─────────────────┐
 │ text inputs:     │
-│ platform,        │
 │ audience, goal,  │
 │ tone, copyLength │
 └─────────────────┘
@@ -88,7 +90,7 @@ User-selectable per generation via `copyLength` text input:
 **Prompt component**: `output-json/v1`  
 **Enrichment**: `serial`
 
-Extracts structured ad context from brief + personas + text inputs:
+Extracts structured ad context from brief + personas + angles + text inputs:
 
 | Field | Source |
 |-------|--------|
@@ -150,8 +152,9 @@ const adCopyTool: ToolDefinition = {
       { key: 'copyLength', label: 'Copy Length', required: true, type: 'select', options: ['short', 'medium', 'long'] },
     ],
     assets: [
-      { assetType: 'brief', required: false },
+      { assetType: 'brief', required: true },
       { assetType: 'persona', required: false, multiple: true },
+      { assetType: 'angle', required: false, multiple: true },
     ],
   },
   steps: [
@@ -235,7 +238,7 @@ ad-copy/
 ### Domain
 - [ ] `adCopyTool` definition replaces `blogPostTool` stub in `toolRegistry`
 - [ ] `acquisition.userText`: `audience`, `goal`, `tone`, `copyLength` (replaces generic `topic`/`language`)
-- [ ] `acquisition.assets`: `brief` (optional), `persona` (optional, multiple)
+- [ ] `acquisition.assets`: `brief` (required), `persona` (optional, multiple), `angle` (optional, multiple)
 - [ ] `creditCost: 2` — 3 steps, 2 premium models
 - [ ] 3 steps: extraction (balanced) → context-generation (premium) → ads-generation (premium, 180s timeout)
 - [ ] `npx tsc --noEmit` passes in `packages/domain`
@@ -274,7 +277,7 @@ ad-copy/
 | Output structure | Top 3 angles × creative activation | 3 clusters × 2 angles × 3 awareness levels |
 | Copy length | Fixed (creative foundations) | User-selectable (short/medium/long) |
 | Primary use | Strategic direction for content tools | Direct ad copy for Meta campaigns |
-| Consumes | brief (required) + personas (required) | brief (optional) + personas (optional) + userText |
+| Consumes | brief (required) + personas (required) | brief (required) + personas (optional) + angles (optional) + userText |
 
 ## Downstream Relationship
 
