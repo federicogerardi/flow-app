@@ -13,6 +13,7 @@ import { SessionSummary } from '../tool/SessionSummary';
 import { CompletionBanner } from '../shared/CompletionBanner';
 import { toolPageMachine } from '../../machines/tool-page-machine';
 import type { ToolDefinition, TextInput, FileInput, AssetInput } from '../../tool-inputs';
+import type { SessionDTO as ApiSessionDTO, ArtifactDTO } from '../../api/client';
 import { copy } from '@flow-app/copy';
 import { AssetPicker } from '../shared/AssetPicker';
 import { ASSET_LABELS, ASSET_TOOL_MAP } from '../workspace/AssetCoverageBar';
@@ -45,6 +46,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
   const navigate = useNavigate();
   const [state, send] = useMachine(toolPageMachine);
   const [workspaceAssets, setWorkspaceAssets] = useState<Array<{ id: string; assetType: string; name: string | null; createdAt: string }>>([]);
+  const [replayedDetail, setReplayedDetail] = useState<ApiSessionDTO | null>(null);
   const { setBreadcrumbs } = useBreadcrumbs();
 
   const uiState = deriveUIState(state);
@@ -70,6 +72,16 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
   useEffect(() => {
     document.title = `[${uiState}] ${title}${session?.id ? ` #${session.id.slice(0,8)}` : ''}`;
   }, [uiState, title, session?.id]);
+
+  // Fetch full session detail for replayed completed sessions
+  // (startSession response has no artifacts — GET /api/sessions/:id fills them)
+  useEffect(() => {
+    if (uiState === 'completed' && session?.id && artifacts.length === 0 && !replayedDetail) {
+      api.getSession(session.id).then((detail) => {
+        setReplayedDetail(detail);
+      }).catch(() => {});
+    }
+  }, [uiState, session?.id, artifacts.length, replayedDetail]);
 
   // Set breadcrumbs
   useEffect(() => {
@@ -263,11 +275,13 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
             stepCount={tool?.stepCount ?? 1}
             creditCost={tool?.creditCost ?? 1}
           />
-          {artifacts.length > 0 && (
+          {(artifacts.length > 0 ? (
             <SessionSummary artifacts={artifacts} workspaceId={workspaceId} produces={tool?.produces} />
-          )}
+          ) : replayedDetail?.artifacts ? (
+            <SessionSummary artifacts={replayedDetail.artifacts as ArtifactDTO[]} workspaceId={workspaceId} produces={tool?.produces} />
+          ) : null)}
           <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-            <Button variant="outlined" onClick={() => send({ type: 'RETRY' })}>
+            <Button variant="outlined" onClick={() => { setReplayedDetail(null); send({ type: 'RETRY' }); }}>
               {copy.t('toolPage.cta.new')}
             </Button>
             <Button variant="outlined" onClick={() => navigate(`/workspaces/${workspaceId}`)}>

@@ -249,15 +249,40 @@ export const toolPageMachine = setup({
           workspaceId: context.workspaceId,
           inputs: context.inputs,
         }),
-        onDone: {
-          target: 'running',
-          actions: assign({
-            session: ({ event }) => {
+        onDone: [
+          {
+            target: 'completed',
+            guard: ({ event }) => {
               const output = event.output as { session: SessionDTO; replayed: boolean };
-              return output.session;
+              return !!output.replayed && output.session.status === 'completed';
             },
-          }),
-        },
+            actions: assign({
+              session: ({ event }) => (event.output as { session: SessionDTO }).session,
+            }),
+          },
+          {
+            target: 'failed',
+            guard: ({ event }) => {
+              const output = event.output as { session: SessionDTO; replayed: boolean };
+              return !!output.replayed && (output.session.status === 'failed' || output.session.status === 'cancelled');
+            },
+            actions: assign({
+              session: ({ event }) => (event.output as { session: SessionDTO }).session,
+              error: ({ event }) => {
+                const output = event.output as { session: SessionDTO };
+                return output.session.status === 'failed'
+                  ? { code: 'SESSION_FAILED', message: 'Session previously failed' }
+                  : { code: 'SESSION_CANCELLED', message: 'Session was cancelled' };
+              },
+            }),
+          },
+          {
+            target: 'running',
+            actions: assign({
+              session: ({ event }) => (event.output as { session: SessionDTO }).session,
+            }),
+          },
+        ],
         onError: {
           target: 'ready',
           actions: assign({
