@@ -1,4 +1,5 @@
 # syntax=docker/dockerfile:1
+# Cache bust: 2026-08-07 remediation deploy (kysely 0.29.4, config hardening)
 
 # ── Stage 1: Builder ──────────────────────────────────────────────────────────
 FROM node:22-alpine AS builder
