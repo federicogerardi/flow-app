@@ -141,6 +141,60 @@ const buyerPersonaTool: ToolDefinition = {
   ],
 };
 
+const marketingAngleTool: ToolDefinition = {
+  toolKey: 'marketing-angle',
+  name: 'Angoli di Attacco',
+  description: 'Genera angoli marketing testabili per campagne Meta, basati su brief e buyer personas',
+  creditCost: 1,
+  produces: 'angle',
+  defaultComponents: ['anti-hallucination/v1', 'output-plain-text/v1', 'italian-formal/v1'],
+  acquisition: {
+    assets: [
+      { assetType: 'brief', required: true },
+      { assetType: 'persona', required: true, multiple: true },
+    ],
+    userText: [],
+  },
+  steps: [
+    {
+      order: 1,
+      label: 'extraction',
+      enrichment: 'serial',
+      prompt: {
+        templateId: 'marketing-angle/extraction',
+        version: '1.0.0',
+        model: ModelTier.Balanced,
+        components: ['output-json/v1'],
+      },
+      execution: { timeoutMs: 90000, maxRetries: 2 },
+    },
+    {
+      order: 2,
+      label: 'angle-matrix',
+      enrichment: 'serial',
+      prompt: {
+        templateId: 'marketing-angle/angle-matrix',
+        version: '1.0.0',
+        model: ModelTier.Premium,
+        components: ['output-plain-text/v1', 'italian-formal/v1'],
+      },
+      execution: { timeoutMs: 180000, maxRetries: 2 },
+    },
+    {
+      order: 3,
+      label: 'creative-activation',
+      enrichment: 'serial',
+      prompt: {
+        templateId: 'marketing-angle/creative-activation',
+        version: '1.0.0',
+        model: ModelTier.Premium,
+        components: ['output-plain-text/v1', 'italian-formal/v1'],
+      },
+      execution: { timeoutMs: 120000, maxRetries: 2 },
+    },
+  ],
+};
+
 export const toolRegistry: Record<ToolKeyValue, ToolDefinition> = {
   'blog-post': blogPostTool,
   'brief': briefTool,
@@ -151,7 +205,7 @@ export const toolRegistry: Record<ToolKeyValue, ToolDefinition> = {
   'ad-copy': blogPostTool,
   'brand-voice': blogPostTool,
   'buyer-persona': buyerPersonaTool,
-  'marketing-angle': blogPostTool,
+  'marketing-angle': marketingAngleTool,
   'ai-overview-analysis': blogPostTool,
 };
 

@@ -19,6 +19,7 @@ date_updated: 2026-08-07
 | USER-STORIES.md | [[sources/USER-STORIES]] | 2026-07-30 |
 | prompt_extraction.md, prompt_brief_generation.md | [[sources/brief-generator]] | 2026-08-06 |
 | prompt_extraction.md, prompt_personas_generation.md | [[sources/personas-generator]] | 2026-08-06 |
+| prompt_root.md, prompt_extraction.md, prompt_context_and_angle_matrix.md, prompt_angle_prioritization.md, prompt_creative_activation.md | [[sources/angle-generator]] | 2026-08-07 |
 
 ## Entities
 
@@ -50,6 +51,7 @@ date_updated: 2026-08-07
 | [[Agent Chat]] | high | 8 |
 | [[Agent Chat UX]] | high | 8 |
 | [[Agent Personas]] | high | 4 |
+| [[Angle Generator - Prompt Architecture]] | high | 6 |
 | [[Application Services]] | high | 4 |
 | [[Achievements & Badges]] | high | 4 |
 | [[ArtifactContent]] | high | 3 |
