@@ -3474,3 +3474,25 @@ Buyer-persona tool now generates successfully: `extraction` (3.2s, 2.7K tokens) 
 | 7 | App config | Model IDs stale (`claude-sonnet-4-20250514`, `gemini-2.0-flash-001`, etc.) → LLM gateway returned 400 | Updated `model-registry.ts` with current OpenRouter model IDs, `buyer-persona` step 2 → `ModelTier.Balanced` |
 
 **Wiki updated**: [[Creating a New Tool]] — expanded with Asset Tool checklist, verified model tier table, 6 new pitfalls, buyer-persona reference.
+
+## [2026-08-07] diagnostic | Railway backend health sweep — baseline established
+
+Routine diagnostic sweep of the `backend` service on Railway (`dev` environment). Logs, build output, metrics, and HTTP observability queried via Railway MCP tools.
+
+**Findings** (4 items, 0 critical):
+
+| # | Finding | Type | Assessment |
+|---|---------|------|------------|
+| 1 | `InvalidRefreshTokenError` at `POST /api/auth/refresh` | Expected behavior | Token expired, user re-logged in successfully (340ms) |
+| 2 | 401 cascade from 4 endpoints at same second as refresh failure | Race condition (UX) | Auth middleware correctly rejects requests with expired access token while refresh is in-flight |
+| 3 | SSE long-polling `GET /api/sessions/.../events` → 300s response time | Expected | Deliberate SSE timeout, client reconnects after 5 minutes |
+| 4 | Build warnings: eslint peer dep mismatch, 3 npm audit highs, chunk >500KB | Non-blocking | No runtime impact; tech debt to address |
+
+**Metrics** (6h window): CPU 0.0016 avg, memory 131MB stable, 0% HTTP error rate, cleanup job functional.
+
+**Action items** (non-blocking):
+- Frontend: implement request queue during token refresh (eliminates 401 cascade)
+- Build: bump `eslint-plugin-vitest`, run `npm audit fix`
+- Performance: code-split frontend chunks >500KB
+
+**Wiki updated**: [[synthesis/railway-backend-diagnostics-2026-08-07]] (this entry), [[log]] (this entry).
