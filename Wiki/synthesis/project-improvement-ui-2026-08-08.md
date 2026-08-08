@@ -11,7 +11,7 @@ confidence: medium
 
 # Project Improvement UI — Findings Collection
 
-> **Status**: ✅ 20/21 findings resolved 2026-08-08 — 1 deferred (U4 — low). V8 ToolCard redesign complete: emoji → MUI outline icons, elevation → outline variant, compact mode.  
+> **Status**: ✅ 21/25 findings resolved — V12 sidebar drift fixed (nav first, secondary last). 4 remaining: V9/V10/V11/U8 need visual restyling study.  
 > **Verification**: `tsc --noEmit` 0 errors, `vitest run` 151/151 passing, 19/19 test files.
 > **Baseline**: [[ui-design-summary-2026-08-07]] (37 components, 97.3% completion, 151 tests, 0 deprecated MUI).
 
@@ -56,7 +56,11 @@ Findings about inconsistent spacing, alignment, typography, or visual hierarchy.
 | V5 | WorkspaceDashboard reordered: QuickGenerateBar → AssetCoverageBar → Tools (compact 6-tool grid) → ReadyToPromoteList → SessionList. Members removed from body (→ V6 dialog) | **high** | `WorkspaceDashboard.tsx` | ✅ Resolved |
 | V6 | `WorkspaceMembers` → `ShareMembersDialog`: combined share + members dialog with invite form + member list. Triggered by 👥 PeopleIcon in PageHeader (V7). Removed inline members section from dashboard body | **medium** | `ShareMembersDialog.tsx` (new), `DashboardPage.tsx` | ✅ Resolved |
 | V7 | `PageHeader` now supports `actions?: PageHeaderAction[]` (icon-only outline buttons with Tooltip). DashboardPage header: 👥 share+members, ⚙️ edit, 🗑️ delete. Old single `action` prop preserved for backward compat | **medium** | `PageHeader.tsx`, `DashboardPage.tsx` | ✅ Resolved |
-| V8 | ToolCard uses emoji icons + default filled `variant` — redesigned with `variant="outlined"`, monochrome MUI outline icons (`ArticleIcon`, `LightbulbOutlinedIcon`, etc.), compact mode (icon + name only). Consistent with WorkspaceCard/CompletedCard pattern | **high** | `ToolCard.tsx`, `WorkspaceDashboard.tsx` | ✅ Resolved |
+| V8 | ToolCard uses emoji icons + default filled `variant` — redesigned with `variant="outlined"`, monochrome MUI outline icons, CSS Grid fluid multi-row (max 4 cols), compact mode (icon + name only, noWrap disabled). Consistent with WorkspaceCard pattern | **high** | `ToolCard.tsx`, `WorkspaceDashboard.tsx` | ✅ Resolved |
+| V9 | QuickGenerateBar is too bulky — full-width box with `p: 2`, gray bg, border, 160px Select, text label "Quick Generate" (hardcoded). For a shortcut, it occupies disproportionate surface area and position (top of dashboard). Needs a lighter, more natural placement | **high** | `QuickGenerateBar.tsx`, `WorkspaceDashboard.tsx` | 🔴 Open |
+| V10 | AssetCoverageBar wastes width with 0%/100% LinearProgress bars — a single asset fills the bar completely (binary state). Progress bars are the wrong visual metaphor. Should use achievement-style indicators (badge/chip/trophy) consistent with gamification design language | **high** | `AssetCoverageBar.tsx` | 🔴 Open |
+| V11 | ReadyToPromoteList renders full CompletedCard components — includes markdown preview + tool label + date + download/promote/view buttons. Too tall vertically. Should be compact table-style rows: tool name | date | [Promote] CTA on one line, no content preview | **high** | `ReadyToPromoteList.tsx` | 🔴 Open |
+| V12 | Sidebar collapse causes vertical drift — nav items now come FIRST in Drawer flex column, anchored immediately after Toolbar. Secondary content (workspace switcher, gamification, CTA) moved to bottom via `flexGrow: 1` spacer. Icons never shift on toggle | **high** | `AppShell.tsx` | ✅ Resolved |
 
 ### 2.3 Accessibility Gaps
 Findings related to WCAG AA compliance, ARIA, keyboard navigation, screen readers.
@@ -84,6 +88,7 @@ Findings about loading states, perceived performance, empty/error states, transi
 | U5 | Step labels were numeric-only. Now `ArtifactListItemDTO` includes `stepLabel`. SessionSummary uses `artifact.stepLabel \|\| numeric fallback`. FeedbackPanel uses `progress.label` from SSE | **high** | `SessionSummary.tsx`, `FeedbackPanel.tsx`, `session.dto.ts` | ✅ Resolved |
 | U6 | TXT download format removed from `ArtifactDownloadMenu` — MD/DOCX/PDF remain. Also removed `TextSnippetIcon` import, `downloadFile` helper, and `case 'txt'` from `handleDownload` | **medium** | `SessionSummary.tsx` | ✅ Resolved |
 | U7 | SessionPage now shows XP earned via `CompletionBanner`. Added `xpEarned?: number` to `SessionDetailDTO`. Copy key `shared.session.xpEarned` = "+{xp} XP". Display: "3 step · 1 crediti · +50 XP" | **high** | `SessionPage.tsx`, `CompletionBanner.tsx`, `session.dto.ts` | ✅ Resolved |
+| U8 | SessionPage header stack (PageHeader + metadata Card + CompletionBanner) consumes ~300px before artifacts render. On 768px viewport, content is pushed below fold. CompletionBanner `p:2` + `mb:3` is the worst offender — needs compact restyling to keep result above the fold | **high** | `SessionPage.tsx`, `CompletionBanner.tsx` | 🔴 Open |
 
 ---
 
@@ -686,3 +691,442 @@ const TOP_TOOLS = [
 | `fontSize="small"` (~20px) | Proportional to `body2` title text. Larger icons would dominate the card at compact grid density |
 | `color="primary"` | Blue accent ties cards to the brand's primary action color; distinguishes from passive content cards |
 | Remove description in compact mode | At `md={2}` (6 columns), there's no room for descriptions. Tool names are sufficient — user already knows what each tool does from the QuickGenerateBar dropdown |
+
+---
+
+## 7. Dashboard Section Improvements — V9, V10, V11
+
+### 7.1 QuickGenerateBar (V9) — Too Bulky
+
+**Current**: full-width box, `p: 2`, gray background, border, 160px Select, text label + button. Hardcoded "Quick Generate" label.
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ Quick Generate  [Blog Post ▾]  [⚡ Generate]            │  ← p: 2, bg hover, border
+└─────────────────────────────────────────────────────────┘
+```
+
+**Problem**: Occupies disproportionate surface at the top of the dashboard. For a shortcut that mirrors the tools grid below, it's visually heavier than the tools themselves.
+
+**Direction**: Study natural placement — could become:
+- A compact inline chip bar at the top (horizontal scroll)
+- Merged into the PageHeader as a "⚡ New" action
+- A floating FAB
+- Removed entirely (tools grid already serves this purpose)
+
+### 7.2 AssetCoverageBar (V10) — Wrong Visual Metaphor
+
+**Current**: 5 rows of `type label | LinearProgress (0% or 100%) | ✓ or +`
+
+```
+Brief        ████████████████████  ✓
+Brand Voice  ████████████████████  ✓
+Persona      ░░░░░░░░░░░░░░░░░░░░  +
+Angle        ░░░░░░░░░░░░░░░░░░░░  +
+Ad Copy      ░░░░░░░░░░░░░░░░░░░░  +
+```
+
+**Problem**: Progress bars are designed for continuous values (0-100%). Here they're binary — 0% or 100%. A single asset fills the bar. The visual metaphor is misleading and wastes horizontal width.
+
+**Direction**: Achievement-style indicators consistent with gamification:
+- Badge chips: `[✅ Brief] [✅ Brand Voice] [⬜ Persona] [⬜ Angle] [⬜ Ad Copy]`
+- Trophy row with earned/missing states
+- Compact pill badges with collectible feel
+- Each missing type becomes a CTA to generate
+
+```
+Proposta badge chips:
+┌─────────────────────────────────────────────┐
+│ Asset Coverage                              │
+│ [✅ Brief] [✅ Brand Voice] [+ Persona]     │  ← earned = filled chip
+│ [+ Angle] [+ Ad Copy]       3/5 collected   │  ← missing = outline + "+"
+└─────────────────────────────────────────────┘
+```
+
+### 7.3 ReadyToPromoteList (V11) — Too Tall
+
+**Current**: renders full `CompletedCard` for each promotable session — includes tool label, date, duration, status chip, and action buttons (view, download, promote). Each card is ~70px tall.
+
+**Problem**: The markdown content preview is irrelevant for promotion decisions. The user only needs: what tool, when completed, promote action.
+
+**Direction**: Compact table-style rows:
+
+```
+CURRENT (each card ~70px):
+┌─────────────────────────────────────────────┐
+│ Blog Post    ✅ completed    2m 30s         │
+│ 15 Aug 10:30             [👁️] [⬇️] [📌]    │
+│ ┌─────────────────────────────────────────┐ │
+│ │ # Introduction                          │ │  ← preview content (unnecessary)
+│ │ Lorem ipsum dolor sit amet...           │ │
+│ └─────────────────────────────────────────┘ │
+└─────────────────────────────────────────────┘
+
+PROPOSED (each row ~32px):
+┌─────────────────────────────────────────────┐
+│ Pronti da Promuovere (3)                    │
+│                                             │
+│ Blog Post       15 ago 10:30    [📌 Promuovi]│  ← one-line row
+│ Brand Voice     14 ago 15:45    [📌 Promuovi]│
+│ Buyer Persona   12 ago 09:15    [📌 Promuovi]│
+└─────────────────────────────────────────────┘
+```
+
+---
+
+## 8. SessionPage Header Compression — U8
+
+### Problem: content below the fold
+
+SessionPage vertical height before `SessionSummary` renders: ~300px on a 768px viewport = 39% of screen. The actual result content is pushed below the fold.
+
+```
+PageHeader         ~96px  (mb:3 + h2 + breadcrumbs)
+Card metadata      ~80px  (mb:3 + status + step/duration row)
+CompletionBanner   ~80px  (p:2 + mb:3 + gradient + text)
+─────────────────────────
+ABOVE THE FOLD   ≈300px consumed
+─────────────────────────
+SessionSummary    ← user must scroll to see results
+```
+
+**Worst offender**: `CompletionBanner` with `p: 2` + `mb: 3` = 40px of padding/margin for a single line of celebration text.
+
+### Direction — 3 options
+
+**A: Merge card + banner into one compact strip**
+```
+┌─────────────────────────────────────────────────────────┐
+│ Blog Post  ✅ completato in 2m 30s · 5 step · +50 XP  │
+└─────────────────────────────────────────────────────────┘
+```
+
+**B: Slim CompletionBanner** (`p: 1` instead of `p: 2`, inline layout)
+
+**C: Inline badge in PageHeader** — `[Sessione: Blog Post]  [✅ 2m 30s · +50 XP]`
+
+---
+
+## 9. Sidebar Restyling — V12
+
+### Problem: sidebar too tall, collapse causes drift
+
+```
+SIDEBAR (280px)
+┌──────────────────────────┐
+│ [Workspace Switcher ▾]   │  ← full-width button + icon
+│ [+ Nuovo]                │
+│ ──────────────────────── │
+│ Quota: 3/10              │  ← QuotaCounter row
+│ ──────────────────────── │
+│ ┌─── Gamification ─────┐ │
+│ │   Lv.7               │ │
+│ │   Strategist          │ │  ← ~150px total
+│ │ ████████████ 450/600  │ │
+│ │ 🔥 5    🏅 3          │ │
+│ └───────────────────────┘ │
+│ ──────────────────────── │
+│ 📊 Dashboard             │
+│ 📝 Sessions              │  ← nav items (shift up on collapse)
+│ 📦 Assets                │
+│ 👥 Team                  │
+│ ──────────────────────── │
+│ 📄 Templates             │
+│ 📋 Audit Log             │
+│ ──────────────────────── │
+│ [+ Nuova Generazione]    │  ← full-width contained button
+└──────────────────────────┘
+```
+
+### Direction: compact sidebar with minimal chrome
+
+| Section | Current | Proposed |
+|---------|---------|----------|
+| Workspace switcher | Full-width outlined button + "+" icon next to it | Compact: accent dot + name on one line, "+" as a standalone icon |
+| QuotaCounter | Row with bar | Chip badge inline with gamification or removed |
+| **GamificationZone** | ~150px: level, label, XP bar, streak, badges | ~50px: inline `Lv.7 · 🔥5` chip row, XP bar compressed to 3px, badges count only |
+| Quick Generate | Full-width contained button, full text | Icon-only or compact chip in nav |
+
+**GamificationZone compact proposal**:
+
+```
+PRIMA (~150px):                          DOPO (~50px):
+┌──────────────────────────┐            ┌──────────────────────────┐
+│        Lv.7              │            │ Lv.7 🔥5 🏅3             │  ← single line
+│        Strategist        │            │ ████████████████  450/600│  ← compressed XP bar
+│ ████████████  450/600    │            └──────────────────────────┘
+│ 🔥 5            🏅 3     │
+└──────────────────────────┘
+```
+
+This brings total sidebar pre-nav height from ~280px to ~100px, making the collapse toggle visually clean without CSS hacks.
+
+---
+
+## 10. Visual Strategy — Coherent Restyling of V9, V10, V11, V12, U8
+
+> **Scope**: 5 open findings that require visual study before implementation.  
+> **Design tokens in use**: `primary.main` #2563EB, `secondary.main` #7C3AED, `success.main` #059669, `divider` #e2e8f0, `action.hover` #f8fafc, font "Plus Jakarta Sans".
+
+---
+
+### 10.1 Guiding Principle
+
+All 5 issues share a single root cause: **secondary information competes with primary content for above-the-fold space**.
+
+```
+PRIMARY (must be ATF)     SECONDARY (contextual, compact)
+─────────────────────     ──────────────────────────────
+Generated artifacts       Gamification stats
+Session results           Asset coverage
+Assets list               XP / level / streak
+                          Quick generate shortcuts
+```
+
+Three design rules that apply across all 5 fixes:
+
+| Rule | Rationale |
+|------|-----------|
+| **Binary state → badge, not bar** | LinearProgress is meaningful only for continuous values. Asset coverage (present/absent) and gamification achievements are binary — use Chip/badge |
+| **Duplicate actions → remove the weaker one** | QuickGenerateBar duplicates ToolCards grid + sidebar CTA. Remove the one furthest from the natural click path |
+| **Vertical compression** | Every secondary element should cost ≤50px. GamificationZone at 150px, CompletionBanner at 80px: both fixable with inline layout |
+
+---
+
+### 10.2 V9 — QuickGenerateBar: Remove from Dashboard
+
+**Root problem**: QuickGenerateBar is a third entry point to tool navigation. The user already has ToolCards (same page, immediately below) and the sidebar "Nuova Generazione" button. Three CTAs for the same action create noise, not value.
+
+```
+NOW: 3 entry points to tool navigation
+─────────────────────────────────────
+1. [Quick Generate  Blog Post ▾  ⚡ Generate]   ← QuickGenerateBar (dashboard)
+2. [📰 Blog][🎯 Landing][📋 Brief][🗣️ Voice]... ← ToolCards (dashboard)
+3. [+ Nuova Generazione]                         ← Sidebar CTA
+
+PROPOSED: 2 entry points (remove the weakest)
+─────────────────────────────────────────────
+1. [📰 Blog][🎯 Landing][📋 Brief][🗣️ Voice]... ← ToolCards (primary)
+2. [+ Nuova Generazione]                         ← Sidebar (persistent)
+```
+
+**Decision**: remove QuickGenerateBar from WorkspaceDashboard. The ToolCard grid directly below fills the same intent with better UX (you can see all tools at once, not just a select with one visible).
+
+**If a "quick action" is still desired**: move it to the PageHeader as a secondary action — a `⚡` icon button that opens a small popover with the tool Select + Go button. Dormant until used, zero body space consumed.
+
+```
+OPTION: PageHeader with contextual quick-generate
+┌──────────────────────────────────────────────────────┐
+│ My Workspace                         [👥] [⚙️] [⚡] [🗑️]│
+│ Seleziona un tool per iniziare                       │
+└──────────────────────────────────────────────────────┘
+                                             ↑
+                                     popover: [Blog Post ▾] [Vai →]
+```
+
+---
+
+### 10.3 V10 — AssetCoverageBar: Achievement Badges
+
+**Root problem**: 5 LinearProgress bars at 0% or 100% use the wrong visual metaphor. Progress bars imply gradients between 0 and 100 — here they're either empty or full.
+
+The correct metaphor: **collectible badges** — consistent with the gamification design language already present (`rarity` tokens, `GamificationZone`, `BadgeProgressRing`).
+
+```
+NOW:
+─────────────────────────────────────────────────────
+Brief        ████████████████████  ✓
+Brand Voice  ████████████████████  ✓
+Persona      ░░░░░░░░░░░░░░░░░░░░  +
+Angle        ░░░░░░░░░░░░░░░░░░░░  +
+Ad Copy      ░░░░░░░░░░░░░░░░░░░░  +
+
+PROPOSED:
+─────────────────────────────────────────────────────
+Asset  [✅ Brief] [✅ Brand Voice] [+ Persona →]
+       [+ Angle →] [+ Ad Copy →]              2/5
+```
+
+**Chip spec**:
+
+| State | Variant | Color | Icon | Action |
+|-------|---------|-------|------|--------|
+| Earned | `filled` | `success` | `CheckCircleIcon` | none (click → assets) |
+| Missing | `outlined` | `default` | `AddIcon` | click → tool to generate |
+
+**Layout**: flexbox `flexWrap: 'wrap'`, `gap: 1`. At the top-right: compact `2/5` progress summary chip (`Chip variant="outlined" label="2/5"`) with a small `LinearProgress` bar inside only if the user wants the numeric context. Summary count replaces the 5-row table.
+
+```
+┌────────────────────────────────────────────────────┐
+│ Asset  ──────────────────────────────────  2/5 ██░│
+│ [✓ Brief] [✓ Brand Voice] [+ Persona]              │
+│ [+ Angle] [+ Ad Copy]                              │
+└────────────────────────────────────────────────────┘
+Height: ~80px (from ~160px) — 50% reduction
+```
+
+---
+
+### 10.4 V11 — ReadyToPromoteList: Compact Table Rows
+
+**Root problem**: full CompletedCard (~70px each) renders markdown preview + all action buttons for items whose only relevant action is "promote".
+
+```
+NOW (each card ~70-90px):
+┌──────────────────────────────────────────────────────┐
+│ Blog Post                        ✅ 2m 30s           │
+│ 15 ago 10:30                     [👁] [⬇] [📌]      │
+│ ┌──────────────────────────────────────────────────┐ │
+│ │ # The Ultimate Guide...                          │ │  ← preview (not needed)
+│ │ Lorem ipsum dolor sit amet, consectetur...       │ │
+│ └──────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────┘
+
+PROPOSED (each row ~36px):
+┌──────────────────────────────────────────────────────┐
+│ Pronti da promuovere (3)                             │
+│                                                      │
+│ 📰 Blog Post          15 ago · 2m 30s   [📌 Promuovi]│
+│ 🗣️ Brand Voice        14 ago · 1m 12s   [📌 Promuovi]│
+│ 👤 Buyer Persona      12 ago · 3m 05s   [📌 Promuovi]│
+└──────────────────────────────────────────────────────┘
+```
+
+**Row spec**: `display: flex`, `alignItems: center`, `py: 1`, `borderBottom: 1px solid divider`.
+
+- Left: tool icon (MUI, `fontSize="small"`, `color="action"`) + tool name (`body2`, `fontWeight=600`)
+- Middle: date + duration (`caption`, `color="text.secondary"`, `ml: 'auto'`)  
+- Right: `Button variant="outlined" size="small"` with `PushPinIcon` + "Promuovi"
+
+Keep `onView` as a secondary action: clicking the row navigates to session, the button promotes.
+
+---
+
+### 10.5 V12 — Sidebar: GamificationZone Compact
+
+**Root problem**: GamificationZone (150px) + workspace switcher (50px) + QuotaCounter (40px) = 240px of chrome before nav items. On 768px this is 31% of the screen dedicated to secondary context.
+
+```
+NOW (pre-nav height ~240px):
+┌────────────────────────────┐
+│ [Workspace Name         ▾] │  ← full-width button ~44px
+│ [+]                        │
+│ ──────────────────────────  │
+│ Quota: 3/10 ███░░░░         │  ← QuotaCounter ~36px
+│ ──────────────────────────  │
+│     Lv.7                   │
+│     Strategist              │  ← GamificationZone ~150px
+│ ██████████████ 450/600     │
+│ 🔥 5           🏅 3         │
+│ ──────────────────────────  │
+│ nav items ↓                 │
+
+PROPOSED (pre-nav height ~80px):
+┌────────────────────────────┐
+│ ● My Workspace         [+] │  ← accent dot + name + add icon ~40px
+│ ──────────────────────────  │
+│ Lv.7 · 🔥 5 · 🏅 3         │  ← one row ~24px
+│ ████████████░░  450/600     │  ← 3px XP bar ~8px + caption ~16px
+│ ──────────────────────────  │  total GamificationZone ~48px
+│ nav items ↓                 │
+```
+
+**GamificationZone compact layout**:
+
+```tsx
+// Compact layout — entire zone: 1 click → /profile
+<Box onClick={...} sx={{ px: 2, py: 1, cursor: 'pointer' }}>
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+    <Chip label="Lv.7" size="small" color="primary" />        // level
+    <Chip icon={<WhatshotIcon />} label="5" size="small" />   // streak
+    <Chip icon={<EmojiEventsIcon />} label="3" size="small" /> // badges
+  </Box>
+  <LinearProgress value={75} sx={{ height: 3, borderRadius: 1 }} />  // 3px
+  <Typography variant="caption" color="text.secondary">
+    450 / 600 XP
+  </Typography>
+</Box>
+```
+
+**Workspace switcher compact**:
+
+```
+NOW:                             PROPOSED:
+[  My Workspace Name         ▾]  ● My Workspace Name         [+]
+                                 (accent dot + text, click → popover)
+[+]
+```
+
+Single row: colored accent dot (`bgcolor: accent`, `8px × 8px`, `borderRadius: '50%'`) + workspace name (`body2`, `fontWeight=600`) + `AddIcon` right-aligned. Click on name → popover (existing), click `[+]` → create.
+
+**Remove sidebar QuickGenerate CTA**: redundant with V9 decision (ToolCards cover this). Saves 60px at bottom and reduces CTA duplication.
+
+---
+
+### 10.6 U8 — SessionPage: Header Compression
+
+**Root problem**: three distinct blocks (PageHeader + metadata Card + CompletionBanner) stack to ~256px before content renders.
+
+```
+NOW (~256px before content):
+┌────────────────────────────────────────────────────┐
+│ [breadcrumbs]                                      │  ~20px
+│ Sessione: Blog Post                                │  ~32px (h2)
+│                                                    │  mb:3 = 24px
+│ ┌────────────────────────────────────────────────┐ │
+│ │ Stato  ✅ completato              [Cancel]      │ │  ~48px
+│ │ 5 step · ⏱ 2m 30s · Creata 15 ago 10:30        │ │  ~24px
+│ └────────────────────────────────────────────────┘ │  mb:3 = 24px
+│ ┌────────────────────────────────────────────────┐ │
+│ │ ✅  Completato in 2m 30s                       │ │  ~28px (h6 bold)
+│ │     5 step · 1 credito · +50 XP               │ │  ~20px (body2)
+│ └────────────────────────────────────────────────┘ │  mb:3 = 24px (gradient bg)
+│                                                    │
+│ ─── ABOVE THE FOLD ────────────────────────────── │  256px consumed
+│                                                    │
+│ ⭐ Risultato finale        [⬇️] [📌]               │  ← starts here
+└────────────────────────────────────────────────────┘
+
+PROPOSED Option A — Merge banner into PageHeader chip:
+┌────────────────────────────────────────────────────┐
+│ [breadcrumbs]                                      │  ~20px
+│ Blog Post                  ✅ 2m 30s · 5 step · +50 XP│  ~40px (h2 + chip)
+│                                                    │  mb:2 = 16px
+│ ─── ABOVE THE FOLD (~76px) ──────────────────────  │
+│                                                    │
+│ ⭐ Risultato finale        [⬇️] [📌]               │  ← starts here
+└────────────────────────────────────────────────────┘
+Saving: ~180px
+```
+
+**PageHeader extension for sessions**: add optional `meta?: ReactNode` slot that renders right of the title as a compact inline row.
+
+```tsx
+// PageHeader receives:
+meta={isCompleted ? (
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+    <Chip icon={<CheckCircleIcon />} label="completato" color="success" size="small" />
+    <Typography variant="caption" color="text.secondary">
+      {formatDuration(durationSeconds)} · {stepCount} step · +{xpEarned} XP
+    </Typography>
+  </Box>
+) : null}
+```
+
+For **running sessions**: the metadata card stays (it shows FeedbackPanel). Only for `completed` state does the merge apply — the user needs the artifacts, not a celebration banner.
+
+**Transition**: the CompletionBanner animation (`celebrate` keyframe) moves to the chip — it scales in from `scale(0.8)` when it appears, giving the celebration feel without the vertical space.
+
+---
+
+### 10.7 Execution Order
+
+Findings are independent — each can land separately. Suggested priority by user-facing impact per effort:
+
+| Priority | Finding | Effort | Saving |
+|----------|---------|--------|--------|
+| 1 | **V9** QuickGenerateBar remove | 15 min | ~60px + remove clutter |
+| 2 | **V11** ReadyToPromoteList rows | 45 min | ~40px/item + clarity |
+| 3 | **U8** SessionPage header | 1h | ~180px above fold |
+| 4 | **V12** Sidebar GamificationZone | 1.5h | ~160px pre-nav |
+| 5 | **V10** AssetCoverageBar badges | 1h | ~80px + gamification coherence |

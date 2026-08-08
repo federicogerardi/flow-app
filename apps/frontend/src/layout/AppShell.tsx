@@ -241,80 +241,8 @@ export function AppShell() {
       >
         <Toolbar />
 
-        {/* Workspace Switcher + Create — hidden when collapsed */}
-        {!sidebarCollapsed && (
-          <Box>
-            <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Button
-            fullWidth
-            size="small"
-            variant="outlined"
-            onClick={(e) => setWsSwitcherAnchor(e.currentTarget)}
-            sx={{
-              justifyContent: 'flex-start',
-              textTransform: 'none',
-              color: 'text.primary',
-              borderColor: 'divider',
-              px: 1.5,
-            }}
-          >
-            {activeWorkspaceId && workspaces ? (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, overflow: 'hidden' }}>
-                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: accent, flexShrink: 0 }} />
-                <Typography variant="body2" noWrap>
-                  {workspaces.find((w) => w.id === activeWorkspaceId)?.name ?? activeWorkspaceId}
-                </Typography>
-              </Box>
-            ) : (
-              <Typography variant="body2" noWrap sx={{ opacity: 0.5 }}>
-                {copy.t('workspace.switcher.selectWorkspace')}
-              </Typography>
-            )}
-          </Button>
-          <IconButton size="small" onClick={() => setCreateOpen(true)} aria-label={copy.t('workspace.list.createCta')} title={copy.t('workspace.list.createCta')}>
-            <AddIcon fontSize="small" />
-          </IconButton>
-        </Box>
-
-        {/* Workspace Switcher Popover */}
-        <Popover
-          open={Boolean(wsSwitcherAnchor)}
-          anchorEl={wsSwitcherAnchor}
-          onClose={() => setWsSwitcherAnchor(null)}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-          slotProps={{ paper: { sx: { width: DRAWER_WIDTH - 32, p: 1 } } }}
-        >
-          {workspaces?.map((ws) => (
-            <WorkspaceCard
-              key={ws.id}
-              id={ws.id}
-              name={ws.name}
-              memberCount={1}
-              isActive={ws.id === activeWorkspaceId}
-              accentColor={accent}
-              onClick={() => {
-                setWsSwitcherAnchor(null);
-                handleWorkspaceChange(ws.id);
-              }}
-            />
-          ))}
-        </Popover>
-
-        <Divider sx={{ mx: 2 }} />
-
-        {/* Quota counter */}
-        <QuotaCounter />
-
-        {/* Gamification */}
-        <GamificationZone />
-        </Box>)}
-
-
-        <Divider sx={{ mx: 2 }} />
-
-        {/* Primary Navigation */}
-        <Box sx={{ overflow: 'auto', flexGrow: 1, pt: 1 }}>
+        {/* Primary Navigation — FIRST, anchored to top, never shifts */}
+        <Box sx={{ pt: 1 }}>
           <List dense>
             {navItems.map((item) => (
               <NavItem key={item.label} {...item} collapsed={sidebarCollapsed} />
@@ -330,24 +258,99 @@ export function AppShell() {
           </List>
         </Box>
 
-        {/* Quick Generate CTA */}
+        {/* Flexible spacer — pushes secondary content to bottom */}
+        <Box sx={{ flexGrow: 1 }} />
+
+        {/* Secondary content — workspace context + gamification + CTA
+            Hidden when collapsed: disappears below nav so icons never drift */}
         {!sidebarCollapsed && (
-          <Box sx={{ px: 2, py: 2 }}>
-            <Button
-              variant="contained"
-              fullWidth
-              startIcon={<AddIcon />}
-              disabled={!activeWorkspaceId}
-              onClick={() => activeWorkspaceId && navigate(`/workspaces/${activeWorkspaceId}/tools/blog-post`)}
-              sx={{
-                bgcolor: accent,
-                '&:hover': { bgcolor: 'primary.dark' },
-                textTransform: 'none',
-                fontWeight: 600,
-              }}
+          <Box>
+            <Divider sx={{ mx: 2 }} />
+
+            {/* Quota counter */}
+            <QuotaCounter />
+
+            {/* Gamification */}
+            <GamificationZone />
+
+            <Divider sx={{ mx: 2 }} />
+
+            {/* Workspace Switcher + Create */}
+            <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Button
+                fullWidth
+                size="small"
+                variant="outlined"
+                onClick={(e) => setWsSwitcherAnchor(e.currentTarget)}
+                sx={{
+                  justifyContent: 'flex-start',
+                  textTransform: 'none',
+                  color: 'text.primary',
+                  borderColor: 'divider',
+                  px: 1.5,
+                }}
+              >
+                {activeWorkspaceId && workspaces ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, overflow: 'hidden' }}>
+                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: accent, flexShrink: 0 }} />
+                    <Typography variant="body2" noWrap>
+                      {workspaces.find((w) => w.id === activeWorkspaceId)?.name ?? activeWorkspaceId}
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Typography variant="body2" noWrap sx={{ opacity: 0.5 }}>
+                    {copy.t('workspace.switcher.selectWorkspace')}
+                  </Typography>
+                )}
+              </Button>
+              <IconButton size="small" onClick={() => setCreateOpen(true)} aria-label={copy.t('workspace.list.createCta')} title={copy.t('workspace.list.createCta')}>
+                <AddIcon fontSize="small" />
+              </IconButton>
+            </Box>
+
+            {/* Workspace Switcher Popover */}
+            <Popover
+              open={Boolean(wsSwitcherAnchor)}
+              anchorEl={wsSwitcherAnchor}
+              onClose={() => setWsSwitcherAnchor(null)}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+              slotProps={{ paper: { sx: { width: DRAWER_WIDTH - 32, p: 1 } } }}
             >
-              {copy.t('workspace.nav.newGeneration')}
-            </Button>
+              {workspaces?.map((ws) => (
+                <WorkspaceCard
+                  key={ws.id}
+                  id={ws.id}
+                  name={ws.name}
+                  memberCount={1}
+                  isActive={ws.id === activeWorkspaceId}
+                  accentColor={accent}
+                  onClick={() => {
+                    setWsSwitcherAnchor(null);
+                    handleWorkspaceChange(ws.id);
+                  }}
+                />
+              ))}
+            </Popover>
+
+            {/* Quick Generate CTA */}
+            <Box sx={{ px: 2, py: 2 }}>
+              <Button
+                variant="contained"
+                fullWidth
+                startIcon={<AddIcon />}
+                disabled={!activeWorkspaceId}
+                onClick={() => activeWorkspaceId && navigate(`/workspaces/${activeWorkspaceId}/tools/blog-post`)}
+                sx={{
+                  bgcolor: accent,
+                  '&:hover': { bgcolor: 'primary.dark' },
+                  textTransform: 'none',
+                  fontWeight: 600,
+                }}
+              >
+                {copy.t('workspace.nav.newGeneration')}
+              </Button>
+            </Box>
           </Box>
         )}
       </Drawer>
