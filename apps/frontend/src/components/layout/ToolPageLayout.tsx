@@ -277,9 +277,9 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
             creditCost={tool?.creditCost ?? 1}
           />
           {(artifacts.length > 0 ? (
-            <SessionSummary artifacts={artifacts} workspaceId={workspaceId} produces={tool?.produces} stepCount={tool?.stepCount} />
+            <SessionSummary artifacts={artifacts} workspaceId={workspaceId} produces={tool?.produces} />
           ) : replayedDetail?.artifacts ? (
-            <SessionSummary artifacts={replayedDetail.artifacts as ArtifactDTO[]} workspaceId={workspaceId} produces={tool?.produces} stepCount={tool?.stepCount} />
+            <SessionSummary artifacts={replayedDetail.artifacts as ArtifactDTO[]} workspaceId={workspaceId} produces={tool?.produces} />
           ) : null)}
           <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
             <Button variant="outlined" onClick={() => { setReplayedDetail(null); send({ type: 'RETRY' }); }}>

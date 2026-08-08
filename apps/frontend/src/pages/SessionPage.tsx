@@ -172,7 +172,6 @@ export default function SessionPage() {
           artifacts={session.artifacts}
           workspaceId={workspaceId}
           produces={session.produces}
-          stepCount={session.stepCount}
         />
       )}
     </Box>

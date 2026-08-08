@@ -1,4 +1,4 @@
-import { Box, Typography, Divider, Card, IconButton, Menu, MenuItem, ListItemIcon, ListItemText, Snackbar, Alert, Button } from '@mui/material';
+import { Box, Typography, Card, Menu, MenuItem, ListItemIcon, ListItemText, Snackbar, Alert, Button } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import DescriptionIcon from '@mui/icons-material/Description';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
@@ -39,9 +39,15 @@ function ArtifactDownloadMenu({ artifactId, index }: { artifactId: string; index
 
   return (
     <>
-      <IconButton size="small" onClick={(e) => setAnchorEl(e.currentTarget)} aria-label={copy.t('shared.actions.download')}>
-        <DownloadIcon fontSize="small" />
-      </IconButton>
+      <Button
+        variant="outlined"
+        size="small"
+        startIcon={<DownloadIcon fontSize="small" />}
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+        aria-label={copy.t('shared.actions.download')}
+      >
+        {copy.t('toolPage.cta.download')}
+      </Button>
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
         <MenuItem onClick={() => handleDownload('md')}>
           <ListItemIcon><DescriptionIcon fontSize="small" /></ListItemIcon>
@@ -64,10 +70,9 @@ interface SessionSummaryProps {
   artifacts: ArtifactDTO[];
   workspaceId?: string;
   produces?: string;
-  stepCount?: number;
 }
 
-export function SessionSummary({ artifacts, workspaceId, produces, stepCount }: SessionSummaryProps) {
+export function SessionSummary({ artifacts, workspaceId, produces }: SessionSummaryProps) {
   const navigate = useNavigate();
   const [toast, setToast] = useState<{ open: boolean; assetId?: string; assetType?: string; assetName?: string | null }>({ open: false });
 
@@ -93,22 +98,11 @@ export function SessionSummary({ artifacts, workspaceId, produces, stepCount }: 
   // V3: Reverse order — final result (last step) appears first
   const ordered = [...deduplicated].reverse();
 
-  const displayStepCount = stepCount ?? deduplicated.length;
-
   if (!artifacts || artifacts.length === 0) return null;
 
   return (
     <>
     <Card>
-      <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h3">
-          {copy.t('toolPage.progress.completed')}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {copy.t('toolPage.progress.stepCount', { count: String(displayStepCount) })}
-        </Typography>
-      </Box>
-      <Divider />
       <Box sx={{ p: 2 }}>
         {ordered.map((artifact, i) => {
           const displayNumber = normalise(artifact.stepNumber);
