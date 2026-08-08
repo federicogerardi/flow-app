@@ -1,6 +1,6 @@
 import { Box, Typography, Chip } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import HistoryIcon from '@mui/icons-material/History';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useNavigate } from 'react-router';
 import useSWR from 'swr';
 import { api, type ToolListItemDTO } from '../../api/client';
@@ -46,12 +46,12 @@ export function AssetCoverageBar({ workspaceId }: AssetCoverageBarProps) {
           return present ? (
             <Chip
               key={tool.toolKey}
-              icon={<HistoryIcon fontSize="small" />}
+              icon={<CheckCircleIcon fontSize="small" />}
               label={tool.name}
               size="small"
               color="success"
               variant="filled"
-              onClick={() => navigate(`/workspaces/${workspaceId}/sessions?toolKey=${tool.toolKey}`)}
+              onClick={() => navigate(`/workspaces/${workspaceId}/tools/${tool.toolKey}`)}
             />
           ) : (
             <Chip
