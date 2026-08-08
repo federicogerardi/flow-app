@@ -1,14 +1,13 @@
-import { Box, Typography, LinearProgress, Stack, Button, Tooltip } from '@mui/material';
+import { Box, Typography, Chip } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useNavigate } from 'react-router';
 import useSWR from 'swr';
 import { api } from '../../api/client';
-import { copy } from '@flow-app/copy';
 import { ASSET_TYPE_LABELS } from '../../constants/assets';
 
 const COVERABLE_TYPES = ['brief', 'brand-voice', 'persona', 'angle', 'ad-copy'] as const;
 
-/** Map asset types to their corresponding tool keys */
 export const ASSET_TOOL_MAP: Record<string, string> = {
   'brief': 'brief',
   'brand-voice': 'brand-voice',
@@ -29,52 +28,48 @@ export function AssetCoverageBar({ workspaceId }: AssetCoverageBarProps) {
   );
 
   const assets = data?.assets ?? [];
+  const coveredCount = COVERABLE_TYPES.filter((type) =>
+    assets.some((a) => a.assetType === type),
+  ).length;
+  const total = COVERABLE_TYPES.length;
 
   return (
     <Box>
-      <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1.5 }}>
-        Asset Coverage
-      </Typography>
-      <Stack spacing={1}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+        <Typography variant="subtitle2" fontWeight={600}>Assets</Typography>
+        <Chip
+          label={`${coveredCount}/${total}`}
+          size="small"
+          color={coveredCount === total ? 'success' : 'default'}
+          variant="outlined"
+        />
+      </Box>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
         {COVERABLE_TYPES.map((type) => {
-          const matchingAssets = assets.filter((a) => a.assetType === type);
-          const present = matchingAssets.length > 0;
-          const count = matchingAssets.length;
-          return (
-            <Stack key={type} direction="row" alignItems="center" spacing={1.5}>
-              <Typography variant="caption" sx={{ width: 100, flexShrink: 0, fontSize: '0.7rem' }}>
-                {ASSET_TYPE_LABELS[type]}{count > 1 ? ` (${count})` : ''}
-              </Typography>
-              <LinearProgress
-                variant="determinate"
-                value={present ? 100 : 0}
-                sx={{
-                  flex: 1,
-                  height: 6,
-                  borderRadius: 3,
-                  bgcolor: 'action.hover',
-                }}
-              />
-              <Tooltip title={present ? copy.t('shared.status.success') : copy.t('toolPage.readiness.missingAsset')}>
-                <Box sx={{ width: 20, display: 'flex', justifyContent: 'center' }}>
-                  {present ? (
-                    <CheckCircleIcon color="success" sx={{ fontSize: 16 }} />
-                  ) : (
-                    <Button
-                      size="small"
-                      variant="text"
-                      sx={{ minWidth: 'auto', p: 0, fontSize: '0.65rem', textTransform: 'none' }}
-                      onClick={() => navigate(`/workspaces/${workspaceId}/tools/${ASSET_TOOL_MAP[type]}`)}
-                    >
-                      +
-                    </Button>
-                  )}
-                </Box>
-              </Tooltip>
-            </Stack>
+          const present = assets.some((a) => a.assetType === type);
+          return present ? (
+            <Chip
+              key={type}
+              icon={<CheckCircleIcon fontSize="small" />}
+              label={ASSET_TYPE_LABELS[type]}
+              size="small"
+              color="success"
+              variant="filled"
+              onClick={() => navigate(`/workspaces/${workspaceId}/assets`)}
+            />
+          ) : (
+            <Chip
+              key={type}
+              icon={<AddIcon fontSize="small" />}
+              label={ASSET_TYPE_LABELS[type]}
+              size="small"
+              variant="outlined"
+              onClick={() => navigate(`/workspaces/${workspaceId}/tools/${ASSET_TOOL_MAP[type]}`)}
+              sx={{ cursor: 'pointer' }}
+            />
           );
         })}
-      </Stack>
+      </Box>
     </Box>
   );
 }

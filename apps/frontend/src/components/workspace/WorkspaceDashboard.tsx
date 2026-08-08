@@ -8,7 +8,6 @@ import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import { useNavigate } from 'react-router';
 import { ToolCard } from '../tool/ToolCard';
 import { SessionList } from '../workspace/SessionList';
-import { QuickGenerateBar } from '../shared/QuickGenerateBar';
 import { AssetCoverageBar } from '../workspace/AssetCoverageBar';
 import { ReadyToPromoteList } from '../workspace/ReadyToPromoteList';
 import { copy } from '@flow-app/copy';
@@ -31,13 +30,8 @@ export function WorkspaceDashboard({ workspaceId }: WorkspaceDashboardProps) {
 
   return (
     <Box>
-      {/* Quick generate shortcut */}
+      {/* Asset coverage — achievement badges */}
       <Box sx={{ mt: 2 }}>
-        <QuickGenerateBar workspaceId={workspaceId} />
-      </Box>
-
-      {/* Asset coverage */}
-      <Box sx={{ mt: 4 }}>
         <AssetCoverageBar workspaceId={workspaceId} />
       </Box>
 
@@ -71,7 +65,7 @@ export function WorkspaceDashboard({ workspaceId }: WorkspaceDashboardProps) {
         </Box>
       </Box>
 
-      {/* Ready to promote — compact */}
+      {/* Ready to promote — compact rows */}
       <Box sx={{ mt: 4 }}>
         <ReadyToPromoteList workspaceId={workspaceId} />
       </Box>

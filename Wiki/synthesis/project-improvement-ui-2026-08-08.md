@@ -11,7 +11,7 @@ confidence: medium
 
 # Project Improvement UI — Findings Collection
 
-> **Status**: ✅ 21/25 findings resolved — V12 sidebar drift fixed (nav first, secondary last). 4 remaining: V9/V10/V11/U8 need visual restyling study.  
+> **Status**: ✅ 25/25 findings resolved 2026-08-08. All 4 restyling findings implemented: V9 (remove QuickGenerateBar), V10 (achievement badges), V11 (compact table rows), U8 (PageHeader meta slot). 1 deferred (U4 — low).  
 > **Verification**: `tsc --noEmit` 0 errors, `vitest run` 151/151 passing, 19/19 test files.
 > **Baseline**: [[ui-design-summary-2026-08-07]] (37 components, 97.3% completion, 151 tests, 0 deprecated MUI).
 
@@ -57,9 +57,9 @@ Findings about inconsistent spacing, alignment, typography, or visual hierarchy.
 | V6 | `WorkspaceMembers` → `ShareMembersDialog`: combined share + members dialog with invite form + member list. Triggered by 👥 PeopleIcon in PageHeader (V7). Removed inline members section from dashboard body | **medium** | `ShareMembersDialog.tsx` (new), `DashboardPage.tsx` | ✅ Resolved |
 | V7 | `PageHeader` now supports `actions?: PageHeaderAction[]` (icon-only outline buttons with Tooltip). DashboardPage header: 👥 share+members, ⚙️ edit, 🗑️ delete. Old single `action` prop preserved for backward compat | **medium** | `PageHeader.tsx`, `DashboardPage.tsx` | ✅ Resolved |
 | V8 | ToolCard uses emoji icons + default filled `variant` — redesigned with `variant="outlined"`, monochrome MUI outline icons, CSS Grid fluid multi-row (max 4 cols), compact mode (icon + name only, noWrap disabled). Consistent with WorkspaceCard pattern | **high** | `ToolCard.tsx`, `WorkspaceDashboard.tsx` | ✅ Resolved |
-| V9 | QuickGenerateBar is too bulky — full-width box with `p: 2`, gray bg, border, 160px Select, text label "Quick Generate" (hardcoded). For a shortcut, it occupies disproportionate surface area and position (top of dashboard). Needs a lighter, more natural placement | **high** | `QuickGenerateBar.tsx`, `WorkspaceDashboard.tsx` | 🔴 Open |
-| V10 | AssetCoverageBar wastes width with 0%/100% LinearProgress bars — a single asset fills the bar completely (binary state). Progress bars are the wrong visual metaphor. Should use achievement-style indicators (badge/chip/trophy) consistent with gamification design language | **high** | `AssetCoverageBar.tsx` | 🔴 Open |
-| V11 | ReadyToPromoteList renders full CompletedCard components — includes markdown preview + tool label + date + download/promote/view buttons. Too tall vertically. Should be compact table-style rows: tool name | date | [Promote] CTA on one line, no content preview | **high** | `ReadyToPromoteList.tsx` | 🔴 Open |
+| V9 | QuickGenerateBar removed from WorkspaceDashboard — redundant with ToolCards grid + sidebar CTA. Eliminates 2 of 3 entry points for the same action | **high** | `WorkspaceDashboard.tsx` | ✅ Resolved |
+| V10 | AssetCoverageBar redesigned as achievement Chip badges: `[✓ Brief]` (filled success) vs `[+ Persona]` (outlined, click → tool). Summary `2/5` Chip + flexWrap layout. ~80px vs ~160px before | **high** | `AssetCoverageBar.tsx` | ✅ Resolved |
+| V11 | ReadyToPromoteList redesigned as compact table rows (~36px each) — no CompletedCard, no preview. Row: tool name | date · duration | [📌 Promuovi] button. Click row → session, click button → promote | **high** | `ReadyToPromoteList.tsx` | ✅ Resolved |
 | V12 | Sidebar collapse causes vertical drift — nav items now come FIRST in Drawer flex column, anchored immediately after Toolbar. Secondary content (workspace switcher, gamification, CTA) moved to bottom via `flexGrow: 1` spacer. Icons never shift on toggle | **high** | `AppShell.tsx` | ✅ Resolved |
 
 ### 2.3 Accessibility Gaps
@@ -88,7 +88,7 @@ Findings about loading states, perceived performance, empty/error states, transi
 | U5 | Step labels were numeric-only. Now `ArtifactListItemDTO` includes `stepLabel`. SessionSummary uses `artifact.stepLabel \|\| numeric fallback`. FeedbackPanel uses `progress.label` from SSE | **high** | `SessionSummary.tsx`, `FeedbackPanel.tsx`, `session.dto.ts` | ✅ Resolved |
 | U6 | TXT download format removed from `ArtifactDownloadMenu` — MD/DOCX/PDF remain. Also removed `TextSnippetIcon` import, `downloadFile` helper, and `case 'txt'` from `handleDownload` | **medium** | `SessionSummary.tsx` | ✅ Resolved |
 | U7 | SessionPage now shows XP earned via `CompletionBanner`. Added `xpEarned?: number` to `SessionDetailDTO`. Copy key `shared.session.xpEarned` = "+{xp} XP". Display: "3 step · 1 crediti · +50 XP" | **high** | `SessionPage.tsx`, `CompletionBanner.tsx`, `session.dto.ts` | ✅ Resolved |
-| U8 | SessionPage header stack (PageHeader + metadata Card + CompletionBanner) consumes ~300px before artifacts render. On 768px viewport, content is pushed below fold. CompletionBanner `p:2` + `mb:3` is the worst offender — needs compact restyling to keep result above the fold | **high** | `SessionPage.tsx`, `CompletionBanner.tsx` | 🔴 Open |
+| U8 | SessionPage header stack consumes ~300px before content. Fixed: `PageHeader` gains `meta` slot — completed sessions show ✅ chip + duration/steps/XP inline in header. Metadata card only renders for running/failed. CompletionBanner removed from SessionPage (still used in ToolPageLayout). Saving: ~180px above the fold | **high** | `SessionPage.tsx`, `PageHeader.tsx` | ✅ Resolved |
 
 ---
 

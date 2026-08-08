@@ -13,18 +13,20 @@ interface PageHeaderAction {
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
+  /** Inline metadata rendered right of the title (compact chips/stats) */
+  meta?: ReactNode;
   /** Single action — backward compat. Prefer `actions` for multiple icons. */
   action?: { label: string; onClick: () => void };
   /** Multiple icon-only outline actions rendered as a group on the right */
   actions?: PageHeaderAction[];
 }
 
-export function PageHeader({ title, subtitle, action, actions }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, meta, action, actions }: PageHeaderProps) {
   const navigate = useNavigate();
   const { crumbs } = useBreadcrumbs();
 
   return (
-    <Box sx={{ mb: 3 }}>
+    <Box sx={{ mb: meta ? 1.5 : 3 }}>
       {crumbs.length > 0 && (
         <Breadcrumbs sx={{ mb: 1 }}>
           {crumbs.map((c, i) =>
@@ -48,7 +50,10 @@ export function PageHeader({ title, subtitle, action, actions }: PageHeaderProps
       )}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Box>
-          <Typography variant="h2">{title}</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+            <Typography variant="h2">{title}</Typography>
+            {meta && <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>{meta}</Box>}
+          </Box>
           {subtitle && (
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               {subtitle}
