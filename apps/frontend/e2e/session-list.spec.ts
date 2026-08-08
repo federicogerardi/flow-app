@@ -29,9 +29,7 @@ test.describe('Session List', () => {
 
       expect(hasProgress || hasCompleted || hasFailed).toBe(true);
     } else {
-      // No tabs — sessions may be shown as a flat list with status chips
-      const statusChips = page.getByText(/queued|running|in corso|completat|fallit|completed|failed/i);
-      const chipCount = await statusChips.count();
+// No tabs — sessions may be shown as a flat list with status chips
       // At minimum, the page should render without crashing
       expect(page.url()).toContain('/sessions');
     }

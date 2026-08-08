@@ -137,7 +137,6 @@ vi.mock('../../shared/AssetPicker', () => ({
 }));
 
 import { fetchToolDefinitions } from '../../tool/SetupPanel';
-import { api } from '../../../api/client';
 
 const mockFetchToolDefs = fetchToolDefinitions as ReturnType<typeof vi.fn>;
 

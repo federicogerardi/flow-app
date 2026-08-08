@@ -100,8 +100,7 @@ test.describe('Tool Page — Asset Selection', () => {
     await page.goto(`/workspaces/${WS}/tools/buyer-persona`);
     await expect(page.getByText(/configura|configure/i)).toBeVisible({ timeout: 15_000 });
 
-    // Asset picker should be visible if tool requires assets
-    const assetSection = page.getByText(/asset|risorse/i);
+// Asset picker should be visible if tool requires assets
     const checkboxes = page.locator('input[type="checkbox"]');
     const checkboxCount = await checkboxes.count();
 
