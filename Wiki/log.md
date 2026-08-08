@@ -4793,3 +4793,73 @@ Eliminated SSE and UI duplication between `ToolPageLayout` and `SessionPage`. Th
 - [[Tool UX Architecture]] — redirected lifecycle, updated state→info mapping for ToolPage + SessionPage
 - [[SessionPage]] — "Nuova generazione" CTA, friendly queued message, canonical post-submit
 - [[Frontend Architecture]] — ToolPage section updated to single-phase + redirect
+
+## [2026-08-08] diagnose | Worker gamification bug — 2 findings + remediation plan
+
+Investigated missing LLM logs during session generation. Root cause: LLM was called successfully (artifacts exist in DB), but worker logs were not visible in terminal output (pino child logger, same INFO level as HTTP logs — easily missed).
+
+### Findings (2)
+
+| # | Severity | File:line | Bug | Impact |
+|---|----------|-----------|-----|--------|
+| F1 | Medium | `session-worker.ts:70` | `session.apply(QUEUE)` on cancelled sessions throws `InvalidSessionStateError` | Worker crash, job dead-letter, session stuck cancelled |
+| F2 | High | `session-worker.ts:247` | `snapshot.status === "done"` true for completed, failed, AND cancelled | Credits consumed + XP awarded for failed/cancelled sessions |
+
+### Root cause details
+- F1: `SessionLifecycle` defines `cancelled` as final with no transitions. Worker applies QUEUE/WORKER_PICKUP unconditionally.
+- F2: All three final states have `type: "final"` in XState → `snapshot.status === "done"`. Worker checks only `snapshot.status`, not `snapshot.value`.
+- Bonus: `session-machine.ts:114,122` — `onError` transitions to `failed` without calling `session.apply(FAIL)`. Session aggregate stays `running`.
+
+### Remediation plan
+Saved to [[synthesis/worker-gamification-fix-2026-08-08]]:
+- **Phase 1**: Terminal state guard (8 lines) — skip QUEUE/WORKER_PICKUP for `isTerminal()` sessions
+- **Phase 2**: SSE + gamification conditional — use `snapshot.value` instead of `snapshot.status === "done"`
+- **7 new tests**, 4 existing tests preserved. 1 file modified (`session-worker.ts`).
+
+### Verification
+- Session `d95136b2`: status=cancelled, step 1 artifact exists (4659 chars), step 2 never completed
+- Session `90a38898`: both steps completed (716 + 5207 chars), LLM called successfully
+- [[Frontend Architecture]] — ToolPage section updated to single-phase + redirect
+
+## [2026-08-08] fix | Worker gamification — terminal guard + XP/credits conditional
+
+Implemented [[synthesis/worker-gamification-fix-2026-08-08]]:
+- **Phase 1**: Terminal state guard in `session-worker.ts:70` — skip QUEUE/WORKER_PICKUP for `isTerminal()` sessions
+- **Phase 2**: SSE + gamification conditional — use `snapshot.value` instead of `snapshot.status === 'done'`; only award XP/credits for `completed` state
+- **7 new tests** (T1-T7): terminal guard for completed/cancelled/failed, credits NOT consumed for failed/cancelled, session_failed SSE, happy path preserved
+- Backend: 145/145 tests, tsc clean
+
+## [2026-08-08] fix | Replay-aware redirect — idempotency replay detection
+
+User re-submitted same inputs → API returned 200 (replay) → redirected to already-completed session with no indication it was a replay.
+
+### Files changed (4)
+| File | Change |
+|------|--------|
+| `apps/frontend/src/machines/tool-page-machine.ts` | Added `replayed: boolean` to `ToolPageContext`. `submitSession.onDone` stores flag from API response. |
+| `apps/frontend/src/components/layout/ToolPageLayout.tsx` | Redirect appends `?replayed=true` when context.replayed is true |
+| `apps/frontend/src/pages/SessionPage.tsx` | Reads `useSearchParams('replayed')`, shows banner with `shared.session.replayedMessage` |
+| `packages/copy/src/it/shared.ts` | New key: `shared.session.replayedMessage` |
+
+### Verification
+- Frontend: 135/135 tests (19 files), tsc clean
+- New test: stores `replayed: true` in context when API returns replayed session
+
+## [2026-08-08] fix | Stale idempotency key cleanup for cancelled/failed retry
+
+User resubmitted same inputs after session was cancelled/failed → idempotency returned dead session → user stuck on useless page. Fix: `StartSessionUseCase` now deletes stale idempotency keys for `cancelled`/`failed` sessions and creates a fresh session.
+
+### Files changed (3)
+| File | Change |
+|------|--------|
+| `packages/domain/src/.../SessionRepository.ts` | Added `deleteIdempotencyKey(hash)` to interface |
+| `packages/infra-db/src/.../session-repository.ts` | Implementation: `DELETE FROM idempotency_keys WHERE key_hash = ?` |
+| `apps/backend/src/.../start-session.usecase.ts` | Logic: detect cancelled/failed stale key → delete → create fresh session |
+
+### Wiki updated
+- [[Idempotency]] — Stale Key Cleanup for Retry section, updated scenario table
+
+### Verification
+- Backend: 145/145 tests, tsc clean (all packages)
+- Frontend: 135/135 tests (19 files), tsc clean
+- New test: stores `replayed: true` in context when API returns replayed session

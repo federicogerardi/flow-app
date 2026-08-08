@@ -157,3 +157,4 @@ date_updated: 2026-08-08
 | [[synthesis/railway-deploy-40x-2026-08-08]] | Railway deploy 40X analysis — 1 real bug (missing PUT /api/me/profile) + 14x 401 race condition. Implementation plan for streak mode + silent retry guard | 2026-08-08 |
 | [[synthesis/project-improvement-ui-2026-08-08]] | Project Improvement UI — active findings collection for the 2026-08-08 improvement session. Baseline audit: 48 .tsx files, 288 sx={{ }}, 4 hardcoded gradients, 0 CSS modules | 2026-08-08 |
 | [[overview]] | High-level synthesis (v3) | 2026-08-04 |
+| [[synthesis/worker-gamification-fix-2026-08-08]] | Worker gamification fix — 2 bugs: terminal session crash + XP/credits for failed/cancelled. Implementation plan: 1 file, 2 phases, 7 new tests | 2026-08-08 |

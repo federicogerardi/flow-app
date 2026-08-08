@@ -46,14 +46,15 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
   useEffect(() => { navigateRef.current = navigate; }, [navigate]);
 
   const uiState = deriveUIState(state);
-  const { tool, inputs, session, error } = state.context;
+  const { tool, inputs, session, replayed, error } = state.context;
 
   // ── Redirect to SessionPage after successful submit ────────────────────────
   useEffect(() => {
     if (state.matches('submitted') && session?.id) {
-      navigateRef.current(`/workspaces/${workspaceId}/sessions/${session.id}`);
+      const query = replayed ? '?replayed=true' : '';
+      navigateRef.current(`/workspaces/${workspaceId}/sessions/${session.id}${query}`);
     }
-  }, [state, session?.id, workspaceId]);
+  }, [state, session?.id, workspaceId, replayed]);
 
   // Derived readiness
   const textMissing = (tool?.textInputs ?? []).some(

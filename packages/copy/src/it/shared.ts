@@ -94,6 +94,7 @@ export const shared = {
   session: {
     interruptedMessage: 'Questa sessione è stata interrotta. Puoi riprovare avviando una nuova generazione dalla pagina ',
     queuedMessage:      'Generazione in elaborazione. Segui l\'avanzamento in questa pagina.',
+    replayedMessage:    'Questa generazione è stata già completata in precedenza con gli stessi input. Per avviare una nuova generazione, modifica gli input o usa "Nuova generazione".',
     failedAtStep:       ' · Step {step}',
     queuePosition:      'Posizione in coda: {position}',
     newGeneration:      'Nuova generazione',

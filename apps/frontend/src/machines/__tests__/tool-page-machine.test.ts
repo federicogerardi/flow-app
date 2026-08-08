@@ -83,6 +83,7 @@ describe('toolPageMachine', () => {
       expect(snap.context.inputs.files).toEqual({});
       expect(snap.context.inputs.selectedAssetIds).toEqual([]);
       expect(snap.context.session).toBeNull();
+      expect(snap.context.replayed).toBe(false);
       expect(snap.context.error).toBeNull();
     });
   });
@@ -284,6 +285,18 @@ describe('toolPageMachine', () => {
       await waitFor(actor, (s) => s.matches('submitted'));
       // Inputs are reset to empty after successful submit
       expect(actor.getSnapshot().context.inputs.text).toEqual({});
+    });
+
+    it('stores replayed: true in context when API returns a replayed session', async () => {
+      vi.mocked(api.startSession).mockResolvedValue({
+        session: mockSession({ status: 'completed' }),
+        replayed: true,
+      });
+      const actor = setupActor();
+      actor.send({ type: 'SUBMIT' });
+      await waitFor(actor, (s) => s.matches('submitted'));
+      expect(actor.getSnapshot().context.replayed).toBe(true);
+      expect(actor.getSnapshot().context.session?.status).toBe('completed');
     });
   });
 

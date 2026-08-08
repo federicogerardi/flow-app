@@ -55,13 +55,9 @@ No optional bypass exists for required assets.
 interface ToolPageContext {
   tool: ToolDefinition | null;
   workspaceId: string;
-  inputs: {
-    text: Record<string, string>;
-    files: Record<string, File>;
-    selectedAssetIds: string[];
-    selectedAssetsByType: Partial<Record<string, string[]>>;
-  };
+  inputs: { ... };
   session: SessionDTO | null;
+  replayed: boolean;              // true when API returns an idempotency replay (2026-08-08)
   error: { code: string; message: string } | null;
 }
 
@@ -187,10 +183,13 @@ function ToolPageLayout({ workspaceId, toolKey }: Props) {
   const [state, send] = useMachine(toolPageMachine);
   const navigate = useNavigate();
 
-  // Redirect to SessionPage after successful submit
+  // Redirect to SessionPage after successful submit.
+  // For idempotency replays (same inputs as previous generation),
+  // appends ?replayed=true so SessionPage can show a banner.
   useEffect(() => {
     if (state.matches('submitted') && state.context.session?.id) {
-      navigate(`/workspaces/${workspaceId}/sessions/${state.context.session.id}`);
+      const query = state.context.replayed ? '?replayed=true' : '';
+      navigate(`/workspaces/${workspaceId}/sessions/${state.context.session.id}${query}`);
     }
   }, [state]);
 
@@ -216,7 +215,7 @@ function ToolPageLayout({ workspaceId, toolKey }: Props) {
 | **`submitted` terminal state** | Machine reaches `submitted` → `ToolPageLayout` navigates to `/sessions/[id]` via `useEffect` |
 | **State → UI derivation** | 5 machine states → 3 UI states. `configuring` and `ready` both render `SetupPanel` but differ in CTA enabled state |
 | **canSubmit guard** | Mirrors backend `ReadinessPolicy` exactly, including required asset checks by `assetType` |
-| **Idempotent replay** | Handled transparently: `submitSession` returns session regardless of `replayed` flag; redirect sends user to SessionPage which fetches the real state |
+| **Idempotent replay** | `submitSession` stores `replayed` flag from API response in context. `ToolPageLayout` appends `?replayed=true` to redirect URL. [[SessionPage]] shows a banner indicating the generation is a previous result with the same inputs. |
 
 ## Sources
 

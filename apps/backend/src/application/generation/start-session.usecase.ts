@@ -67,13 +67,21 @@ export class StartSessionUseCase {
     // Check for existing session (idempotency)
     const existing = await this.sessionRepo.findByIdempotencyKeyHash(idempotencyHash);
     if (existing) {
-      return {
-        session: existing,
-        toolKey: existing.toolKey.value,
-        stepCount: getTool(existing.toolKey)?.steps.length ?? 0,
-        replayed: true,
-        resolvedAssets,
-      };
+      // If the existing session is cancelled or failed, delete the stale
+      // idempotency key and create a fresh session. The user wants to retry
+      // with the same inputs — blocking them on a dead session is frustrating.
+      if (existing.status.toString() === 'cancelled' || existing.status.toString() === 'failed') {
+        await this.sessionRepo.deleteIdempotencyKey(idempotencyHash);
+        // Fall through to fresh session creation below
+      } else {
+        return {
+          session: existing,
+          toolKey: existing.toolKey.value,
+          stepCount: getTool(existing.toolKey)?.steps.length ?? 0,
+          replayed: true,
+          resolvedAssets,
+        };
+      }
     }
 
     // Fresh session: validate readiness and create

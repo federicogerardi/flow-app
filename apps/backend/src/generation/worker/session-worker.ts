@@ -63,6 +63,18 @@ async function processSessionJob(
     const session = await deps.sessionRepo.findById(sessionId);
     if (!session) throw new SessionNotFoundError(sessionId);
 
+    // Guard: skip processing if session is already in a terminal state.
+    // Replayed sessions that were completed/failed/cancelled by a previous
+    // worker run cannot accept QUEUE or WORKER_PICKUP events —
+    // InvalidSessionStateError would be thrown.
+    if (session.status.isTerminal()) {
+      log.warn(
+        { status: session.status.toString(), version: session.version },
+        'job_skipped_terminal_session',
+      );
+      return;
+    }
+
     // Advance session aggregate through queued→running before processing steps
     // The session was saved in "ready" state by StartSessionUseCase.
     // QUEUE and WORKER_PICKUP events are applied to the session aggregate,
@@ -216,35 +228,56 @@ async function processSessionJob(
       });
     });
 
-    // Persist final session state BEFORE publishing session_completed.
+    // Persist final session state BEFORE publishing SSE events.
     // The machine's completeSession action applied COMPLETE in-memory,
-    // but the FE's onCompleted handler fetches from DB — which must already
-    // have status=completed for the phaseOverride to work.
+    // but subscribers (SSE, FE polling) fetch from DB — which must already
+    // reflect the final state.
     await deps.sessionRepo.save(session);
     log.info({ status: session.status.toString(), version: session.version }, 'session_persisted');
 
-    // Manually publish session_completed via SSE — after DB is consistent
-    const finalArtifact = session.artifacts[session.artifacts.length - 1];
-    deps.eventBridge.publish(sessionId, {
-      event: 'session_completed',
-      data: {
-        sessionId,
-        status: 'completed',
-        finalArtifact: finalArtifact ? {
-          id: finalArtifact.artifactId,
-          stepNumber: finalArtifact.stepNumber,
-          status: finalArtifact.status.toString(),
-          createdAt: finalArtifact.createdAt?.toISOString() ?? new Date().toISOString(),
-          sessionId: finalArtifact.sessionId,
-          content: finalArtifact.content,
-        } : undefined,
-        completedAt: session.completedAt?.toISOString(),
-      },
-    });
+    // Publish correct SSE event based on the machine's actual final state.
+    // Using snapshot.value (not session.status) because the machine
+    // transitions to 'failed' without calling session.apply(FAIL) —
+    // the session aggregate stays 'running' in that case.
+    const finalMachineState = String(actor.getSnapshot().value);
 
-    // Gamification: award XP on successful session completion
-    const snapshot = actor.getSnapshot();
-    if (snapshot.status === 'done') {
+    if (finalMachineState === 'completed') {
+      const finalArtifact = session.artifacts[session.artifacts.length - 1];
+      deps.eventBridge.publish(sessionId, {
+        event: 'session_completed',
+        data: {
+          sessionId,
+          status: 'completed',
+          finalArtifact: finalArtifact ? {
+            id: finalArtifact.artifactId,
+            stepNumber: finalArtifact.stepNumber,
+            status: finalArtifact.status.toString(),
+            createdAt: finalArtifact.createdAt?.toISOString() ?? new Date().toISOString(),
+            sessionId: finalArtifact.sessionId,
+            content: finalArtifact.content,
+          } : undefined,
+          completedAt: session.completedAt?.toISOString(),
+        },
+      });
+    } else if (finalMachineState === 'failed') {
+      deps.eventBridge.publish(sessionId, {
+        event: 'session_failed',
+        data: {
+          sessionId,
+          status: 'failed',
+          error: {
+            code: session.errorCode ?? 'SESSION_FAILED',
+            message: session.errorMessage ?? 'Session processing failed',
+          },
+        },
+      });
+    }
+    // cancelled → no SSE event published (the cancel API handled it)
+
+    // Gamification + credits: only for genuinely completed sessions.
+    // The XState snapshot.status === 'done' is true for ALL final states
+    // (completed, failed, cancelled). We must check snapshot.value explicitly.
+    if (finalMachineState === 'completed') {
       // Credit consumption: synchronous with optimistic retry (reliable)
       try {
         await deps.consumeCreditsUC.execute({

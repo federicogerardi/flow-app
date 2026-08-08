@@ -105,32 +105,46 @@ vi.mock('../../infrastructure/logger.js', () => ({
   },
 }));
 
+// ── Mock session factory ───────────────────────────────────────────────────
+
+function createMockSession(overrides: {
+  status?: string;
+  isTerminal?: boolean;
+  errorCode?: string | null;
+  errorMessage?: string | null;
+} = {}) {
+  const self = {
+    sessionId: 's-1',
+    toolKey: { value: 'blog-post', toString: () => 'blog-post' },
+    workspaceId: 'ws-1',
+    userId: 'user-1',
+    status: {
+      toString: () => overrides.status ?? 'queued',
+      isTerminal: () => overrides.isTerminal ?? false,
+    },
+    currentStepIndex: 0,
+    startedAt: new Date(),
+    completedAt: null as Date | null,
+    errorCode: overrides.errorCode ?? null,
+    errorMessage: overrides.errorMessage ?? null,
+    artifacts: [] as Array<{ artifactId: string; stepNumber: number; content: string; status: string; createdAt: Date; sessionId: string }>,
+    version: 1,
+    apply: vi.fn(function (this: typeof self, event: { type: string; artifact?: typeof self.artifacts[number]; isLast?: boolean }) {
+      if (event.type === 'ADD_ARTIFACT' && event.artifact) {
+        this.artifacts.push(event.artifact);
+      }
+      if (event.type === 'COMPLETE') {
+        this.completedAt = new Date();
+      }
+    }),
+  };
+  return self;
+}
+
 function createMockDeps(overrides: Partial<SessionWorkerDeps> = {}): SessionWorkerDeps {
   return {
     sessionRepo: {
-      findById: vi.fn().mockImplementation(() => {
-        const mockSession = {
-          sessionId: 's-1',
-          toolKey: { value: 'blog-post', toString: () => 'blog-post' },
-          workspaceId: 'ws-1',
-          userId: 'user-1',
-          status: { toString: () => 'queued' },
-          currentStepIndex: 0,
-          startedAt: new Date(),
-          completedAt: null,
-          artifacts: [] as Array<{ artifactId: string; stepNumber: number; content: string; status: string; createdAt: Date; sessionId: string }>,
-          version: 1,
-          apply: vi.fn(function(this: typeof mockSession, event: { type: string; artifact?: typeof mockSession.artifacts[number]; isLast?: boolean }) {
-            if (event.type === 'ADD_ARTIFACT' && event.artifact) {
-              this.artifacts.push(event.artifact);
-            }
-            if (event.type === 'COMPLETE') {
-              this.completedAt = new Date();
-            }
-          }),
-        };
-        return Promise.resolve(mockSession);
-      }),
+      findById: vi.fn().mockResolvedValue(createMockSession()),
       save: vi.fn().mockResolvedValue(undefined),
       saveWithLock: vi.fn().mockResolvedValue(undefined),
       saveIdempotencyKey: vi.fn().mockResolvedValue(undefined),
@@ -180,6 +194,8 @@ function createMockDeps(overrides: Partial<SessionWorkerDeps> = {}): SessionWork
   };
 }
 
+// ── Tests ───────────────────────────────────────────────────────────────────
+
 describe('SessionWorker', () => {
   let deps: SessionWorkerDeps;
 
@@ -189,6 +205,8 @@ describe('SessionWorker', () => {
     deps = createMockDeps();
   });
 
+  // ── Existing tests ──────────────────────────────────────────────────────
+
   it('should create a worker with correct queue name', async () => {
     const { createSessionWorker } = await import('../worker/session-worker.js');
     const worker = createSessionWorker(deps);
@@ -196,7 +214,7 @@ describe('SessionWorker', () => {
     expect(worker).toBeDefined();
   });
 
-  it('should process a job and return artifact', async () => {
+  it('should process a job and return artifact (happy path)', async () => {
     const { createSessionWorker } = await import('../worker/session-worker.js');
     const { Worker } = await import('bullmq');
 
@@ -245,5 +263,198 @@ describe('SessionWorker', () => {
     const { createSessionWorker } = await import('../worker/session-worker.js');
 
     expect(() => createSessionWorker(deps)).toThrow('REDIS_URL not set');
+  });
+
+  // ── New tests: Terminal state guard ──────────────────────────────────────
+
+  it('[T1] skips processing for already-completed session', async () => {
+    deps.sessionRepo.findById = vi.fn().mockResolvedValue(
+      createMockSession({ status: 'completed', isTerminal: true }),
+    );
+
+    const { createSessionWorker } = await import('../worker/session-worker.js');
+    const { Worker } = await import('bullmq');
+
+    createSessionWorker(deps);
+
+    const mockWorker = vi.mocked(Worker).mock.results[0]?.value as { processor?: { mock?: { calls?: Array<[unknown]> } } };
+    if (!mockWorker?.processor) return;
+
+    const processorFn = mockWorker.processor;
+
+    await processorFn({
+      data: { sessionId: 's-completed' },
+      id: 'job-t1',
+      attemptsMade: 0,
+    });
+
+    // No LLM calls, no events published
+    expect(deps.llmGateway.generate).not.toHaveBeenCalled();
+    expect(deps.eventBridge.publish).not.toHaveBeenCalled();
+    expect(deps.consumeCreditsUC.execute).not.toHaveBeenCalled();
+  });
+
+  it('[T2] skips processing for already-cancelled session', async () => {
+    deps.sessionRepo.findById = vi.fn().mockResolvedValue(
+      createMockSession({ status: 'cancelled', isTerminal: true }),
+    );
+
+    const { createSessionWorker } = await import('../worker/session-worker.js');
+    const { Worker } = await import('bullmq');
+
+    createSessionWorker(deps);
+
+    const mockWorker = vi.mocked(Worker).mock.results[0]?.value as { processor?: { mock?: { calls?: Array<[unknown]> } } };
+    if (!mockWorker?.processor) return;
+
+    const processorFn = mockWorker.processor;
+
+    await processorFn({
+      data: { sessionId: 's-cancelled' },
+      id: 'job-t2',
+      attemptsMade: 0,
+    });
+
+    // No side effects — worker returns cleanly
+    expect(deps.llmGateway.generate).not.toHaveBeenCalled();
+    expect(deps.consumeCreditsUC.execute).not.toHaveBeenCalled();
+  });
+
+  it('[T3] skips processing for already-failed session', async () => {
+    deps.sessionRepo.findById = vi.fn().mockResolvedValue(
+      createMockSession({ status: 'failed', isTerminal: true }),
+    );
+
+    const { createSessionWorker } = await import('../worker/session-worker.js');
+    const { Worker } = await import('bullmq');
+
+    createSessionWorker(deps);
+
+    const mockWorker = vi.mocked(Worker).mock.results[0]?.value as { processor?: { mock?: { calls?: Array<[unknown]> } } };
+    if (!mockWorker?.processor) return;
+
+    const processorFn = mockWorker.processor;
+
+    await processorFn({
+      data: { sessionId: 's-failed' },
+      id: 'job-t3',
+      attemptsMade: 0,
+    });
+
+    expect(deps.llmGateway.generate).not.toHaveBeenCalled();
+    expect(deps.consumeCreditsUC.execute).not.toHaveBeenCalled();
+  });
+
+  // ── New tests: Gamification + SSE conditional ────────────────────────────
+
+  it('[T4] happy path: credits consumed + XP awarded for completed session', async () => {
+    const { createSessionWorker } = await import('../worker/session-worker.js');
+    const { Worker } = await import('bullmq');
+
+    createSessionWorker(deps);
+
+    const mockWorker = vi.mocked(Worker).mock.results[0]?.value as { processor?: { mock?: { calls?: Array<[unknown]> } } };
+    if (!mockWorker?.processor) return;
+
+    const processorFn = mockWorker.processor;
+
+    await processorFn({
+      data: { sessionId: 's-1' },
+      id: 'job-t4',
+      attemptsMade: 0,
+    });
+
+    expect(deps.consumeCreditsUC.execute).toHaveBeenCalled();
+    expect(deps.gamificationEventPublisher.publishSessionCompleted).toHaveBeenCalledWith(
+      's-1', 'ws-1', 'user-1', 'blog-post',
+    );
+  });
+
+  it('[T5] happy path: session_completed SSE published for completed session', async () => {
+    const { createSessionWorker } = await import('../worker/session-worker.js');
+    const { Worker } = await import('bullmq');
+
+    createSessionWorker(deps);
+
+    const mockWorker = vi.mocked(Worker).mock.results[0]?.value as { processor?: { mock?: { calls?: Array<[unknown]> } } };
+    if (!mockWorker?.processor) return;
+
+    const processorFn = mockWorker.processor;
+
+    await processorFn({
+      data: { sessionId: 's-1' },
+      id: 'job-t5',
+      attemptsMade: 0,
+    });
+
+    // Verify session_completed was published
+    const publishCalls = vi.mocked(deps.eventBridge.publish).mock.calls;
+    const completedCall = publishCalls.find(
+      ([_id, payload]: [unknown, { event: string }]) => (payload as { event: string }).event === 'session_completed',
+    );
+    expect(completedCall).toBeDefined();
+  });
+
+  it('[T6] credits NOT consumed + session_failed SSE for failed session', async () => {
+    // Simulate a session where the LLM gateway throws, causing the machine
+    // to transition to 'failed' via onError (not an uncaught exception).
+    // The machine reaches done with snapshot.value === 'failed'.
+    deps.llmGateway.generate = vi.fn().mockRejectedValue(new Error('LLM timeout'));
+
+    const { createSessionWorker } = await import('../worker/session-worker.js');
+    const { Worker } = await import('bullmq');
+
+    createSessionWorker(deps);
+
+    const mockWorker = vi.mocked(Worker).mock.results[0]?.value as { processor?: { mock?: { calls?: Array<[unknown]> } } };
+    if (!mockWorker?.processor) return;
+
+    const processorFn = mockWorker.processor;
+
+    await processorFn({
+      data: { sessionId: 's-1' },
+      id: 'job-t6',
+      attemptsMade: 0,
+    });
+
+    // Credits NOT consumed (machine reached 'failed', not 'completed')
+    expect(deps.consumeCreditsUC.execute).not.toHaveBeenCalled();
+    expect(deps.gamificationEventPublisher.publishSessionCompleted).not.toHaveBeenCalled();
+
+    // session_failed SSE published
+    const publishCalls = vi.mocked(deps.eventBridge.publish).mock.calls;
+    const failedCall = publishCalls.find(
+      ([_id, payload]: [unknown, { event: string }]) => (payload as { event: string }).event === 'session_failed',
+    );
+    expect(failedCall).toBeDefined();
+  });
+
+  it('[T7] no credits consumed + no session_completed for cancelled state', async () => {
+    // For cancelled state, the worker is reached via the terminal guard
+    // (T2 already tests that). This test validates that if somehow a session
+    // reaches cancelled through the machine (CANCEL event), no credits/XP
+    // are awarded. The terminal guard at the start covers this case in practice.
+    deps.sessionRepo.findById = vi.fn().mockResolvedValue(
+      createMockSession({ status: 'cancelled', isTerminal: true }),
+    );
+
+    const { createSessionWorker } = await import('../worker/session-worker.js');
+    const { Worker } = await import('bullmq');
+
+    createSessionWorker(deps);
+
+    const mockWorker = vi.mocked(Worker).mock.results[0]?.value as { processor?: { mock?: { calls?: Array<[unknown]> } } };
+    if (!mockWorker?.processor) return;
+
+    const processorFn = mockWorker.processor;
+
+    await processorFn({
+      data: { sessionId: 's-cancelled' },
+      id: 'job-t7',
+      attemptsMade: 0,
+    });
+
+    expect(deps.consumeCreditsUC.execute).not.toHaveBeenCalled();
+    expect(deps.gamificationEventPublisher.publishSessionCompleted).not.toHaveBeenCalled();
   });
 });

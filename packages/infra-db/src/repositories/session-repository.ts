@@ -243,6 +243,13 @@ export class KyselySessionRepository implements SessionRepository {
       .execute();
   }
 
+  async deleteIdempotencyKey(hash: string): Promise<void> {
+    await this.db
+      .deleteFrom('idempotency_keys')
+      .where('key_hash', '=', hash)
+      .execute();
+  }
+
   async saveSnapshot(sessionId: string, snapshot: string): Promise<void> {
     await this.db
       .insertInto('session_snapshots')

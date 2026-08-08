@@ -24,11 +24,14 @@ Mounted in `App.tsx` with `<ErrorBoundary>` wrapper. Route parameters: `workspac
 
 **2026-08-08**: SessionPage is now the **single canonical destination** for session progress and results. `ToolPageLayout` redirects here after successful submission (`submitted` state). This eliminates duplicated SSE connections and FeedbackPanel/SessionSummary renders in the tool page.
 
+**2026-08-08 (replay detection)**: When the redirect includes `?replayed=true` (idempotency hit — same inputs as a previous generation), a banner alerts the user that this is a previously completed result and suggests modifying inputs for a fresh generation.
+
 ## Component Structure
 
 ```
 SessionPage
 ├── PageHeader: "Session: {toolName}"
+├── Alert (replayed: "Questa generazione è stata già completata...")
 ├── Alert (queued/draft/ready: friendly "in elaborazione" message)
 ├── Card: Status + Metadata
 │   ├── Status chip (color-coded via statusColorMap)
@@ -71,6 +74,13 @@ const durationMs = startedAt && completedAt
 ```
 
 Displayed only when `durationMs > 0`.
+
+### Replay Detection
+
+> **Added 2026-08-08**: When `ToolPageLayout` redirects with `?replayed=true` (idempotency hit — user submitted the same inputs as a previous generation), an informational banner is shown:
+> `shared.session.replayedMessage`: "Questa generazione è stata già completata in precedenza con gli stessi input. Per avviare una nuova generazione, modifica gli input o usa 'Nuova generazione'."
+
+The `useSearchParams()` hook reads the query param and shows the banner at the top of the page (below PageHeader, above the queued/pending alert).
 
 ### Cancel
 

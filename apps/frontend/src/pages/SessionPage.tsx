@@ -2,7 +2,7 @@ import { Box, Card, CardContent, Chip, Typography, Button, Alert } from '@mui/ma
 import CancelIcon from '@mui/icons-material/Cancel';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AddIcon from '@mui/icons-material/Add';
-import { useParams, useNavigate } from 'react-router';
+import { useParams, useNavigate, useSearchParams } from 'react-router';
 import { useEffect, useState } from 'react';
 import { useSession } from '../api/hooks';
 import { api } from '../api/client';
@@ -25,6 +25,8 @@ function formatDurationMs(ms: number): string {
 
 export default function SessionPage() {
   const { sessionId, workspaceId } = useParams<{ sessionId: string; workspaceId: string }>();
+  const [searchParams] = useSearchParams();
+  const isReplayed = searchParams.get('replayed') === 'true';
   const navigate = useNavigate();
   const { session, progress, loading, error } = useSession(sessionId ?? null);
   const { setBreadcrumbs } = useBreadcrumbs();
@@ -86,6 +88,13 @@ export default function SessionPage() {
           </>
         ) : undefined}
       />
+
+      {/* Replayed session — user submitted same inputs as a previous generation */}
+      {isReplayed && (
+        <Alert severity="info" sx={{ mb: 2 }} role="status" aria-live="polite">
+          {copy.t('shared.session.replayedMessage')}
+        </Alert>
+      )}
 
       {/* Pending session — friendly "in elaborazione" message */}
       {isQueued && (

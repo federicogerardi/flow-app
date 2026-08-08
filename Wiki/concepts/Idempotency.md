@@ -5,7 +5,7 @@ tags:
   - wiki/infrastructure
   - wiki/domain-value-object
   - wiki/idempotency
-date_updated: 2026-08-02
+date_updated: 2026-08-08
 source_count: 8
 confidence: high
 ---
@@ -65,6 +65,7 @@ if (version === 'latest') {
 | Same inputs, template updated | ❌ No | New session with updated prompt |
 | Same inputs, `"latest"` changed | ❌ No (resolved differently) | New session |
 | One input field changed | ❌ No (inputHash differs) | New session |
+| Same inputs, old session cancelled/failed | ❌ No (key deleted by use case) | Fresh session |
 
 ## Canonical Constants
 
@@ -178,6 +179,26 @@ The `sessionRepository.saveIdempotencyKey()` method persists the key separately 
 ```sql
 DELETE FROM idempotency_keys WHERE expires_at < NOW();
 ```
+
+## Stale Key Cleanup for Retry (2026-08-08)
+
+When a user re-submits the same inputs but the previous session was **cancelled** or **failed**, the idempotency key is a dead end — it maps to a session that will never complete. `StartSessionUseCase` now detects this and **deletes the stale key** before creating a fresh session:
+
+```typescript
+// start-session.usecase.ts
+if (existing.status.toString() === 'cancelled' || existing.status.toString() === 'failed') {
+  await this.sessionRepo.deleteIdempotencyKey(idempotencyHash);
+  // Fall through → create fresh session (201 instead of 200)
+}
+```
+
+| Existing session status | Behavior |
+|---|---|
+| `completed` | Return existing (replay) — user sees result ✅ |
+| `running` / `queued` / `ready` | Return existing (replay) — user sees progress ✅ |
+| `cancelled` / `failed` | Delete key → create fresh session (201) ✅ |
+
+`SessionRepository.deleteIdempotencyKey()` is a simple `DELETE FROM idempotency_keys WHERE key_hash = ?`.
 
 ## Development Opt-Out
 

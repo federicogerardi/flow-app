@@ -17,6 +17,7 @@ export interface ToolPageContext {
   workspaceId: string;
   inputs: ToolPageInputs;
   session: SessionDTO | null;
+  replayed: boolean;
   error: { code: string; message: string } | null;
 }
 
@@ -122,6 +123,7 @@ export const toolPageMachine = setup({
     workspaceId: '',
     inputs: emptyInputs(),
     session: null,
+    replayed: false,
     error: null,
   },
   states: {
@@ -187,7 +189,14 @@ export const toolPageMachine = setup({
         onDone: {
           target: 'submitted',
           actions: assign({
-            session: ({ event }) => (event.output as { session: SessionDTO }).session,
+            session: ({ event }) => {
+              const output = event.output as { session: SessionDTO; replayed: boolean };
+              return output.session;
+            },
+            replayed: ({ event }) => {
+              const output = event.output as { session: SessionDTO; replayed: boolean };
+              return output.replayed ?? false;
+            },
             inputs: () => emptyInputs(),
           }),
         },

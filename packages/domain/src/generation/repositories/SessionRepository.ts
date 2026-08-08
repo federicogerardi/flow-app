@@ -31,6 +31,8 @@ export interface SessionRepository {
    */
   saveWithLock(session: Session, expectedVersion: number): Promise<void>;
   saveIdempotencyKey(hash: string, sessionId: string): Promise<void>;
+  /** Delete a stale idempotency key to allow retry of cancelled/failed sessions. */
+  deleteIdempotencyKey(hash: string): Promise<void>;
   saveSnapshot(sessionId: string, snapshot: string): Promise<void>;
   loadSnapshot(sessionId: string): Promise<string | null>;
 }
