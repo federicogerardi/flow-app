@@ -1001,6 +1001,39 @@ These rules prevent the class of test failures discovered during the 2026-08-08 
 - [ ] `apply()` and other mutating methods actually modify the mock object (not just `vi.fn()`)
 - [ ] Repository methods not directly called in tests still accept the expected parameter shape (e.g., `findLastArtifactsBySessionIds`)
 
+### 1 bis — Mock data MUST include ALL mandatory DTO fields
+
+**Pattern**: mock session data `{ id: 's-1', toolKey: 'Blog Post', status: 'completed', createdAt: '...' }` was missing `workspaceId` and `stepCount` — both mandatory fields in `SessionListItemDTO`. The code under test didn't access them directly, but intermediate components (Tab badges, card renderers) destructured them, causing `undefined` silently propagated to `{undefined} step{undefined !== 1 ? 's' : ''}` — rendering "undefined steps" without throwing. Worse: missing `workspaceId` was silently swallowed by the component but broke navigation callbacks that expected it.
+
+**Rule**: mock data objects must contain every mandatory field from their TypeScript interface, even if the immediate code path doesn't access them. The blast radius of a missing field extends to child components, MUI renderers, and event handlers.
+
+```typescript
+// ❌ VIOLATION — missing mandatory workspaceId + stepCount
+const mockSession = {
+  id: 's-1',
+  toolKey: 'blog-post',
+  status: 'completed',
+  createdAt: '2024-01-15T10:30:00Z',
+};
+
+// ✅ CORRECT — all SessionListItemDTO mandatory fields present
+const mockSession: SessionListItemDTO = {
+  id: 's-1',
+  toolKey: 'blog-post',
+  workspaceId: 'ws-1',
+  status: 'completed',
+  stepCount: 5,
+  createdAt: '2024-01-15T10:30:00Z',
+};
+```
+
+**Checklist before writing mock data:**
+- [ ] Read the interface definition (not just the code under test)
+- [ ] Every non-optional field has a valid value
+- [ ] `stepCount`, `workspaceId`, `userId`-type fields are populated — never left `undefined`
+- [ ] For list/page-level tests with SWR: provide ALL keys used by child components (`assets-ws-1-coverage`, `members-ws-1`), not just the primary data source
+- [ ] Mock SWR responses include `{ data, isLoading: false, error: undefined }` — missing `isLoading`/`error` defaults to `true`/`undefined` which triggers unexpected loading skeletons
+
 ### 2 — Establish test baseline before large-scale refactoring
 
 **Pattern**: starting a 50-file refactor without knowing the pre-existing test state wastes time debugging failures that pre-date the changes.
@@ -1046,6 +1079,33 @@ rg "Sign in" apps/frontend/src/pages/__tests__/LoginPage.test.tsx
 3. **Execute phase**: apply all edits in parallel batches
 
 For the execute phase, prefer `write` for files under 200 lines (cleaner, avoids whitespace/context issues) and `edit` for targeted changes in larger files.
+
+### 5 — XState v5 `fromCallback` with browser APIs requires jsdom polyfill
+
+**Pattern**: XState machines that use `fromCallback` to invoke browser APIs (`EventSource`, `WebSocket`, `fetch`) will fail in jsdom because these APIs are not implemented. The machine reaches the `running` state, invokes the callback actor, and `new EventSource(...)` throws — causing uncaught errors that break unrelated tests.
+
+**Rule**: before any test file that triggers a state invoking a `fromCallback` actor with browser APIs, polyfill the missing API:
+
+```typescript
+// ✅ CORRECT — polyfill EventSource before machine tests
+class MockEventSource {
+  onerror: (() => void) | null = null;
+  addEventListener(_type: string, _handler: (e: MessageEvent) => void) {}
+  close() {}
+}
+
+beforeAll(() => {
+  (globalThis as any).EventSource = MockEventSource;
+});
+```
+
+**When to apply**: any test that sends events leading to a state that invokes a `fromCallback` actor. Even if the specific test doesn't reach that state, the polyfill prevents side effects from other tests that do.
+
+**Checklist before writing XState machine tests:**
+- [ ] Scan the machine for `fromCallback` actors — identify all browser APIs used
+- [ ] Mock or polyfill every browser API before any test runs
+- [ ] The polyfill must expose all methods/properties referenced by the `fromCallback` closure (typically `addEventListener`, `close`, `onerror`)
+- [ ] Tests that need to simulate SSE events should send events directly via `actor.send()`, not through the polyfill
 
 ---
 
