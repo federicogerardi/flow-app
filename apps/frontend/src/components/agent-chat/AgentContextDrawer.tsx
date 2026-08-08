@@ -9,17 +9,9 @@ import useSWR from 'swr';
 import { api, type AgentDTO } from '../../api/client';
 import { statusColorMap } from '../../shared/statusColors';
 import { copy } from '@flow-app/copy';
-import { ASSET_TYPE_LABELS } from '../../constants/assets';
+import { ASSET_TYPE_LABELS, ASSET_TOOL_MAP } from '../../constants/assets';
 
 const EXPECTED_ASSET_TYPES = ['brief', 'brand-voice', 'persona', 'angle', 'ad-copy'] as const;
-
-const ASSET_TOOL_MAP: Record<string, string> = {
-  'brief': 'brief',
-  'brand-voice': 'brand-voice',
-  'persona': 'buyer-persona',
-  'angle': 'marketing-angle',
-  'ad-copy': 'ad-copy',
-};
 
 interface AgentContextDrawerProps {
   open: boolean;

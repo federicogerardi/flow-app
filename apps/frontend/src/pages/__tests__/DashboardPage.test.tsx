@@ -56,6 +56,18 @@ describe('DashboardPage', () => {
     vi.clearAllMocks();
   });
 
+  /** Mock tools list response — data-driven from API (ToolOutputCategory in domain) */
+  const TOOLS_DATA = {
+    tools: [
+      { toolKey: 'blog-post', name: 'Blog Post', outputCategory: 'content' as const, produces: undefined as string | undefined, description: 'SEO article', creditCost: 1, stepCount: 3, acquisition: { userText: [], files: [], assets: [] } },
+      { toolKey: 'landing-funnel', name: 'Landing Funnel', outputCategory: 'content' as const, produces: undefined as string | undefined, description: 'Landing + opt-in', creditCost: 1, stepCount: 3, acquisition: { userText: [], files: [], assets: [] } },
+      { toolKey: 'brief', name: 'Brief', outputCategory: 'asset' as const, produces: 'brief' as string, description: 'Marketing brief', creditCost: 1, stepCount: 2, acquisition: { userText: [], files: [], assets: [] } },
+    ],
+  };
+
+  const MOCK_TOOLS_RESPONSE = { data: TOOLS_DATA, isLoading: false as const, error: undefined };
+  const mockAssetsEmpty = { data: { assets: [] }, isLoading: false as const, error: undefined };
+
   it('shows loading skeleton while workspaces are loading', () => {
     mockSwrReturns({
       workspaces: { data: undefined, isLoading: true, error: undefined },
@@ -95,6 +107,9 @@ describe('DashboardPage', () => {
         isLoading: false,
         error: undefined,
       },
+      'tools-list-content': MOCK_TOOLS_RESPONSE,
+      'tools-list': MOCK_TOOLS_RESPONSE,
+      'assets-ws-1-coverage': { data: { assets: [] }, isLoading: false, error: undefined },
     });
 
     renderDashboard('ws-1');
@@ -113,6 +128,9 @@ describe('DashboardPage', () => {
         isLoading: false,
         error: undefined,
       },
+      'tools-list-content': MOCK_TOOLS_RESPONSE,
+      'tools-list': MOCK_TOOLS_RESPONSE,
+      'assets-ws-1-coverage': { data: { assets: [] }, isLoading: false, error: undefined },
       'sessions-ws-1': {
         data: {
           data: [],
@@ -136,6 +154,9 @@ describe('DashboardPage', () => {
         isLoading: false,
         error: undefined,
       },
+      'tools-list-content': MOCK_TOOLS_RESPONSE,
+      'tools-list': MOCK_TOOLS_RESPONSE,
+      'assets-ws-1-coverage': { data: { assets: [] }, isLoading: false, error: undefined },
       'sessions-ws-1': {
         data: {
           queued: [],
@@ -219,6 +240,9 @@ describe('DashboardPage', () => {
         isLoading: false,
         error: undefined,
       },
+      'tools-list-content': MOCK_TOOLS_RESPONSE,
+      'tools-list': MOCK_TOOLS_RESPONSE,
+      'assets-ws-1-coverage': { data: { assets: [] }, isLoading: false, error: undefined },
     });
 
     renderDashboard('ws-1');

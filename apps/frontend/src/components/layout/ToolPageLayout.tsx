@@ -16,7 +16,7 @@ import type { ToolDefinition, TextInput, FileInput, AssetInput } from '../../too
 import type { SessionDTO as ApiSessionDTO, ArtifactDTO } from '../../api/client';
 import { copy } from '@flow-app/copy';
 import { AssetPicker } from '../shared/AssetPicker';
-import { ASSET_TOOL_MAP } from '../workspace/AssetCoverageBar';
+import { ASSET_TOOL_MAP } from '../../constants/assets';
 import { ASSET_TYPE_LABELS } from '../../constants/assets';
 
 // ── UI state derivation ────────────────────────────────────────────────────────

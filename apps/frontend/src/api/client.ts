@@ -22,6 +22,21 @@ export interface SessionListResponse {
   total: number;
 }
 
+export interface ToolListItemDTO {
+  toolKey: string;
+  name: string;
+  description: string;
+  stepCount: number;
+  creditCost: number;
+  produces?: string;
+  outputCategory: 'asset' | 'content';
+  acquisition: {
+    userText: Array<{ key: string; label: string; required: boolean; type?: string; placeholder?: string; options?: string[] }>;
+    files: Array<{ key: string; label: string; accept: string[]; required: boolean; description?: string; maxSizeMb?: number }>;
+    assets: Array<{ assetType: string; required: boolean; multiple: boolean }>;
+  };
+}
+
 export type { WorkspaceDTO, MessageDTO, ConversationDTO, ConversationListItemDTO, AgentDTO, PlayerProfileDTO, LeaderboardEntryDTO, WorkspaceHealthDTO, ChallengeDTO, SeasonDTO, AssetDTO };
 
 // ── API Client ────────────────────────────────────────────────────────────────
@@ -110,6 +125,10 @@ class ApiClient {
 
   async getSession(sessionId: string) {
     return this.request<SessionDTO>('GET', `/api/sessions/${sessionId}`);
+  }
+
+  async listTools() {
+    return this.request<{ tools: ToolListItemDTO[] }>('GET', '/api/tools');
   }
 
   async listSessions(params?: { workspaceId?: string; status?: string; limit?: number }) {

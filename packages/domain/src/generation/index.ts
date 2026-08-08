@@ -15,6 +15,8 @@ export { ArtifactStatus, InvalidArtifactStatusError, InvalidArtifactTransitionEr
 export type { ArtifactStatusValue } from './value-objects/ArtifactStatus';
 export { ReadinessPolicy } from './value-objects/ReadinessPolicy';
 export type { AcquisitionData } from './value-objects/ReadinessPolicy';
+export { ToolOutputCategory, InvalidToolOutputCategoryError } from './value-objects/ToolOutputCategory';
+export type { ToolOutputCategoryValue } from './value-objects/ToolOutputCategory';
 export { CrawlData, InvalidCrawlDataError } from './value-objects/CrawlData';
 export type { CrawlDataProps } from './value-objects/CrawlData';
 
@@ -36,7 +38,7 @@ export { ContextEnricher } from './domain-services/ContextEnricher';
 export type { SessionRepository, SessionFilters } from './repositories/SessionRepository';
 
 // Tools
-export { toolRegistry, getTool, ToolNotFoundError } from './tools';
+export { toolRegistry, getTool, getAssetProducerTools, getContentProducerTools, ToolNotFoundError } from './tools';
 export type { ToolDefinition, StepDefinition, StepPromptDefinition, TextInput } from './tools/tool-definition';
 export { ModelTier, InvalidModelTierError } from './value-objects/ModelTier';
 

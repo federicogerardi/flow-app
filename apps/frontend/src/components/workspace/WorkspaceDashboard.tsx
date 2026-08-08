@@ -1,25 +1,29 @@
 import { Box, Typography } from '@mui/material';
 import ArticleIcon from '@mui/icons-material/Article';
 import FilterCenterFocusIcon from '@mui/icons-material/FilterCenterFocus';
-import AssignmentIcon from '@mui/icons-material/Assignment';
-import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
+import DescriptionIcon from '@mui/icons-material/Description';
+import SmartDisplayIcon from '@mui/icons-material/SmartDisplay';
+import InsightsIcon from '@mui/icons-material/Insights';
+import CampaignIcon from '@mui/icons-material/Campaign';
 import { useNavigate } from 'react-router';
+import useSWR from 'swr';
+import { api } from '../../api/client';
 import { ToolCard } from '../tool/ToolCard';
 import { SessionList } from '../workspace/SessionList';
 import { AssetCoverageBar } from '../workspace/AssetCoverageBar';
 import { ReadyToPromoteList } from '../workspace/ReadyToPromoteList';
 import { copy } from '@flow-app/copy';
 
-const TOP_TOOLS = [
-  { key: 'blog-post', name: 'Blog Post', icon: <ArticleIcon fontSize="small" /> },
-  { key: 'landing-funnel', name: 'Landing Funnel', icon: <FilterCenterFocusIcon fontSize="small" /> },
-  { key: 'brief', name: 'Brief', icon: <AssignmentIcon fontSize="small" /> },
-  { key: 'brand-voice', name: 'Brand Voice', icon: <RecordVoiceOverIcon fontSize="small" /> },
-  { key: 'buyer-persona', name: 'Buyer Persona', icon: <PersonOutlineIcon fontSize="small" /> },
-  { key: 'marketing-angle', name: 'Marketing Angle', icon: <LightbulbOutlinedIcon fontSize="small" /> },
-];
+/** Icon map for content tools — presentation concern, not a domain rule */
+const TOOL_ICON_MAP: Record<string, React.ReactNode> = {
+  'blog-post': <ArticleIcon fontSize="small" />,
+  'landing-funnel': <FilterCenterFocusIcon fontSize="small" />,
+  'landing-page': <DescriptionIcon fontSize="small" />,
+  'video-script-long-form': <SmartDisplayIcon fontSize="small" />,
+  'ai-overview-analysis': <InsightsIcon fontSize="small" />,
+  'ad-copy': <CampaignIcon fontSize="small" />,
+  'video-description': <SmartDisplayIcon fontSize="small" />,
+};
 
 interface WorkspaceDashboardProps {
   workspaceId: string;
@@ -27,15 +31,20 @@ interface WorkspaceDashboardProps {
 
 export function WorkspaceDashboard({ workspaceId }: WorkspaceDashboardProps) {
   const navigate = useNavigate();
+  const { data: toolsData } = useSWR('tools-list-content', () => api.listTools());
+
+  const contentTools = (toolsData?.tools ?? []).filter(
+    (t) => t.outputCategory === 'content',
+  );
 
   return (
     <Box>
-      {/* Asset coverage — achievement badges */}
+      {/* Asset coverage — data-driven from ToolOutputCategory.AssetProducer */}
       <Box sx={{ mt: 2 }}>
         <AssetCoverageBar workspaceId={workspaceId} />
       </Box>
 
-      {/* Tools grid — fluid multi-row, max 4 columns */}
+      {/* Content tools grid — data-driven from ToolOutputCategory.ContentProducer */}
       <Box sx={{ mt: 4 }}>
         <Typography variant="h3" sx={{ mb: 2 }}>
           {copy.t('workspace.dashboard.tools')}
@@ -52,12 +61,12 @@ export function WorkspaceDashboard({ workspaceId }: WorkspaceDashboardProps) {
             gap: 1.5,
           }}
         >
-          {TOP_TOOLS.map((tool) => (
+          {contentTools.map((tool) => (
             <ToolCard
-              key={tool.key}
-              toolKey={tool.key}
+              key={tool.toolKey}
+              toolKey={tool.toolKey}
               name={tool.name}
-              icon={tool.icon}
+              icon={TOOL_ICON_MAP[tool.toolKey]}
               workspaceId={workspaceId}
               variant="compact"
             />

@@ -2,6 +2,7 @@ import type { ToolDefinition } from './tool-definition';
 import type { ToolKeyValue } from '../value-objects/ToolKey';
 import { ToolKey } from '../value-objects/ToolKey';
 import { ModelTier } from '../value-objects/ModelTier';
+import { ToolOutputCategory } from '../value-objects/ToolOutputCategory';
 import { DomainError } from '../../shared/domain-error';
 
 export class ToolNotFoundError extends DomainError {
@@ -17,6 +18,7 @@ const blogPostTool: ToolDefinition = {
   name: 'Blog Post',
   description: 'Generate a complete blog article with SEO optimization',
   creditCost: 1,
+  outputCategory: ToolOutputCategory.ContentProducer,
   defaultComponents: ['anti-hallucination/v1', 'output-markdown/v1', 'seo-optimized/v1'],
   acquisition: {
     userText: [
@@ -59,8 +61,9 @@ const blogPostTool: ToolDefinition = {
 const briefTool: ToolDefinition = {
   toolKey: 'brief',
   name: 'Brief',
-  description: 'Genera un brief marketing strutturato — il documento base per tutti i tool di generazione',
+  description: 'Genera un brief marketing strutturato',
   creditCost: 1,
+  outputCategory: ToolOutputCategory.AssetProducer,
   produces: 'brief',
   acquisition: {
     userText: [
@@ -103,6 +106,7 @@ const buyerPersonaTool: ToolDefinition = {
   name: 'Buyer Persona',
   description: 'Genera buyer persona completi a partire da un brief — con dati supplementari opzionali',
   creditCost: 1,
+  outputCategory: ToolOutputCategory.AssetProducer,
   produces: 'persona',
   defaultComponents: ['anti-hallucination/v1', 'output-plain-text/v1', 'italian-formal/v1'],
   acquisition: {
@@ -145,7 +149,9 @@ const marketingAngleTool: ToolDefinition = {
   toolKey: 'marketing-angle',
   name: 'Angoli di Attacco',
   description: 'Genera angoli marketing testabili per campagne Meta, basati su brief e buyer personas',
+  // marketing-angle is asset producer first
   creditCost: 1,
+  outputCategory: ToolOutputCategory.AssetProducer,
   produces: 'angle',
   defaultComponents: ['anti-hallucination/v1', 'output-plain-text/v1', 'italian-formal/v1'],
   acquisition: {
@@ -198,9 +204,9 @@ const marketingAngleTool: ToolDefinition = {
 const adCopyTool: ToolDefinition = {
   toolKey: 'ad-copy',
   name: 'Meta Ads',
-  description: 'Genera copy per campagne Meta (Facebook/Instagram) con sistema cluster → angolo → awareness',
+description: 'Genera copy per campagne Meta (Facebook/Instagram) con sistema cluster → angolo → awareness',
   creditCost: 1,
-  defaultComponents: ['anti-hallucination/v1', 'output-plain-text/v1', 'italian-formal/v1'],
+  outputCategory: ToolOutputCategory.ContentProducer,
   acquisition: {
     userText: [
       { key: 'goal', label: 'Campaign Goal', required: true, type: 'select', options: ['Awareness', 'Traffic', 'Engagement', 'Leads', 'Sales'] },
@@ -269,4 +275,14 @@ export const toolRegistry: Record<ToolKeyValue, ToolDefinition> = {
 
 export function getTool(key: ToolKey): ToolDefinition | undefined {
   return toolRegistry[key.value];
+}
+
+/** Returns all tools whose output is reusable context (promotable to assets) */
+export function getAssetProducerTools(): ToolDefinition[] {
+  return Object.values(toolRegistry).filter((t) => t.outputCategory.isAssetProducer());
+}
+
+/** Returns all tools whose output is a final document (consumes assets as context) */
+export function getContentProducerTools(): ToolDefinition[] {
+  return Object.values(toolRegistry).filter((t) => t.outputCategory.isContentProducer());
 }

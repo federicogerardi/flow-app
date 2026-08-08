@@ -1,20 +1,9 @@
 import { Box, Typography, Chip } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import HistoryIcon from '@mui/icons-material/History';
 import { useNavigate } from 'react-router';
 import useSWR from 'swr';
-import { api } from '../../api/client';
-import { ASSET_TYPE_LABELS } from '../../constants/assets';
-
-const COVERABLE_TYPES = ['brief', 'brand-voice', 'persona', 'angle', 'ad-copy'] as const;
-
-export const ASSET_TOOL_MAP: Record<string, string> = {
-  'brief': 'brief',
-  'brand-voice': 'brand-voice',
-  'persona': 'buyer-persona',
-  'angle': 'marketing-angle',
-  'ad-copy': 'ad-copy',
-};
+import { api, type ToolListItemDTO } from '../../api/client';
 
 interface AssetCoverageBarProps {
   workspaceId: string;
@@ -22,16 +11,23 @@ interface AssetCoverageBarProps {
 
 export function AssetCoverageBar({ workspaceId }: AssetCoverageBarProps) {
   const navigate = useNavigate();
-  const { data } = useSWR(
+
+  const { data: toolsData } = useSWR('tools-list', () => api.listTools());
+  const { data: assetsData } = useSWR(
     `assets-${workspaceId}-coverage`,
     () => api.listAssets(workspaceId),
   );
 
-  const assets = data?.assets ?? [];
-  const coveredCount = COVERABLE_TYPES.filter((type) =>
-    assets.some((a) => a.assetType === type),
+  const assetTools = (toolsData?.tools ?? []).filter(
+    (t) => t.outputCategory === 'asset' && t.produces,
+  ) as (ToolListItemDTO & { produces: string })[];
+  const assets = assetsData?.assets ?? [];
+  const coveredCount = assetTools.filter((t) =>
+    assets.some((a) => a.assetType === t.produces),
   ).length;
-  const total = COVERABLE_TYPES.length;
+  const total = assetTools.length;
+
+  if (assetTools.length === 0) return null;
 
   return (
     <Box>
@@ -45,26 +41,26 @@ export function AssetCoverageBar({ workspaceId }: AssetCoverageBarProps) {
         />
       </Box>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-        {COVERABLE_TYPES.map((type) => {
-          const present = assets.some((a) => a.assetType === type);
+        {assetTools.map((tool) => {
+          const present = assets.some((a) => a.assetType === tool.produces);
           return present ? (
             <Chip
-              key={type}
-              icon={<CheckCircleIcon fontSize="small" />}
-              label={ASSET_TYPE_LABELS[type]}
+              key={tool.toolKey}
+              icon={<HistoryIcon fontSize="small" />}
+              label={tool.name}
               size="small"
               color="success"
               variant="filled"
-              onClick={() => navigate(`/workspaces/${workspaceId}/assets`)}
+              onClick={() => navigate(`/workspaces/${workspaceId}/sessions?toolKey=${tool.toolKey}`)}
             />
           ) : (
             <Chip
-              key={type}
+              key={tool.toolKey}
               icon={<AddIcon fontSize="small" />}
-              label={ASSET_TYPE_LABELS[type]}
+              label={tool.name}
               size="small"
               variant="outlined"
-              onClick={() => navigate(`/workspaces/${workspaceId}/tools/${ASSET_TOOL_MAP[type]}`)}
+              onClick={() => navigate(`/workspaces/${workspaceId}/tools/${tool.toolKey}`)}
               sx={{ cursor: 'pointer' }}
             />
           );

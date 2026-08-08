@@ -51,6 +51,7 @@ export function createGenerationRoutes(
           })) ?? [],
         },
         produces: tool.produces,
+        outputCategory: tool.outputCategory.toString(),
       }));
 
       res.json({ tools });

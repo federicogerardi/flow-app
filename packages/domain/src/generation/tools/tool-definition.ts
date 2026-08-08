@@ -1,5 +1,6 @@
 import type { ToolKeyValue } from '../value-objects/ToolKey';
 import type { ModelTier } from '../value-objects/ModelTier';
+import type { ToolOutputCategory } from '../value-objects/ToolOutputCategory';
 
 export interface TextInput {
   key: string;
@@ -62,6 +63,9 @@ export interface ToolDefinition {
   name: string;
   description: string;
   creditCost?: number;
+  /** Classification: asset producer (output is reusable context) vs content producer (final document) */
+  outputCategory: ToolOutputCategory;
+  /** For asset-producer tools: the asset type produced. Null for content producers. */
   produces?: string;
   defaultComponents?: string[];
   acquisition: {
