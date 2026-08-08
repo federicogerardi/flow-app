@@ -363,3 +363,4 @@ Toast border color matches the rarity tier. Badge cards on the profile page show
 - [[UX Wireframes]] — Sidebar layout and notification patterns
 - [[Design Tokens]] — Accent colors, gradients, animation tokens
 - [[synthesis/ui-design-summary-2026-08-07]] — comprehensive UI design reference for backend handoff
+- [[synthesis/railway-deploy-40x-2026-08-08]] — StreakModeToggle calls missing PUT endpoint

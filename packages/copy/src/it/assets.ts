@@ -1,5 +1,6 @@
 export const assets = {
   pageTitle:      'Asset',
+  pageSubtitle:   'Asset del workspace',
   notFound:       'Asset non trovato',
   types: {
     brief:         'Brief',

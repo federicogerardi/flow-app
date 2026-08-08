@@ -14,9 +14,13 @@ import { copy } from '@flow-app/copy';
 interface AssetListProps {
   workspaceId: string;
   onDelete?: () => void;
+  /** Label for the CTA button shown when the asset list is empty */
+  emptyCtaLabel?: string;
+  /** Callback when the empty-state CTA is clicked */
+  onEmptyCta?: () => void;
 }
 
-export function AssetList({ workspaceId, onDelete }: AssetListProps) {
+export function AssetList({ workspaceId, onDelete, emptyCtaLabel, onEmptyCta }: AssetListProps) {
   const navigate = useNavigate();
   const { data, isLoading, mutate } = useSWR(
     `assets-${workspaceId}`,
@@ -34,7 +38,14 @@ export function AssetList({ workspaceId, onDelete }: AssetListProps) {
   const assets = data?.assets ?? [];
 
   if (assets.length === 0) {
-    return <EmptyState title="No assets" message="Upload or generate assets for your workspace." />;
+    return (
+      <EmptyState
+        title={copy.t('assets.empty.title')}
+        message={copy.t('assets.empty.message')}
+        ctaLabel={emptyCtaLabel}
+        onCta={onEmptyCta}
+      />
+    );
   }
 
   const handleDelete = async (assetId: string) => {

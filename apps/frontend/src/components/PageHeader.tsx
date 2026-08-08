@@ -1,14 +1,25 @@
-import { Breadcrumbs, Box, Typography, Button, Link } from '@mui/material';
+import { Breadcrumbs, Box, Typography, Button, Link, IconButton, Tooltip } from '@mui/material';
 import { useNavigate } from 'react-router';
 import { useBreadcrumbs } from '../layout/AppShell';
+import type { ReactNode } from 'react';
+
+interface PageHeaderAction {
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+  color?: 'primary' | 'error' | 'default';
+}
 
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
+  /** Single action — backward compat. Prefer `actions` for multiple icons. */
   action?: { label: string; onClick: () => void };
+  /** Multiple icon-only outline actions rendered as a group on the right */
+  actions?: PageHeaderAction[];
 }
 
-export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, action, actions }: PageHeaderProps) {
   const navigate = useNavigate();
   const { crumbs } = useBreadcrumbs();
 
@@ -44,11 +55,25 @@ export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
             </Typography>
           )}
         </Box>
-        {action && (
-          <Button variant="contained" onClick={action.onClick}>
-            {action.label}
-          </Button>
-        )}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          {actions && actions.map((a, i) => (
+            <Tooltip key={i} title={a.label}>
+              <IconButton
+                size="small"
+                onClick={a.onClick}
+                color={a.color ?? 'default'}
+                aria-label={a.label}
+              >
+                {a.icon}
+              </IconButton>
+            </Tooltip>
+          ))}
+          {!actions && action && (
+            <Button variant="contained" onClick={action.onClick}>
+              {action.label}
+            </Button>
+          )}
+        </Box>
       </Box>
     </Box>
   );

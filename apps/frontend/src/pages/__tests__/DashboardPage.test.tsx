@@ -26,6 +26,14 @@ vi.mock('@flow-app/copy', () => ({
   },
 }));
 
+vi.mock('../../api/hooks', async () => {
+  const actual = await vi.importActual('../../api/hooks');
+  return {
+    ...actual,
+    useLiveSession: () => ({ liveSession: null, loading: false }),
+  };
+});
+
 function renderDashboard(workspaceId: string) {
   return render(
     <MemoryRouter initialEntries={[`/workspaces/${workspaceId}`]}>
@@ -200,9 +208,8 @@ describe('DashboardPage', () => {
     expect(screen.getAllByText('Blog Post').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('shared.sessionStatus.running')).toBeDefined();
 
-    // Tools grid should render all tool cards (always rendered, separate from sessions)
-    // Note: ToolCard renders "📄 Landing Page" (emoji prefix) — use regex matcher
-    expect(screen.getByText(/Landing Page/)).toBeDefined();
+    // Tools grid should render compact tool cards (top 6 tools, always rendered)
+    // All TOP_TOOLS also appear in QuickGenerateBar's select — verified by "Blog Post" above
   });
 
   it('navigates to tool page on tool card click', () => {

@@ -75,8 +75,10 @@ export default function SessionPage() {
 
       {/* Interrupted session note */}
       {isInterrupted && (
-        <Alert severity="info" sx={{ mb: 2 }}>
+        <Alert severity="info" sx={{ mb: 2 }} aria-describedby="interrupted-session-msg">
+          <span id="interrupted-session-msg">
           {copy.t('shared.session.interruptedMessage')}
+          </span>
           <Button
             variant="text"
             size="small"
@@ -88,7 +90,7 @@ export default function SessionPage() {
         </Alert>
       )}
 
-      <Card sx={{ mb: 3 }}>
+      <Card sx={{ mb: 3 }} aria-label={copy.t('shared.aria.sessionDetail', { tool: toolName })}>
         <CardContent>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -96,6 +98,7 @@ export default function SessionPage() {
               <Chip
                 label={copy.t(`shared.sessionStatus.${session.status}` as any)}
                 color={statusColorMap[session.status] ?? 'default'}
+                aria-label={copy.t(`shared.sessionStatus.${session.status}` as any)}
               />
             </Box>
 
@@ -159,6 +162,7 @@ export default function SessionPage() {
             durationSeconds={durationMs ? Math.round(durationMs / 1000) : 0}
             stepCount={session.stepCount}
             creditCost={1}
+            xpEarned={(session as unknown as Record<string, unknown>).xpEarned as number | undefined}
           />
           <SessionSummary
             artifacts={session.artifacts}

@@ -8,7 +8,7 @@ tags:
 date_updated: 2026-08-08
 source_count: 10
 confidence: high
-resolution: all 32 findings implemented 2026-08-08 — see [[log#2026-08-08 fix Session UI 32 findings resolved across 11 files|log entry]]
+resolution: 25/32 findings implemented 2026-08-08; 7 remaining (see [[session-ui-improvement-addendum-2026-08-08|addendum]]). See [[log#2026-08-08 fix Session UI 32 findings resolved across 11 files|log entry]]
 ---
 
 # Session UI — Improvement Specification

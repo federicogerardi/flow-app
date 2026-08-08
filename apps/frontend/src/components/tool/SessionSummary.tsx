@@ -1,7 +1,6 @@
 import { Box, Typography, Divider, Card, IconButton, Menu, MenuItem, ListItemIcon, ListItemText, Snackbar, Alert, Button } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import DescriptionIcon from '@mui/icons-material/Description';
-import TextSnippetIcon from '@mui/icons-material/TextSnippet';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import ArticleIcon from '@mui/icons-material/Article';
 import ReactMarkdown from 'react-markdown';
@@ -12,17 +11,7 @@ import type { ArtifactDTO } from '../../api/client';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
-function downloadFile(content: string, filename: string, mimeType: string) {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function ArtifactDownloadMenu({ artifactId, content, index }: { artifactId: string; content: string; index: number }) {
+function ArtifactDownloadMenu({ artifactId, index }: { artifactId: string; index: number }) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const shortId = artifactId.slice(0, 8);
 
@@ -36,10 +25,6 @@ function ArtifactDownloadMenu({ artifactId, content, index }: { artifactId: stri
         a.click();
         break;
       }
-      case 'txt':
-        // Strip basic markdown formatting for plain text
-        downloadFile(content, `step-${index + 1}-${shortId}.txt`, 'text/plain;charset=utf-8');
-        break;
       case 'docx':
       case 'pdf': {
         // Server-side conversion — fetch blob and trigger download
@@ -61,10 +46,6 @@ function ArtifactDownloadMenu({ artifactId, content, index }: { artifactId: stri
         <MenuItem onClick={() => handleDownload('md')}>
           <ListItemIcon><DescriptionIcon fontSize="small" /></ListItemIcon>
           <ListItemText>{copy.t('toolPage.download.formatLabel', { format: copy.t('toolPage.download.formatMd'), ext: 'md' })}</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={() => handleDownload('txt')}>
-          <ListItemIcon><TextSnippetIcon fontSize="small" /></ListItemIcon>
-          <ListItemText>{copy.t('toolPage.download.formatLabel', { format: copy.t('toolPage.download.formatTxt'), ext: 'txt' })}</ListItemText>
         </MenuItem>
         <MenuItem onClick={() => handleDownload('docx')}>
           <ListItemIcon><ArticleIcon fontSize="small" /></ListItemIcon>
@@ -97,19 +78,20 @@ export function SessionSummary({ artifacts, workspaceId, produces, stepCount }: 
   // Deduplicate artifacts by normalised stepNumber — keep the LAST artifact for each step.
   // Normalisation: stepNumber values of 0 (phantom/pre-init artifacts) are corrected
   // to 1 so they collide with legitimate stepNumber=1 artifacts.
-  // This handles both backend retries (duplicate UUIDs) and phantom zero-step artifacts.
   const normalise = (n: number) => Math.max(1, n);
   const deduplicated = artifacts.reduce<ArtifactDTO[]>((acc, a) => {
     const key = normalise(a.stepNumber);
     const existingIndex = acc.findIndex((existing) => normalise(existing.stepNumber) === key);
     if (existingIndex >= 0) {
-      // Replace with the latest artifact (preserve order)
       acc[existingIndex] = a;
     } else {
       acc.push(a);
     }
     return acc;
   }, []);
+
+  // V3: Reverse order — final result (last step) appears first
+  const ordered = [...deduplicated].reverse();
 
   const displayStepCount = stepCount ?? deduplicated.length;
 
@@ -128,18 +110,25 @@ export function SessionSummary({ artifacts, workspaceId, produces, stepCount }: 
       </Box>
       <Divider />
       <Box sx={{ p: 2 }}>
-        {deduplicated.map((artifact, i) => {
+        {ordered.map((artifact, i) => {
           const displayNumber = normalise(artifact.stepNumber);
+          const isFinal = i === 0; // First after reverse = final result (V3)
+
           return (
-          <Box key={artifact.id ?? i} sx={{ mb: i < deduplicated.length - 1 ? 3 : 0 }}>
+          <Box key={artifact.id ?? i} sx={{ mb: i < ordered.length - 1 ? 3 : 0 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-              <Typography variant="subtitle2" color="text.secondary" fontWeight={600}>
-                {copy.t('toolPage.progress.artifactLabel', { number: String(displayNumber) })}
+              <Typography
+                variant={isFinal ? 'h6' : 'subtitle2'}
+                color={isFinal ? 'primary.main' : 'text.secondary'}
+                fontWeight={600}
+              >
+                {isFinal
+                  ? copy.t('toolPage.progress.finalResult')
+                  : (artifact.stepLabel || copy.t('toolPage.progress.artifactLabel', { number: String(displayNumber) }))}
               </Typography>
               <Box sx={{ display: 'flex', gap: 0.5 }}>
                 <ArtifactDownloadMenu
                   artifactId={artifact.id}
-                  content={artifact.content}
                   index={i}
                 />
                 <PromoteButton
@@ -151,7 +140,22 @@ export function SessionSummary({ artifacts, workspaceId, produces, stepCount }: 
                 />
               </Box>
             </Box>
-            <Card variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
+            <Card
+              variant={isFinal ? 'elevation' : 'outlined'}
+              sx={{
+                p: isFinal ? 3 : 2,
+                bgcolor: isFinal ? 'background.paper' : 'background.default',
+                ...(isFinal && {
+                  borderLeft: '4px solid',
+                  borderColor: 'primary.main',
+                  borderTopLeftRadius: 0,
+                  borderBottomLeftRadius: 0,
+                }),
+                ...(!isFinal && {
+                  opacity: 0.85,
+                }),
+              }}
+            >
               <Box
                 sx={{
                   '& h1,h2,h3,h4,h5,h6': { mt: 2, mb: 1, fontWeight: 600 },

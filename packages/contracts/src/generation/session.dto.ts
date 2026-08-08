@@ -21,6 +21,7 @@ export interface SessionDetailDTO extends SessionDTO {
   currentStepIndex: number;
   startedAt: string | null;
   completedAt: string | null;
+  xpEarned?: number;
   artifacts: ArtifactListItemDTO[];
 }
 
@@ -47,6 +48,7 @@ export interface SessionListItemDTO {
 export interface ArtifactListItemDTO {
   id: string;
   stepNumber: number;
+  stepLabel: string;
   status: 'pending' | 'generating' | 'completed' | 'failed';
   createdAt: string;
 }

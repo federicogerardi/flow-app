@@ -39,12 +39,16 @@ export const workspace = {
     tools: 'Strumenti',
     recentSessions: 'Sessioni recenti',
     noSessions: 'Nessuna sessione ancora. Seleziona un tool per iniziare.',
+    noSessionsWithAssets: 'Hai già degli asset. Avvia una generazione per creare contenuti.',
+    ctaStartTool: 'Avvia un tool',
     subtitle: 'Seleziona un tool per iniziare a generare contenuti',
     readyToPromote: 'Pronti da Promuovere',
     promoteHint: 'Promuovi ad Asset per renderlo disponibile come contesto',
     editAction: 'Modifica',
   },
   sessions: {
+    pageTitle: 'Sessioni',
+    pageSubtitle: 'Tutte le sessioni di generazione in questo workspace',
     tabs: {
       inProgress: 'In corso',
       completed: 'Completate',
@@ -58,5 +62,11 @@ export const workspace = {
     createTitle: 'Nuovo Workspace',
     editTitle: 'Modifica Workspace',
     accentLabel: 'Colore accento',
+  },
+  header: {
+    shareMembers: 'Condividi e gestisci membri',
+    shareMembersTooltip: 'Membri del workspace',
+    edit: 'Modifica workspace',
+    delete: 'Elimina workspace',
   },
 } as const;

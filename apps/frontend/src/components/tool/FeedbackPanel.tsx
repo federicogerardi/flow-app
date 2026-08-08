@@ -45,15 +45,24 @@ function ElapsedTimer({ startedAt }: { startedAt: number }) {
   const mins = Math.floor(elapsed / 60);
   const secs = elapsed % 60;
   return (
-    <Typography variant="body2" color="text.secondary" role="timer">
+    <Typography variant="body2" color="text.secondary" role="timer" aria-label={copy.t('toolPage.progress.elapsedTime', { mins: String(mins), secs: String(secs) })}>
       {mins}:{secs.toString().padStart(2, '0')}
     </Typography>
   );
 }
 
 function StepIndicator({ index, isCompleted, isActive, total, artifactPreview }: { index: number; isCompleted: boolean; isActive: boolean; total: number; artifactPreview?: string }) {
+  const stepParams = { current: String(index + 1), total: String(total) };
+  const ariaLabel = isCompleted
+    ? copy.t('toolPage.progress.stepCompleted', stepParams)
+    : isActive
+      ? copy.t('toolPage.progress.stepActive', stepParams)
+      : copy.t('toolPage.progress.stepPending', stepParams);
+
   return (
     <Box
+      role="listitem"
+      aria-label={ariaLabel}
       sx={{
         display: 'flex',
         alignItems: 'center',
@@ -97,7 +106,9 @@ function StepIndicator({ index, isCompleted, isActive, total, artifactPreview }:
           fontWeight={isActive ? 600 : 400}
           color={isCompleted ? 'success.main' : isActive ? 'text.primary' : 'text.disabled'}
         >
-          {copy.t('toolPage.progress.stepLabel', { current: String(index + 1), total: String(total) })}
+          {artifactPreview
+            ? artifactPreview
+            : copy.t('toolPage.progress.stepLabel', { current: String(index + 1), total: String(total) })}
         </Typography>
         {isCompleted && artifactPreview && (
           <Typography

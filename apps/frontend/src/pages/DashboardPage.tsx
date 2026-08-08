@@ -1,5 +1,7 @@
-import { Box, Button } from '@mui/material';
+import { Box } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import PeopleIcon from '@mui/icons-material/People';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import useSWR, { mutate } from 'swr';
@@ -10,8 +12,9 @@ import { ErrorState } from '../components/ErrorState';
 import { LoadingSkeleton } from '../components/LoadingSkeleton';
 import { WorkspaceDashboard } from '../components/workspace/WorkspaceDashboard';
 import { WorkspaceForm } from '../components/workspace/WorkspaceForm';
+import { ShareMembersDialog } from '../components/workspace/ShareMembersDialog';
 import { copy } from '@flow-app/copy';
-import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@mui/material';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -21,6 +24,7 @@ export default function DashboardPage() {
   const currentWorkspace = workspaces?.find((w) => w.id === workspaceId);
 
   const [renameOpen, setRenameOpen] = useState(false);
+  const [membersOpen, setMembersOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -60,7 +64,11 @@ export default function DashboardPage() {
       <PageHeader
         title={currentWorkspace.name}
         subtitle={copy.t('workspace.dashboard.subtitle')}
-        action={{ label: copy.t('workspace.dashboard.editAction'), onClick: () => setRenameOpen(true) }}
+        actions={[
+          { icon: <PeopleIcon fontSize="small" />, label: copy.t('workspace.header.shareMembersTooltip'), onClick: () => setMembersOpen(true) },
+          { icon: <EditIcon fontSize="small" />, label: copy.t('workspace.header.edit'), onClick: () => setRenameOpen(true) },
+          { icon: <DeleteIcon fontSize="small" />, label: copy.t('workspace.header.delete'), onClick: () => setDeleteOpen(true), color: 'error' },
+        ]}
       />
 
       {/* Rename Dialog — via WorkspaceForm in edit mode */}
@@ -69,6 +77,13 @@ export default function DashboardPage() {
         workspace={currentWorkspace}
         onClose={() => setRenameOpen(false)}
         onSave={handleRename}
+      />
+
+      {/* Share & Members Dialog */}
+      <ShareMembersDialog
+        open={membersOpen}
+        onClose={() => setMembersOpen(false)}
+        workspaceId={workspaceId!}
       />
 
       {/* Delete Confirmation */}
@@ -86,17 +101,6 @@ export default function DashboardPage() {
           </Button>
         </DialogActions>
       </Dialog>
-
-      <Button
-        variant="outlined"
-        color="error"
-        size="small"
-        startIcon={<DeleteIcon />}
-        onClick={() => setDeleteOpen(true)}
-        sx={{ mb: 2 }}
-      >
-        {copy.t('workspace.detail.deleteTitle')}
-      </Button>
 
       <WorkspaceDashboard workspaceId={workspaceId!} />
     </Box>

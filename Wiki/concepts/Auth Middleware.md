@@ -188,3 +188,4 @@ router.get('/admin/models', listModels);
 - [[API Routes]] — route protection
 - [[sources/PRD]] — FR-S01 to FR-S06
 - [[synthesis/phase-8-real-auth-plan]] — Implementation plan for Phase 8 auth middleware
+- [[synthesis/railway-deploy-40x-2026-08-08]] — 401 race condition on page load; deferred SWR guard

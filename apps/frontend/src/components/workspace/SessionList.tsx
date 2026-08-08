@@ -1,8 +1,9 @@
-import { Box, Tabs, Tab, Badge, Typography } from '@mui/material';
+import { Box, Tabs, Tab, Badge } from '@mui/material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import useSWR from 'swr';
 import { api } from '../../api/client';
+import { useLiveSession } from '../../api/hooks';
 import { LoadingSkeleton } from '../LoadingSkeleton';
 import { EmptyState } from '../EmptyState';
 import { QueuedCard } from './QueuedCard';
@@ -10,14 +11,67 @@ import { RunningCard } from './RunningCard';
 import { CompletedCard } from './CompletedCard';
 import { FailedCard } from './FailedCard';
 import { copy } from '@flow-app/copy';
+import type { SessionListItemDTO } from '@flow-app/contracts';
 
 interface SessionListProps {
   workspaceId: string;
+  /** Label for the CTA button shown when session list is empty */
+  emptyCtaLabel?: string;
+  /** Callback when the empty-state CTA is clicked */
+  onEmptyCta?: () => void;
+  /** Custom message for the global empty-state — overrides default when provided */
+  emptyMessage?: string;
 }
 
 type TabValue = 'in-progress' | 'completed' | 'failed';
 
-export function SessionList({ workspaceId }: SessionListProps) {
+/**
+ * Wraps a RunningCard with useLiveSession SSE subscription for real-time updates.
+ * Falls back to the base session data when SSE is unavailable.
+ */
+function LiveRunningCard({ session, onViewProgress, onCancel }: {
+  session: SessionListItemDTO;
+  onViewProgress: () => void;
+  onCancel: () => void;
+}) {
+  const { liveSession } = useLiveSession(session.id);
+  const display = liveSession ?? session;
+  return (
+    <RunningCard
+      session={display}
+      onViewProgress={onViewProgress}
+      onCancel={onCancel}
+    />
+  );
+}
+
+/**
+ * Wraps a QueuedCard with useLiveSession SSE subscription for real-time status transitions.
+ * Transitions to RunningCard automatically when the session starts.
+ */
+function LiveQueuedCard({ session, onCancel, onViewProgress }: {
+  session: SessionListItemDTO;
+  onCancel: () => void;
+  onViewProgress: () => void;
+}) {
+  const { liveSession } = useLiveSession(session.id);
+  const display = liveSession ?? session;
+
+  // When SSE reports the session is now running, show a RunningCard instead
+  if (display.status === 'running') {
+    return (
+      <RunningCard
+        session={display}
+        onViewProgress={onViewProgress}
+        onCancel={onCancel}
+      />
+    );
+  }
+
+  return <QueuedCard session={display} onCancel={onCancel} />;
+}
+
+export function SessionList({ workspaceId, emptyCtaLabel, onEmptyCta, emptyMessage }: SessionListProps) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabValue>('in-progress');
 
@@ -53,7 +107,14 @@ export function SessionList({ workspaceId }: SessionListProps) {
   if (isLoading) return <LoadingSkeleton variant="list" />;
 
   if (allCount === 0) {
-    return <EmptyState title={copy.t('workspace.detail.noSessions')} message={copy.t('workspace.dashboard.noSessions')} />;
+    return (
+      <EmptyState
+        title={copy.t('workspace.detail.noSessions')}
+        message={emptyMessage ?? copy.t('workspace.dashboard.noSessions')}
+        ctaLabel={emptyCtaLabel}
+        onCta={onEmptyCta}
+      />
+    );
   }
 
   return (
@@ -93,14 +154,15 @@ export function SessionList({ workspaceId }: SessionListProps) {
         {activeTab === 'in-progress' && (
           <>
             {queued.map((s) => (
-              <QueuedCard
+              <LiveQueuedCard
                 key={s.id}
                 session={s}
                 onCancel={() => api.cancelSession(s.id).then(() => mutate())}
+                onViewProgress={() => navigate(`/workspaces/${workspaceId}/sessions/${s.id}`)}
               />
             ))}
             {running.map((s) => (
-              <RunningCard
+              <LiveRunningCard
                 key={s.id}
                 session={s}
                 onViewProgress={() => navigate(`/workspaces/${workspaceId}/sessions/${s.id}`)}
@@ -108,9 +170,10 @@ export function SessionList({ workspaceId }: SessionListProps) {
               />
             ))}
             {inProgressCount === 0 && (
-              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                {copy.t('workspace.sessions.emptyInProgress')}
-              </Typography>
+              <EmptyState
+                title={copy.t('workspace.sessions.emptyInProgress')}
+                message=""
+              />
             )}
           </>
         )}
@@ -131,9 +194,10 @@ export function SessionList({ workspaceId }: SessionListProps) {
               />
             ))}
             {completed.length === 0 && (
-              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                {copy.t('workspace.sessions.emptyCompleted')}
-              </Typography>
+              <EmptyState
+                title={copy.t('workspace.sessions.emptyCompleted')}
+                message=""
+              />
             )}
           </>
         )}
@@ -148,9 +212,10 @@ export function SessionList({ workspaceId }: SessionListProps) {
               />
             ))}
             {failed.length === 0 && (
-              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                {copy.t('workspace.sessions.emptyFailed')}
-              </Typography>
+              <EmptyState
+                title={copy.t('workspace.sessions.emptyFailed')}
+                message=""
+              />
             )}
           </>
         )}

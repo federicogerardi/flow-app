@@ -152,5 +152,8 @@ date_updated: 2026-08-08
 | [[synthesis/testing-plan-xstate-toolpage-2026-08-07]] | Testing plan — ✅ 79 unit/component tests implemented: 34 machine + 10 deriveUIState + 7 ToolPageLayout + 28 session cards | 2026-08-08 |
 | [[synthesis/e2e-test-plan-tool-page-2026-08-07]] | E2E test plan — ✅ 8 Playwright scenarios scaffolded: happy path, upload, asset, error+retry, SSE resilience, accessibility, session list, gamification | 2026-08-08 |
 | [[synthesis/open-findings-plan-2026-08-08]] | Open findings remediation — 4 gaps: 55 copy violations (8 files), 2 embedded gamification components, 2 missing tests, 1 migration deploy. ~5.75h, 1 day | 2026-08-08 |
-| [[synthesis/session-ui-improvement-spec-2026-08-08]] | Session UI improvement spec — 32 findings: 14 copy violations, 12 a11y gaps, 4 drifts, 2 visual issues. Prioritized 4-batch plan, ~6.25h | 2026-08-08 |
+| [[synthesis/session-ui-improvement-spec-2026-08-08]] | Session UI improvement spec — 32 findings: 14 copy violations, 12 a11y gaps, 4 drifts, 2 visual issues. ✅ 32/32 resolved | 2026-08-08 |
+| [[synthesis/session-ui-improvement-addendum-2026-08-08]] | Session UI addendum — 7 remaining gaps resolved: 1 SSE integration + 6 a11y ARIA refinements. 4 new copy keys. ✅ | 2026-08-08 |
+| [[synthesis/railway-deploy-40x-2026-08-08]] | Railway deploy 40X analysis — 1 real bug (missing PUT /api/me/profile) + 14x 401 race condition. Implementation plan for streak mode + silent retry guard | 2026-08-08 |
+| [[synthesis/project-improvement-ui-2026-08-08]] | Project Improvement UI — active findings collection for the 2026-08-08 improvement session. Baseline audit: 48 .tsx files, 288 sx={{ }}, 4 hardcoded gradients, 0 CSS modules | 2026-08-08 |
 | [[overview]] | High-level synthesis (v3) | 2026-08-04 |

@@ -11,6 +11,7 @@ interface CompletionBannerProps {
   durationSeconds: number;
   stepCount: number;
   creditCost: number;
+  xpEarned?: number;
 }
 
 function formatDuration(seconds: number): string {
@@ -20,7 +21,7 @@ function formatDuration(seconds: number): string {
   return `${min}m ${sec}s`;
 }
 
-export function CompletionBanner({ durationSeconds, stepCount, creditCost }: CompletionBannerProps) {
+export function CompletionBanner({ durationSeconds, stepCount, creditCost, xpEarned }: CompletionBannerProps) {
   return (
     <Box
       role="alert"
@@ -43,6 +44,7 @@ export function CompletionBanner({ durationSeconds, stepCount, creditCost }: Com
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.9 }}>
             {copy.t('toolPage.progress.stepCountSummary', { count: String(stepCount) })} · {copy.t('toolPage.progress.creditCostSummary', { count: String(creditCost) })}
+            {xpEarned && xpEarned > 0 ? ` · ${copy.t('shared.session.xpEarned', { xp: String(xpEarned) })}` : ''}
           </Typography>
         </Stack>
       </Stack>

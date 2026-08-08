@@ -36,6 +36,7 @@ export function RunningCard({ session, onViewProgress, onCancel }: RunningCardPr
           variant="determinate"
           value={progressValue}
           sx={{ height: 6, borderRadius: 3, mb: 1, bgcolor: 'action.hover' }}
+          aria-label={copy.t('shared.aria.runningProgress', { current: String((session.currentStepIndex ?? 0) + 1), total: String(session.stepCount) })}
         />
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>

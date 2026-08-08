@@ -467,3 +467,4 @@ async processEvent(event: SessionCompleted): Promise<void> {
 - [[UX Wireframes]] — Workspace Dashboard where health + challenges display
 - [[Usage & Quota]] — Credit reward consumer
 - [[synthesis/implementation-roadmap-2026-08-01]] — Phase 11 implementation roadmap
+- [[synthesis/railway-deploy-40x-2026-08-08]] — Missing streak mode endpoint + 401 race condition analysis

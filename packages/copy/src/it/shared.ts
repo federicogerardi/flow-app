@@ -95,5 +95,6 @@ export const shared = {
     interruptedMessage: 'Questa sessione è stata interrotta. Puoi riprovare avviando una nuova generazione dalla pagina ',
     failedAtStep:       ' · Step {step}',
     queuePosition:      'Posizione in coda: {position}',
+    xpEarned:           '+{xp} XP',
   },
 } as const;
