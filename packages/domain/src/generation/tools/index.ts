@@ -262,15 +262,56 @@ description: 'Genera copy per campagne Meta (Facebook/Instagram) con sistema clu
 export const toolRegistry: Record<ToolKeyValue, ToolDefinition> = {
   'blog-post': blogPostTool,
   'brief': briefTool,
-  'landing-funnel': blogPostTool,
-  'landing-page': blogPostTool,
-  'video-script-long-form': blogPostTool,
-  'video-description': blogPostTool,
   'ad-copy': adCopyTool,
-  'brand-voice': blogPostTool,
   'buyer-persona': buyerPersonaTool,
   'marketing-angle': marketingAngleTool,
-  'ai-overview-analysis': blogPostTool,
+
+  // Content producers — inherit blogPostTool structure, override identity fields
+  'landing-funnel': {
+    ...blogPostTool,
+    toolKey: 'landing-funnel' as ToolKeyValue,
+    name: 'Landing Funnel',
+    description: 'Landing page + opt-in + quiz + VSL',
+    outputCategory: ToolOutputCategory.ContentProducer,
+  },
+  'landing-page': {
+    ...blogPostTool,
+    toolKey: 'landing-page' as ToolKeyValue,
+    name: 'Landing Page',
+    description: 'Landing page + thank-you',
+    outputCategory: ToolOutputCategory.ContentProducer,
+  },
+  'video-script-long-form': {
+    ...blogPostTool,
+    toolKey: 'video-script-long-form' as ToolKeyValue,
+    name: 'Video Script',
+    description: 'Long-form video script',
+    outputCategory: ToolOutputCategory.ContentProducer,
+  },
+  'video-description': {
+    ...blogPostTool,
+    toolKey: 'video-description' as ToolKeyValue,
+    name: 'Video Description',
+    description: 'YouTube video description',
+    outputCategory: ToolOutputCategory.ContentProducer,
+  },
+  'ai-overview-analysis': {
+    ...blogPostTool,
+    toolKey: 'ai-overview-analysis' as ToolKeyValue,
+    name: 'AI Overview',
+    description: 'Google AI Overview presence analysis',
+    outputCategory: ToolOutputCategory.ContentProducer,
+  },
+
+  // Asset producer — inherits blogPostTool structure
+  'brand-voice': {
+    ...blogPostTool,
+    toolKey: 'brand-voice' as ToolKeyValue,
+    name: 'Brand Voice',
+    description: 'Brand voice guidelines',
+    outputCategory: ToolOutputCategory.AssetProducer,
+    produces: 'brand-voice',
+  },
 };
 
 export function getTool(key: ToolKey): ToolDefinition | undefined {
