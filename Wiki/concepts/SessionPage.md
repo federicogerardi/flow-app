@@ -4,14 +4,14 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/generation
-date_updated: 2026-08-06
+date_updated: 2026-08-08
 source_count: 5
 confidence: high
 ---
 
 # SessionPage
 
-> Full-page session detail component  
+> Full-page session detail component — **canonical post-submit destination**  
 > `apps/frontend/src/pages/SessionPage.tsx`
 
 ## Route
@@ -22,12 +22,14 @@ confidence: high
 
 Mounted in `App.tsx` with `<ErrorBoundary>` wrapper. Route parameters: `workspaceId`, `sessionId`.
 
+**2026-08-08**: SessionPage is now the **single canonical destination** for session progress and results. `ToolPageLayout` redirects here after successful submission (`submitted` state). This eliminates duplicated SSE connections and FeedbackPanel/SessionSummary renders in the tool page.
+
 ## Component Structure
 
 ```
 SessionPage
 ├── PageHeader: "Session: {toolName}"
-├── Alert (interrupted sessions: queued/draft/ready)
+├── Alert (queued/draft/ready: friendly "in elaborazione" message)
 ├── Card: Status + Metadata
 │   ├── Status chip (color-coded via statusColorMap)
 │   ├── Cancel button (running only)
@@ -36,8 +38,10 @@ SessionPage
 │   ├── Created date
 │   ├── FeedbackPanel (running: progress bar + step label)
 │   └── ErrorState (failed: error message + retry CTA)
-├── CompletionBanner (completed only)
-└── SessionSummary (completed: artifact list + download)
+├── SessionSummary (completed: artifact list + download/promote)
+└── CTA buttons
+    ├── [Nuova generazione] — navigates to tool setup page
+    └── [Back to workspace]
 ```
 
 ## State Guards (render order)
@@ -72,9 +76,9 @@ Displayed only when `durationMs > 0`.
 
 Only visible when `status === 'running'`. Calls `api.cancelSession(sessionId)`. Button disabled while cancelling (local `cancelling` state).
 
-### Interrupted State
+### Pending State (queued / draft / ready)
 
-Sessions in `queued`, `draft`, or `ready` status show an `Alert` with a link back to the tool page for retry.
+> **Changed 2026-08-08**: previously treated as "interrupted" with a warning alert. Now shows a friendly informational message (`shared.session.queuedMessage`: "Generazione in elaborazione. Segui l'avanzamento in questa pagina.") since this is the **normal** state after the redirect from `ToolPageLayout`.
 
 ### Breadcrumbs
 
@@ -89,6 +93,24 @@ On `completed` status, renders:
 1. `CompletionBanner` — summary with duration, step count, credit cost
 2. `SessionSummary` — scrollable artifact list with ReactMarkdown rendering and download/promote actions
 
+### "Nuova generazione" CTA
+
+> **Added 2026-08-08**: a "Nuova generazione" (`AddIcon` + `Button variant="contained"`) button appears for `completed`, `failed`, and `queued` states. It navigates back to the tool setup page (`/workspaces/:workspaceId/tools/:toolKey`) so users can launch another generation without navigating through the sidebar.
+
+```typescript
+{(isCompleted || isFailed || isQueued) && (
+  <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+    <Button variant="contained" startIcon={<AddIcon />}
+      onClick={() => navigate(`/workspaces/${workspaceId}/tools/${session.toolKey}`)}>
+      {copy.t('shared.session.newGeneration')}
+    </Button>
+    <Button variant="outlined" onClick={() => navigate(`/workspaces/${workspaceId}`)}>
+      {copy.t('workspace.nav.backToWorkspace')}
+    </Button>
+  </Box>
+)}
+```
+
 ## Dependencies
 
 | Dependency | Purpose |
@@ -102,6 +124,8 @@ On `completed` status, renders:
 | `LoadingSkeleton` | Loading state |
 | `ErrorState` | Error state with retry |
 | `statusColorMap` | Shared MUI color mapping per status |
+| `copy.t('shared.session.queuedMessage')` | Friendly pending message |
+| `copy.t('shared.session.newGeneration')` | "Nuova generazione" CTA label |
 
 ## Sources
 
@@ -110,3 +134,4 @@ On `completed` status, renders:
 - [[UI Component Map]] — Shared components (LoadingSkeleton, ErrorState, CompletionBanner)
 - [[Session Machine (XState v5)]] — SSE events consumed by useSession
 - [[Session]] — Session aggregate root with lifecycle states
+- [[Tool UX Architecture]] — 2026-08-08 simplification: redirect from ToolPage to SessionPage

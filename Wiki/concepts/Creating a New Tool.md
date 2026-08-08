@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/generation
   - wiki/howto
-date_updated: 2026-08-06
+date_updated: 2026-08-08
 source_count: 7
 confidence: high
 ---
@@ -41,11 +41,11 @@ Before writing any code, answer these questions:
 **Files that DO NOT need changes** (generic, work for all tools):
 - `SetupPanel.tsx` — renders any `ToolDefinition.acquisition` dynamically
 - `ReadinessSnapshot.tsx` — validates any required field
-- `FeedbackPanel.tsx` — shows step progress for any step count
-- `SessionSummary.tsx` — renders artifacts + download for any tool
-- `ToolPageLayout.tsx` — state machine drives any tool lifecycle
-- `ToolPage Machine (XState v5)` — one machine, all tools
-- `ReadinessPolicy.ts` — evaluates any `ToolDefinition` acquisition requirements
+- `SessionPage.tsx` — handles progress + results for any session (canonical post-submit destination)
+- `FeedbackPanel.tsx` — shows step progress for any step count (SessionPage-only)
+- `SessionSummary.tsx` — renders artifacts + download for any tool (SessionPage-only)
+- `ToolPageLayout.tsx` — setup form redirects to SessionPage after submit
+- `ToolPage Machine (XState v5)` — one machine, setup-only, all tools
 
 ---
 
@@ -472,9 +472,7 @@ Before merging, verify each layer:
 | Wrong model tier | Expensive model for simple extraction or weak model for creative synthesis | Review model tier table above |
 | **Invalid model ID** | Worker `llm_generate_primary_failed: 400 ... is not a valid model ID` | Run OpenRouter model verification command above; model IDs change frequently |
 | **Workspace assets not loaded** | `InvalidAssetSelectionError: [...] not found in workspace` on every session start | `KyselyWorkspaceRepository.findById` must query `assets` table and pass results to `Workspace.reconstitute()` |
-| **Asset-only tool replay loop** | `POST → 200` every time, never fresh `201` | Tool with no `userText` has zero idempotency variance — same asset = same hash. Delete stale idempotency keys or change asset selection |
-| **`cancelled` phase not handled** | FE stuck in "running" after replayed cancelled session | Add `'cancelled'` to `phaseOverride` state type + render block in `ToolPageLayout` |
-| **Missing `isTerminal()` on mock** | Idempotent replay test fails with TypeError | Test mock's `status` object needs `isTerminal: () => true/false` |
+| **Asset-only tool replay loop** | `POST → 200` every time, never fresh `201` | Tool with no `userText` has zero idempotency variance — same asset = same hash. User is redirected to the existing session, which shows completion immediately. To force a fresh session, delete stale idempotency keys or change asset selection. |
 | **`ON CONFLICT` on wrong column** | `duplicate key violates "assets_pkey"` on rename | `KyselyAssetRepository.save()` must use `ON CONFLICT (id)` not `(workspace_id, asset_type, source_ref)` |
 
 ---

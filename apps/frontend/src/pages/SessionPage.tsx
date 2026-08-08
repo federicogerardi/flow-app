@@ -1,6 +1,7 @@
 import { Box, Card, CardContent, Chip, Typography, Button, Alert } from '@mui/material';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import AddIcon from '@mui/icons-material/Add';
 import { useParams, useNavigate } from 'react-router';
 import { useEffect, useState } from 'react';
 import { useSession } from '../api/hooks';
@@ -66,7 +67,7 @@ export default function SessionPage() {
   const isRunning = session.status === 'running';
   const isCompleted = session.status === 'completed';
   const isFailed = session.status === 'failed';
-  const isInterrupted = session.status === 'queued' || session.status === 'draft' || session.status === 'ready';
+  const isQueued = session.status === 'queued' || session.status === 'draft' || session.status === 'ready';
 
   const xpEarned = (session as unknown as Record<string, unknown>).xpEarned as number | undefined;
 
@@ -86,28 +87,18 @@ export default function SessionPage() {
         ) : undefined}
       />
 
-      {/* Interrupted session note */}
-      {isInterrupted && (
-        <Alert severity="info" sx={{ mb: 2 }} aria-describedby="interrupted-session-msg">
-          <span id="interrupted-session-msg">
-          {copy.t('shared.session.interruptedMessage')}
-          </span>
-          <Button
-            variant="text"
-            size="small"
-            onClick={() => navigate(`/workspaces/${workspaceId}/tools/${session.toolKey}`)}
-            sx={{ textTransform: 'none', fontWeight: 600, verticalAlign: 'baseline' }}
-          >
-            {toolName} tool
-          </Button>.
+      {/* Pending session — friendly "in elaborazione" message */}
+      {isQueued && (
+        <Alert severity="info" sx={{ mb: 2 }} role="status" aria-live="polite">
+          {copy.t('shared.session.queuedMessage')}
         </Alert>
       )}
 
-      {/* Metadata card — only for running/failed (completed merges into PageHeader) */}
+      {/* Metadata card — only for running/failed/pending (completed merges into PageHeader) */}
       {!isCompleted && (
         <Card sx={{ mb: 1.5 }} aria-label={copy.t('shared.aria.sessionDetail', { tool: toolName })}>
           <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: isRunning ? 2 : 0 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: isRunning || isQueued ? 2 : 0 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Typography variant="h3">{copy.t('shared.label.status')}</Typography>
                 <Chip
@@ -133,8 +124,8 @@ export default function SessionPage() {
               )}
             </Box>
 
-            {/* Metadata row — only for running */}
-            {isRunning && (
+            {/* Metadata row — for running and queued */}
+            {(isRunning || isQueued) && (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Typography variant="caption" color="text.secondary">{copy.t('shared.label.steps')}</Typography>
@@ -173,6 +164,23 @@ export default function SessionPage() {
           workspaceId={workspaceId}
           produces={session.produces}
         />
+      )}
+
+      {/* CTA: New generation with same tool */}
+      {(isCompleted || isFailed || isQueued) && (
+        <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+          <Button
+            variant="contained"
+            size="medium"
+            startIcon={<AddIcon />}
+            onClick={() => navigate(`/workspaces/${workspaceId}/tools/${session.toolKey}`)}
+          >
+            {copy.t('shared.session.newGeneration')}
+          </Button>
+          <Button variant="outlined" size="medium" onClick={() => navigate(`/workspaces/${workspaceId}`)}>
+            {copy.t('workspace.nav.backToWorkspace')}
+          </Button>
+        </Box>
       )}
     </Box>
   );

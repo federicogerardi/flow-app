@@ -4,22 +4,24 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/architecture
-date_updated: 2026-08-07
+date_updated: 2026-08-08
 source_count: 6
 confidence: high
 ---
 
 # ToolPage Machine (XState v5)
 
-> Frontend state machine for the unified tool execution UI  
+> Frontend state machine for the unified tool setup UI  
 > `apps/frontend/src/machines/tool-page-machine.ts`  
 > Component architecture: see [[Frontend Architecture]]
 
-## Architecture
+## Architecture (simplified 2026-08-08)
 
-The `toolPageMachine` manages the complete lifecycle of a tool page: from input configuration through readiness validation, submission, real-time progress, to completion. It consumes domain types from `@flow-app/contracts` and communicates with the backend via HTTP + SSE.
+The `toolPageMachine` manages the **setup-only** lifecycle of a tool page: from tool loading through input configuration, readiness validation, and submission. **Post-submit progress and results are handled by [[SessionPage]]** — the tool page redirects to `/sessions/[id]` after successful submission.
 
-**Principle**: one machine for all 11 tools. Differences are purely configuration — which `ToolDefinition` is loaded determines which inputs to show, how many steps to expect, and what CTA states to render.
+**Rationale**: eliminating SSE-duplication between `ToolPageLayout` (which had its own `subscribeToSSE` actor) and `SessionPage` (which uses `useSession` hook with SSE). The tool page is now a pure setup form; SessionPage is the single canonical view for session progress and results.
+
+**Principle**: one machine for all 11 tools. Differences are purely configuration — which `ToolDefinition` is loaded determines which inputs to show.
 
 ## Determinism Contract (2026-07-31 remediation)
 
@@ -36,13 +38,12 @@ No optional bypass exists for required assets.
 ┌───────────────────────────────────────────────────────────────┐
 │ toolPageMachine (XState v5 — React)                            │
 │                                                                 │
-│  draft-empty ──▶ configuring ──▶ ready ──▶ submitting          │
-│                                                 │               │
-│                                                 ▼               │
-│                                              running ──▶ completed
-│                                                 │         │     │
-│                                                 ▼         ▼     │
-│                                              failed    cancelled│
+│  draftEmpty ──▶ configuring ⇄ ready ──▶ submitting             │
+│                                                │                │
+│                                                ▼                │
+│                                             submitted (final)   │
+│                                             → redirect to       │
+│                                             /sessions/[id]      │
 └───────────────────────────────────────────────────────────────┘
 ```
 
@@ -51,246 +52,69 @@ No optional bypass exists for required assets.
 ```typescript
 // apps/frontend/src/machines/tool-page-machine.ts
 
-import { setup, assign, fromPromise, fromCallback } from 'xstate';
-import type { 
-  ToolDefinition, 
-  AssetType,
-  AcquisitionInput,
-  SessionDTO, 
-  ArtifactDTO,
-  StepProgress,
-} from '@flow-app/contracts';
-
 interface ToolPageContext {
-  // Tool + workspace
   tool: ToolDefinition | null;
   workspaceId: string;
-
-  // User inputs (acquisition data)
   inputs: {
     text: Record<string, string>;
     files: Record<string, File>;
     selectedAssetIds: string[];
-    selectedAssetsByType: Partial<Record<AssetType, string>>;
+    selectedAssetsByType: Partial<Record<string, string[]>>;
   };
-
-  // Server responses
   session: SessionDTO | null;
-  artifacts: ArtifactDTO[];
-
-  // Progress
-  progress: StepProgress | null;
   error: { code: string; message: string } | null;
 }
 
 type ToolPageEvent =
   | { type: 'LOAD'; tool: ToolDefinition; workspaceId: string }
-  | { type: 'CONFIGURE'; inputs: Partial<ToolPageContext['inputs']> }
+  | { type: 'CONFIGURE'; inputs: Partial<ToolPageInputs> }
   | { type: 'SUBMIT' }
-  | { type: 'CANCEL' }
-  | { type: 'SESSION_STARTED'; session: SessionDTO }
-  | { type: 'STEP_COMPLETED'; artifact: ArtifactDTO; progress: StepProgress }
-  | { type: 'SESSION_COMPLETED'; finalArtifact: ArtifactDTO }
-  | { type: 'SESSION_FAILED'; error: { code: string; message: string } }
-  | { type: 'RETRY' }
   | { type: 'RESET' };
 ```
 
-## Machine Definition
+## Machine Definition (simplified)
 
 ```typescript
 export const toolPageMachine = setup({
-  types: {
-    context: {} as ToolPageContext,
-    events: {} as ToolPageEvent,
-  },
+  types: { context: {} as ToolPageContext, events: {} as ToolPageEvent },
   actors: {
-    // POST /api/tools/:toolKey/sessions — start generation
-    submitSession: fromPromise(async ({ context }: { context: ToolPageContext }) => {
-      const response = await fetch(`/api/tools/${context.tool!.toolKey}/sessions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          workspaceId: context.workspaceId,
-          inputs: context.inputs,
-        }),
+    // POST /api/tools/:toolKey/sessions — single HTTP call, no SSE
+    submitSession: fromPromise(async ({ input }) => {
+      // Reads file contents, calls api.startSession()
+      const result = await api.startSession(input.toolKey, {
+        workspaceId: input.workspaceId,
+        inputs: { text, files, selectedAssets },
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(JSON.stringify(error.error));
-      }
-
-      return (await response.json()).session as SessionDTO;
-    }),
-
-    // GET /api/sessions/:id/events — SSE progress stream
-    subscribeToSSE: fromCallback<
-      ToolPageEvent,
-      { sessionId: string }
-    >(({ input, sendBack }) => {
-      const eventSource = new EventSource(`/api/sessions/${input.sessionId}/events`);
-
-      eventSource.addEventListener('session_started', (e) => {
-        sendBack({ type: 'SESSION_STARTED', session: JSON.parse(e.data) });
-      });
-
-      eventSource.addEventListener('step_completed', (e) => {
-        const data = JSON.parse(e.data);
-        sendBack({
-          type: 'STEP_COMPLETED',
-          artifact: data.artifact,
-          progress: data.progress,
-        });
-      });
-
-      eventSource.addEventListener('session_completed', (e) => {
-        const data = JSON.parse(e.data);
-        sendBack({ type: 'SESSION_COMPLETED', finalArtifact: data.artifact });
-        eventSource.close();
-      });
-
-      eventSource.addEventListener('session_failed', (e) => {
-        const data = JSON.parse(e.data);
-        sendBack({ type: 'SESSION_FAILED', error: data.error });
-        eventSource.close();
-      });
-
-      eventSource.onerror = () => {
-        sendBack({
-          type: 'SESSION_FAILED',
-          error: { code: 'SSE_ERROR', message: 'Connection lost' },
-        });
-        eventSource.close();
-      };
-
-      return () => eventSource.close(); // cleanup
+      return result; // { session: SessionDTO, replayed: boolean }
     }),
   },
   guards: {
-    // Validate readiness — delegates to domain ReadinessPolicy (shared via contracts)
-    canSubmit: ({ context }) => {
-      if (!context.tool) return false;
-
-      const acquisition = context.tool.acquisition;
-      const requiredText   = acquisition.userText?.filter(t => t.required) ?? [];
-      const requiredFiles  = acquisition.files?.filter(f => f.required) ?? [];
-      const requiredAssets = acquisition.assets?.filter(a => a.required) ?? [];
-
-      const textOk   = requiredText.every(t => context.inputs.text[t.key]?.trim());
-      const filesOk  = requiredFiles.every(f => context.inputs.files[f.key]);
-      const assetsOk = requiredAssets.every(
-        (a) => !!context.inputs.selectedAssetsByType[a.assetType]
-      );
-
-      return textOk && filesOk && assetsOk;
-    },
-    isStillDraft: ({ context }) => {
-      // No inputs configured — back to empty state
-      return Object.keys(context.inputs.text).length === 0
-          && Object.keys(context.inputs.files).length === 0;
-    },
-  },
-  actions: {
-    setTool: assign({
-      tool: ({ event }) => (event as { tool: ToolDefinition }).tool,
-      workspaceId: ({ event }) => (event as { workspaceId: string }).workspaceId,
-      inputs: { text: {}, files: {}, selectedAssetIds: [], selectedAssetsByType: {} },
-    }),
-    updateInputs: assign({
-      inputs: ({ context, event }) => {
-        const { inputs } = event as { inputs: Partial<ToolPageContext['inputs']> };
-        return {
-            ...context.inputs,
-            ...inputs,
-            text: { ...context.inputs.text, ...(inputs.text ?? {}) },
-            files: { ...context.inputs.files, ...(inputs.files ?? {}) },
-            selectedAssetsByType: {
-              ...context.inputs.selectedAssetsByType,
-              ...(inputs.selectedAssetsByType ?? {}),
-            },
-          };
-        },
-    }),
-    setSession: assign({
-      session: ({ event }) => (event as { session: SessionDTO }).session,
-    }),
-    addArtifact: assign({
-      artifacts: ({ context, event }) => {
-        const { artifact } = event as { artifact: ArtifactDTO };
-        return [...context.artifacts, artifact];
-      },
-    }),
-    setProgress: assign({
-      progress: ({ event }) => (event as { progress: StepProgress }).progress,
-    }),
-    setError: assign({
-      error: ({ event }) => (event as { error: { code: string; message: string } }).error,
-    }),
-    setFinalArtifact: assign({
-      artifacts: ({ context, event }) => {
-        const { finalArtifact } = event as { finalArtifact: ArtifactDTO };
-        return [...context.artifacts, finalArtifact];
-      },
-    }),
-    reset: assign({
-      session: null,
-      artifacts: [],
-      progress: null,
-      error: null,
-    }),
+    canSubmit: canSubmitGuard,     // mirrors backend ReadinessPolicy
+    isStillDraft: isStillDraftGuard, // true when inputs are all empty
   },
 }).createMachine({
   id: 'toolPage',
   initial: 'draftEmpty',
-  context: {
-    tool: null,
-    workspaceId: '',
-    inputs: { text: {}, files: {}, selectedAssetIds: [], selectedAssetsByType: {} },
-    session: null,
-    artifacts: [],
-    progress: null,
-    error: null,
-  },
   states: {
-    // 1. No tool loaded, no inputs
+    // 1. No tool loaded
     draftEmpty: {
-      on: {
-        LOAD: {
-          target: 'configuring',
-          actions: 'setTool',
-        },
-      },
+      on: { LOAD: { target: 'configuring', actions: 'setTool' } },
     },
 
-    // 2. User configuring inputs
+    // 2. User configuring inputs — auto-transitions to ready via always guard
     configuring: {
       on: {
-        CONFIGURE: {
-          target: 'configuring',       // re-enter to re-evaluate guards
-          actions: 'updateInputs',
-        },
-        RESET: {
-          target: 'draftEmpty',
-          guard: 'isStillDraft',
-        },
+        CONFIGURE: { actions: 'updateInputs' },
+        RESET: { guard: 'isStillDraft', target: 'draftEmpty' },
       },
-      always: [
-        { target: 'ready', guard: 'canSubmit' },
-      ],
+      always: [{ target: 'ready', guard: 'canSubmit' }],
     },
 
-    // 3. All required inputs present — user can submit
+    // 3. All required inputs present
     ready: {
       on: {
-        CONFIGURE: {
-          target: 'configuring',       // user changed something, re-evaluate
-          actions: 'updateInputs',
-        },
-        SUBMIT: {
-          target: 'submitting',
-          actions: 'reset',            // clear previous run artifacts
-        },
+        CONFIGURE: { target: 'configuring', actions: 'updateInputs' },
+        SUBMIT: { target: 'submitting' },
       },
     },
 
@@ -298,173 +122,37 @@ export const toolPageMachine = setup({
     submitting: {
       invoke: {
         src: 'submitSession',
-        onDone: [
-          {
-            target: 'completed',
-            guard: 'isReplayedCompleted',
-            actions: 'setSession',
-          },
-          {
-            target: 'failed',
-            guard: 'isReplayedFailed',
-            actions: ['setSession', 'setErrorFromReplay'],
-          },
-          {
-            target: 'running',
-            actions: 'setSession',
-          },
-        ],
+        onDone: {
+          target: 'submitted',
+          actions: assign({
+            session: ({ event }) => event.output.session,
+            inputs: () => emptyInputs(),
+          }),
+        },
         onError: {
-          target: 'ready',             // stay ready — user can retry
-          actions: setErrorFromEvent,
+          target: 'ready',
+          actions: assign({ error: ({ event }) => extractError(event) }),
         },
       },
     },
 
-    // Special guards for idempotent replay (added 2026-08-07):
-    // - isReplayedCompleted: session was replayed AND status === 'completed'
-    //   → skip SSE, go directly to completed (ToolPageLayout fetches detail)
-    // - isReplayedFailed: session was replayed AND status IN ('failed','cancelled')
-    //   → skip SSE, go directly to failed with error from session state
-    // If neither guard matches (fresh session or non-terminal replayed session):
-    //   → go to running, invoke subscribeToSSE normally
-
-    // 5. Generation in progress — SSE events drive transitions
-    running: {
-      invoke: {
-        src: 'subscribeToSSE',
-        input: ({ context }) => ({ sessionId: context.session!.id }),
-      },
-      on: {
-        STEP_COMPLETED: {
-          actions: ['addArtifact', 'setProgress'],
-        },
-        SESSION_COMPLETED: {
-          target: 'completed',
-          actions: ['setFinalArtifact', 'setProgress'],
-        },
-        SESSION_FAILED: {
-          target: 'failed',
-          actions: 'setError',
-        },
-        CANCEL: {
-          target: 'cancelled',
-        },
-      },
-    },
-
-    // 6. Successful completion
-    completed: {
-      on: {
-        RETRY: {
-          target: 'ready',             // go back to ready, user can resubmit
-          actions: 'reset',
-        },
-        RESET: {
-          target: 'draftEmpty',
-        },
-      },
-    },
-
-    // 7. Generation failed
-    failed: {
-      on: {
-        RETRY: {
-          target: 'submitting',        // retry the submit
-          actions: 'reset',
-        },
-        RESET: {
-          target: 'draftEmpty',
-        },
-      },
-    },
-
-    // 8. User cancelled
-    cancelled: {
-      on: {
-        RETRY: {
-          target: 'submitting',
-          actions: 'reset',
-        },
-        RESET: {
-          target: 'draftEmpty',
-        },
-      },
-    },
+    // 5. Terminal — ToolPageLayout navigates to /sessions/[id]
+    submitted: { type: 'final' },
   },
 });
-```
-
-## React Integration
-
-```typescript
-// apps/frontend/src/components/ToolPage.tsx
-
-import { useMachine } from '@xstate/react';
-import { toolPageMachine } from '../machines/tool-page-machine';
-
-function ToolPage({ toolKey, workspaceId }: Props) {
-  const [state, send] = useMachine(toolPageMachine);
-
-  // Load tool definition on mount
-  useEffect(() => {
-    const tool = toolRegistry[toolKey];
-    send({ type: 'LOAD', tool, workspaceId });
-  }, [toolKey, workspaceId]);
-
-  // Derive UI from state
-  const uiState = deriveUIState(state);
-
-  return (
-    <div className="tool-page">
-      {uiState === 'setup' && (
-        <SetupPanel
-          tool={state.context.tool!}
-          inputs={state.context.inputs}
-          onChange={(inputs) => send({ type: 'CONFIGURE', inputs })}
-          onSubmit={() => send({ type: 'SUBMIT' })}
-          canSubmit={state.matches('ready')}
-        />
-      )}
-      {uiState === 'progress' && (
-        <FeedbackPanel
-          artifacts={state.context.artifacts}
-          progress={state.context.progress}
-          onCancel={() => send({ type: 'CANCEL' })}
-        />
-      )}
-      {uiState === 'completed' && (
-        <SessionSummary
-          artifacts={state.context.artifacts}
-          onDownload={(id) => downloadArtifact(id)}
-          onRetry={() => send({ type: 'RETRY' })}
-        />
-      )}
-      {uiState === 'failed' && (
-        <ErrorPanel
-          error={state.context.error}
-          onRetry={() => send({ type: 'RETRY' })}
-        />
-      )}
-    </div>
-  );
-}
 ```
 
 ## State → UI Derivation
 
 ```typescript
-type UIState = 'loading' | 'setup' | 'submitting' | 'progress' | 'completed' | 'failed' | 'cancelled';
+type UIState = 'loading' | 'setup' | 'submitting';
 
 function deriveUIState(state: Snapshot): UIState {
-  if (state.matches('draftEmpty'))           return 'loading';
-  if (state.matches('configuring'))          return 'setup';
-  if (state.matches('ready'))                return 'setup';
-  if (state.matches('submitting'))           return 'submitting';
-  if (state.matches('running'))              return 'progress';
-  if (state.matches('completed'))            return 'completed';
-  if (state.matches('failed'))               return 'failed';
-  if (state.matches('cancelled'))            return 'cancelled';
+  if (state.matches('draftEmpty'))  return 'loading';
+  if (state.matches('configuring')) return 'setup';
+  if (state.matches('ready'))       return 'setup';
+  if (state.matches('submitting'))  return 'submitting';
+  if (state.matches('submitted'))   return 'submitting'; // brief flash before redirect
   return 'loading';
 }
 ```
@@ -473,32 +161,49 @@ function deriveUIState(state: Snapshot): UIState {
 |-------|-----------|-------|
 | `loading` | — (spinner) | Loading |
 | `setup` (configuring) | "Configure" (disabled) | SetupPanel |
-| `setup` (ready) | "Generate" (enabled) | SetupPanel + KnowledgePanel |
+| `setup` (ready) | **"Generate"** (enabled) | SetupPanel + KnowledgePanel |
 | `submitting` | — (spinner) | SetupPanel (disabled) |
-| `progress` | "Cancel" | FeedbackPanel (cards) |
-| `completed` | "Download" + "New" | SessionSummary + Download |
-| `failed` | "Retry" | ErrorPanel + error message |
-| `cancelled` | "Retry" | SetupPanel (restored) |
+| `submitted` | — (redirect) | → navigates to `/sessions/[id]` |
 
 ## Component Tree
 
 ```
-ToolPage
+ToolPageLayout
 ├── KnowledgePanel           # Asset selection (available when ready)
 │   └── AssetCard[]
 ├── SetupPanel               # Input fields + file upload
 │   ├── TextField[]            # userText inputs
 │   ├── FileUpload[]           # file inputs
 │   └── SubmitButton           # CTA — enabled/disabled based on canSubmit
-├── FeedbackPanel            # Step progress (visible during running)
-│   ├── ProgressBar            # overall progress
-│   └── StepCard[]             # per-step artifacts (animated)
-├── SessionSummary           # Final result
-│   ├── ArtifactPreview        # final artifact content
-│   └── DownloadButton[]       # format: md, txt, docx, pdf
-└── ErrorPanel               # Error state
-    ├── ErrorMessage           # human-readable
-    └── RetryButton
+└── ReadinessSnapshot        # Pre-flight validation display
+```
+
+**Removed from ToolPage** (now only in [[SessionPage]]): `FeedbackPanel`, `SessionSummary`, `CompletionBanner`, `ErrorPanel`.
+
+## React Integration
+
+```typescript
+function ToolPageLayout({ workspaceId, toolKey }: Props) {
+  const [state, send] = useMachine(toolPageMachine);
+  const navigate = useNavigate();
+
+  // Redirect to SessionPage after successful submit
+  useEffect(() => {
+    if (state.matches('submitted') && state.context.session?.id) {
+      navigate(`/workspaces/${workspaceId}/sessions/${state.context.session.id}`);
+    }
+  }, [state]);
+
+  if (state.matches('submitting')) return <SubmittingState />;
+
+  return (
+    <SetupPanel
+      tool={state.context.tool}
+      inputs={state.context.inputs}
+      onChange={(inputs) => send({ type: 'CONFIGURE', inputs })}
+    />
+  );
+}
 ```
 
 ## Key Design Decisions
@@ -506,12 +211,12 @@ ToolPage
 | Decision | Rationale |
 |----------|-----------|
 | **One machine, 11 tools** | Same pattern as backend `sessionMachine`. Tool differences are configuration, not code |
-| **`fromCallback` for SSE** | SSE is a long-lived connection — `fromCallback` provides lifecycle management (open/close/error) |
-| **`useMachine` hook** | Returns `[state, send, actor]` — simplest API for direct state access in React |
-| **State → UI derivation** | 8 machine states map to 6 UI states. `configuring` and `ready` both render `SetupPanel` but differ in CTA enabled state |
+| **Setup-only, no SSE** | `SessionPage` is the single canonical SSE subscriber — eliminates duplicated EventSource connections |
+| **`fromPromise` only** | Single HTTP POST call; no `fromCallback` needed since SSE is handled by SessionPage |
+| **`submitted` terminal state** | Machine reaches `submitted` → `ToolPageLayout` navigates to `/sessions/[id]` via `useEffect` |
+| **State → UI derivation** | 5 machine states → 3 UI states. `configuring` and `ready` both render `SetupPanel` but differ in CTA enabled state |
 | **canSubmit guard** | Mirrors backend `ReadinessPolicy` exactly, including required asset checks by `assetType` |
-| **Readiness reason codes** | Canonical backend codes are rendered in FE (`ReadinessSnapshot`) with parity tests |
-| **Retry flow** | `completed`/`failed`/`cancelled` → RETRY → `ready` or `submitting`. Preserves inputs, clears artifacts |
+| **Idempotent replay** | Handled transparently: `submitSession` returns session regardless of `replayed` flag; redirect sends user to SessionPage which fetches the real state |
 
 ## Sources
 
@@ -519,4 +224,5 @@ ToolPage
 - [[sources/PRD]] — FR-U01 to FR-U04 (UI requirements)
 - [[sources/USER-STORIES]] — US-GF01 to US-GF04 (workflow UX)
 - [[Session Machine (XState v5)]] — backend equivalent machine
-- [[Tool UX Architecture]] — 4-phase lifecycle, always-on information pattern
+- [[Tool UX Architecture]] — setup-only UX, redirect to SessionPage
+- [[SessionPage]] — canonical post-submit destination for progress + results

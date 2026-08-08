@@ -93,8 +93,10 @@ export const shared = {
   },
   session: {
     interruptedMessage: 'Questa sessione è stata interrotta. Puoi riprovare avviando una nuova generazione dalla pagina ',
+    queuedMessage:      'Generazione in elaborazione. Segui l\'avanzamento in questa pagina.',
     failedAtStep:       ' · Step {step}',
     queuePosition:      'Posizione in coda: {position}',
+    newGeneration:      'Nuova generazione',
     xpEarned:           '+{xp} XP',
   },
 } as const;

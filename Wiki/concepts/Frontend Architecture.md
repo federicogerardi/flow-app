@@ -51,7 +51,7 @@ apps/frontend/src/components/
 ├── layout/                        # 3 components
 │   ├── AppShell.tsx               # Root layout: sidebar + header + content
 │   ├── WorkspaceDashboard.tsx     # Dashboard view (default)
-│   └── ToolPageLayout.tsx         # Tool page shell: setup | progress | result
+│   └── ToolPageLayout.tsx         # Tool page shell: setup → redirect to SessionPage
 │
 ├── workspace/                     # 4 components
 │   ├── WorkspaceCard.tsx          # Card in dashboard grid
@@ -156,22 +156,22 @@ WorkspaceDashboard
 
 ## Tool Page
 
-Three-phase flow driven by the [[ToolPage Machine (XState v5)|ToolPage machine]]:
+Single-phase setup driven by the [[ToolPage Machine (XState v5)|ToolPage machine]] (simplified 2026-08-08). After submitting, the user is redirected to [[SessionPage]] for progress and results.
 
 ```
-PHASE 1: SETUP                          PHASE 2: PROGRESS              PHASE 3: RESULT
-┌────────────────┬──────────────┐      ┌─────────────────────┐      ┌─────────────────────┐
-│ SetupPanel     │ KnowledgePanel│      │ FeedbackPanel       │      │ SessionSummary      │
-│                │              │      │                     │      │                     │
-│ Topic: [____]  │ Asset:       │      │ Step 1/3 ✓ Analysis  │      │ # Blog Post Title   │
-│                │ ✅ Brand Voice│      │ Step 2/3 ◐ Outline  │      │                     │
-│ File: [Upload] │ ○ Persona    │      │ Step 3/3 ○ Article  │      │ Content preview...  │
-│                │              │      │                     │      │                     │
-│ [Generate]     │              │      │ [Cancel]            │      │ [Download] [Promote]│
-└────────────────┴──────────────┘      └─────────────────────┘      └─────────────────────┘
+PHASE: SETUP                              REDIRECT → SessionPage
+┌────────────────┬──────────────┐      ┌───────────────────────────┐
+│ SetupPanel     │ KnowledgePanel│      │ /sessions/[id]            │
+│                │              │      │                            │
+│ Topic: [____]  │ Asset:       │      │ FeedbackPanel (running)    │
+│                │ ✅ Brand Voice│      │ or SessionSummary (done)  │
+│ File: [Upload] │ ○ Persona    │      │                            │
+│                │              │      │ [Nuova generazione]        │
+│ [Generate]     │              │      │                            │
+└────────────────┴──────────────┘      └───────────────────────────┘
 ```
 
-**Mapping from user stories**: US-T04 (step-by-step progress), US-AS04 (Knowledge Panel), US-QF01 (unified feedback panel).
+**Mapping from user stories**: US-T04 (step-by-step progress, now in SessionPage), US-AS04 (Knowledge Panel), US-QF01 (unified feedback panel).
 
 ---
 

@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/generation
-date_updated: 2026-07-30
+date_updated: 2026-08-08
 source_count: 7
 confidence: high
 ---
@@ -14,12 +14,14 @@ confidence: high
 > Centralized, reusable — new tool = configuration, not code  
 > Zero cognitive weight for users, zero friction for developers
 
+> **2026-08-08 simplification**: the tool page is now setup-only. After submitting, the user is redirected to [[SessionPage]] (`/sessions/[id]`) for progress tracking and results. This eliminates SSE-duplication between `ToolPageLayout` and `SessionPage`. [[SessionPage]] is the single canonical view for session lifecycle.
+
 ## Principle
 
 Every tool is the **same experience** with different inputs. The user never asks "what's happening?" or "what do I need?". The developer adds a tool by writing a config file, not a component.
 
 ```
-Tool UX = Standardized Setup + Always-On Information + Predictable Result
+Tool UX = Standardized Setup → Redirect to SessionPage for progress + results
 ```
 
 ---
@@ -92,23 +94,30 @@ The user **always** knows what is happening. Every state has a visible informati
 ### State → Information Mapping
 
 ```
-┌──────────────┬──────────────────────────────────────────────────────────┐
-│ State        │ What the user sees                                        │
-├──────────────┼──────────────────────────────────────────────────────────┤
-│ draftEmpty   │ Workspace dashboard. "Select a tool to start"             │
-│ configuring  │ SetupPanel active. Clear labels. Real-time readiness      │
-│ ready        │ "Ready to generate" + credit cost visible                 │
-│ submitting   │ Spinner + "Starting generation..." + credits deducted     │
-│ running      │ FeedbackPanel with animated step cards. Never silent.     │
-│ completed    │ SessionSummary with preview, download, promote            │
-│ failed       │ ErrorState with actionable message + retry                │
-│ cancelled    │ SetupPanel restored with preserved inputs                 │
-└──────────────┴──────────────────────────────────────────────────────────┘
+┌──────────────────┬──────────────────────────────────────────────────────────┐
+│ ToolPage State   │ What the user sees                                        │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ draftEmpty       │ Loading spinner. "Loading tool..."                        │
+│ configuring      │ SetupPanel active. Clear labels. Readiness snapshot       │
+│ ready            │ "Ready to generate" + credit cost visible                 │
+│ submitting       │ Spinner + "Starting generation..."                        │
+│ submitted        │ Redirect → [[SessionPage]]: FeedbackPanel (running) or    │
+│                  │ CompletionBanner + SessionSummary (completed)             │
+└──────────────────┴──────────────────────────────────────────────────────────┘
+
+┌──────────────────┬──────────────────────────────────────────────────────────┐
+│ SessionPage      │ What the user sees                                        │
+├──────────────────┼──────────────────────────────────────────────────────────┤
+│ queued/draft     │ Friendly "Generazione in elaborazione" alert             │
+│ running          │ FeedbackPanel with animated step cards. Never silent.     │
+│ completed        │ CompletionBanner + SessionSummary with download, promote  │
+│ failed           │ ErrorState with actionable message + retry CTA            │
+└──────────────────┴──────────────────────────────────────────────────────────┘
 ```
 
-### FeedbackPanel — Never Silent
+### FeedbackPanel — Never Silent (now SessionPage-only)
 
-During execution, the `FeedbackPanel` always shows updated information:
+During execution, the `FeedbackPanel` (rendered in [[SessionPage]]) always shows updated information:
 
 ```tsx
 function FeedbackPanel({ artifacts, progress }: Props) {
@@ -165,28 +174,27 @@ function FeedbackPanel({ artifacts, progress }: Props) {
 ## Tool Lifecycle — User Perspective
 
 ```
-1. ENTER TOOL                       2. CONFIGURE                         3. GENERATE
+1. ENTER TOOL                       2. CONFIGURE                         3. REDIRECT → SessionPage
 ┌─────────────────────┐             ┌─────────────────────┐             ┌─────────────────────┐
-│ Sidebar: Blog Post   │             │ Topic: [___________] │             │ Step 1/3 ◐ Analysis  │
-│                      │             │ File:  [Upload 📎]   │             │ Step 2/3 ○ Outline  │
-│ What it produces:    │  ──fill──▶  │                      │  ──click──▶ │ Step 3/3 ○ Article  │
-│ SEO blog article     │             │ Credit cost: 1        │  "Generate" │                     │
-│                      │             │                      │             │ Time: 00:45         │
-│ 3 steps:             │             │ [Generate] ← enabled  │             │                     │
-│ SEO → Outline → Post │             │                      │             │ [Cancel]            │
+│ Sidebar: Blog Post   │             │ Topic: [___________] │             │ /sessions/[id]       │
+│                      │             │ File:  [Upload 📎]   │             │                      │
+│ What it produces:    │  ──fill──▶  │                      │  ──click──▶ │ See progress +       │
+│ SEO blog article     │             │ Credit cost: 1        │  "Generate" │ results in the       │
+│                      │             │                      │             │ canonical session    │
+│ 3 steps:             │             │ [Generate] ← enabled  │             │ page                 │
+│ SEO → Outline → Post │             │                      │             │                      │
 └─────────────────────┘             └─────────────────────┘             └─────────────────────┘
 
-4. RESULT
+4. RESULT (SessionPage)
 ┌──────────────────────────────────────────────────────────┐
 │ ✅ Completed in 1:23                                      │
 │                                                           │
 │ # Article Title                                           │
-│                                                           │
 │ Lorem ipsum dolor sit amet...                             │
 │                                                           │
 │ [Download .docx] [Download .pdf] [Download .md]           │
 │ [Promote to Asset]  ← if tool.produces !== undefined      │
-│ [New generation]                                          │
+│ [Nuova generazione] ← back to tool setup                  │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -208,7 +216,7 @@ New tool = **5 files, ~100 lines, ~30 minutes**. No new React components.
    → Add toolName to a dictionary (if different from the default)
 
 5. apps/frontend/src/...                                    (0 loc)
-   → No frontend files. SetupPanel + FeedbackPanel are generic.
+    → No frontend files. SetupPanel is generic. Progress/results handled by [[SessionPage]].
 ```
 
 ### Example: `campaign-report` (hypothetical new tool)

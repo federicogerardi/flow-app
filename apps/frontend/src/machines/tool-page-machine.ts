@@ -1,15 +1,9 @@
-import { setup, assign, fromPromise, fromCallback } from 'xstate';
+import { setup, assign, fromPromise } from 'xstate';
 import type { ToolDefinition, TextInput, FileInput, AssetInput } from '../tool-inputs';
 import { api } from '../api/client';
-import type { SessionDTO, ArtifactDTO } from '../api/client';
+import type { SessionDTO } from '../api/client';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
-
-export interface StepProgress {
-  current: number;
-  total: number;
-  label?: string;
-}
 
 export interface ToolPageInputs {
   text: Record<string, string>;
@@ -23,8 +17,6 @@ export interface ToolPageContext {
   workspaceId: string;
   inputs: ToolPageInputs;
   session: SessionDTO | null;
-  artifacts: ArtifactDTO[];
-  progress: StepProgress | null;
   error: { code: string; message: string } | null;
 }
 
@@ -34,12 +26,6 @@ export type ToolPageEvent =
   | { type: 'LOAD'; tool: ToolDefinition; workspaceId: string }
   | { type: 'CONFIGURE'; inputs: Partial<ToolPageInputs> }
   | { type: 'SUBMIT' }
-  | { type: 'CANCEL' }
-  | { type: 'SESSION_STARTED'; session: SessionDTO }
-  | { type: 'STEP_COMPLETED'; artifact: ArtifactDTO; progress: StepProgress }
-  | { type: 'SESSION_COMPLETED'; finalArtifact: ArtifactDTO }
-  | { type: 'SESSION_FAILED'; error: { code: string; message: string } }
-  | { type: 'RETRY' }
   | { type: 'RESET' };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -123,49 +109,6 @@ export const toolPageMachine = setup({
 
       return result;
     }),
-
-    subscribeToSSE: fromCallback(({ sendBack, input }: { sendBack: (event: ToolPageEvent) => void; input: { sessionId: string } }) => {
-      const { sessionId } = input;
-
-      const source = new EventSource(`/api/sessions/${sessionId}/events`, {
-        withCredentials: true,
-      });
-
-      source.addEventListener('step_completed', (e: MessageEvent) => {
-        const data = JSON.parse(e.data);
-        sendBack({
-          type: 'STEP_COMPLETED',
-          artifact: data.artifact ?? { id: `step-${data.stepNumber}`, stepNumber: data.stepNumber, status: 'completed', createdAt: new Date().toISOString(), sessionId, content: '' },
-          progress: data.progress,
-        });
-      });
-
-      source.addEventListener('session_completed', (e: MessageEvent) => {
-        const data = JSON.parse(e.data);
-        sendBack({
-          type: 'SESSION_COMPLETED',
-          finalArtifact: data.finalArtifact ?? { id: data.finalArtifactId, stepNumber: 0, status: 'completed', createdAt: data.completedAt, sessionId, content: '' },
-        });
-        source.close();
-      });
-
-      source.addEventListener('session_failed', (e: MessageEvent) => {
-        const data = JSON.parse(e.data);
-        sendBack({
-          type: 'SESSION_FAILED',
-          error: data.error ?? { code: 'UNKNOWN', message: 'Session failed' },
-        });
-        source.close();
-      });
-
-      source.onerror = () => {
-        source.close();
-      };
-
-      return () => {
-        source.close();
-      };
-    }),
   },
   guards: {
     canSubmit: canSubmitGuard,
@@ -179,11 +122,10 @@ export const toolPageMachine = setup({
     workspaceId: '',
     inputs: emptyInputs(),
     session: null,
-    artifacts: [],
-    progress: null,
     error: null,
   },
   states: {
+    // ── No tool loaded, no inputs ──────────────────────────────────────────────
     draftEmpty: {
       on: {
         LOAD: {
@@ -197,6 +139,7 @@ export const toolPageMachine = setup({
       },
     },
 
+    // ── User is filling inputs ─────────────────────────────────────────────────
     configuring: {
       on: {
         CONFIGURE: {
@@ -208,19 +151,13 @@ export const toolPageMachine = setup({
           guard: 'isStillDraft',
           target: 'draftEmpty',
         },
-        SUBMIT: {
-          guard: 'canSubmit',
-          target: 'submitting',
-          actions: assign({
-            session: () => null,
-            artifacts: () => [],
-            progress: () => null,
-            error: () => null,
-          }),
-        },
       },
+      always: [
+        { target: 'ready', guard: 'canSubmit' },
+      ],
     },
 
+    // ── All required inputs filled — user can submit ───────────────────────────
     ready: {
       on: {
         CONFIGURE: {
@@ -232,15 +169,13 @@ export const toolPageMachine = setup({
         SUBMIT: {
           target: 'submitting',
           actions: assign({
-            session: () => null,
-            artifacts: () => [],
-            progress: () => null,
             error: () => null,
           }),
         },
       },
     },
 
+    // ── HTTP POST in flight ────────────────────────────────────────────────────
     submitting: {
       invoke: {
         src: 'submitSession',
@@ -249,40 +184,13 @@ export const toolPageMachine = setup({
           workspaceId: context.workspaceId,
           inputs: context.inputs,
         }),
-        onDone: [
-          {
-            target: 'completed',
-            guard: ({ event }) => {
-              const output = event.output as { session: SessionDTO; replayed: boolean };
-              return !!output.replayed && output.session.status === 'completed';
-            },
-            actions: assign({
-              session: ({ event }) => (event.output as { session: SessionDTO }).session,
-            }),
-          },
-          {
-            target: 'failed',
-            guard: ({ event }) => {
-              const output = event.output as { session: SessionDTO; replayed: boolean };
-              return !!output.replayed && (output.session.status === 'failed' || output.session.status === 'cancelled');
-            },
-            actions: assign({
-              session: ({ event }) => (event.output as { session: SessionDTO }).session,
-              error: ({ event }) => {
-                const output = event.output as { session: SessionDTO };
-                return output.session.status === 'failed'
-                  ? { code: 'SESSION_FAILED', message: 'Session previously failed' }
-                  : { code: 'SESSION_CANCELLED', message: 'Session was cancelled' };
-              },
-            }),
-          },
-          {
-            target: 'running',
-            actions: assign({
-              session: ({ event }) => (event.output as { session: SessionDTO }).session,
-            }),
-          },
-        ],
+        onDone: {
+          target: 'submitted',
+          actions: assign({
+            session: ({ event }) => (event.output as { session: SessionDTO }).session,
+            inputs: () => emptyInputs(),
+          }),
+        },
         onError: {
           target: 'ready',
           actions: assign({
@@ -298,103 +206,9 @@ export const toolPageMachine = setup({
       },
     },
 
-    running: {
-      invoke: {
-        src: 'subscribeToSSE',
-        input: ({ context }) => ({
-          sessionId: context.session?.id ?? '',
-        }),
-      },
-      on: {
-        STEP_COMPLETED: {
-          actions: assign({
-            artifacts: ({ context, event }) => [...context.artifacts, event.artifact],
-            progress: ({ event }) => event.progress,
-          }),
-        },
-        SESSION_COMPLETED: {
-          target: 'completed',
-          actions: assign({
-            artifacts: ({ context, event }) => [...context.artifacts, event.finalArtifact],
-          }),
-        },
-        SESSION_FAILED: {
-          target: 'failed',
-          actions: assign({
-            error: ({ event }) => event.error,
-          }),
-        },
-        CANCEL: 'cancelled',
-      },
-    },
-
-    completed: {
-      on: {
-        RETRY: {
-          target: 'ready',
-          actions: assign({
-            session: () => null,
-            artifacts: () => [],
-            progress: () => null,
-            error: () => null,
-          }),
-        },
-        RESET: {
-          target: 'draftEmpty',
-          actions: assign({
-            session: () => null,
-            artifacts: () => [],
-            progress: () => null,
-            error: () => null,
-          }),
-        },
-      },
-    },
-
-    failed: {
-      on: {
-        RETRY: {
-          target: 'submitting',
-          actions: assign({
-            session: () => null,
-            artifacts: () => [],
-            progress: () => null,
-            error: () => null,
-          }),
-        },
-        RESET: {
-          target: 'draftEmpty',
-          actions: assign({
-            session: () => null,
-            artifacts: () => [],
-            progress: () => null,
-            error: () => null,
-          }),
-        },
-      },
-    },
-
-    cancelled: {
-      on: {
-        RETRY: {
-          target: 'submitting',
-          actions: assign({
-            session: () => null,
-            artifacts: () => [],
-            progress: () => null,
-            error: () => null,
-          }),
-        },
-        RESET: {
-          target: 'draftEmpty',
-          actions: assign({
-            session: () => null,
-            artifacts: () => [],
-            progress: () => null,
-            error: () => null,
-          }),
-        },
-      },
+    // ── Session created — the ToolPageLayout navigates away immediately ────────
+    submitted: {
+      type: 'final',
     },
   },
 });

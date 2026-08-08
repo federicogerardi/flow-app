@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 // ── Replicate the `deriveUIState` function from ToolPageLayout ─────────────────
 // (It's a private function in ToolPageLayout.tsx; reproduced here for testing)
 
-type UIState = 'loading' | 'setup' | 'submitting' | 'progress' | 'completed' | 'failed' | 'cancelled';
+type UIState = 'loading' | 'setup' | 'submitting';
 
 function deriveUIState(state: { value: unknown }): UIState {
   const v = String(state.value);
@@ -11,10 +11,7 @@ function deriveUIState(state: { value: unknown }): UIState {
   if (v === 'configuring') return 'setup';
   if (v === 'ready') return 'setup';
   if (v === 'submitting') return 'submitting';
-  if (v === 'running') return 'progress';
-  if (v === 'completed') return 'completed';
-  if (v === 'failed') return 'failed';
-  if (v === 'cancelled') return 'cancelled';
+  if (v === 'submitted') return 'submitting'; // brief flash before redirect
   return 'loading';
 }
 
@@ -26,10 +23,7 @@ describe('deriveUIState', () => {
     ['configuring', 'setup'],
     ['ready', 'setup'],
     ['submitting', 'submitting'],
-    ['running', 'progress'],
-    ['completed', 'completed'],
-    ['failed', 'failed'],
-    ['cancelled', 'cancelled'],
+    ['submitted', 'submitting'],
   ] as const)('maps machine state %s → UI state %s', (machineValue, expectedUIState) => {
     expect(deriveUIState({ value: machineValue })).toBe(expectedUIState);
   });
@@ -39,7 +33,7 @@ describe('deriveUIState', () => {
   });
 
   it('handles compound XState values by converting to string', () => {
-    // XState v5 can return compound values like { running: 'processing' }
-    expect(deriveUIState({ value: { running: 'processing' } })).toBe('loading');
+    // XState v5 can return compound values like { submitting: 'processing' }
+    expect(deriveUIState({ value: { submitting: 'processing' } })).toBe('loading');
   });
 });

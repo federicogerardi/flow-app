@@ -4763,3 +4763,33 @@ Activated dead-code CTA path in EmptyState, fixed 4 copy violations (SessionsPag
 
 ### Wiki specs consulted
 [[ui-design-summary-2026-08-07]], [[Design Tokens]], [[UI Component Map]], [[Centralized Copy Modules]], [[DDD Domain Design Rules]]
+
+
+## [2026-08-08] simplify | ToolPage redirect to SessionPage — Option A
+
+Eliminated SSE and UI duplication between `ToolPageLayout` and `SessionPage`. The tool page is now a pure setup form; after submitting, the user is redirected to `/sessions/[id]` for progress tracking and results.
+
+### Rationale
+- `ToolPageLayout` had its own `subscribeToSSE` EventSource actor → duplicated with `SessionPage.useSession` hook
+- `FeedbackPanel` and `SessionSummary` were rendered in two places → design divergence risk
+- SessionPage already handles all session lifecycle states (queued, running, failed, completed)
+
+### Files changed (6)
+| File | Change |
+|------|--------|
+| `apps/frontend/src/machines/tool-page-machine.ts` | Removed 4 states (running, completed, failed, cancelled), SSE actor, replayed guards. 8→4 states + 1 terminal. Added `submitted` state. |
+| `apps/frontend/src/components/layout/ToolPageLayout.tsx` | Removed FeedbackPanel, SessionSummary, CompletionBanner, ErrorState renders. Added redirect useEffect when machine reaches `submitted`. `deriveUIState` now returns loading/setup/submitting only. |
+| `apps/frontend/src/pages/SessionPage.tsx` | Changed "interrupted" alert to friendly "in elaborazione" message for queued/draft/ready. Added "Nuova generazione" CTA button (navigates to tool page). |
+| `packages/copy/src/it/shared.ts` | Added 2 keys: `shared.session.queuedMessage`, `shared.session.newGeneration` |
+| `apps/frontend/src/machines/__tests__/tool-page-machine.test.ts` | Removed 20+ running/SSE/terminal tests. Added `submitted` state test and input reset test. |
+| `apps/frontend/src/machines/__tests__/derive-ui-state.test.ts` | Removed progress/completed/failed/cancelled UI states. Added `submitted` mapping. |
+
+### Verification
+- Frontend: 134/134 tests (19 files), tsc 0 errors
+- Copy module: no tests (type-only change)
+
+### Wiki updated
+- [[ToolPage Machine (XState v5)]] — full rewrite: simplified machine, removed SSE actor, new state diagram
+- [[Tool UX Architecture]] — redirected lifecycle, updated state→info mapping for ToolPage + SessionPage
+- [[SessionPage]] — "Nuova generazione" CTA, friendly queued message, canonical post-submit
+- [[Frontend Architecture]] — ToolPage section updated to single-phase + redirect

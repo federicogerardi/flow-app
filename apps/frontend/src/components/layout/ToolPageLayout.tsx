@@ -1,19 +1,14 @@
 import { Box, Button, Card, CardContent, Typography, Alert, LinearProgress } from '@mui/material';
 import { useMachine } from '@xstate/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { api } from '../../api/client';
 import { PageHeader } from '../PageHeader';
 import { useBreadcrumbs } from '../../layout/AppShell';
-import { ErrorState } from '../ErrorState';
 import { ReadinessSnapshot } from '../tool/ReadinessSnapshot';
 import { SetupPanel, fetchToolDefinitions } from '../tool/SetupPanel';
-import { FeedbackPanel } from '../tool/FeedbackPanel';
-import { SessionSummary } from '../tool/SessionSummary';
-import { CompletionBanner } from '../shared/CompletionBanner';
 import { toolPageMachine } from '../../machines/tool-page-machine';
 import type { ToolDefinition, TextInput, FileInput, AssetInput } from '../../tool-inputs';
-import type { SessionDTO as ApiSessionDTO, ArtifactDTO } from '../../api/client';
 import { copy } from '@flow-app/copy';
 import { AssetPicker } from '../shared/AssetPicker';
 import { ASSET_TOOL_MAP } from '../../constants/assets';
@@ -21,7 +16,7 @@ import { ASSET_TYPE_LABELS } from '../../constants/assets';
 
 // ── UI state derivation ────────────────────────────────────────────────────────
 
-type UIState = 'loading' | 'setup' | 'submitting' | 'progress' | 'completed' | 'failed' | 'cancelled';
+type UIState = 'loading' | 'setup' | 'submitting';
 
 function deriveUIState(state: { value: unknown }): UIState {
   const v = String(state.value);
@@ -29,10 +24,7 @@ function deriveUIState(state: { value: unknown }): UIState {
   if (v === 'configuring') return 'setup';
   if (v === 'ready') return 'setup';
   if (v === 'submitting') return 'submitting';
-  if (v === 'running') return 'progress';
-  if (v === 'completed') return 'completed';
-  if (v === 'failed') return 'failed';
-  if (v === 'cancelled') return 'cancelled';
+  if (v === 'submitted') return 'submitting'; // brief flash before redirect
   return 'loading';
 }
 
@@ -47,11 +39,21 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
   const navigate = useNavigate();
   const [state, send] = useMachine(toolPageMachine);
   const [workspaceAssets, setWorkspaceAssets] = useState<Array<{ id: string; assetType: string; name: string | null; createdAt: string }>>([]);
-  const [replayedDetail, setReplayedDetail] = useState<ApiSessionDTO | null>(null);
   const { setBreadcrumbs } = useBreadcrumbs();
+  const navigateRef = useRef(navigate);
+
+  // Keep navigate stable in ref
+  useEffect(() => { navigateRef.current = navigate; }, [navigate]);
 
   const uiState = deriveUIState(state);
-  const { tool, inputs, session, artifacts, progress, error } = state.context;
+  const { tool, inputs, session, error } = state.context;
+
+  // ── Redirect to SessionPage after successful submit ────────────────────────
+  useEffect(() => {
+    if (state.matches('submitted') && session?.id) {
+      navigateRef.current(`/workspaces/${workspaceId}/sessions/${session.id}`);
+    }
+  }, [state, session?.id, workspaceId]);
 
   // Derived readiness
   const textMissing = (tool?.textInputs ?? []).some(
@@ -71,18 +73,8 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
 
   // Debug: write phase to document title
   useEffect(() => {
-    document.title = `[${uiState}] ${title}${session?.id ? ` #${session.id.slice(0,8)}` : ''}`;
+    document.title = `[${uiState}] ${title}${session?.id ? ` #${session.id.slice(0, 8)}` : ''}`;
   }, [uiState, title, session?.id]);
-
-  // Fetch full session detail for replayed completed sessions
-  // (startSession response has no artifacts — GET /api/sessions/:id fills them)
-  useEffect(() => {
-    if (uiState === 'completed' && session?.id && artifacts.length === 0 && !replayedDetail) {
-      api.getSession(session.id).then((detail) => {
-        setReplayedDetail(detail);
-      }).catch(() => {});
-    }
-  }, [uiState, session?.id, artifacts.length, replayedDetail]);
 
   // Set breadcrumbs
   useEffect(() => {
@@ -138,7 +130,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
     if (file) {
       send({ type: 'CONFIGURE', inputs: { files: { [key]: file } } });
     } else {
-      // Remove file — send empty object for that key
+      // Remove file — send updated files map without that key
       const newFiles = { ...inputs.files };
       delete newFiles[key];
       send({ type: 'CONFIGURE', inputs: { files: newFiles } });
@@ -253,73 +245,6 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
             </Typography>
           </CardContent>
         </Card>
-      )}
-
-      {/* UI State: progress */}
-      {uiState === 'progress' && (
-        <Card>
-          <CardContent>
-            <FeedbackPanel
-              progress={progress}
-              status="running"
-              artifacts={artifacts}
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* UI State: completed */}
-      {uiState === 'completed' && (
-        <>
-          <CompletionBanner
-            durationSeconds={0}
-            stepCount={tool?.stepCount ?? 1}
-            creditCost={tool?.creditCost ?? 1}
-          />
-          {(artifacts.length > 0 ? (
-            <SessionSummary artifacts={artifacts} workspaceId={workspaceId} produces={tool?.produces} />
-          ) : replayedDetail?.artifacts ? (
-            <SessionSummary artifacts={replayedDetail.artifacts as ArtifactDTO[]} workspaceId={workspaceId} produces={tool?.produces} />
-          ) : null)}
-          <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-            <Button variant="outlined" onClick={() => { setReplayedDetail(null); send({ type: 'RETRY' }); }}>
-              {copy.t('toolPage.cta.new')}
-            </Button>
-            <Button variant="outlined" onClick={() => navigate(`/workspaces/${workspaceId}`)}>
-              {copy.t('workspace.nav.backToWorkspace')}
-            </Button>
-          </Box>
-        </>
-      )}
-
-      {/* UI State: failed */}
-      {uiState === 'failed' && (
-        <>
-          {error && <ErrorState message={error.message} onRetry={() => send({ type: 'RETRY' })} />}
-          <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-            <Button variant="outlined" onClick={() => send({ type: 'RESET' })}>
-              {copy.t('shared.actions.retry')}
-            </Button>
-            <Button variant="outlined" onClick={() => navigate(`/workspaces/${workspaceId}`)}>
-              {copy.t('workspace.nav.backToWorkspace')}
-            </Button>
-          </Box>
-        </>
-      )}
-
-      {/* UI State: cancelled */}
-      {uiState === 'cancelled' && (
-        <>
-          <ErrorState message={copy.t('toolPage.progress.cancelled')} onRetry={() => send({ type: 'RETRY' })} />
-          <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-            <Button variant="contained" onClick={() => send({ type: 'RESET' })}>
-              {copy.t('toolPage.cta.new')}
-            </Button>
-            <Button variant="outlined" onClick={() => navigate(`/workspaces/${workspaceId}`)}>
-              {copy.t('workspace.nav.backToWorkspace')}
-            </Button>
-          </Box>
-        </>
       )}
     </Box>
   );
