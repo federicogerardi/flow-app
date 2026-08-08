@@ -22,7 +22,12 @@ import { TokenService } from './infrastructure/token-service.js';
 import { AuthService } from './api/auth/auth-service.js';
 import { createSessionWorker } from './generation/worker/session-worker.js';
 import { GamificationEventPublisher } from './application/gamification/gamification-event-publisher.js';
+import { createGamificationWorker } from './application/gamification/gamification-worker.js';
 import { getGamificationQueue } from './generation/jobs/gamification-queue.js';
+import { ProcessedEventRepository } from './infrastructure/processed-event-repository.js';
+import { XPTransactionRepository } from './infrastructure/xp-transaction-repository.js';
+import { LeaderboardProjectionRepository } from './infrastructure/leaderboard-projection-repository.js';
+import { GamificationStatsRepository } from './infrastructure/gamification-stats-repository.js';
 import { ConsumeCreditsUseCase } from './application/usage/consume-credits.usecase.js';
 
 const config = validateConfig();
@@ -107,7 +112,7 @@ app.listen(config.PORT, () => {
   logger.info({ port: config.PORT, env: config.NODE_ENV }, 'Server started');
 });
 
-// ── Worker (runs in same process as server) ───────────────────────────────────
+// ── Session Worker ────────────────────────────────────────────────────────────
 const worker = createSessionWorker({
   sessionRepo,
   eventBridge,
@@ -117,7 +122,18 @@ const worker = createSessionWorker({
   gamificationEventPublisher,
   consumeCreditsUC,
 });
-logger.info('Worker started');
+logger.info('Session worker started');
+
+// ── Gamification Worker ───────────────────────────────────────────────────────
+const gamificationWorker = createGamificationWorker({
+  playerProfileRepo,
+  workspaceChallengeRepo,
+  processedEventRepo: new ProcessedEventRepository(db),
+  xpTransactionRepo: new XPTransactionRepository(db),
+  leaderboardRepo: new LeaderboardProjectionRepository(db),
+  gamificationStatsRepo: new GamificationStatsRepository(db),
+});
+logger.info('Gamification worker started');
 
 // ── Graceful Shutdown ─────────────────────────────────────────────────────────
 let isShuttingDown = false;
@@ -134,6 +150,7 @@ async function gracefulShutdown(signal: string) {
       await new Promise((r) => setTimeout(r, 500));
     }
     await worker.close();
+    await gamificationWorker.close();
     cleanupJob.stop();
     await queue.close();
     await gamificationQueue.close();

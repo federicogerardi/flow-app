@@ -11,15 +11,25 @@ dotenv.config({ path: path.join(root, '.env.local'), override: true });
 import { validateConfig } from '../../config.js';
 import { logger } from '../../infrastructure/logger.js';
 import { createDatabase } from '@flow-app/infra-db';
-import { KyselySessionRepository, KyselyQuotaRepository } from '@flow-app/infra-db';
+import {
+  KyselySessionRepository,
+  KyselyQuotaRepository,
+  KyselyPlayerProfileRepository,
+  KyselyWorkspaceChallengeRepository,
+} from '@flow-app/infra-db';
 import { JobEventBridge } from '../../infrastructure/job-event-bridge.js';
 import { createSessionWorker } from './session-worker.js';
+import { createGamificationWorker } from '../../application/gamification/gamification-worker.js';
 import { LlmGateway } from '../../infrastructure/llm-gateway.js';
 import { FilesystemPromptTemplateRepository } from '../../infrastructure/prompt-template-repository.js';
 import { PromptComponentRegistry, PromptComposer, getDefaultComponents } from '@flow-app/domain';
 import { GamificationEventPublisher } from '../../application/gamification/gamification-event-publisher.js';
 import { getGamificationQueue } from '../jobs/gamification-queue.js';
 import { ConsumeCreditsUseCase } from '../../application/usage/consume-credits.usecase.js';
+import { ProcessedEventRepository } from '../../infrastructure/processed-event-repository.js';
+import { XPTransactionRepository } from '../../infrastructure/xp-transaction-repository.js';
+import { LeaderboardProjectionRepository } from '../../infrastructure/leaderboard-projection-repository.js';
+import { GamificationStatsRepository } from '../../infrastructure/gamification-stats-repository.js';
 
 const config = validateConfig();
 const log = logger.child({ component: 'worker-process' });
@@ -49,10 +59,22 @@ const gamificationEventPublisher = new GamificationEventPublisher(gamificationQu
 
 const quotaRepo = new KyselyQuotaRepository(db);
 const consumeCreditsUC = new ConsumeCreditsUseCase(quotaRepo);
+const playerProfileRepo = new KyselyPlayerProfileRepository(db);
+const workspaceChallengeRepo = new KyselyWorkspaceChallengeRepository(db);
 
 const worker = createSessionWorker({ sessionRepo, eventBridge, llmGateway, promptComposer, promptTemplateRepo, gamificationEventPublisher, consumeCreditsUC });
 
-log.info('Worker started');
+log.info('Session worker started');
+
+const gamificationWorker = createGamificationWorker({
+  playerProfileRepo,
+  workspaceChallengeRepo,
+  processedEventRepo: new ProcessedEventRepository(db),
+  xpTransactionRepo: new XPTransactionRepository(db),
+  leaderboardRepo: new LeaderboardProjectionRepository(db),
+  gamificationStatsRepo: new GamificationStatsRepository(db),
+});
+log.info('Gamification worker started');
 
 let isShuttingDown = false;
 
@@ -74,6 +96,7 @@ async function gracefulShutdown(signal: string) {
     }
 
     await worker.close();
+    await gamificationWorker.close();
     await eventBridge.close();
     await db.destroy();
 
