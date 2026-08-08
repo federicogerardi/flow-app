@@ -1,4 +1,15 @@
 
+## [2026-08-08] unify | Maintenance Log → log.md — redundant concept removed
+
+Merged [[Maintenance Log]] into [[log]] (canonical operation log). The Maintenance Log was a redundant less-detailed duplicate created 2026-08-03 to work around a YAML duplicate-key issue in index.md. All entries were already present in log.md with more detail. Actions:
+- Deleted `Wiki/concepts/Maintenance Log.md` (114 lines)
+- Removed from `Wiki/index.md` Concepts table; updated maintenance note → `[[log]]`
+- Fixed 9 `[[Maintenance Log]]` wikilinks across `log.md`, `index.md`, `frontend-gap-analysis-2026-08-04.md`
+- Rewrote [[CLAUDE.md#9 — Maintenance entries go to log.md, never to index frontmatter|Rule 9]] in CLAUDE.md — now points to log.md instead of Maintenance Log page
+- Final state: log.md is the single canonical operation log; index.md is a pure catalog
+
+Net: 1 concept page eliminated, zero information lost.
+
 ## [2026-08-08] simplify | Wiki remediation — 15 pages deleted, 6 merged, 6 cross-refs fixed
 
 Performed a comprehensive wiki simplification based on CLAUDE.md Wiki Content Rules audit. **~20 pages eliminated (-13%)**.
@@ -58,6 +69,12 @@ Performed a comprehensive wiki simplification based on CLAUDE.md Wiki Content Ru
 
 **Before**: 80 concepts, 13 entities, 39 synthesis = ~155 files in Wiki/
 **After**: 74 concepts, 11 entities, 28 synthesis = ~135 files (-13%)
+
+## [2026-08-08] schema | CLAUDE.md — Test Fidelity Rules 1-bis + 5
+
+Added two rules derived from session learnings:
+- **1-bis**: Mock data MUST include ALL mandatory DTO fields (workspaceId, stepCount, etc.), not just fields accessed by the immediate code path. Missing fields silently propagate `undefined` to child components.
+- **5**: XState v5 `fromCallback` with `EventSource` requires `MockEventSource` polyfill in jsdom. Prevents uncaught errors when machine enters `running` state in tests.
 
 ## [2026-08-08] fix | pre-existing DashboardPage session-cards test
 
@@ -894,7 +911,7 @@ Executed Sprint 4 — all remaining tracks, ~5h. All 4 sprints complete: ~22h to
 
 **Frontend** (Tracks F+G): `AssetList` (list + delete), `AssetCoverageBar` (5-type progress), `ConfirmDialog`, `CompletionBanner`, `QuickGenerateBar`. Dark mode: light/dark/system toggle in AppShell header, persisted via ThemeProvider context.
 
-**Wiki updated**: [[frontend-gap-analysis-2026-08-04|gap analysis]] (all tracks ✅, component inventory refreshed, P1 blockers resolved), [[log]] (this entry), [[Maintenance Log]].
+**Wiki updated**: [[frontend-gap-analysis-2026-08-04|gap analysis]] (all tracks ✅, component inventory refreshed, P1 blockers resolved), [[log]] (this entry).
 
 **Verification**: `tsc --build` clean, `vite build` 2.51s, `eslint` 0/0, `vitest` 69/674.
 
@@ -915,7 +932,7 @@ Executed Sprint 3 — 8 gamification components, ~4h:
 
 **Verification**: `tsc --noEmit` 0, `vite build` 2.03s, `eslint` 0/0, `vitest` 69/674.
 
-**Updated**: [[frontend-gap-analysis-2026-08-04|gap analysis]] (Sprint 3 ✅), [[log]] (this entry), [[Maintenance Log]].
+**Updated**: [[frontend-gap-analysis-2026-08-04|gap analysis]] (Sprint 3 ✅), [[log]] (this entry).
 
 ---
 
@@ -951,7 +968,7 @@ Executed Sprint 2 — 4 phases, ~6h:
 - Fixed backend send-message/accept-invitation tests: added `gamificationEventPublisher` mock
 - `npx tsc --build` → 0 errors (was 27 errors)
 
-**Updated**: [[frontend-gap-analysis-2026-08-04|gap analysis]] (Sprint 2 ✅, 2/4 sprints done), [[log]] (this entry), [[Maintenance Log]].
+**Updated**: [[frontend-gap-analysis-2026-08-04|gap analysis]] (Sprint 2 ✅, 2/4 sprints done), [[log]] (this entry).
 
 ---
 
@@ -991,7 +1008,7 @@ Executed [[synthesis/frontend-gap-analysis-2026-08-04|Sprint 1]] — 5 phases, ~
 
 **Bundle**: SessionPage 9.56→163.68 KB (react-markdown+remark-gfm), ToolPage 2.76→4.14 KB, index 524→565 KB.
 
-**Updated**: [[frontend-gap-analysis-2026-08-04|gap analysis]] (Sprint 1 ✅, remaining 13–19 days), [[log]] (this entry), [[Maintenance Log]].
+**Updated**: [[frontend-gap-analysis-2026-08-04|gap analysis]] (Sprint 1 ✅, remaining 13–19 days), [[log]] (this entry).
 
 ---
 
@@ -1011,7 +1028,7 @@ Audit confirmed Phase 12 backend already implemented — zero code needed. Wiki 
 - `API Routes.md` — `GET /api/usage/credits` added to route index + full response documentation, sync date updated
 - `Frontend Architecture.md` — Auth status fixed (was stale: 0 → 5 built), updated to 2026-08-04
 - `log.md` — this entry
-- `Maintenance Log.md` — appended
+- `log.md` — this entry (appended)
 
 **Verification**: `tsc --build` clean, `eslint` 0/0, 80 domain usage tests passing.
 
@@ -1024,7 +1041,7 @@ Created [[synthesis/frontend-gap-analysis-2026-08-04]] — two-part operational 
 - **Part 2**: 3 priority tiers — 🔴 Phase 12 Usage & Quota wiring (not built), 🟠 backend API blockers (7 ⬜ endpoints blocking 7 frontend components), 🟡 technical debt (XState deferred, DTO cleanup, markdown rendering, tool definitions).
 - **Execution roadmap**: 7 tracks (A–G) across 4 sprints, ~17–23 days total. Critical path: Track A (quota safety) + Track B (tool workflow).
 - **Wiki drift found**: `Frontend Architecture.md` Auth status is stale — says 0 built but Phase 8 completed AuthContext/AuthGuard/OAuthCallback/LoginPage/RegisterPage. Flagged for reconciliation.
-- Updated: [[index]] Synthesis table, [[log]] (this entry), [[Maintenance Log]].
+- Updated: [[index]] Synthesis table, [[log]] (this entry).
 
 ---
 
@@ -1088,7 +1105,7 @@ Executed Phase 11 per [[synthesis/phase-11-testing-plan]]. Final results:
 
 **DDD compliance**: zero `new Aggregate(...)`, zero `as any` casts, all errors are `DomainError` subclasses.
 
-**Wiki pages updated**: `Testing Strategy` (Phase 11 Baseline + configs), `phase-11-testing-plan` (Results section), `log.md`, `Maintenance Log`.
+**Wiki pages updated**: `Testing Strategy` (Phase 11 Baseline + configs), `phase-11-testing-plan` (Results section), `log.md`.
 
 ## [2026-08-04] synthesis | Phase 11 execution completed
 
@@ -4125,4 +4142,183 @@ Wired `createGamificationWorker()` into both entry points:
 
 `apps/backend/src/server.ts`, `apps/backend/src/generation/worker/worker-process.ts`.
 
-Wiki updated: [[log]] (this entry), [[Maintenance Log]], [[Gamification]].
+Wiki updated: [[log]] (this entry), [[Gamification]].
+
+## [2026-08-08] audit | UI component implementation status — wiki vs codebase verification
+
+Full filesystem audit of `apps/frontend/src/` against the 37-component wiki inventory. Wiki claimed 22% completion (8/37) as of 2026-08-07; actual is **86% (32/37)**.
+
+### Gap: wiki claimed 29 components as ⬜ — 24 of them are actually built
+
+**Biggest discrepancies (all claimed ⬜, actually ✅):**
+- Tool layer: 6/6 built (SetupPanel 216 lines, FeedbackPanel 177 lines, ReadinessSnapshot 136 lines, SessionSummary 227 lines, KnowledgePanel 66 lines, ToolCard 32 lines)
+- Shared layer: 4/4 built (ConfirmDialog 29 lines, CompletionBanner 48 lines, QuickGenerateBar 61 lines, PromoteButton 79 lines)
+- Workspace layer: 3/4 built (WorkspaceCard, AssetList, AssetCoverageBar)
+- Gamification: 6/8 standalone files + 2 embedded in ToastSystem
+- Agent Chat: 5/5 component files
+
+### Relocations from wiki-specified paths
+- AppShell: `components/layout/` → `layout/AppShell.tsx` (392 lines)
+- WorkspaceAccentProvider: `components/shared/` → `theme/WorkspaceAccentProvider.tsx` (46 lines)
+
+### Files not in wiki inventory
+- Workspace sub-cards: QueuedCard, RunningCard, CompletedCard, FailedCard, RenameAssetDialog
+- Shared extras: AssetPicker, PromoteDialog
+- Gamification extra: ToastSystem (embeds LevelUpBanner + LuckyBonusSparkle)
+- Quota: QuotaCounter (components/usage/)
+- Components root: AuthLayout, ErrorBoundary
+- Pages: SessionsPage (new)
+
+### Still missing
+- 1 component: WorkspaceForm ⬜
+- 4 partial: WorkspaceDashboard (inline in DashboardPage), ConversationPage (in pages/), LevelUpBanner + LuckyBonusSparkle (in ToastSystem)
+
+### Test coverage
+- 17 unit tests + 2 E2E Playwright specs (session-list, tool-page)
+- XState: 34 machine tests + 10 deriveUIState tests
+
+### Wiki pages updated
+- [[UI Component Map]] — status table, layer counts, tree structure, relocated file paths, new extras inventory
+- [[synthesis/ui-design-summary-2026-08-07]] — component status table (all 37 rows), gap analysis, implementation priority section rewritten
+- [[Frontend Architecture]] — implementation status section, route inventory, test coverage
+
+## [2026-08-08] plan | Remaining gaps aggressive plan v2 — 3 batches, ~6h, 1 day
+
+Revised [[synthesis/remaining-gaps-plan-2026-08-08]] to maximally compressed 3-batch plan. Key compression: merged steps touching same files, eliminated intermediate PRs, parallelized independent work.
+
+### Structure
+
+```
+Batch 1 — Backend + independent components (parallel)
+  A  Backend: migration + contract + API (1 PR)
+  B  WorkspaceForm component (new file, mock onSave)
+  C  ReadyToPromoteList component (new file)
+  D  ConversationView extraction + ConversationPage thin-out
+
+Batch 2 — Dashboard refactor (sequential, after 1C)
+  E  WorkspaceDashboard extraction + wire ReadyToPromoteList + thin DashboardPage
+
+Batch 3 — Final wiring (after 1A + 2E)
+  F  API client + wire WorkspaceForm into AppShell + DashboardPage
+```
+
+### Files: 4 new + 7 modified
+
+### Wiki pages updated
+
+- [[synthesis/remaining-gaps-plan-2026-08-08]] (v2)
+- [[Wiki/index.md]] — entry updated
+- [[log]] (this entry)
+
+## [2026-08-08] implementation | Remaining gaps — all batches completed
+
+Executed the aggressive 3-batch plan in full. All 4 gaps closed: WorkspaceForm, ReadyToPromoteList, WorkspaceDashboard extraction, ConversationView extraction.
+
+### Batch 1A — Backend accentColor support
+
+- Migration `013_workspace_accent.sql`: `ALTER TABLE workspaces ADD COLUMN accent_color`
+- `WorkspacesTable` (Kysely types): added `accent_color: Generated<string>`
+- `WorkspaceDTO`: added `accentColor?: string`
+- `Workspace` domain entity: `_accentColor` field, `create()` optional param, `reconstitute()` new param, `changeAccentColor()` method, `accentColor` getter
+- `KyselyWorkspaceRepository`: persist/read `accent_color` in `save`, `saveWithLock`, `findById`, `findByMember`, `findPendingInvitations`
+- API: `POST /api/workspaces` accepts+returns `accentColor`; `PUT /api/workspaces/:id` accepts `accentColor`; `listWorkspaces`, `getWorkspace` return `accentColor`
+- 3 test files updated for new `Workspace.reconstitute()` signature
+- `useSetAccent()` hook exported from `WorkspaceAccentProvider`
+
+### Batch 1B — WorkspaceForm component
+
+- New file: `apps/frontend/src/components/workspace/WorkspaceForm.tsx` (~110 lines)
+- Dialog with `TextField` (name: 2-50 chars) + 10-dot color picker from `WORKSPACE_ACCENTS`
+- Selection state: `border: 2px solid grey.900`, hover `scale(1.2)`
+- Create/edit dual mode via `workspace?: WorkspaceDTO` prop
+- Save disabled until name valid; Enter key submits
+- Copy keys added: `workspace.form.createTitle`, `workspace.form.editTitle`, `workspace.form.accentLabel`
+
+### Batch 1C — ReadyToPromoteList component
+
+- New file: `apps/frontend/src/components/workspace/ReadyToPromoteList.tsx` (~65 lines)
+- Fetches completed sessions, filters `isPromotable`, renders `CompletedCard` with promote/download/view
+- `onPromote` → `api.promoteArtifact()` → mutate to refresh
+- Collapses when empty (returns null)
+- Copy keys added: `workspace.dashboard.readyToPromote`, `workspace.dashboard.promoteHint`
+
+### Batch 1D — ConversationView extraction
+
+- New file: `apps/frontend/src/components/agent-chat/ConversationView.tsx` (~230 lines)
+- Extracted from `ConversationPage.tsx` (was 260 lines, now ~65 lines thin wrapper)
+- Props interface: `workspaceId`, `agentName`, `agentKey`, `messages`, `isStreaming`, `onSend`
+- Enables reuse in Team Hub preview, AgentContextDrawer
+
+### Batch 2E — WorkspaceDashboard extraction
+
+- New file: `apps/frontend/src/components/workspace/WorkspaceDashboard.tsx` (~78 lines)
+- 6 sections in order: QuickGenerateBar → SessionList → ReadyToPromoteList → AssetCoverageBar → Tools grid → WorkspaceMembers
+- New file: `apps/frontend/src/components/workspace/WorkspaceMembers.tsx` (~105 lines)
+- Extracted from `DashboardPage.tsx` (was 289 lines, now ~95 lines thin wrapper)
+
+### Batch 3F — WorkspaceForm wiring
+
+- `AppShell.tsx`: replaced inline `Dialog + TextField` with `<WorkspaceForm>`, `handleCreate` now passes `accentColor`, calls `setAccent()` for immediate CSS var injection
+- `DashboardPage.tsx`: replaced rename `Dialog` with `<WorkspaceForm workspace={...}>`, calls `api.updateWorkspace(id, { name, accentColor })`
+
+### Test verification
+
+- Backend: 138/138 passed (19 files)
+- Domain: 490/490 passed (37 files)
+- Frontend: 140/140 passed (17 files)
+- TypeScript: zero errors across all packages
+
+### Files created (8)
+
+| File | Batch |
+|---|---|
+| `packages/infra-db/migrations/013_workspace_accent.sql` | 1A |
+| `apps/frontend/src/components/workspace/WorkspaceForm.tsx` | 1B |
+| `apps/frontend/src/components/workspace/ReadyToPromoteList.tsx` | 1C |
+| `apps/frontend/src/components/agent-chat/ConversationView.tsx` | 1D |
+| `apps/frontend/src/components/workspace/WorkspaceDashboard.tsx` | 2E |
+| `apps/frontend/src/components/workspace/WorkspaceMembers.tsx` | 2E |
+
+### Files modified (12)
+
+| File | Batch |
+|---|---|
+| `packages/infra-db/src/types.ts` | 1A |
+| `packages/contracts/src/workspace/workspace.dto.ts` | 1A |
+| `packages/domain/src/workspace/entities/Workspace.ts` | 1A |
+| `packages/infra-db/src/repositories/workspace-repository.ts` | 1A |
+| `apps/backend/src/api/workspaces.ts` | 1A |
+| `apps/frontend/src/api/client.ts` | 1A |
+| `apps/frontend/src/theme/WorkspaceAccentProvider.tsx` | 1A |
+| `apps/frontend/src/layout/AppShell.tsx` | 3F |
+| `apps/frontend/src/pages/DashboardPage.tsx` | 2E+3F |
+| `apps/frontend/src/pages/ConversationPage.tsx` | 1D |
+| `packages/copy/src/it/workspace.ts` | 1B+1C |
+| 3 test files (promote-to-asset, Workspace, AssetResolver) | 1A |
+
+## [2026-08-08] remediation-plan | Open findings sweep — 4 gaps, ~5.75h
+
+Created [[synthesis/open-findings-plan-2026-08-08]] covering findings left open:
+
+### Findings
+
+| # | Gap | Count | Effort |
+|---|---|---|---|
+| 1 | Copy module violations | 55 strings across 8 files | ~3h |
+| 2 | Embedded gamification (LevelUpBanner + LuckyBonusSparkle in ToastSystem) | 2 components | ~1h |
+| 3 | Missing component tests (WorkspaceForm + ReadyToPromoteList) | 2 test files | ~1.5h |
+| 4 | Migration deployment (013_workspace_accent.sql) | 1 SQL | 0.25h |
+
+### Key insight: copy violations discovered
+
+Full sweep of 7 files (audited by explore agent) found 55 hardcoded strings:
+- 1 Italian (`'Modifica'` in DashboardPage), 54 English
+- 13 in AppShell (8 aria-labels), 26 in ConversationView (suggested questions), 7 in WorkspaceMembers (dialog labels)
+- Most frequent category: aria-labels (8 strings) — invisible to sighted users, critical for screen readers
+- No behavioral changes needed — purely mechanical `copy.t()` replacements
+
+### Wiki pages updated
+
+- [[synthesis/open-findings-plan-2026-08-08]] (new)
+- [[Wiki/index.md]] — added to synthesis table
+- [[log]] (this entry)
