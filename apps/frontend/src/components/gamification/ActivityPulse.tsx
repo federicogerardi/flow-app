@@ -1,5 +1,6 @@
 import { Box, Typography, keyframes } from '@mui/material';
 import CircleIcon from '@mui/icons-material/Circle';
+import { copy } from '@flow-app/copy';
 
 const pulse = keyframes`
   0%, 100% { opacity: 0.4; }
@@ -15,8 +16,8 @@ export function ActivityPulse({ activeUsers }: ActivityPulseProps) {
 
   const text =
     activeUsers.length === 1
-      ? `${activeUsers[0]} is working`
-      : `${activeUsers.slice(0, 2).join(' and ')} are working`;
+      ? copy.t('gamification.activity.workingSingular', { name: activeUsers[0] })
+      : copy.t('gamification.activity.workingPlural', { names: activeUsers.slice(0, 2).join(' e ') });
 
   return (
     <Box

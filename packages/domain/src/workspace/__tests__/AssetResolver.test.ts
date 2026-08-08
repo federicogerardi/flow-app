@@ -21,7 +21,7 @@ function makeTool(assets?: Array<{ assetType: string; required: boolean; multipl
 function makeWorkspaceWithAssets(workspaceId: string, assetData: Array<{ type: string; content: string; id: string }>) {
   const now = new Date();
   const ws = Workspace.reconstitute(
-    workspaceId, 'owner-1', 'Test WS', now, now, 1, [],
+    workspaceId, 'owner-1', 'Test WS', '#2563eb', now, now, 1, [],
     assetData.map((d) =>
       Asset.reconstitute(d.id, workspaceId, AssetType.from(d.type), AssetSource.Generated, d.content, null, null, null, now, now),
     ),

@@ -1,5 +1,6 @@
 import { setup, assign, fromPromise } from 'xstate';
 import type { Session, ToolDefinition, AcquisitionData, Artifact } from '@flow-app/domain';
+import { NotImplementedError } from '@flow-app/domain';
 
 export interface SessionContext {
   session: Session;
@@ -28,10 +29,10 @@ export const sessionMachine = setup({
   },
   actors: {
     executeStep: fromPromise<Artifact, SessionContext>(
-      async () => { throw new Error('provide executeStep'); },
+      async () => { throw new NotImplementedError('provide executeStep'); },
     ),
     persistSession: fromPromise<void, { session: Session }>(
-      async () => { throw new Error('provide persistSession'); },
+      async () => { throw new NotImplementedError('provide persistSession'); },
     ),
   },
   guards: {

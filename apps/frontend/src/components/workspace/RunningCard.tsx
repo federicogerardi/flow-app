@@ -29,7 +29,7 @@ export function RunningCard({ session, onViewProgress, onCancel }: RunningCardPr
           <Typography variant="body1" fontWeight={600}>
             {toolLabel}
           </Typography>
-          <Chip label="Running" size="small" color="primary" variant="outlined" />
+          <Chip label={copy.t('shared.sessionStatus.running')} size="small" color="primary" variant="outlined" />
         </Box>
 
         <LinearProgress
@@ -55,7 +55,7 @@ export function RunningCard({ session, onViewProgress, onCancel }: RunningCardPr
         <Box sx={{ display: 'flex', gap: 1 }}>
           {onViewProgress && (
             <Button size="small" variant="text" onClick={onViewProgress}>
-              View progress
+              {copy.t('shared.actions.viewAsset')}
             </Button>
           )}
           {onCancel && (

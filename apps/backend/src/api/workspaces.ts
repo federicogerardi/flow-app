@@ -19,7 +19,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository, redisU
     createWorkspace: async (req: Request, res: Response, next: NextFunction) => {
       try {
         const userId = getAuthUser(req)!.sub;
-        const { name } = req.body;
+        const { name, accentColor } = req.body;
 
         if (!name || typeof name !== 'string' || name.trim().length === 0) {
           res.status(422).json({
@@ -28,12 +28,13 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository, redisU
           return;
         }
 
-        const workspace = Workspace.create(name.trim(), userId);
+        const workspace = Workspace.create(name.trim(), userId, accentColor);
         await workspaceRepo.save(workspace);
 
         res.status(201).json({
           id: workspace.workspaceId,
           name: workspace.name,
+          accentColor: workspace.accentColor,
           createdBy: workspace.createdBy,
           createdAt: workspace.createdAt.toISOString(),
         });
@@ -50,6 +51,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository, redisU
           workspaces: workspaces.map((w) => ({
             id: w.workspaceId,
             name: w.name,
+            accentColor: w.accentColor,
             role: w.getMemberRole(userId)?.toString(),
             createdAt: w.createdAt.toISOString(),
           })),
@@ -65,6 +67,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository, redisU
         res.json({
           id: workspace.workspaceId,
           name: workspace.name,
+          accentColor: workspace.accentColor,
           createdBy: workspace.createdBy,
           createdAt: workspace.createdAt.toISOString(),
           updatedAt: workspace.updatedAt.toISOString(),
@@ -233,7 +236,7 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository, redisU
       try {
         const workspaceId = req.params.id as string;
         const userId = getAuthUser(req)!.sub as string;
-        const { name } = req.body;
+        const { name, accentColor } = req.body;
 
         if (!name || typeof name !== 'string' || name.trim().length < 2) {
           return res.status(422).json({
@@ -249,11 +252,15 @@ export function createWorkspaceRoutes(workspaceRepo: WorkspaceRepository, redisU
         }
 
         workspace.rename(name.trim(), userId);
+        if (accentColor) {
+          workspace.changeAccentColor(accentColor, userId);
+        }
         await workspaceRepo.save(workspace);
 
         res.json({
           id: workspace.workspaceId,
           name: workspace.name,
+          accentColor: workspace.accentColor,
           updatedAt: workspace.updatedAt.toISOString(),
         });
       } catch (error) {

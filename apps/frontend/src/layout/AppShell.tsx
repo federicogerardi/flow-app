@@ -1,4 +1,4 @@
-import { AppBar, Box, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, Divider, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton, Avatar, Menu, MenuItem, useMediaQuery, Popover, Chip } from '@mui/material';
+import { AppBar, Box, Drawer, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, Divider, Button, IconButton, Avatar, Menu, MenuItem, useMediaQuery, Popover, Chip } from '@mui/material';
 import type { Theme } from '@mui/material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PlayCircleIcon from '@mui/icons-material/PlayCircle';
@@ -14,13 +14,14 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { Outlet, useNavigate, useParams } from 'react-router';
 import useSWR, { mutate } from 'swr';
 import { api } from '../api/client';
-import { useWorkspaceAccent } from '../theme/WorkspaceAccentProvider';
+import { useWorkspaceAccent, useSetAccent } from '../theme/WorkspaceAccentProvider';
 import { useThemeMode } from '../theme/ThemeProvider';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import { QuotaCounter } from '../components/usage/QuotaCounter';
 import { GamificationZone } from '../components/gamification/GamificationZone';
+import { WorkspaceForm } from '../components/workspace/WorkspaceForm';
 import { copy } from '@flow-app/copy';
 import { useState, createContext, useContext } from 'react';
 import { useAuth } from '../auth/AuthContext';
@@ -53,7 +54,7 @@ function NavItem({ icon, label, path, disabled, collapsed }: { icon: React.React
     <ListItemButton onClick={() => !disabled && navigate(path)} disabled={disabled} sx={{ borderRadius: 1, mx: 0.5, justifyContent: collapsed ? 'center' : 'flex-start', px: collapsed ? 1 : undefined }}>
       <ListItemIcon sx={{ minWidth: collapsed ? 'auto' : 36 }}>{icon}</ListItemIcon>
       {!collapsed && <ListItemText primary={label} />}
-      {disabled && !collapsed && <Chip label="soon" size="small" variant="outlined" sx={{ fontSize: '0.65rem' }} />}
+      {disabled && !collapsed && <Chip label={copy.t('shared.status.soon')} size="small" variant="outlined" sx={{ fontSize: '0.65rem' }} />}
     </ListItemButton>
   );
 }
@@ -63,13 +64,12 @@ export function AppShell() {
   const { workspaceId: activeWorkspaceId } = useParams<{ workspaceId: string }>();
   const { data: workspaces } = useSWR('workspaces', () => api.listWorkspaces());
   const accent = useWorkspaceAccent();
+  const setAccent = useSetAccent();
   const { mode, setMode } = useThemeMode();
   const { user, logout } = useAuth();
   const isDesktop = useMediaQuery((t: Theme) => t.breakpoints.up('md'));
 
   const [createOpen, setCreateOpen] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [creating, setCreating] = useState(false);
   const [userMenuAnchor, setUserMenuAnchor] = useState<HTMLElement | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [crumbs, setCrumbs] = useState<Crumb[]>([]);
@@ -82,25 +82,17 @@ export function AppShell() {
 
   const currentWidth = sidebarCollapsed ? 60 : DRAWER_WIDTH;
 
-  const handleCreate = async () => {
-    if (!newName.trim()) return;
-    setCreating(true);
-    try {
-      const ws = await api.createWorkspace(newName.trim());
-      await mutate('workspaces');
-      setCreateOpen(false);
-      setNewName('');
-      navigate(`/workspaces/${ws.id}`);
-    } catch {
-      // error handled by global error handler
-    } finally {
-      setCreating(false);
-    }
+  const handleCreate = async (data: { name: string; accentColor: string }) => {
+    const ws = await api.createWorkspace(data.name, data.accentColor);
+    await mutate('workspaces');
+    setAccent(data.accentColor);
+    setCreateOpen(false);
+    navigate(`/workspaces/${ws.id}`);
   };
 
   const navItems = [
     { label: copy.t('workspace.nav.home'), icon: <DashboardIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}` : '/dashboard' },
-    { label: 'Tools', icon: <BoltIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/tools/blog-post` : '/dashboard' },
+    { label: copy.t('workspace.nav.tools'), icon: <BoltIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/tools/blog-post` : '/dashboard' },
     { label: copy.t('workspace.nav.sessions'), icon: <PlayCircleIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/sessions` : '/dashboard' },
     { label: copy.t('workspace.nav.assets'), icon: <InventoryIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/assets` : '/dashboard' },
     { label: copy.t('workspace.nav.team'), icon: <PeopleIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/team` : '/dashboard' },
@@ -132,7 +124,7 @@ export function AppShell() {
           '&:focus': { left: 8 },
         }}
       >
-        Skip to content
+        {copy.t('shared.wcag.skipToContent')}
       </Box>
       <AppBar position="fixed" role="banner" sx={{ zIndex: (t) => t.zIndex.drawer + 1, bgcolor: 'background.paper', color: 'text.primary', boxShadow: 1 }}>
         <Toolbar>
@@ -141,7 +133,7 @@ export function AppShell() {
               color="inherit"
               edge="start"
               onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+              aria-label={mobileOpen ? copy.t('shared.aria.closeMenu') : copy.t('shared.aria.openMenu')}
               sx={{ mr: 1 }}
             >
               <MenuIcon />
@@ -151,11 +143,11 @@ export function AppShell() {
             flow app
           </Typography>
 
-          {/* Collapse sidebar toggle (M22) */}
+          {/* Collapse sidebar toggle */}
           {isDesktop && (
             <IconButton
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-label={sidebarCollapsed ? copy.t('shared.aria.expandSidebar') : copy.t('shared.aria.collapseSidebar')}
               size="small"
               sx={{ ml: 1 }}
             >
@@ -168,8 +160,8 @@ export function AppShell() {
           {/* Dark Mode Toggle */}
           <IconButton
             onClick={() => setMode(mode === 'light' ? 'dark' : mode === 'dark' ? 'system' : 'light')}
-            aria-label="Toggle theme"
-            title={`Theme: ${mode}`}
+            aria-label={copy.t('shared.aria.toggleTheme')}
+            title={`${copy.t('shared.label.theme')}: ${mode}`}
             sx={{ mr: 0.5 }}
           >
             {mode === 'light' ? <LightModeIcon fontSize="small" /> : mode === 'dark' ? <DarkModeIcon fontSize="small" /> : <SettingsBrightnessIcon fontSize="small" />}
@@ -180,7 +172,7 @@ export function AppShell() {
             <>
               <IconButton
                 onClick={(e) => setUserMenuAnchor(e.currentTarget)}
-                aria-label="User menu"
+                aria-label={copy.t('shared.aria.userMenu')}
                 sx={{ p: 0.5 }}
               >
                 <Avatar
@@ -218,7 +210,7 @@ export function AppShell() {
                     logout().then(() => navigate('/login'));
                   }}
                 >
-                  Logout
+                  {copy.t('shared.actions.logout')}
                 </MenuItem>
               </Menu>
             </>
@@ -232,7 +224,7 @@ export function AppShell() {
         onClose={() => setMobileOpen(false)}
         ModalProps={{ keepMounted: true }}
         role="navigation"
-        aria-label="Main navigation"
+        aria-label={copy.t('shared.aria.mainNavigation')}
         sx={{
           width: currentWidth,
           flexShrink: 0,
@@ -249,7 +241,7 @@ export function AppShell() {
       >
         <Toolbar />
 
-        {/* Workspace Switcher + Create (L6: WorkspaceCard via Popover) — hidden when collapsed */}
+        {/* Workspace Switcher + Create — hidden when collapsed */}
         {!sidebarCollapsed && (
           <Box>
             <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -366,27 +358,12 @@ export function AppShell() {
         </BreadcrumbContext.Provider>
       </Box>
 
-      {/* Create Workspace Dialog */}
-      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>{copy.t('workspace.list.createCta')}</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            fullWidth
-            label={copy.t('workspace.list.createLabel')}
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); }}
-            sx={{ mt: 1 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreateOpen(false)}>{copy.t('shared.actions.cancel')}</Button>
-          <Button variant="contained" onClick={handleCreate} disabled={!newName.trim() || creating}>
-            {creating ? copy.t('shared.status.loading') : copy.t('shared.actions.save')}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Create Workspace Dialog — via WorkspaceForm */}
+      <WorkspaceForm
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onSave={handleCreate}
+      />
     </Box>
   );
 }

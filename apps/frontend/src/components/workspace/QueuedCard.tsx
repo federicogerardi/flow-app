@@ -18,11 +18,11 @@ export function QueuedCard({ session, onCancel }: QueuedCardProps) {
             {toolLabel}
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-            <Chip label="Queued" size="small" color="default" variant="outlined" />
+            <Chip label={copy.t('shared.sessionStatus.queued')} size="small" color="default" variant="outlined" />
             <Typography variant="body2" color="text.secondary">
               {session.queuePosition !== undefined
                 ? `Queue position: ${session.queuePosition}`
-                : 'Waiting...'}
+                : copy.t('shared.status.loading')}
             </Typography>
           </Box>
         </Box>

@@ -1,5 +1,5 @@
 // Entities
-export { Session, InvalidSessionStateError, SessionNotFoundError } from './entities/Session';
+export { Session, InvalidSessionStateError, SessionNotFoundError, StepNotFoundError } from './entities/Session';
 export { Artifact } from './entities/Artifact';
 
 // Value Objects

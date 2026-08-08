@@ -4,6 +4,7 @@ import { TextField, Button, Alert, Typography, Divider, Box } from '@mui/materia
 import GoogleIcon from '@mui/icons-material/Google';
 import { AuthLayout } from '../components/AuthLayout';
 import { useAuth } from '../auth/AuthContext';
+import { copy } from '@flow-app/copy';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ export default function LoginPage() {
       await login(email, password);
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setError(err instanceof Error ? err.message : copy.t('auth.login.genericError'));
     } finally {
       setLoading(false);
     }
@@ -43,12 +44,12 @@ export default function LoginPage() {
 
   return (
     <AuthLayout
-      title="Sign in to your account"
+      title={copy.t('auth.login.title')}
       footer={
         <Typography variant="body2" color="text.secondary">
-          Don&apos;t have an account?{' '}
+          {copy.t('auth.login.noAccount')}{' '}
           <Link to="/register" style={{ color: 'inherit', fontWeight: 500 }}>
-            Sign up
+            {copy.t('auth.login.signUp')}
           </Link>
         </Typography>
       }
@@ -57,7 +58,7 @@ export default function LoginPage() {
         {error && <Alert severity="error" onClose={() => setError('')}>{error}</Alert>}
 
         <TextField
-          label="Email"
+          label={copy.t('auth.login.email')}
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -68,7 +69,7 @@ export default function LoginPage() {
         />
 
         <TextField
-          label="Password"
+          label={copy.t('auth.login.password')}
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -84,10 +85,10 @@ export default function LoginPage() {
           disabled={loading || !email.trim() || !password}
           sx={{ py: 1.2, mt: 1 }}
         >
-          {loading ? 'Signing in...' : 'Sign in'}
+          {loading ? copy.t('auth.login.loading') : copy.t('auth.login.submit')}
         </Button>
 
-        <Divider sx={{ my: 1 }}>or</Divider>
+        <Divider sx={{ my: 1 }}>{copy.t('auth.login.divider')}</Divider>
 
         <Button
           variant="outlined"
@@ -96,7 +97,7 @@ export default function LoginPage() {
           onClick={handleGoogleLogin}
           sx={{ py: 1.2 }}
         >
-          Sign in with Google
+          {copy.t('auth.login.google')}
         </Button>
       </Box>
     </AuthLayout>

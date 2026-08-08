@@ -6,6 +6,7 @@ import {
   ConcurrencyError,
   getTool,
   ToolKey,
+  UnreachableError,
 } from '@flow-app/domain';
 import { logger } from '../../infrastructure/logger.js';
 
@@ -33,7 +34,7 @@ async function withOptimisticRetry<T>(maxAttempts: number, fn: () => Promise<T>)
       throw error;
     }
   }
-  throw new Error('Unreachable: max retry attempts exceeded');
+  throw new UnreachableError('max retry attempts exceeded');
 }
 
 export class ConsumeCreditsUseCase {

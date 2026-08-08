@@ -13,6 +13,7 @@ export const notifications = {
     deleted:          'Asset eliminato',
     renamed:          'Asset rinominato',
     renameFailed:     'Impossibile rinominare l\'asset',
+    promoteConfirm:   'Promuovere ad asset?',
   },
   auth: {
     loggedIn:  'Accesso effettuato',

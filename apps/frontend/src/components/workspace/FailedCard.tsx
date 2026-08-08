@@ -20,7 +20,7 @@ export function FailedCard({ session, onRetry }: FailedCardProps) {
           </Typography>
           <Chip
             icon={<ErrorIcon />}
-            label="Failed"
+            label={copy.t('shared.sessionStatus.failed')}
             size="small"
             color="error"
             variant="outlined"
@@ -28,7 +28,7 @@ export function FailedCard({ session, onRetry }: FailedCardProps) {
         </Box>
 
         <Typography variant="caption" color="error.main" sx={{ display: 'block', mb: 0.5 }}>
-          {session.errorMessage ?? 'An error occurred'}
+          {session.errorMessage ?? copy.t('shared.status.error')}
           {session.failedAtStep !== undefined ? ` · Step ${session.failedAtStep}` : ''}
         </Typography>
 

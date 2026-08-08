@@ -26,7 +26,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
       await onSend(newMessage.trim());
       setNewMessage('');
     } catch (err) {
-      setSendError(err instanceof Error ? err.message : 'Failed to send message');
+      setSendError(err instanceof Error ? err.message : copy.t('shared.chat.failedToSend'));
     } finally {
       setSending(false);
     }
@@ -39,7 +39,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
     }
   };
 
-  const placeholder = disabled ? 'Risposta in arrivo...' : 'Type your message...';
+  const placeholder = disabled ? copy.t('shared.chat.typingReply') : copy.t('shared.chat.typeYourMessage');
 
   return (
     <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
@@ -87,7 +87,7 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
           variant="contained"
           onClick={handleSend}
           disabled={disabled || sending || !newMessage.trim() || isOverLimit}
-          aria-label="Invia messaggio"
+          aria-label={copy.t('shared.aria.sendMessage')}
         >
           {sending ? '...' : copy.t('shared.actions.send')}
         </Button>

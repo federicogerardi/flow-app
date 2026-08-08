@@ -6,6 +6,7 @@ import {
   ALL_BADGES,
   ALL_CHALLENGES,
   ChallengeKey,
+  InfrastructureError,
 } from '@flow-app/domain';
 import type { PlayerProfileRepository } from '@flow-app/domain';
 import type { WorkspaceChallengeRepository } from '@flow-app/domain';
@@ -56,7 +57,7 @@ function sleep(ms: number): Promise<void> {
 
 export function createGamificationWorker(deps: GamificationWorkerDeps): Worker<GamificationEventJob> {
   const redisUrl = process.env.REDIS_URL;
-  if (!redisUrl) throw new Error('REDIS_URL not set');
+  if (!redisUrl) throw new InfrastructureError('REDIS_URL not set');
 
   return new Worker<GamificationEventJob>(
     'gamification-events',

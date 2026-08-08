@@ -54,7 +54,7 @@ describe('Workspace', () => {
         now,
         now,
       );
-      const workspace = Workspace.reconstitute('ws-1', ownerId, 'My Workspace', now, now, 5, [ownerMembership]);
+      const workspace = Workspace.reconstitute('ws-1', ownerId, 'My Workspace', '#2563eb', now, now, 5, [ownerMembership]);
 
       expect(workspace.name).toBe('My Workspace');
       expect(workspace.version).toBe(5);
@@ -375,7 +375,7 @@ describe('Workspace', () => {
         'asset-1', 'ws-1', AssetType.from('persona'), AssetSource.Generated,
         'content', null, null, null, now, now,
       );
-      const workspace = Workspace.reconstitute('ws-1', ownerId, 'WS', now, now, 1, [ownerMembership], [asset]);
+      const workspace = Workspace.reconstitute('ws-1', ownerId, 'WS', '#2563eb', now, now, 1, [ownerMembership], [asset]);
       expect(workspace.assets).toHaveLength(1);
     });
   });

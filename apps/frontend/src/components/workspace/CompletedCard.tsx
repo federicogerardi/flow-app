@@ -32,7 +32,7 @@ export function CompletedCard({ session, onView, onDownload, onPromote }: Comple
           </Typography>
           <Chip
             icon={<CheckCircleIcon />}
-            label="Completed"
+            label={copy.t('shared.sessionStatus.completed')}
             size="small"
             color="success"
             variant="outlined"
@@ -40,7 +40,7 @@ export function CompletedCard({ session, onView, onDownload, onPromote }: Comple
         </Box>
 
         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-          {session.stepCount} step{session.stepCount !== 1 ? 's' : ''}
+          {session.stepCount} {session.stepCount === 1 ? copy.t('shared.sessionStatus.step') : copy.t('shared.sessionStatus.steps')}
           {session.durationSeconds !== undefined ? ` · ${formatDuration(session.durationSeconds)}` : ''}
         </Typography>
 
@@ -53,12 +53,12 @@ export function CompletedCard({ session, onView, onDownload, onPromote }: Comple
         <Box sx={{ display: 'flex', gap: 1 }}>
           {onView && (
             <Button size="small" variant="text" onClick={onView}>
-              View
+              {copy.t('shared.actions.viewAsset')}
             </Button>
           )}
           {onDownload && (
             <Button size="small" variant="text" startIcon={<DownloadIcon />} onClick={onDownload}>
-              Download
+              {copy.t('shared.actions.download')}
             </Button>
           )}
           {session.isPromotable && onPromote && (

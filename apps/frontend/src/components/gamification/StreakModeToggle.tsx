@@ -1,6 +1,7 @@
 import { ToggleButton, ToggleButtonGroup, Typography, Box, CircularProgress } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
+import { copy } from '@flow-app/copy';
 
 type StreakMode = 'daily' | 'business';
 
@@ -9,11 +10,9 @@ export function StreakModeToggle() {
   const [loading, setLoading] = useState(true);
   const [persisting, setPersisting] = useState(false);
 
-  // Load current mode from backend
   useEffect(() => {
     api.getPlayerProfile()
       .then((profile) => {
-        // Use streakMode if available, otherwise default to 'daily'
         const savedMode = (profile as unknown as Record<string, unknown>).streakMode as StreakMode | undefined;
         if (savedMode === 'daily' || savedMode === 'business') {
           setMode(savedMode);
@@ -28,10 +27,8 @@ export function StreakModeToggle() {
     setMode(v);
     setPersisting(true);
     try {
-      // Persist to backend via profile update
       await api.request('PUT', '/api/me/profile', { streakMode: v });
     } catch {
-      // Revert on failure
       setMode(mode);
     } finally {
       setPersisting(false);
@@ -49,7 +46,7 @@ export function StreakModeToggle() {
   return (
     <Box>
       <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
-        Streak mode
+        {copy.t('gamification.streakMode.label')}
       </Typography>
       <ToggleButtonGroup
         value={mode}
@@ -60,10 +57,10 @@ export function StreakModeToggle() {
         disabled={persisting}
       >
         <ToggleButton value="daily" sx={{ py: 0.25, textTransform: 'none', fontSize: '0.75rem' }}>
-          Daily
+          {copy.t('gamification.streakMode.daily')}
         </ToggleButton>
         <ToggleButton value="business" sx={{ py: 0.25, textTransform: 'none', fontSize: '0.75rem' }}>
-          Business days
+          {copy.t('gamification.streakMode.business')}
         </ToggleButton>
       </ToggleButtonGroup>
     </Box>

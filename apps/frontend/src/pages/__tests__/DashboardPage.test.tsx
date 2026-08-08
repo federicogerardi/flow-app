@@ -183,15 +183,15 @@ describe('DashboardPage', () => {
     expect(screen.getByText('workspace.dashboard.recentSessions')).toBeDefined();
 
     // Session list tabs should be visible (always rendered with badge counts)
-    expect(screen.getByText('In Progress')).toBeDefined();
-    expect(screen.getByText('Completed')).toBeDefined();
-    expect(screen.getByText('Failed')).toBeDefined();
+    expect(screen.getByText('workspace.sessions.tabs.inProgress')).toBeDefined();
+    expect(screen.getByText('workspace.sessions.tabs.completed')).toBeDefined();
+    expect(screen.getByText('workspace.sessions.tabs.failed')).toBeDefined();
 
     // Default tab is "in-progress" — running card should be visible
     // Running card transforms toolKey kebab-case → Title Case
     // Note: Blog Post also appears in the tools grid (ToolCard) — use getAllByText
     expect(screen.getAllByText('Blog Post').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Running')).toBeDefined();
+    expect(screen.getByText('shared.sessionStatus.running')).toBeDefined();
 
     // Tools grid should render all tool cards (always rendered, separate from sessions)
     // Note: ToolCard renders "📄 Landing Page" (emoji prefix) — use regex matcher

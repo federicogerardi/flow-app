@@ -146,8 +146,8 @@ class ApiClient {
     return res.workspaces ?? [];
   }
 
-  async createWorkspace(name: string) {
-    return this.request<WorkspaceDTO>('POST', '/api/workspaces', { name });
+  async createWorkspace(name: string, accentColor?: string) {
+    return this.request<WorkspaceDTO>('POST', '/api/workspaces', { name, accentColor });
   }
 
   async getWorkspace(workspaceId: string) {
@@ -176,6 +176,10 @@ class ApiClient {
 
   async renameWorkspace(workspaceId: string, name: string) {
     return this.request<{ id: string; name: string; updatedAt: string }>('PUT', `/api/workspaces/${workspaceId}`, { name });
+  }
+
+  async updateWorkspace(workspaceId: string, updates: { name?: string; accentColor?: string }) {
+    return this.request<{ id: string; name: string; accentColor: string; updatedAt: string }>('PUT', `/api/workspaces/${workspaceId}`, updates);
   }
 
   async deleteWorkspace(workspaceId: string) {

@@ -143,7 +143,7 @@ export default function SessionPage() {
 
           {isFailed && (
             <Box sx={{ mt: 2 }}>
-              <ErrorState message="Session failed" onRetry={() => navigate(`/workspaces/${workspaceId}/tools/${session.toolKey}`)} />
+              <ErrorState message={copy.t('errors.generation.failed')} onRetry={() => navigate(`/workspaces/${workspaceId}/tools/${session.toolKey}`)} />
             </Box>
           )}
         </CardContent>

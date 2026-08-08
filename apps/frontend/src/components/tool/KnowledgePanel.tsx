@@ -1,14 +1,7 @@
 import { Box, Typography, Checkbox, FormControlLabel, Stack } from '@mui/material';
 import useSWR from 'swr';
 import { api } from '../../api/client';
-
-const ASSET_LABELS: Record<string, string> = {
-  'brief': 'Brief',
-  'brand-voice': 'Brand Voice',
-  'persona': 'Persona',
-  'angle': 'Angle',
-  'ad-copy': 'Ad Copy',
-};
+import { ASSET_TYPE_LABELS } from '../../constants/assets';
 
 interface KnowledgePanelProps {
   workspaceId: string;
@@ -55,7 +48,7 @@ export function KnowledgePanel({ workspaceId, selectedIds, onChange }: Knowledge
             }
             label={
               <Typography variant="body2">
-                {ASSET_LABELS[a.assetType] ?? a.assetType}
+                {ASSET_TYPE_LABELS[a.assetType] ?? a.assetType}
               </Typography>
             }
           />

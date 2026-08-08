@@ -29,7 +29,7 @@ describe('RunningCard', () => {
 
   it('shows Running status chip', () => {
     render(<RunningCard session={makeSession()} />);
-    expect(screen.getByText('Running')).toBeInTheDocument();
+    expect(screen.getByText('In esecuzione')).toBeInTheDocument();
   });
 
   it('shows progress bar', () => {
@@ -57,7 +57,7 @@ describe('RunningCard', () => {
 
   it('renders View progress and Cancel buttons when callbacks provided', () => {
     render(<RunningCard session={makeSession()} onViewProgress={() => {}} onCancel={() => {}} />);
-    expect(screen.getByRole('button', { name: /view progress/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /vedi asset/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /annulla/i })).toBeInTheDocument();
   });
 
@@ -66,7 +66,7 @@ describe('RunningCard', () => {
     const onCancel = vi.fn();
     render(<RunningCard session={makeSession()} onViewProgress={onView} onCancel={onCancel} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /view progress/i }));
+    fireEvent.click(screen.getByRole('button', { name: /vedi asset/i }));
     expect(onView).toHaveBeenCalledOnce();
 
     fireEvent.click(screen.getByRole('button', { name: /annulla/i }));
@@ -91,7 +91,7 @@ describe('CompletedCard', () => {
 
   it('shows Completed status chip with check icon', () => {
     render(<CompletedCard session={makeSession({ status: 'completed' })} />);
-    expect(screen.getByText('Completed')).toBeInTheDocument();
+    expect(screen.getByText('Completata')).toBeInTheDocument();
   });
 
   it('shows step count and duration', () => {
@@ -119,8 +119,8 @@ describe('CompletedCard', () => {
       onDownload={() => {}}
       onPromote={() => {}}
     />);
-    expect(screen.getByRole('button', { name: /view$/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /vedi asset$/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /scarica/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /promuovi/i })).toBeInTheDocument();
   });
 
@@ -143,8 +143,8 @@ describe('CompletedCard', () => {
       onPromote={onPromote}
     />);
 
-    fireEvent.click(screen.getByRole('button', { name: /view$/i }));
-    fireEvent.click(screen.getByRole('button', { name: /download/i }));
+    fireEvent.click(screen.getByRole('button', { name: /vedi asset$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /scarica/i }));
     fireEvent.click(screen.getByRole('button', { name: /promuovi/i }));
 
     expect(onView).toHaveBeenCalledOnce();
@@ -163,7 +163,7 @@ describe('FailedCard', () => {
 
   it('shows Failed status chip with error icon', () => {
     render(<FailedCard session={makeSession({ status: 'failed' })} />);
-    expect(screen.getByText('Failed')).toBeInTheDocument();
+    expect(screen.getByText('Fallita')).toBeInTheDocument();
   });
 
   it('shows error message and failed step', () => {
@@ -178,7 +178,7 @@ describe('FailedCard', () => {
 
   it('shows default error message when errorMessage is undefined', () => {
     render(<FailedCard session={makeSession({ status: 'failed', errorMessage: undefined })} />);
-    expect(screen.getByText('An error occurred')).toBeInTheDocument();
+    expect(screen.getByText('Si è verificato un errore')).toBeInTheDocument();
   });
 
   it('has left border error color', () => {

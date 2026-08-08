@@ -3,16 +3,10 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useNavigate } from 'react-router';
 import useSWR from 'swr';
 import { api } from '../../api/client';
+import { copy } from '@flow-app/copy';
+import { ASSET_TYPE_LABELS } from '../../constants/assets';
 
 const COVERABLE_TYPES = ['brief', 'brand-voice', 'persona', 'angle', 'ad-copy'] as const;
-
-export const ASSET_LABELS: Record<string, string> = {
-  'brief': 'Brief',
-  'brand-voice': 'Brand Voice',
-  'persona': 'Persona',
-  'angle': 'Angle',
-  'ad-copy': 'Ad Copy',
-};
 
 /** Map asset types to their corresponding tool keys */
 export const ASSET_TOOL_MAP: Record<string, string> = {
@@ -49,7 +43,7 @@ export function AssetCoverageBar({ workspaceId }: AssetCoverageBarProps) {
           return (
             <Stack key={type} direction="row" alignItems="center" spacing={1.5}>
               <Typography variant="caption" sx={{ width: 100, flexShrink: 0, fontSize: '0.7rem' }}>
-                {ASSET_LABELS[type]}{count > 1 ? ` (${count})` : ''}
+                {ASSET_TYPE_LABELS[type]}{count > 1 ? ` (${count})` : ''}
               </Typography>
               <LinearProgress
                 variant="determinate"
@@ -61,7 +55,7 @@ export function AssetCoverageBar({ workspaceId }: AssetCoverageBarProps) {
                   bgcolor: 'action.hover',
                 }}
               />
-              <Tooltip title={present ? 'Available' : 'Missing — click to create'}>
+              <Tooltip title={present ? copy.t('shared.status.success') : copy.t('toolPage.readiness.missingAsset')}>
                 <Box sx={{ width: 20, display: 'flex', justifyContent: 'center' }}>
                   {present ? (
                     <CheckCircleIcon color="success" sx={{ fontSize: 16 }} />

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router';
 import { TextField, Button, Alert, Typography, Box } from '@mui/material';
 import { AuthLayout } from '../components/AuthLayout';
 import { useAuth } from '../auth/AuthContext';
+import { copy } from '@flow-app/copy';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -19,11 +20,11 @@ export default function RegisterPage() {
     setError('');
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(copy.t('auth.register.passwordTooShort'));
       return;
     }
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(copy.t('auth.register.passwordMismatch'));
       return;
     }
 
@@ -33,7 +34,7 @@ export default function RegisterPage() {
       await register(email, password);
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
+      setError(err instanceof Error ? err.message : copy.t('auth.register.genericError'));
     } finally {
       setLoading(false);
     }
@@ -41,12 +42,12 @@ export default function RegisterPage() {
 
   return (
     <AuthLayout
-      title="Create your account"
+      title={copy.t('auth.register.title')}
       footer={
         <Typography variant="body2" color="text.secondary">
-          Already have an account?{' '}
+          {copy.t('auth.register.hasAccount')}{' '}
           <Link to="/login" style={{ color: 'inherit', fontWeight: 500 }}>
-            Sign in
+            {copy.t('auth.register.signIn')}
           </Link>
         </Typography>
       }
@@ -55,7 +56,7 @@ export default function RegisterPage() {
         {error && <Alert severity="error" onClose={() => setError('')}>{error}</Alert>}
 
         <TextField
-          label="Email"
+          label={copy.t('auth.register.email')}
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -66,18 +67,18 @@ export default function RegisterPage() {
         />
 
         <TextField
-          label="Password"
+          label={copy.t('auth.register.password')}
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
           autoComplete="new-password"
-          helperText="At least 8 characters"
+          helperText={copy.t('auth.register.helperText')}
           fullWidth
         />
 
         <TextField
-          label="Confirm password"
+          label={copy.t('auth.register.confirmPassword')}
           type="password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
@@ -93,7 +94,7 @@ export default function RegisterPage() {
           disabled={loading || !email.trim() || !password || !confirmPassword}
           sx={{ py: 1.2, mt: 1 }}
         >
-          {loading ? 'Creating account...' : 'Create account'}
+          {loading ? copy.t('auth.register.loading') : copy.t('auth.register.submit')}
         </Button>
       </Box>
     </AuthLayout>

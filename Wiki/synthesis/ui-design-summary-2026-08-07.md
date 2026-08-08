@@ -5,8 +5,8 @@ tags:
   - wiki/frontend
   - wiki/ux
   - wiki/backend-architecture-feed
-date_updated: 2026-08-07
-source_count: 4
+date_updated: 2026-08-08
+source_count: 5
 confidence: high
 ---
 
@@ -23,62 +23,64 @@ confidence: high
 
 | # | Component | File | Layer | Status | Description |
 |---|-----------|------|-------|--------|-------------|
-| 1 | AppShell | `layout/AppShell.tsx` | Layout | ✅ | Root layout: sidebar + header + content + workspace accent injection + theme toggle |
-| 2 | WorkspaceDashboard | `layout/WorkspaceDashboard.tsx` | Layout | 🟡 | Dashboard view composed from QuickGenerateBar, SessionList, AssetCoverageBar, ToolShortcuts |
-| 3 | ToolPageLayout | `layout/ToolPageLayout.tsx` | Layout | ⬜ | 3-phase tool wrapper driven by toolPageMachine XState state |
-| 4 | WorkspaceCard | `workspace/WorkspaceCard.tsx` | Workspace | ⬜ | Card in workspace switcher with accent dot, session count |
-| 5 | WorkspaceForm | `workspace/WorkspaceForm.tsx` | Workspace | ⬜ | Create/edit dialog with 10-dot color picker |
-| 6 | SessionList | `workspace/SessionList.tsx` | Workspace | 🟡 | Live session tracker with tabs (queued/running/completed/failed), appears inline in DashboardPage |
-| 7 | AssetList | `workspace/AssetList.tsx` | Workspace | ⬜ | Manageable asset grid with selection mode and per-type filter |
-| 8 | AssetCoverageBar | `workspace/AssetCoverageBar.tsx` | Workspace | ⬜ | Per-asset-type completeness bars with "generate missing" CTAs |
-| 9 | SetupPanel | `tool/SetupPanel.tsx` | Tool | ⬜ | Generic input renderer from ToolDefinition.acquisition; TextField, Select, FileUpload |
-| 10 | KnowledgePanel | `tool/KnowledgePanel.tsx` | Tool | ⬜ | Asset selection sidebar; max 1 asset per AssetType |
-| 11 | ReadinessSnapshot | `tool/ReadinessSnapshot.tsx` | Tool | ⬜ | Pre-flight readiness display: ok/missing/optional per input |
-| 12 | FeedbackPanel | `tool/FeedbackPanel.tsx` | Tool | ⬜ | Step-by-step SSE-driven progress cards: completed/active/pending |
-| 13 | SessionSummary | `tool/SessionSummary.tsx` | Tool | ⬜ | Final result: artifact preview + download + promote + retry |
-| 14 | ToolCard | `tool/ToolCard.tsx` | Tool | ⬜ | Tool shortcut card for dashboard "Strumenti Rapidi" grid |
-| 15 | AgentCard | `agent-chat/AgentCard.tsx` | Agent Chat | ⬜ | Agent selector card |
-| 16 | TeamHub | `agent-chat/TeamHub.tsx` | Agent Chat | ⬜ | Team hub page: grid + recent conversations |
-| 17 | ConversationPage | `agent-chat/ConversationPage.tsx` | Agent Chat | 🟡 | Full chat wrapper; exists as page, not componentized |
-| 18 | ChatMessageBubble | `agent-chat/ChatMessageBubble.tsx` | Agent Chat | ⬜ | Individual message (user/agent roles) |
-| 19 | ChatInput | `agent-chat/ChatInput.tsx` | Agent Chat | ⬜ | Sticky input composer |
-| 20 | AgentContextDrawer | `agent-chat/AgentContextDrawer.tsx` | Agent Chat | ⬜ | Assets + sessions info drawer |
-| 21 | GamificationZone | `gamification/GamificationZone.tsx` | Gamification | ⬜ | Sidebar zone: level, streak, badges, weekly rank |
-| 22 | LevelUpBanner | `gamification/LevelUpBanner.tsx` | Gamification | ⬜ | Celebratory level-up banner (gradient, 4s auto-dismiss) |
-| 23 | BadgeProgressRing | `gamification/BadgeProgressRing.tsx` | Gamification | ⬜ | Circular progress toward next badge (SVG stroke-dashoffset) |
-| 24 | LuckyBonusSparkle | `gamification/LuckyBonusSparkle.tsx` | Gamification | ⬜ | Sparkle overlay for 10% random critical hit XP event |
-| 25 | ActivityPulse | `gamification/ActivityPulse.tsx` | Gamification | ⬜ | "Marco is generating" live indicator, polled every 60s |
-| 26 | SeasonCountdown | `gamification/SeasonCountdown.tsx` | Gamification | ⬜ | Seasonal countdown chip (appears last 7 days of season) |
-| 27 | ChallengeVoting | `gamification/ChallengeVoting.tsx` | Gamification | ⬜ | Weekly challenge voting UI (simple majority) |
-| 28 | StreakModeToggle | `gamification/StreakModeToggle.tsx` | Gamification | ⬜ | Daily vs Business days switch |
+| 1 | AppShell | `layout/AppShell.tsx` | Layout | ✅ | Root layout: sidebar + header + content + workspace accent injection + theme toggle (relocated from components/layout/) |
+| 2 | WorkspaceDashboard | `layout/WorkspaceDashboard.tsx` | Layout | 🟡 | Dashboard view inline in DashboardPage; not yet extracted as standalone component |
+| 3 | ToolPageLayout | `layout/ToolPageLayout.tsx` | Layout | ✅ | 3-phase tool wrapper driven by toolPageMachine XState state (325 lines) |
+| 4 | WorkspaceCard | `workspace/WorkspaceCard.tsx` | Workspace | ✅ | Card in workspace switcher with accent dot, member count |
+| 5 | WorkspaceForm | `workspace/WorkspaceForm.tsx` | Workspace | ⬜ | Create/edit dialog — **ONLY remaining gap** |
+| 6 | SessionList | `workspace/SessionList.tsx` | Workspace | ✅ | Live session tracker with tabs (queued/running/completed/failed), 4 state cards |
+| 7 | AssetList | `workspace/AssetList.tsx` | Workspace | ✅ | Manageable asset grid with SWR, rename, delete |
+| 8 | AssetCoverageBar | `workspace/AssetCoverageBar.tsx` | Workspace | ✅ | Per-asset-type completeness bars with "generate missing" CTAs, ASSET_TOOL_MAP |
+| 9 | SetupPanel | `tool/SetupPanel.tsx` | Tool | ✅ | Generic input renderer from ToolDefinition.acquisition; TextField, Select, FileUpload (216 lines) |
+| 10 | KnowledgePanel | `tool/KnowledgePanel.tsx` | Tool | ✅ | Asset selection sidebar; max 1 asset per AssetType, SWR-based |
+| 11 | ReadinessSnapshot | `tool/ReadinessSnapshot.tsx` | Tool | ✅ | Pre-flight readiness display: ok/missing/optional per input; file + asset awareness |
+| 12 | FeedbackPanel | `tool/FeedbackPanel.tsx` | Tool | ✅ | Step-by-step SSE-driven progress cards: completed/active/pending with animations |
+| 13 | SessionSummary | `tool/SessionSummary.tsx` | Tool | ✅ | Final result: ReactMarkdown artifact preview + download (.md/.txt/.pdf/.docx) + PromoteButton |
+| 14 | ToolCard | `tool/ToolCard.tsx` | Tool | ✅ | Tool shortcut card for dashboard with CardActionArea navigation |
+| 15 | AgentCard | `agent-chat/AgentCard.tsx` | Agent Chat | ✅ | Agent selector card |
+| 16 | TeamHub | `agent-chat/TeamHub.tsx` | Agent Chat | ✅ | Team hub page: grid + recent conversations |
+| 17 | ConversationPage | `agent-chat/ConversationPage.tsx` | Agent Chat | 🟡 | Full chat wrapper in pages/ConversationPage.tsx (292 lines); not componentized |
+| 18 | ChatMessageBubble | `agent-chat/ChatMessageBubble.tsx` | Agent Chat | ✅ | Individual message (user/agent roles) |
+| 19 | ChatInput | `agent-chat/ChatInput.tsx` | Agent Chat | ✅ | Sticky input composer |
+| 20 | AgentContextDrawer | `agent-chat/AgentContextDrawer.tsx` | Agent Chat | ✅ | Assets + sessions info drawer |
+| 21 | GamificationZone | `gamification/GamificationZone.tsx` | Gamification | ✅ | Sidebar zone: level, streak, badges, weekly rank (106 lines, SWR-based) |
+| 22 | LevelUpBanner | `gamification/LevelUpBanner.tsx` | Gamification | ⚠️ | Embedded in ToastSystem.tsx — not standalone file |
+| 23 | BadgeProgressRing | `gamification/BadgeProgressRing.tsx` | Gamification | ✅ | Circular progress toward next badge (SVG stroke-dashoffset) |
+| 24 | LuckyBonusSparkle | `gamification/LuckyBonusSparkle.tsx` | Gamification | ⚠️ | Embedded in ToastSystem.tsx — not standalone file |
+| 25 | ActivityPulse | `gamification/ActivityPulse.tsx` | Gamification | ✅ | Active member live indicator |
+| 26 | SeasonCountdown | `gamification/SeasonCountdown.tsx` | Gamification | ✅ | Seasonal countdown chip |
+| 27 | ChallengeVoting | `gamification/ChallengeVoting.tsx` | Gamification | ✅ | Weekly challenge voting UI |
+| 28 | StreakModeToggle | `gamification/StreakModeToggle.tsx` | Gamification | ✅ | Daily vs Business days switch |
 | 29 | PageHeader | `shared/PageHeader.tsx` | Shared | ✅ | Title + breadcrumb + optional actions slot |
 | 30 | EmptyState | `shared/EmptyState.tsx` | Shared | ✅ | No-data state with contextual CTA |
 | 31 | ErrorState | `shared/ErrorState.tsx` | Shared | ✅ | Error display with retry, maps ApiClientError.code |
 | 32 | LoadingSkeleton | `shared/LoadingSkeleton.tsx` | Shared | ✅ | Shape-matched skeleton per view variant (8 variants) |
-| 33 | ConfirmDialog | `shared/ConfirmDialog.tsx` | Shared | ⬜ | Destructive action confirmation modal |
-| 34 | CompletionBanner | `shared/CompletionBanner.tsx` | Shared | ⬜ | Celebratory completion: gradient + celebrationPop animation |
-| 35 | QuickGenerateBar | `shared/QuickGenerateBar.tsx` | Shared | ⬜ | Top-of-dashboard generation shortcut: Select + CTA |
-| 36 | WorkspaceAccentProvider | `shared/WorkspaceAccentProvider.tsx` | Shared | ⬜ | Injects `--workspace-accent` CSS var per workspace |
-| 37 | PromoteButton | `shared/PromoteButton.tsx` | Shared | ⬜ | Standalone Promote-to-Asset action: 4-state machine (idle→confirming→loading→done) |
+| 33 | ConfirmDialog | `shared/ConfirmDialog.tsx` | Shared | ✅ | Destructive action confirmation modal (29 lines) |
+| 34 | CompletionBanner | `shared/CompletionBanner.tsx` | Shared | ✅ | Celebratory completion: gradient + celebrationPop animation (48 lines) |
+| 35 | QuickGenerateBar | `shared/QuickGenerateBar.tsx` | Shared | ✅ | Top-of-dashboard generation shortcut: Select + CTA (61 lines) |
+| 36 | WorkspaceAccentProvider | `shared/WorkspaceAccentProvider.tsx` | Shared | ✅ | Injects `--workspace-accent` CSS var (relocated to theme/WorkspaceAccentProvider.tsx, 46 lines) |
+| 37 | PromoteButton | `shared/PromoteButton.tsx` | Shared | ✅ | Standalone Promote-to-Asset action: 4-state machine (idle→confirming→promoting→done) (79 lines) |
 
-### 1.2 Implementation Gap Analysis
+### 1.2 Implementation Gap Analysis (2026-08-08)
 
 | Metric | Value |
 |--------|-------|
 | Total components | 37 |
-| ✅ Built | 5 (AppShell, PageHeader, EmptyState, ErrorState, LoadingSkeleton) |
-| 🟡 Partial (inline in pages) | 3 (WorkspaceDashboard, SessionList, ConversationPage) |
-| ⬜ Not built | 29 |
-| Completion rate | 13.5% (5/37) or 21.6% (8/37 including partials) |
+| ✅ Built | 32 (AppShell, ToolPageLayout, WorkspaceCard, SessionList, AssetList, AssetCoverageBar, SetupPanel, KnowledgePanel, ReadinessSnapshot, FeedbackPanel, SessionSummary, ToolCard, AgentCard, TeamHub, ChatMessageBubble, ChatInput, AgentContextDrawer, GamificationZone, BadgeProgressRing, ActivityPulse, SeasonCountdown, ChallengeVoting, StreakModeToggle, PageHeader, EmptyState, ErrorState, LoadingSkeleton, ConfirmDialog, CompletionBanner, QuickGenerateBar, WorkspaceAccentProvider, PromoteButton) |
+| ⚠️ Partial/embedded | 4 (WorkspaceDashboard inline in DashboardPage, ConversationPage in pages/, LevelUpBanner + LuckyBonusSparkle embedded in ToastSystem.tsx) |
+| ⬜ Not built | 1 (WorkspaceForm — only remaining gap) |
+| Completion rate | **86.5% (32/37)** or **97.3% (36/37 including partials)** |
 
-**Critical path gaps:**
-- **Tool layer**: 6/6 components not built — `SetupPanel`, `KnowledgePanel`, `ReadinessSnapshot`, `FeedbackPanel`, `SessionSummary`, `ToolCard`
-- **Workspace layer**: 4/5 not built — `WorkspaceCard`, `WorkspaceForm`, `AssetList`, `AssetCoverageBar`
-- **Gamification layer**: 8/8 deferred to Phase 11
-- **Agent Chat layer**: 5/6 not built
-- **Shared layer**: 4/9 not built (ConfirmDialog, CompletionBanner, QuickGenerateBar, WorkspaceAccentProvider, PromoteButton)
+**Extras not in wiki inventory:** QueuedCard, RunningCard, CompletedCard, FailedCard, RenameAssetDialog (workspace sub-cards); AssetPicker, PromoteDialog (shared); ToastSystem (gamification); QuotaCounter (quota); AuthLayout, ErrorBoundary (components root); SessionsPage (pages).
 
-**Design rule**: All components are generic. Zero tool-specific, zero agent-specific. New tool = 0 new component files.
+**Critical path remaining gap:**
+- **WorkspaceForm** — Create/edit workspace dialog with color picker. Only missing component.
+
+**Relocations from wiki-specified paths:**
+- AppShell: `components/layout/` → `layout/AppShell.tsx`
+- WorkspaceAccentProvider: `components/shared/` → `theme/WorkspaceAccentProvider.tsx`
+
+**Test coverage:** 17 unit tests (AuthContext, AuthGuard, OAuthCallback, AuthLayout, EmptyState, ErrorBoundary, ErrorState, LoadingSkeleton, PageHeader, ToolPageLayout, QueuedCard, SessionCards, derive-ui-state, tool-page-machine, DashboardPage, LoginPage, RegisterPage) + 2 E2E Playwright specs (session-list, tool-page).
 
 ---
 
@@ -1362,50 +1364,31 @@ All semantic states use icon + text, never rely on color alone:
 
 ---
 
-## 7. Implementation Priority
+## 7. Implementation Priority (2026-08-08)
 
 ### 7.1 Current Status vs Target
 
 | Layer | Target | Built | Gap |
 |-------|--------|-------|-----|
-| Layout | 3 | 1 | WorkspaceDashboard 🟡, ToolPageLayout ⬜ |
-| Workspace | 5 | 0 | All 5 missing (SessionList 🟡 inline only) |
-| Tool | 6 | 0 | All 6 missing |
-| Agent Chat | 6 | 0 | ConversationPage 🟡 as monolithic page, 5 missing |
-| Gamification | 8 | 0 | All 8 deferred to Phase 11 |
-| Shared | 9 | 4 | ConfirmDialog, CompletionBanner, QuickGenerateBar, WorkspaceAccentProvider, PromoteButton missing |
-| **Total** | **37** | **5** | **32 missing or partial** |
+| Layout | 3 | 2 | WorkspaceDashboard 🟡 (extract from DashboardPage) |
+| Workspace | 5 | 4 | WorkspaceForm ⬜ (only remaining gap) |
+| Tool | 6 | 6 | ✅ All built |
+| Agent Chat | 6 | 5 | ConversationPage 🟡 (componentize) |
+| Gamification | 8 | 6+2 | LevelUpBanner, LuckyBonusSparkle embedded in ToastSystem |
+| Shared | 9 | 8 | ✅ All built (+ WorkspaceAccentProvider relocated to theme/) |
+| **Total** | **37** | **32** | **1 missing + 4 partial** |
 
-### 7.2 Critical Path for Next Components
+### 7.2 Remaining Work (Single Phase)
 
-**Tier 1 — Unblock Tool Pipeline (backend dependency):**
-1. `WorkspaceAccentProvider` — runtime CSS var injection needed by all workspace-colored components
-2. `ToolPageLayout` — XState-driven 3-phase wrapper, prerequisite for all tool components
-3. `SetupPanel` + `KnowledgePanel` — enable actual generation sessions
-4. `ReadinessSnapshot` — pre-flight validation display
-5. `FeedbackPanel` — SSE-driven progress (backend must provide SSE endpoint)
-6. `SessionSummary` — final result view with PromoteButton
+**Only gap — WorkspaceForm:**
+1. `WorkspaceForm` — Create/edit workspace dialog with 10-dot color picker
 
-**Tier 2 — Complete Workspace UX:**
-7. `WorkspaceDashboard` (componentize from inline page)
-8. `WorkspaceCard` + `WorkspaceForm` (workspace creation/management)
-9. `AssetList` + `AssetCoverageBar` (asset management UX)
-10. `QuickGenerateBar` + `CompletionBanner` + `ToolCard` (UX-v1 additions)
+**Extract from inline (nice-to-have):**
+2. `WorkspaceDashboard` — Extract from DashboardPage inline to standalone component
+3. `ConversationPage` — Componentize from pages/ to components/agent-chat/
 
-**Tier 3 — Agent Chat:**
-11. `ChatMessageBubble`, `ChatInput`, `AgentContextDrawer` (core chat components)
-12. `AgentCard`, `TeamHub` (agent discovery)
-13. `ConversationPage` (refactor from monolithic page to composed components)
-
-**Tier 4 — Gamification (Phase 11):**
-14. `GamificationZone` (sidebar — most visible, anchors the system)
-15. `LevelUpBanner` + toast system (rewards visibility)
-16. `BadgeProgressRing`, `LuckyBonusSparkle`, `ActivityPulse` (engagement mechanics)
-17. `SeasonCountdown`, `ChallengeVoting`, `StreakModeToggle` (retention mechanics)
-
-**Tier 5 — Cleanup:**
-18. `ConfirmDialog` (destructive action safety)
-19. `SessionList` (componentize from inline page)
+**Cleanup:**
+4. Verify LevelUpBanner + LuckyBonusSparkle should remain in ToastSystem or be extracted
 
 ### 7.3 Backend Dependencies by Component
 

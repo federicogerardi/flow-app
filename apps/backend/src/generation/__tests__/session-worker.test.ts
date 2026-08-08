@@ -44,6 +44,8 @@ vi.mock('@flow-app/domain', async () => {
         content,
         stepNumber: stepNum,
         sessionId,
+        status: 'completed',
+        createdAt: new Date(),
       })),
     },
     DEFAULT_COMPONENTS: {},
@@ -67,6 +69,16 @@ vi.mock('@flow-app/domain', async () => {
     DomainError: class extends Error {
       code = 'DOMAIN_ERROR';
       retryable = false;
+      constructor(message: string) { super(message); }
+    },
+    StepNotFoundError: class extends Error {
+      code = 'STEP_NOT_FOUND';
+      retryable = false;
+      constructor(stepIndex: number, toolKey: string) { super(`Step ${stepIndex} not found in tool ${toolKey}`); }
+    },
+    InfrastructureError: class extends Error {
+      code = 'INFRASTRUCTURE_UNAVAILABLE';
+      retryable = true;
       constructor(message: string) { super(message); }
     },
   };
@@ -96,16 +108,28 @@ vi.mock('../../infrastructure/logger.js', () => ({
 function createMockDeps(overrides: Partial<SessionWorkerDeps> = {}): SessionWorkerDeps {
   return {
     sessionRepo: {
-      findById: vi.fn().mockResolvedValue({
-        sessionId: 's-1',
-        toolKey: { value: 'blog-post', toString: () => 'blog-post' },
-        workspaceId: 'ws-1',
-        status: { toString: () => 'queued' },
-        currentStepIndex: 0,
-        startedAt: new Date(),
-        completedAt: null,
-        apply: vi.fn(),
-        version: 1,
+      findById: vi.fn().mockImplementation(() => {
+        const mockSession = {
+          sessionId: 's-1',
+          toolKey: { value: 'blog-post', toString: () => 'blog-post' },
+          workspaceId: 'ws-1',
+          userId: 'user-1',
+          status: { toString: () => 'queued' },
+          currentStepIndex: 0,
+          startedAt: new Date(),
+          completedAt: null,
+          artifacts: [] as Array<{ artifactId: string; stepNumber: number; content: string; status: string; createdAt: Date; sessionId: string }>,
+          version: 1,
+          apply: vi.fn(function(this: typeof mockSession, event: { type: string; artifact?: typeof mockSession.artifacts[number]; isLast?: boolean }) {
+            if (event.type === 'ADD_ARTIFACT' && event.artifact) {
+              this.artifacts.push(event.artifact);
+            }
+            if (event.type === 'COMPLETE') {
+              this.completedAt = new Date();
+            }
+          }),
+        };
+        return Promise.resolve(mockSession);
       }),
       save: vi.fn().mockResolvedValue(undefined),
       saveWithLock: vi.fn().mockResolvedValue(undefined),

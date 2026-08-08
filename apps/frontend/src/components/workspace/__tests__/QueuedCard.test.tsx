@@ -23,7 +23,7 @@ describe('QueuedCard', () => {
 
   it('shows queued status chip', () => {
     render(<QueuedCard session={makeSession()} />);
-    expect(screen.getByText('Queued')).toBeInTheDocument();
+    expect(screen.getByText('In coda')).toBeInTheDocument();
   });
 
   it('shows queue position when available', () => {
@@ -33,7 +33,7 @@ describe('QueuedCard', () => {
 
   it('shows "Waiting..." when queuePosition is undefined', () => {
     render(<QueuedCard session={makeSession({ queuePosition: undefined })} />);
-    expect(screen.getByText('Waiting...')).toBeInTheDocument();
+    expect(screen.getByText('Caricamento...')).toBeInTheDocument();
   });
 
   it('renders cancel button when onCancel provided', () => {

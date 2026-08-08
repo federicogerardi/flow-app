@@ -46,6 +46,7 @@ function createMockSessionRepo() {
       if (status) filtered = filtered.filter((s: Record<string, unknown>) => s.status?.toString() === status);
       return filtered.slice(0, limit ?? 50);
     }),
+    findLastArtifactsBySessionIds: vi.fn(async () => new Map()),
     findByIdempotencyKeyHash: vi.fn(async (_hash: string) => null),
     save: vi.fn(async (session: Record<string, unknown>) => { sessions.set(session.sessionId, session); }),
     saveIdempotencyKey: vi.fn(async () => {}),
@@ -125,10 +126,11 @@ vi.mock('@flow-app/domain', async () => {
         sessionId: 's-new',
         toolKey: { value: 'blog-post', toString: () => 'blog-post' },
         workspaceId: _workspaceId,
-        status: { toString: () => 'draft' },
+        status: { toString: () => 'draft', isTerminal: () => false },
         currentStepIndex: 0,
         startedAt: new Date(),
         completedAt: null,
+        createdAt: new Date(),
         apply: vi.fn(),
       })),
     },
@@ -155,10 +157,13 @@ describe('Generation Routes', () => {
     it('should return sessions array', async () => {
       sessionRepo.sessions.set('s-1', {
         sessionId: 's-1',
-        toolKey: { toString: () => 'blog-post' },
+        toolKey: { value: 'blog-post', toString: () => 'blog-post' },
         workspaceId: 'ws-1',
         status: { toString: () => 'completed' },
         startedAt: new Date('2025-01-01'),
+        completedAt: new Date('2025-01-01'),
+        createdAt: new Date('2025-01-01'),
+        currentStepIndex: 1,
       });
 
       const req = mockReq();
@@ -180,12 +185,13 @@ describe('Generation Routes', () => {
     it('should return session detail', async () => {
       sessionRepo.sessions.set('s-1', {
         sessionId: 's-1',
-        toolKey: { toString: () => 'blog-post' },
+        toolKey: { value: 'blog-post', toString: () => 'blog-post' },
         workspaceId: 'ws-1',
-        status: { toString: () => 'completed' },
+        status: { toString: () => 'completed', isTerminal: () => true },
         currentStepIndex: 1,
         startedAt: new Date('2025-01-01'),
         completedAt: new Date('2025-01-01'),
+        createdAt: new Date('2025-01-01'),
       });
 
       const req = mockReq({ params: { id: 's-1' } });
@@ -245,9 +251,12 @@ describe('Generation Routes', () => {
     it('should return 200 on idempotent replay', async () => {
       const existingSession = {
         sessionId: 's-existing',
-        toolKey: { value: 'blog-post' },
+        toolKey: { value: 'blog-post', toString: () => 'blog-post' },
         workspaceId: 'ws-1',
         status: { toString: () => 'completed', isTerminal: () => true },
+        startedAt: new Date(),
+        completedAt: new Date(),
+        createdAt: new Date(),
       };
       sessionRepo.findByIdempotencyKeyHash.mockResolvedValue(existingSession);
 

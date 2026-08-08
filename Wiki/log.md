@@ -4322,3 +4322,75 @@ Full sweep of 7 files (audited by explore agent) found 55 hardcoded strings:
 - [[synthesis/open-findings-plan-2026-08-08]] (new)
 - [[Wiki/index.md]] — added to synthesis table
 - [[log]] (this entry)
+
+## [2026-08-08] remediation | Open findings — all 4 gaps closed
+
+Executed [[synthesis/open-findings-plan-2026-08-08]] in full. All gaps closed.
+
+### Gap 1 — Copy module violations (55 strings → 0)
+
+**Copy keys added**: 30+ new keys across 4 files:
+- `shared.ts`: +15 keys (aria-labels, form labels, roles, chat messages, WCAG)
+- `workspace.ts`: +8 keys (editAction, empty states, inviteMember)
+- `conversations.ts`: +12 keys (empty state, suggested questions per-agent, aria)
+- `notifications.ts`: +1 key (promoteConfirm)
+
+**Strings replaced**: 55 across 8 files:
+- `ConversationView.tsx`: 26 → 0 (SUGGESTED_QUESTIONS now uses copy.raw for arrays)
+- `AppShell.tsx`: 13 → 0 (aria-labels, nav labels, Logout, Skip to content)
+- `WorkspaceMembers.tsx`: 7 → 0 (dialog title, labels, roles)
+- `SessionList.tsx`: 3 → 0 (empty states)
+- `DashboardPage.tsx`: 3 → 0 (Modifica, delete warning, delete button)
+- `ChatInput.tsx`: 3 → 0 (error fallback, placeholders, aria-label)
+- `CompletedCard.tsx`: 2 → 0 (step/steps pluralization)
+- `PromoteButton.tsx`: 1 → 0 (promote confirmation)
+
+**Pattern**: `copy.raw` used for array access (conversations.suggested.*), `copy.t()` for everything else.
+
+### Gap 2 — Embedded gamification components extracted
+
+- New: `components/gamification/LevelUpBanner.tsx` (~45 lines)
+- New: `components/gamification/LuckyBonusSparkle.tsx` (~40 lines)
+- `ToastSystem.tsx`: 128 → 75 lines (orchestrator only)
+- Re-exports preserved: `export { LevelUpBanner, LuckyBonusSparkle }` from ToastSystem
+
+### Gap 3 — Component tests
+
+- New: `WorkspaceForm.test.tsx` — 10 tests (render, color picker, validation, submit, cancel)
+- New: `ReadyToPromoteList.test.tsx` — 2 tests (smoke tests, SWR mock)
+- Total frontend tests: 140 → 152 (+12)
+
+### Verification
+
+- TypeScript: zero errors across all packages
+- Frontend: 152/152 passed (19 files)
+- Backend: 138/138 passed (19 files)
+- Domain: 490/490 passed (37 files)
+- Grep for remaining hardcoded aria-labels/Typography: 0 matches
+
+### Files created (4)
+
+| File | Gap |
+|---|---|
+| `components/gamification/LevelUpBanner.tsx` | 2 |
+| `components/gamification/LuckyBonusSparkle.tsx` | 2 |
+| `components/workspace/__tests__/WorkspaceForm.test.tsx` | 3 |
+| `components/workspace/__tests__/ReadyToPromoteList.test.tsx` | 3 |
+
+### Files modified (12)
+
+| File | Gap | Change |
+|---|---|---|
+| `packages/copy/src/it/shared.ts` | 1 | +15 keys |
+| `packages/copy/src/it/workspace.ts` | 1 | +8 keys |
+| `packages/copy/src/it/conversations.ts` | 1 | +12 keys |
+| `packages/copy/src/it/notifications.ts` | 1 | +1 key |
+| `components/agent-chat/ConversationView.tsx` | 1 | 26 strings → copy.raw/copy.t() |
+| `components/agent-chat/ChatInput.tsx` | 1 | 3 strings → copy.t() |
+| `layout/AppShell.tsx` | 1 | 13 strings → copy.t() |
+| `components/workspace/WorkspaceMembers.tsx` | 1 | 7 strings → copy.t() |
+| `components/workspace/SessionList.tsx` | 1 | 3 strings → copy.t() |
+| `pages/DashboardPage.tsx` | 1 | 3 strings → copy.t() |
+| `components/workspace/CompletedCard.tsx` | 1 | 2 strings → copy.t() |
+| `components/shared/PromoteButton.tsx` | 1 | 1 string → copy.t() |
+| `components/gamification/ToastSystem.tsx` | 2 | Extracted LevelUpBanner + LuckyBonusSparkle |

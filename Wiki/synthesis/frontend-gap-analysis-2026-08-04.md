@@ -487,4 +487,4 @@ npx vitest run
 - [[Usage & Quota]] — domain design for quota bounded context
 - [[Gamification]] — authoritative domain design for engagement layer
 - [[Tool as Static Configuration]] — ToolDefinition drives SetupPanel generation
-- [[Maintenance Log]] — Phase 8 frontend auth completion evidence
+- [[log]] — Phase 8 frontend auth completion evidence

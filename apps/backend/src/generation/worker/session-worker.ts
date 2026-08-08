@@ -2,7 +2,7 @@ import { Worker, type Job } from 'bullmq';
 import { createActor, fromPromise } from 'xstate';
 import { sessionMachine, type SessionContext } from '../machines/session-machine.js';
 import type { SessionRepository, Artifact, PromptComposer, PromptTemplateRepository, Session } from '@flow-app/domain';
-import { getTool, Artifact as ArtifactEntity, ContextEnricher, DEFAULT_COMPONENTS, SessionNotFoundError, ToolNotFoundError, PromptTemplateId, PromptVersion } from '@flow-app/domain';
+import { getTool, Artifact as ArtifactEntity, ContextEnricher, DEFAULT_COMPONENTS, SessionNotFoundError, StepNotFoundError, ToolNotFoundError, PromptTemplateId, PromptVersion, InfrastructureError } from '@flow-app/domain';
 import type { JobEventBridge } from '../../infrastructure/job-event-bridge.js';
 import type { LlmGateway } from '../../infrastructure/llm-gateway.js';
 import type { GamificationEventPublisher } from '../../application/gamification/gamification-event-publisher.js';
@@ -31,7 +31,7 @@ export interface SessionWorkerDeps {
 
 export function createSessionWorker(deps: SessionWorkerDeps): Worker<SessionJobData> {
   const redisUrl = process.env.REDIS_URL;
-  if (!redisUrl) throw new Error('REDIS_URL not set');
+  if (!redisUrl) throw new InfrastructureError('REDIS_URL not set');
 
   return new Worker<SessionJobData>(
     'session-workflow',
@@ -83,7 +83,7 @@ async function processSessionJob(
         executeStep: fromPromise<Artifact, SessionContext>(async ({ input }) => {
           const stepIndex = input.currentStepIndex;
           const step = tool.steps[stepIndex];
-          if (!step) throw new Error(`Step ${stepIndex} not found in tool ${tool.toolKey}`);
+          if (!step) throw new StepNotFoundError(stepIndex, session.toolKey.toString());
 
           const stepLog = log.child({ stepIndex, stepLabel: step.label, modelTier: step.prompt.model });
 

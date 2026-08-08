@@ -43,4 +43,8 @@ export function useWorkspaceAccent(): string {
   return useContext(AccentContext).accent;
 }
 
+export function useSetAccent(): (color: string) => void {
+  return useContext(AccentContext).setAccent;
+}
+
 export { WORKSPACE_ACCENTS };

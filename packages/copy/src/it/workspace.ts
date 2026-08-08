@@ -7,11 +7,12 @@ export const workspace = {
   },
   detail: {
     members:      '{count} members',
-    deleteTitle:  'Delete workspace',
+    deleteTitle:  'Elimina workspace',
     assets:       'Asset',
     recentSessions: 'Sessioni recenti',
     noSessions:   'Nessuna sessione. Avvia un tool per iniziare.',
     noAssets:     'Nessun asset. Genera un brief o una brand voice.',
+    inviteMember: 'Invita membro',
   },
   nav: {
     home:            'Home',
@@ -35,9 +36,27 @@ export const workspace = {
   },
   dashboard: {
     title: 'Dashboard',
-    tools: 'Tools',
+    tools: 'Strumenti',
     recentSessions: 'Sessioni recenti',
     noSessions: 'Nessuna sessione ancora. Seleziona un tool per iniziare.',
     subtitle: 'Seleziona un tool per iniziare a generare contenuti',
+    readyToPromote: 'Pronti da Promuovere',
+    promoteHint: 'Promuovi ad Asset per renderlo disponibile come contesto',
+    editAction: 'Modifica',
+  },
+  sessions: {
+    tabs: {
+      inProgress: 'In corso',
+      completed: 'Completate',
+      failed: 'Fallite',
+    },
+    emptyInProgress: 'Nessuna sessione in corso',
+    emptyCompleted:  'Nessuna sessione completata',
+    emptyFailed:     'Nessuna sessione fallita',
+  },
+  form: {
+    createTitle: 'Nuovo Workspace',
+    editTitle: 'Modifica Workspace',
+    accentLabel: 'Colore accento',
   },
 } as const;

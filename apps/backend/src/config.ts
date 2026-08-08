@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ConfigurationError } from '@flow-app/domain';
 
 function getEnvSchema(isDev: boolean) {
   return z.object({
@@ -44,7 +45,7 @@ export function validateConfig(): Env {
     const missing = result.error.issues.map(
       (i) => `  ${i.path.join('.')}: ${i.message}`
     );
-    throw new Error(
+    throw new ConfigurationError(
       `FATAL: Invalid environment configuration:\n${missing.join('\n')}`
     );
   }

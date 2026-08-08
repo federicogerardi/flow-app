@@ -7,7 +7,7 @@ date_updated: 2026-08-08
 
 # Wiki Index — Flow App
 
-> **Maintenance log**: see [[Maintenance Log]] for chronological history of wiki and codebase operations.
+> **Chronological log**: see [[log]] for all wiki and codebase operations.
 
 ## Processed Sources
 
@@ -86,7 +86,6 @@ date_updated: 2026-08-08
 | [[Job Queue - Monitoring and Stability]] | high | 4 |
 | [[LLM Gateway - OpenRouter]] | high | 6 |
 | [[Logging Strategy]] | high | 4 |
-| [[Maintenance Log]] | high | 2 |
 | [[Meta Ads - Prompt Architecture]] | high | 3 |
 | [[Migration Tooling]] | high | 2 |
 | [[Persona Generator - Prompt Architecture]] | high | 4 |
@@ -152,4 +151,5 @@ date_updated: 2026-08-08
 | [[synthesis/be-coordination-session-dto-2026-08-07]] | Backend coordination plan — 11 missing SessionListItemDTO fields, SSE payload fixes, 2 ghost endpoints, ~3h effort | 2026-08-07 |
 | [[synthesis/testing-plan-xstate-toolpage-2026-08-07]] | Testing plan — ✅ 79 unit/component tests implemented: 34 machine + 10 deriveUIState + 7 ToolPageLayout + 28 session cards | 2026-08-08 |
 | [[synthesis/e2e-test-plan-tool-page-2026-08-07]] | E2E test plan — ✅ 8 Playwright scenarios scaffolded: happy path, upload, asset, error+retry, SSE resilience, accessibility, session list, gamification | 2026-08-08 |
+| [[synthesis/open-findings-plan-2026-08-08]] | Open findings remediation — 4 gaps: 55 copy violations (8 files), 2 embedded gamification components, 2 missing tests, 1 migration deploy. ~5.75h, 1 day | 2026-08-08 |
 | [[overview]] | High-level synthesis (v3) | 2026-08-04 |

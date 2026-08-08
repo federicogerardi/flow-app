@@ -47,6 +47,7 @@ export interface WorkspacesTable {
   id: string;
   created_by: string;
   name: string;
+  accent_color: Generated<string>;
   created_at: ColumnType<Date, never, never>;
   updated_at: ColumnType<Date, Date | null, Date>;
   version: Generated<number>;

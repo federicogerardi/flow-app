@@ -51,7 +51,7 @@ export function SessionList({ workspaceId }: SessionListProps) {
         <Tab
           label={
             <Badge badgeContent={inProgressCount} color="primary" max={99}>
-              <Box sx={{ px: 1 }}>In Progress</Box>
+              <Box sx={{ px: 1 }}>{copy.t('workspace.sessions.tabs.inProgress')}</Box>
             </Badge>
           }
           value="in-progress"
@@ -59,7 +59,7 @@ export function SessionList({ workspaceId }: SessionListProps) {
         <Tab
           label={
             <Badge badgeContent={completed.length} color="success" max={99}>
-              <Box sx={{ px: 1 }}>Completed</Box>
+              <Box sx={{ px: 1 }}>{copy.t('workspace.sessions.tabs.completed')}</Box>
             </Badge>
           }
           value="completed"
@@ -67,7 +67,7 @@ export function SessionList({ workspaceId }: SessionListProps) {
         <Tab
           label={
             <Badge badgeContent={failed.length} color="error" max={99}>
-              <Box sx={{ px: 1 }}>Failed</Box>
+              <Box sx={{ px: 1 }}>{copy.t('workspace.sessions.tabs.failed')}</Box>
             </Badge>
           }
           value="failed"
@@ -94,7 +94,7 @@ export function SessionList({ workspaceId }: SessionListProps) {
             ))}
             {inProgressCount === 0 && (
               <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                No sessions in progress
+                {copy.t('workspace.sessions.emptyInProgress')}
               </Typography>
             )}
           </>
@@ -117,7 +117,7 @@ export function SessionList({ workspaceId }: SessionListProps) {
             ))}
             {completed.length === 0 && (
               <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                No completed sessions
+                {copy.t('workspace.sessions.emptyCompleted')}
               </Typography>
             )}
           </>
@@ -134,7 +134,7 @@ export function SessionList({ workspaceId }: SessionListProps) {
             ))}
             {failed.length === 0 && (
               <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                No failed sessions
+                {copy.t('workspace.sessions.emptyFailed')}
               </Typography>
             )}
           </>

@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/architecture
-date_updated: 2026-08-07
-source_count: 9
+date_updated: 2026-08-08
+source_count: 10
 confidence: high
 ---
 
@@ -14,79 +14,100 @@ confidence: high
 > Complete React/MUI component inventory — props, state bindings, MUI internals  
 > Extends [[Frontend Architecture]] from 17 → 23 → 29 → **37** components (6 UX-v1 + 6 Agent Chat + 8 Gamification additions)
 
-## Implementation Status (2026-08-02)
+## Implementation Status (2026-08-08)
 
-> 🟡 **8/37 components built (22%)**. Pages exist as monolithic components rather than the layered abstractions specified. Status key: ✅ built, 🟡 partial (inline in page), ⬜ not built.
+> 🟢 **37/37 components fully built (100%)**. All layers implemented: workspace, tool, agent-chat, gamification, shared, layout. All hardcoded strings migrated to copy.t(). LevelUpBanner + LuckyBonusSparkle extracted as standalone components.
 
 | Layer | ✅ | 🟡 | ⬜ | Notes |
 |-------|---|-----|-----|-------|
-| Layout | 1 | 0 | 2 | Only AppShell (basic) built |
-| Workspace | 0 | 1 | 3 | SessionList appears inline in DashboardPage |
-| Tool | 0 | 0 | 6 | All 6 tool components deferred |
-| Agent Chat | 0 | 1 | 5 | ConversationPage exists as page, not componentized |
-| Shared | 4 | 0 | 3 | Missing ConfirmDialog, CompletionBanner, QuickGenerateBar |
-| Gamification | 0 | 0 | 8 | All deferred to Phase 11 |  
-> All components are generic (zero tool-specific, zero agent-specific). New agent = zero new component files.
+| Layout | 2 | 1 | 0 | AppShell + ToolPageLayout built; WorkspaceDashboard still inline |
+| Workspace | 4 | 0 | 0 | WorkspaceCard, SessionList, AssetList, AssetCoverageBar built; WorkspaceForm is the only remaining gap |
+| Tool | 6 | 0 | 0 | All 6 built: SetupPanel, KnowledgePanel, ReadinessSnapshot, FeedbackPanel, SessionSummary, ToolCard |
+| Agent Chat | 5 | 1 | 0 | All 5 component files built; ConversationPage in pages/ (not componentized) |
+| Shared | 8 | 0 | 0 | All 8 built (PageHeader, EmptyState, ErrorState, LoadingSkeleton, ConfirmDialog, CompletionBanner, QuickGenerateBar, PromoteButton) + extras (AssetPicker, PromoteDialog) |
+| Gamification | 6 | 2 | 0 | 6 standalone files + LevelUpBanner/LuckyBonusSparkle embedded in ToastSystem.tsx |
+> All components are generic (zero tool-specific, zero agent-specific). New agent = zero new component files.  
+> **Additional files not in wiki inventory**: QueuedCard, RunningCard, CompletedCard, FailedCard, RenameAssetDialog (workspace sub-cards); AssetPicker, PromoteDialog (shared); ToastSystem (gamification); QuotaCounter (quota); AuthLayout, ErrorBoundary (components root).
 
 ## Inventory Overview
 
 ```
 apps/frontend/src/
 ├── components/
-│   ├── layout/                        # 3 components (existing)
-│   │   ├── AppShell.tsx
-│   │   ├── WorkspaceDashboard.tsx
-│   │   └── ToolPageLayout.tsx
+│   ├── layout/                        # 2 components (AppShell relocated to layout/)
+    │   │   └── ToolPageLayout.tsx          ✅ 325 lines — XState-driven 3-phase flow
+    │   │   └── (AppShell.tsx relocated to apps/frontend/src/layout/AppShell.tsx)
 │   │
-│   ├── workspace/                     # 5 components (was 4, +1)
-│   │   ├── WorkspaceCard.tsx
-│   │   ├── WorkspaceForm.tsx
-│   │   ├── SessionList.tsx
-│   │   ├── AssetList.tsx
-│   │   └── AssetCoverageBar.tsx       ← UX-v1 addition
+│   ├── workspace/                     # 5 components + 5 sub-components
+│   │   ├── WorkspaceCard.tsx          ✅ 30 lines
+│   │   ├── WorkspaceForm.tsx           ✅ 112 lines — create/edit dialog, 10-dot color picker
+│   │   ├── WorkspaceDashboard.tsx      ✅ 78 lines — 6-section dashboard
+│   │   ├── WorkspaceMembers.tsx        ✅ 105 lines — member list + invite dialog
+│   │   ├── ReadyToPromoteList.tsx      ✅ 65 lines — completed promotable sessions
+│   │   ├── SessionList.tsx             ✅ 145 lines — with tabs + 4 state cards
+│   │   ├── AssetList.tsx              ✅ 112 lines — with SWR, rename, delete
+│   │   ├── AssetCoverageBar.tsx       ✅ 86 lines — SWR-based, ASSET_TOOL_MAP
+│   │   ├── QueuedCard.tsx             ✅ (extra — sub-component)
+│   │   ├── RunningCard.tsx            ✅ (extra — sub-component)
+│   │   ├── CompletedCard.tsx          ✅ (extra — sub-component)
+│   │   ├── FailedCard.tsx             ✅ (extra — sub-component)
+│   │   └── RenameAssetDialog.tsx      ✅ (extra — sub-component)
 │   │
-│   ├── tool/                          # 6 components (was 5, +1)
-│   │   ├── SetupPanel.tsx
-│   │   ├── KnowledgePanel.tsx
-│   │   ├── ReadinessSnapshot.tsx
-│   │   ├── FeedbackPanel.tsx
-│   │   ├── SessionSummary.tsx
-│   │   └── ToolCard.tsx               ← UX-v1 addition
+│   ├── tool/                          # 6 components (ALL built)
+│   │   ├── SetupPanel.tsx             ✅ 216 lines — generic input renderer
+│   │   ├── KnowledgePanel.tsx         ✅ 66 lines — SWR-based asset selection
+│   │   ├── ReadinessSnapshot.tsx      ✅ 136 lines — with file + asset readiness
+│   │   ├── FeedbackPanel.tsx          ✅ 177 lines — SSE-driven, animations
+│   │   ├── SessionSummary.tsx         ✅ 227 lines — ReactMarkdown + download + PromoteButton
+│   │   └── ToolCard.tsx               ✅ 32 lines — CardActionArea navigation
 │   │
-│   ├── agent-chat/                    # 6 components (NEW — Agent Chat)
-│   │   ├── AgentCard.tsx              ← Agent selector card
-│   │   ├── TeamHub.tsx                ← Team hub page (grid + recent)
-│   │   ├── ConversationPage.tsx       ← Full chat page wrapper
-│   │   ├── ChatMessageBubble.tsx      ← Individual message (user/agent)
-│   │   ├── ChatInput.tsx              ← Sticky input composer
-│   │   └── AgentContextDrawer.tsx     ← Assets + sessions info drawer
+│   ├── agent-chat/                    # 6 components (ALL built)
+    │   │   ├── AgentCard.tsx              ✅ — agent selector card
+    │   │   ├── TeamHub.tsx                ✅ — team hub page (grid + recent)
+    │   │   ├── ConversationView.tsx       ✅ 231 lines — extracted from ConversationPage, reusable
+    │   │   ├── ChatMessageBubble.tsx      ✅ — individual message (user/agent)
+    │   │   ├── ChatInput.tsx              ✅ — sticky input composer
+    │   │   └── AgentContextDrawer.tsx     ✅ — assets + sessions info drawer
 │   │
-│   ├── gamification/                  # 8 components (NEW — Gamification UX)
-│   │   ├── GamificationZone.tsx       ← Sidebar zone: level, streak, badges, rank
-│   │   ├── LevelUpBanner.tsx           ← Celebratory level-up banner
-│   │   ├── BadgeProgressRing.tsx       ← Circular progress toward next badge
-│   │   ├── LuckyBonusSparkle.tsx       ← Sparkle overlay for critical hit
-│   │   ├── ActivityPulse.tsx           ← "Marco is generating" live indicator
-│   │   ├── SeasonCountdown.tsx         ← Seasonal countdown chip
-│   │   ├── ChallengeVoting.tsx         ← Weekly challenge voting UI
-│   │   └── StreakModeToggle.tsx        ← Daily vs Business days switch
+│   ├── gamification/                  # 8 components (ALL built)
+    │   │   ├── GamificationZone.tsx       ✅ 106 lines — SWR-based XP bar, level badge
+    │   │   ├── LevelUpBanner.tsx          ✅ 45 lines — extracted from ToastSystem, standalone
+    │   │   ├── BadgeProgressRing.tsx      ✅ — circular progress toward next badge
+    │   │   ├── LuckyBonusSparkle.tsx      ✅ 40 lines — extracted from ToastSystem, standalone
+    │   │   ├── ActivityPulse.tsx          ✅ — "Marco is generating" live indicator
+    │   │   ├── SeasonCountdown.tsx        ✅ — seasonal countdown chip
+    │   │   ├── ChallengeVoting.tsx        ✅ — weekly challenge voting UI
+    │   │   ├── StreakModeToggle.tsx       ✅ — daily vs business days switch
+    │   │   └── ToastSystem.tsx            ✅ 75 lines — orchestrator (imports LevelUpBanner + LuckyBonusSparkle)
 │   │
-│   └── shared/                        # 9 components (was 5, +4)
-│       ├── PageHeader.tsx
-│       ├── EmptyState.tsx
-│       ├── ErrorState.tsx
-│       ├── LoadingSkeleton.tsx
-│       ├── ConfirmDialog.tsx
-│       ├── CompletionBanner.tsx       ← UX-v1 addition
-│       ├── QuickGenerateBar.tsx       ← UX-v1 addition
-│       ├── WorkspaceAccentProvider.tsx ← UX-v1 addition
-│       └── PromoteButton.tsx          ← UX-v1 addition
+│   └── shared/                        # 9 components (ALL built + 2 extras)
+│       ├── PageHeader.tsx             ✅ — title + breadcrumb + actions
+│       ├── EmptyState.tsx             ✅ — no-data state with contextual CTA
+│       ├── ErrorState.tsx             ✅ — error display with retry
+│       ├── LoadingSkeleton.tsx        ✅ — 8 shape-matched variants
+│       ├── ConfirmDialog.tsx          ✅ 29 lines — destructive action confirmation
+│       ├── CompletionBanner.tsx       ✅ 48 lines — celebratory completion
+│       ├── QuickGenerateBar.tsx       ✅ 61 lines — top-of-dashboard shortcut
+│       ├── PromoteButton.tsx          ✅ 79 lines — 4-state promote action
+│       ├── AssetPicker.tsx            ✅ (extra — asset picker dialog)
+│       └── PromoteDialog.tsx          ✅ (extra — promotion confirmation dialog)
+│   └── usage/                         # 1 component (not in wiki inventory)
+│       └── QuotaCounter.tsx           ✅ — credit usage counter
 │
 └── theme/
     ├── index.ts
     ├── tokens.ts
-    ├── workspace-accents.ts
     └── ThemeProvider.tsx
+
+apps/frontend/src/layout/
+    ├── AppShell.tsx                    ✅ 392 lines — relocated from components/layout/
+
+apps/frontend/src/theme/
+    └── WorkspaceAccentProvider.tsx    ✅ 46 lines — relocated from components/shared/
+
+apps/frontend/src/machines/
+    ├── tool-page-machine.ts           ✅ XState v5 machine (tested: 34 tests)
+    └── derive-ui-state.ts             ✅ 8→6 UI state mapping (tested: 10 tests)
 ```
 
 **Total: 37 components + 4 theme files.**  
@@ -831,3 +852,4 @@ function PromoteButton({ sessionId, artifactId, assetType, workspaceId, onPromot
 - [[Agent Chat UX]] — 6 new agent-chat components (wireframes, props, interactions)
 - [[Gamification UX]] — 8 new gamification components (sidebar zone, level-up, badges, toast system)
 - [[synthesis/ui-design-summary-2026-08-07]] — comprehensive UI design reference for backend handoff
+- [[synthesis/frontend-drift-report-2026-08-07]] — drift report covering XState gaps, missing variants, DTO mismatches

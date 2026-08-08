@@ -93,7 +93,7 @@ function makeWorkspace() {
   const ownerMembership = WorkspaceMembership.reconstitute(
     'user-1', 'ws-1', MembershipRole.Owner, MembershipStatus.Active, 'user-1', now, now,
   );
-  return Workspace.reconstitute('ws-1', 'user-1', 'Test WS', now, now, 1, [ownerMembership]);
+  return Workspace.reconstitute('ws-1', 'user-1', 'Test WS', '#2563eb', now, now, 1, [ownerMembership]);
 }
 
 describe('PromoteToAssetUseCase', () => {

@@ -39,7 +39,7 @@ export function PromoteButton({ artifactId, workspaceId, produces, promotedAsset
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Typography variant="caption" color="text.secondary">
-          Promote to asset?
+          {copy.t('notifications.asset.promoteConfirm')}
         </Typography>
         <Button
           size="small"

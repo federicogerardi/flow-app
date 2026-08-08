@@ -79,6 +79,7 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
       workspace.id,
       workspace.created_by,
       workspace.name,
+      workspace.accent_color ?? '#2563eb',
       workspace.created_at,
       workspace.updated_at,
       workspace.version,
@@ -130,6 +131,7 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
         row.id,
         row.created_by,
         row.name,
+        row.accent_color ?? '#2563eb',
         row.created_at,
         row.updated_at,
         row.version,
@@ -155,11 +157,13 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
         id: workspace.workspaceId,
         created_by: workspace.createdBy,
         name: workspace.name,
+        accent_color: workspace.accentColor,
         version: workspace.version,
       })
       .onConflict((oc) =>
         oc.column('id').doUpdateSet({
           name: workspace.name,
+          accent_color: workspace.accentColor,
           version: workspace.version,
           updated_at: new Date(),
         }),
@@ -175,6 +179,7 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
         .updateTable('workspaces')
         .set({
           name: workspace.name,
+          accent_color: workspace.accentColor,
           version: workspace.version,
           updated_at: new Date(),
         })
@@ -263,6 +268,7 @@ export class KyselyWorkspaceRepository implements WorkspaceRepository {
         row.id,
         row.created_by,
         row.name,
+        row.accent_color ?? '#2563eb',
         row.created_at,
         row.updated_at,
         row.version,

@@ -9,14 +9,9 @@ import { useBreadcrumbs } from '../layout/AppShell';
 import { LoadingSkeleton } from '../components/LoadingSkeleton';
 import { ErrorState } from '../components/ErrorState';
 import { ASSET_TYPE_LABELS } from '../constants/assets';
+import { copy } from '@flow-app/copy';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-
-const SOURCE_LABELS: Record<string, string> = {
-  generated: 'Generato',
-  uploaded: 'Caricato',
-  manual: 'Manuale',
-};
 
 export default function AssetDetailPage() {
   const { workspaceId, assetId } = useParams<{ workspaceId: string; assetId: string }>();
@@ -31,21 +26,21 @@ export default function AssetDetailPage() {
   useEffect(() => {
     const label = asset
       ? (asset.name ?? ASSET_TYPE_LABELS[asset.assetType] ?? asset.assetType)
-      : 'Asset';
+      : copy.t('assets.pageTitle');
     setBreadcrumbs([
-      { label: 'Home', path: workspaceId ? `/workspaces/${workspaceId}` : '/dashboard' },
-      { label: 'Assets', path: `/workspaces/${workspaceId}/assets` },
+      { label: copy.t('workspace.nav.home'), path: workspaceId ? `/workspaces/${workspaceId}` : '/dashboard' },
+      { label: copy.t('assets.pageTitle'), path: `/workspaces/${workspaceId}/assets` },
       { label },
     ]);
   }, [workspaceId, asset, setBreadcrumbs]);
 
   if (isLoading) return <LoadingSkeleton />;
   if (error) return <ErrorState message={error.message} />;
-  if (!asset) return <ErrorState message="Asset not found" />;
+  if (!asset) return <ErrorState message={copy.t('assets.notFound')} />;
 
   const typeLabel = ASSET_TYPE_LABELS[asset.assetType] ?? asset.assetType;
   const pageTitle = asset.name ?? typeLabel;
-  const sourceLabel = SOURCE_LABELS[asset.source] ?? asset.source;
+  const sourceLabelKey = `assets.source.${asset.source}` as const;
 
   return (
     <Box>
@@ -55,9 +50,9 @@ export default function AssetDetailPage() {
         {asset.name && (
           <Chip label={typeLabel} size="small" variant="outlined" />
         )}
-        <Chip label={sourceLabel} size="small" color="primary" variant="outlined" />
+        <Chip label={copy.t(sourceLabelKey)} size="small" color="primary" variant="outlined" />
         <Typography variant="caption" color="text.secondary">
-          Creato {new Date(asset.createdAt).toLocaleString()}
+          {copy.t('shared.format.date')}: {new Date(asset.createdAt).toLocaleDateString()}
         </Typography>
         <Box sx={{ flexGrow: 1 }} />
         <Button
@@ -66,7 +61,7 @@ export default function AssetDetailPage() {
           endIcon={<OpenInNewIcon />}
           onClick={() => navigate(`/workspaces/${workspaceId}/tools/${asset.assetType}`)}
         >
-          Usa in una generazione
+          {copy.t('shared.actions.viewAsset')}
         </Button>
       </Box>
 

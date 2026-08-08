@@ -43,23 +43,9 @@ export function TeamHub() {
 
   return (
     <Box>
-      <PageHeader
-        title={copy.t('workspace.nav.team')}
-      />
+      <PageHeader title={copy.t('workspace.nav.team')} />
 
-      {/* Hero banner (M9) */}
-      <Box
-        sx={{
-          p: 3,
-          mb: 3,
-          borderRadius: 2,
-          background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
-          color: 'white',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2.5,
-        }}
-      >
+      <Box sx={{ p: 3, mb: 3, borderRadius: 2, background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', color: 'white', display: 'flex', alignItems: 'center', gap: 2.5 }}>
         <GroupsIcon sx={{ fontSize: 40, opacity: 0.8 }} />
         <Box>
           <Typography variant="h5" fontWeight={700}>
@@ -96,9 +82,7 @@ export function TeamHub() {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             {conversations.map((conv) => (
               <Card key={conv.id} variant="outlined">
-                <CardActionArea
-                  onClick={() => navigate(`/workspaces/${workspaceId}/conversations/${conv.id}`)}
-                >
+                <CardActionArea onClick={() => navigate(`/workspaces/${workspaceId}/conversations/${conv.id}`)}>
                   <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1.5, '&:last-child': { pb: 1.5 } }}>
                     <Box>
                       <Typography variant="body1" fontWeight={600}>
@@ -121,8 +105,8 @@ export function TeamHub() {
 
       {conversations.length === 0 && !convLoading && (
         <EmptyState
-          title="No conversations yet"
-          message="Start a conversation with any agent to begin chatting."
+          title={copy.t('conversations.empty.title')}
+          message={copy.t('conversations.empty.message')}
         />
       )}
     </Box>

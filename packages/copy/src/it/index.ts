@@ -6,3 +6,7 @@ export { auth } from './auth';
 export { notifications } from './notifications';
 export { admin } from './admin';
 export { usage } from './usage';
+export { profile } from './profile';
+export { conversations } from './conversations';
+export { assets } from './assets';
+export { gamification } from './gamification';

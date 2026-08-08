@@ -57,31 +57,31 @@ describe('RegisterPage', () => {
     expect(getEmailInput()).toBeDefined();
     const passwords = getPasswordInputs();
     expect(passwords).toHaveLength(2);
-    expect(screen.getByRole('button', { name: 'Create account' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Crea account' })).toBeDefined();
   });
 
   it('renders the page title', () => {
     renderRegisterPage();
 
-    expect(screen.getByText('Create your account')).toBeDefined();
+    expect(screen.getByText('Registrati')).toBeDefined();
   });
 
   it('renders link to login page', () => {
     renderRegisterPage();
 
-    expect(screen.getByText('Sign in')).toBeDefined();
+    expect(screen.getByText('Accedi')).toBeDefined();
   });
 
   it('shows password helper text', () => {
     renderRegisterPage();
 
-    expect(screen.getByText('At least 8 characters')).toBeDefined();
+    expect(screen.getByText('Almeno 8 caratteri')).toBeDefined();
   });
 
   it('disables submit button when fields are empty', () => {
     renderRegisterPage();
 
-    const button = screen.getByRole('button', { name: 'Create account' });
+    const button = screen.getByRole('button', { name: 'Crea account' });
     expect(button).toBeDisabled();
   });
 
@@ -94,7 +94,7 @@ describe('RegisterPage', () => {
     fireEvent.change(passwords[0], { target: { value: 'password123' } });
     fireEvent.change(passwords[1], { target: { value: 'password123' } });
 
-    const button = screen.getByRole('button', { name: 'Create account' });
+    const button = screen.getByRole('button', { name: 'Crea account' });
     expect(button).not.toBeDisabled();
   });
 
@@ -106,10 +106,10 @@ describe('RegisterPage', () => {
     fireEvent.change(getEmailInput(), { target: { value: 'user@example.com' } });
     fireEvent.change(passwords[0], { target: { value: 'short' } });
     fireEvent.change(passwords[1], { target: { value: 'short' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Crea account' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Password must be at least 8 characters')).toBeDefined();
+      expect(screen.getByText('La password deve contenere almeno 8 caratteri')).toBeDefined();
     });
 
     expect(mockRegister).not.toHaveBeenCalled();
@@ -123,10 +123,10 @@ describe('RegisterPage', () => {
     fireEvent.change(getEmailInput(), { target: { value: 'user@example.com' } });
     fireEvent.change(passwords[0], { target: { value: 'password123' } });
     fireEvent.change(passwords[1], { target: { value: 'different' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Crea account' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Passwords do not match')).toBeDefined();
+      expect(screen.getByText('Le password non corrispondono')).toBeDefined();
     });
 
     expect(mockRegister).not.toHaveBeenCalled();
@@ -142,7 +142,7 @@ describe('RegisterPage', () => {
     fireEvent.change(getEmailInput(), { target: { value: 'user@example.com' } });
     fireEvent.change(passwords[0], { target: { value: 'password123' } });
     fireEvent.change(passwords[1], { target: { value: 'password123' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Crea account' }));
 
     await waitFor(() => {
       expect(mockRegister).toHaveBeenCalledWith('user@example.com', 'password123');
@@ -161,7 +161,7 @@ describe('RegisterPage', () => {
     fireEvent.change(getEmailInput(), { target: { value: 'user@example.com' } });
     fireEvent.change(passwords[0], { target: { value: 'password123' } });
     fireEvent.change(passwords[1], { target: { value: 'password123' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Create account' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Crea account' }));
 
     await waitFor(() => {
       expect(screen.getByText('Email already in use')).toBeDefined();

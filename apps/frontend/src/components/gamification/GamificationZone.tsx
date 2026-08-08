@@ -3,6 +3,7 @@ import WhatshotIcon from '@mui/icons-material/Whatshot';
 import { useNavigate } from 'react-router';
 import useSWR from 'swr';
 import { api, type PlayerProfileDTO } from '../../api/client';
+import { copy } from '@flow-app/copy';
 
 function LevelBadge({ profile }: { profile: PlayerProfileDTO }) {
   return (
@@ -22,7 +23,7 @@ function XPBar({ profile }: { profile: PlayerProfileDTO }) {
     <Box sx={{ mb: 1.5 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
         <Typography variant="caption" color="text.secondary">
-          XP
+          {copy.t('gamification.zone.xp')}
         </Typography>
         <Typography variant="caption" fontWeight={600}>
           {profile.xpTotal} / {profile.nextLevelXP}
@@ -45,7 +46,7 @@ function XPBar({ profile }: { profile: PlayerProfileDTO }) {
 
 function StreakBadge({ currentStreak, longestStreak }: { currentStreak: number; longestStreak: number }) {
   return (
-    <Tooltip title={`Longest streak: ${longestStreak} days`}>
+    <Tooltip title={copy.t('gamification.zone.streakTooltip', { count: String(longestStreak) })}>
       <Chip
         icon={<WhatshotIcon sx={{ fontSize: 16 }} aria-hidden="true" />}
         label={`${currentStreak}`}
@@ -53,7 +54,7 @@ function StreakBadge({ currentStreak, longestStreak }: { currentStreak: number; 
         color={currentStreak >= 7 ? 'warning' : 'default'}
         variant="outlined"
         sx={{ height: 24, fontWeight: 600 }}
-        aria-label={`Streak: ${currentStreak} giorni`}
+        aria-label={copy.t('gamification.zone.streakAriaLabel', { count: String(currentStreak) })}
       />
     </Tooltip>
   );

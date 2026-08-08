@@ -29,6 +29,7 @@ export class ErrorMapper {
         case 'ARTIFACT_NOT_FOUND':
         case 'ASSET_NOT_FOUND':
         case 'CONVERSATION_NOT_FOUND':
+        case 'STEP_NOT_FOUND':
           return 404;
         case 'ASSET_TYPE_EXISTS':
         case 'INVALID_STATE':
@@ -44,6 +45,12 @@ export class ErrorMapper {
           return 401;
         case 'FORBIDDEN':
           return 403;
+        case 'INFRASTRUCTURE_UNAVAILABLE':
+          return 503;
+        case 'NOT_IMPLEMENTED':
+          return 501;
+        case 'INVALID_CONFIGURATION':
+        case 'SYSTEM_UNREACHABLE':
         default:
           return 500;
       }

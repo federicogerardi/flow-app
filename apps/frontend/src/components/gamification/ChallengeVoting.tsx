@@ -1,6 +1,7 @@
 import { Box, Typography, Card, CardContent, LinearProgress, Stack } from '@mui/material';
 import useSWR from 'swr';
 import { api, type ChallengeDTO } from '../../api/client';
+import { copy } from '@flow-app/copy';
 
 interface ChallengeVotingProps {
   workspaceId: string;
@@ -28,7 +29,7 @@ function ChallengeCard({ challenge }: { challenge: ChallengeDTO }) {
           color={progress >= 100 ? 'success' : 'primary'}
         />
         <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-          {isActive ? 'Active' : 'Completed'} · Week of {new Date(challenge.weekStart).toLocaleDateString()}
+          {isActive ? copy.t('gamification.challenges.activeLabel') : copy.t('gamification.challenges.completedLabel')} · {copy.t('gamification.challenges.weekOf', { date: new Date(challenge.weekStart).toLocaleDateString() })}
         </Typography>
       </CardContent>
     </Card>
@@ -52,7 +53,7 @@ export function ChallengeVoting({ workspaceId }: ChallengeVotingProps) {
       {active.length > 0 && (
         <>
           <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
-            Active Challenges
+            {copy.t('gamification.challenges.activeChallenges')}
           </Typography>
           <Stack spacing={1}>
             {active.map((c) => (
@@ -64,7 +65,7 @@ export function ChallengeVoting({ workspaceId }: ChallengeVotingProps) {
       {completed.length > 0 && (
         <Box sx={{ mt: active.length > 0 ? 2 : 0 }}>
           <Typography variant="subtitle2" fontWeight={600} color="text.secondary" sx={{ mb: 1 }}>
-            Completed
+            {copy.t('gamification.challenges.completedChallenges')}
           </Typography>
           <Stack spacing={0.5}>
             {completed.slice(0, 3).map((c) => (

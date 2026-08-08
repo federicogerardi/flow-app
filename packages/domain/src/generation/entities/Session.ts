@@ -209,3 +209,11 @@ export class SessionNotFoundError extends DomainError {
     super(`Session ${sessionId} not found`);
   }
 }
+
+export class StepNotFoundError extends DomainError {
+  readonly code = 'STEP_NOT_FOUND';
+  readonly retryable = false;
+  constructor(stepIndex: number, toolKey: string) {
+    super(`Step ${stepIndex} not found in tool ${toolKey}`);
+  }
+}

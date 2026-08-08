@@ -22,6 +22,7 @@ export class Workspace {
     readonly workspaceId: string,
     readonly createdBy: string,
     private _name: string,
+    private _accentColor: string,
     readonly createdAt: Date,
     private _updatedAt: Date,
     version: number,
@@ -33,7 +34,7 @@ export class Workspace {
     this._assets = assets;
   }
 
-  static create(name: string, createdBy: string): Workspace {
+  static create(name: string, createdBy: string, accentColor?: string): Workspace {
     const workspaceId = randomUUID();
     const now = new Date();
     const ownerMembership = WorkspaceMembership.reconstitute(
@@ -45,20 +46,21 @@ export class Workspace {
       now,
       now,
     );
-    return new Workspace(workspaceId, createdBy, name, now, now, 1, [ownerMembership]);
+    return new Workspace(workspaceId, createdBy, name, accentColor ?? '#2563eb', now, now, 1, [ownerMembership]);
   }
 
   static reconstitute(
     workspaceId: string,
     createdBy: string,
     name: string,
+    accentColor: string,
     createdAt: Date,
     updatedAt: Date,
     version: number,
     memberships: WorkspaceMembership[],
     assets?: Asset[],
   ): Workspace {
-    return new Workspace(workspaceId, createdBy, name, createdAt, updatedAt, version, memberships, assets);
+    return new Workspace(workspaceId, createdBy, name, accentColor, createdAt, updatedAt, version, memberships, assets);
   }
 
   inviteMember(userId: string, role: MembershipRole, invitedBy: string): DomainEvent {
@@ -189,6 +191,17 @@ export class Workspace {
     this._name = trimmed;
     this._updatedAt = new Date();
     this._version++;
+  }
+
+  changeAccentColor(newColor: string, userId: string): void {
+    this.assertIsOwner(userId);
+    this._accentColor = newColor;
+    this._updatedAt = new Date();
+    this._version++;
+  }
+
+  get accentColor(): string {
+    return this._accentColor;
   }
 
   private assertIsOwner(userId: string): void {

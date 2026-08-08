@@ -8,16 +8,10 @@ import { useNavigate } from 'react-router';
 import useSWR from 'swr';
 import { api, type AgentDTO } from '../../api/client';
 import { statusColorMap } from '../../shared/statusColors';
+import { copy } from '@flow-app/copy';
+import { ASSET_TYPE_LABELS } from '../../constants/assets';
 
 const EXPECTED_ASSET_TYPES = ['brief', 'brand-voice', 'persona', 'angle', 'ad-copy'] as const;
-
-const ASSET_LABELS: Record<string, string> = {
-  'brief': 'Brief',
-  'brand-voice': 'Brand Voice',
-  'persona': 'Persona',
-  'angle': 'Angle',
-  'ad-copy': 'Ad Copy',
-};
 
 const ASSET_TOOL_MAP: Record<string, string> = {
   'brief': 'brief',
@@ -67,7 +61,7 @@ export function AgentContextDrawer({ open, onClose, workspaceId, agent }: AgentC
           <Typography variant="h6" fontWeight={600} id="context-drawer-title">
             {agent ? `${agent.name} Context` : 'Context'}
           </Typography>
-          <IconButton onClick={onClose} size="small" aria-label="Close context drawer">
+          <IconButton onClick={onClose} size="small" aria-label={copy.t('conversations.drawer.closeLabel')}>
             <CloseIcon />
           </IconButton>
         </Box>
@@ -92,7 +86,7 @@ export function AgentContextDrawer({ open, onClose, workspaceId, agent }: AgentC
                           <AddCircleOutlineIcon color="disabled" sx={{ fontSize: 14 }} aria-hidden="true" />
                         )}
                         <Typography variant="body2" fontWeight={500} fontSize="0.8rem">
-                          {ASSET_LABELS[type]}
+                          {ASSET_TYPE_LABELS[type]}
                         </Typography>
                       </Box>
                     }
@@ -113,7 +107,7 @@ export function AgentContextDrawer({ open, onClose, workspaceId, agent }: AgentC
                     </Link>
                   ) : (
                     <Chip
-                      label="Generate →"
+                      label={copy.t('conversations.drawer.generateCta')}
                       size="small"
                       variant="outlined"
                       color="primary"

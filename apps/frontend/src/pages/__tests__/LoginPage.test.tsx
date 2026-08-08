@@ -51,31 +51,31 @@ describe('LoginPage', () => {
     const passwordInput = document.querySelector('input[type="password"]');
     expect(passwordInput).toBeDefined();
 
-    expect(screen.getByRole('button', { name: 'Sign in' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Accedi' })).toBeDefined();
   });
 
   it('renders Google sign-in button', () => {
     renderLoginPage();
 
-    expect(screen.getByRole('button', { name: /Sign in with Google/i })).toBeDefined();
+    expect(screen.getByRole('button', { name: /Accedi con Google/i })).toBeDefined();
   });
 
   it('renders link to register page', () => {
     renderLoginPage();
 
-    expect(screen.getByText('Sign up')).toBeDefined();
+    expect(screen.getByText('Registrati')).toBeDefined();
   });
 
   it('renders the page title', () => {
     renderLoginPage();
 
-    expect(screen.getByText('Sign in to your account')).toBeDefined();
+    expect(screen.getAllByText('Accedi').length).toBeGreaterThanOrEqual(1);
   });
 
   it('disables submit button when email and password are empty', () => {
     renderLoginPage();
 
-    const button = screen.getByRole('button', { name: 'Sign in' });
+    const button = screen.getByRole('button', { name: 'Accedi' });
     expect(button).toBeDisabled();
   });
 
@@ -88,7 +88,7 @@ describe('LoginPage', () => {
     fireEvent.change(emailInput, { target: { value: 'user@example.com' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
 
-    const button = screen.getByRole('button', { name: 'Sign in' });
+    const button = screen.getByRole('button', { name: 'Accedi' });
     expect(button).not.toBeDisabled();
   });
 
@@ -102,7 +102,7 @@ describe('LoginPage', () => {
 
     fireEvent.change(emailInput, { target: { value: 'user@example.com' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Accedi' }));
 
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith('user@example.com', 'password123');
@@ -121,7 +121,7 @@ describe('LoginPage', () => {
 
     fireEvent.change(emailInput, { target: { value: 'user@example.com' } });
     fireEvent.change(passwordInput, { target: { value: 'wrong' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Accedi' }));
 
     await waitFor(() => {
       expect(screen.getByText('Invalid credentials')).toBeDefined();

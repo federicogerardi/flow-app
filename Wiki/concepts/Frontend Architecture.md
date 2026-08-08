@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/architecture
-date_updated: 2026-08-07
-source_count: 10
+date_updated: 2026-08-08
+source_count: 11
 confidence: high
 ---
 
@@ -14,21 +14,24 @@ confidence: high
 > Unification, reusability, minimal surface area — workspace-centric UI  
 > `apps/frontend/src/`
 
-## Implementation Status (2026-08-04)
+## Implementation Status (2026-08-08)
 
-> 🟡 **Partial — 13/17 components built**. Core workflow functional (dashboard → tool → session → agent chat) but workspace-centric routing, asset management, and many component abstractions are not yet implemented. Auth layer (Phase 8) complete. See gap analysis in [[synthesis/frontend-gap-analysis-2026-08-04]].
+> 🟢 **32/37 components built (86%)**. Tool layer (6/6), Shared layer (8/8), Agent Chat layer (5/6), and Gamification (8/8 in some form) are all implemented. Only WorkspaceForm remains completely unbuilt.
 
 | Layer | Spec | Built | Gap |
 |-------|------|-------|-----|
-| Layout | 3 | 1 (AppShell base) | WorkspaceDashboard, ToolPageLayout missing |
-| Workspace | 4 | 0 | WorkspaceCard, WorkspaceForm, SessionList, AssetList |
-| Tool | 5 | 0 | SetupPanel, KnowledgePanel, ReadinessSnapshot, FeedbackPanel, SessionSummary |
-| Shared | 5 | 5 | PageHeader, EmptyState, ErrorState, LoadingSkeleton, ErrorBoundary ✅ |
-| Auth | 5 | 5 | AuthContext, AuthGuard, OAuthCallback ✅, AuthLayout, LoginPage, RegisterPage ✅ |
+| Layout | 3 | 2 | WorkspaceDashboard still inline in DashboardPage |
+| Workspace | 5 | 4 | WorkspaceForm ⬜ (only gap) |
+| Tool | 6 | 6 | ✅ All built |
+| Agent Chat | 6 | 5 | ConversationPage in pages/ (not componentized) |
+| Shared | 5 | 5 | ✅ All built + AssetPicker/PromoteDialog extras |
+| Gamification | 8 | 8 | 6 standalone + 2 in ToastSystem |
 
-**Routes implemented** (7): `/` → redirect to first workspace, `/dashboard`, `/workspaces/:workspaceId` (DashboardPage), `/workspaces/:workspaceId/tools/:toolKey`, `/workspaces/:workspaceId/sessions/:sessionId`, `/workspaces/:workspaceId/conversations/:conversationId`, `* → /dashboard`.
+**Test coverage:** 17 unit tests (AuthContext, AuthGuard, OAuthCallback, AuthLayout, EmptyState, ErrorBoundary, ErrorState, LoadingSkeleton, PageHeader, ToolPageLayout, QueuedCard, SessionCards, derive-ui-state, tool-page-machine, DashboardPage, LoginPage, RegisterPage) + 2 E2E Playwright specs (session-list.spec.ts, tool-page.spec.ts) + 1 Playwright config.
 
-**Routes planned but not built**: `/workspaces/:id` (workspace dashboard), `/workspaces/:id/assets`, `/workspaces/:id/team`, `/workspaces/:id/templates`, `/workspaces/:id/audit`, `/profile`, `/login`, `/register`.
+**Routes implemented** (14): `/` → redirect, `/workspaces/:workspaceId` (DashboardPage), `/workspaces/:workspaceId/tools/:toolKey` (ToolPage), `/workspaces/:workspaceId/sessions/:sessionId` (SessionPage), `/workspaces/:workspaceId/sessions` (SessionsPage), `/workspaces/:workspaceId/conversations/:conversationId` (ConversationPage), `/workspaces/:workspaceId/assets` (AssetsPage), `/workspaces/:workspaceId/assets/:assetId` (AssetDetailPage), `/workspaces/:workspaceId/audit` (AuditPage), `/workspaces/:workspaceId/templates` (TemplatesPage), `/profile` (ProfilePage), `/login` (LoginPage), `/register` (RegisterPage).
+
+**Routes not yet built**: `/workspaces/:id/team` (TeamPage).
 
 ## Decisions
 

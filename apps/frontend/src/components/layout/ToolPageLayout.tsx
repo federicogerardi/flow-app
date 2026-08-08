@@ -16,7 +16,8 @@ import type { ToolDefinition, TextInput, FileInput, AssetInput } from '../../too
 import type { SessionDTO as ApiSessionDTO, ArtifactDTO } from '../../api/client';
 import { copy } from '@flow-app/copy';
 import { AssetPicker } from '../shared/AssetPicker';
-import { ASSET_LABELS, ASSET_TOOL_MAP } from '../workspace/AssetCoverageBar';
+import { ASSET_TOOL_MAP } from '../workspace/AssetCoverageBar';
+import { ASSET_TYPE_LABELS } from '../../constants/assets';
 
 // ── UI state derivation ────────────────────────────────────────────────────────
 
@@ -212,7 +213,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
                       navigate(`/workspaces/${workspaceId}/tools/${targetToolKey}`);
                     }
                   }}
-                  assetLabels={ASSET_LABELS}
+                  assetLabels={ASSET_TYPE_LABELS}
                 />
               </Box>
             )}
@@ -309,7 +310,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
       {/* UI State: cancelled */}
       {uiState === 'cancelled' && (
         <>
-          <ErrorState message="La generazione è stata annullata." onRetry={() => send({ type: 'RETRY' })} />
+          <ErrorState message={copy.t('toolPage.progress.cancelled')} onRetry={() => send({ type: 'RETRY' })} />
           <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
             <Button variant="contained" onClick={() => send({ type: 'RESET' })}>
               {copy.t('toolPage.cta.new')}

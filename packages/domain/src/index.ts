@@ -3,6 +3,7 @@ export type { DomainEvent } from './shared/domain-event';
 export { DateTime } from './shared/date-time';
 export { DomainError } from './shared/domain-error';
 export { ConcurrencyError } from './shared/concurrency-error';
+export { InfrastructureError, ConfigurationError, UnreachableError, NotImplementedError } from './shared/system-errors';
 
 // Re-export generation for convenience
 export * from './generation';
