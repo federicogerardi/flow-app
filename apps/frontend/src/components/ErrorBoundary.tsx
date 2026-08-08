@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Box, Typography, Button } from '@mui/material';
+import { copy } from '@flow-app/copy';
 
 interface Props {
   children: ReactNode;
@@ -26,12 +27,12 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return this.props.fallback ?? (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 8 }}>
-          <Typography variant="h4" gutterBottom>Something went wrong</Typography>
+          <Typography variant="h4" gutterBottom>{copy.t('shared.errorBoundary.title')}</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             {this.state.error?.message}
           </Typography>
           <Button variant="contained" onClick={() => this.setState({ hasError: false, error: null })}>
-            Try again
+            {copy.t('shared.errorBoundary.retry')}
           </Button>
         </Box>
       );

@@ -28,4 +28,7 @@ export const auth = {
     passwordTooShort:  'La password deve contenere almeno 8 caratteri',
     genericError:      'Registrazione fallita',
   },
+  oauth: {
+    processing: 'Completando accesso...',
+  },
 } as const;

@@ -1,16 +1,20 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { AuthLayout } from '../AuthLayout';
 
+vi.mock('@flow-app/copy', () => ({
+  copy: { t: (key: string) => key },
+}));
+
 describe('AuthLayout', () => {
-  it('renders logo text "flow app"', () => {
+  it('renders brand app name from copy', () => {
     render(
       <AuthLayout title="Sign in">
         <p>Form content</p>
       </AuthLayout>,
     );
 
-    expect(screen.getByText('flow app')).toBeInTheDocument();
+    expect(screen.getByText('shared.brand.appName')).toBeInTheDocument();
   });
 
   it('renders title', () => {

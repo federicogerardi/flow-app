@@ -32,6 +32,7 @@ export const toolPage = {
     failed:           'Generazione fallita',
     cancelled:        'Generazione annullata',
     reconnecting:     'Riconnessione in corso...',
+    ariaLabel:        'Step {current} di {total}',
   },
   feedback: {
     sessionStarted:   'Generazione avviata',

@@ -18,6 +18,10 @@ vi.mock('../AuthContext', () => ({
   setAccessToken: vi.fn(),
 }));
 
+vi.mock('@flow-app/copy', () => ({
+  copy: { t: (key: string) => key },
+}));
+
 function renderOAuthCallback(search: string) {
   Object.defineProperty(window, 'location', {
     value: { search, pathname: '/auth/callback' },
@@ -61,6 +65,6 @@ describe('OAuthCallback', () => {
     renderOAuthCallback('?token=abc123');
 
     expect(screen.getByRole('progressbar')).toBeDefined();
-    expect(screen.getByText('Completing sign in...')).toBeDefined();
+    expect(screen.getByText('auth.oauth.processing')).toBeDefined();
   });
 });

@@ -45,7 +45,7 @@ function ElapsedTimer({ startedAt }: { startedAt: number }) {
   const mins = Math.floor(elapsed / 60);
   const secs = elapsed % 60;
   return (
-    <Typography variant="body2" color="text.secondary">
+    <Typography variant="body2" color="text.secondary" role="timer">
       {mins}:{secs.toString().padStart(2, '0')}
     </Typography>
   );
@@ -123,7 +123,7 @@ export function FeedbackPanel({ progress, status, artifacts = [] }: FeedbackPane
   if (!progress) {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4 }}>
-        <LinearProgress sx={{ width: '60%', mb: 2 }} />
+        <LinearProgress sx={{ width: '60%', mb: 2 }} aria-label={copy.t('toolPage.progress.starting')} />
         <Typography variant="body2" color="text.secondary">
           {copy.t('toolPage.progress.starting')}
         </Typography>
@@ -153,7 +153,10 @@ export function FeedbackPanel({ progress, status, artifacts = [] }: FeedbackPane
             borderRadius: 4,
             bgcolor: 'action.hover',
           }}
-          aria-label={`Step ${progress.current} of ${progress.total}`}
+          aria-label={copy.t('toolPage.progress.ariaLabel', {
+            current: String(progress.current),
+            total: String(progress.total),
+          })}
         />
       </Box>
 

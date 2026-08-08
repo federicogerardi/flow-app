@@ -21,6 +21,10 @@ vi.mock('../../auth/AuthContext', () => ({
   setAccessToken: vi.fn(),
 }));
 
+vi.mock('@flow-app/copy', () => ({
+  copy: { t: (key: string) => key },
+}));
+
 function getEmailInput() {
   return screen.getByRole('textbox', { name: /email/i });
 }
@@ -57,31 +61,31 @@ describe('RegisterPage', () => {
     expect(getEmailInput()).toBeDefined();
     const passwords = getPasswordInputs();
     expect(passwords).toHaveLength(2);
-    expect(screen.getByRole('button', { name: 'Crea account' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'auth.register.submit' })).toBeDefined();
   });
 
   it('renders the page title', () => {
     renderRegisterPage();
 
-    expect(screen.getByText('Registrati')).toBeDefined();
+    expect(screen.getByText('auth.register.title')).toBeDefined();
   });
 
   it('renders link to login page', () => {
     renderRegisterPage();
 
-    expect(screen.getByText('Accedi')).toBeDefined();
+    expect(screen.getByText('auth.register.signIn')).toBeDefined();
   });
 
   it('shows password helper text', () => {
     renderRegisterPage();
 
-    expect(screen.getByText('Almeno 8 caratteri')).toBeDefined();
+    expect(screen.getByText('auth.register.helperText')).toBeDefined();
   });
 
   it('disables submit button when fields are empty', () => {
     renderRegisterPage();
 
-    const button = screen.getByRole('button', { name: 'Crea account' });
+    const button = screen.getByRole('button', { name: 'auth.register.submit' });
     expect(button).toBeDisabled();
   });
 
@@ -94,7 +98,7 @@ describe('RegisterPage', () => {
     fireEvent.change(passwords[0], { target: { value: 'password123' } });
     fireEvent.change(passwords[1], { target: { value: 'password123' } });
 
-    const button = screen.getByRole('button', { name: 'Crea account' });
+    const button = screen.getByRole('button', { name: 'auth.register.submit' });
     expect(button).not.toBeDisabled();
   });
 
@@ -106,10 +110,10 @@ describe('RegisterPage', () => {
     fireEvent.change(getEmailInput(), { target: { value: 'user@example.com' } });
     fireEvent.change(passwords[0], { target: { value: 'short' } });
     fireEvent.change(passwords[1], { target: { value: 'short' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Crea account' }));
+    fireEvent.click(screen.getByRole('button', { name: 'auth.register.submit' }));
 
     await waitFor(() => {
-      expect(screen.getByText('La password deve contenere almeno 8 caratteri')).toBeDefined();
+      expect(screen.getByText('auth.register.passwordTooShort')).toBeDefined();
     });
 
     expect(mockRegister).not.toHaveBeenCalled();
@@ -123,10 +127,10 @@ describe('RegisterPage', () => {
     fireEvent.change(getEmailInput(), { target: { value: 'user@example.com' } });
     fireEvent.change(passwords[0], { target: { value: 'password123' } });
     fireEvent.change(passwords[1], { target: { value: 'different' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Crea account' }));
+    fireEvent.click(screen.getByRole('button', { name: 'auth.register.submit' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Le password non corrispondono')).toBeDefined();
+      expect(screen.getByText('auth.register.passwordMismatch')).toBeDefined();
     });
 
     expect(mockRegister).not.toHaveBeenCalled();
@@ -142,7 +146,7 @@ describe('RegisterPage', () => {
     fireEvent.change(getEmailInput(), { target: { value: 'user@example.com' } });
     fireEvent.change(passwords[0], { target: { value: 'password123' } });
     fireEvent.change(passwords[1], { target: { value: 'password123' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Crea account' }));
+    fireEvent.click(screen.getByRole('button', { name: 'auth.register.submit' }));
 
     await waitFor(() => {
       expect(mockRegister).toHaveBeenCalledWith('user@example.com', 'password123');
@@ -161,8 +165,9 @@ describe('RegisterPage', () => {
     fireEvent.change(getEmailInput(), { target: { value: 'user@example.com' } });
     fireEvent.change(passwords[0], { target: { value: 'password123' } });
     fireEvent.change(passwords[1], { target: { value: 'password123' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Crea account' }));
+    fireEvent.click(screen.getByRole('button', { name: 'auth.register.submit' }));
 
+    // Error message comes from err.message, not copy — it's runtime data
     await waitFor(() => {
       expect(screen.getByText('Email already in use')).toBeDefined();
     });

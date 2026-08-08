@@ -1,7 +1,11 @@
 export const shared = {
+  brand: {
+    appName:   'flow app',
+  },
   actions: {
-    cancel:    'Annulla',
-    save:      'Salva',
+    cancel:     'Annulla',
+    cancelling: 'Annullamento...',
+    save:       'Salva',
     delete:    'Elimina',
     remove:    'Rimuovi',
     confirm:   'Conferma',
@@ -58,6 +62,15 @@ export const shared = {
     collapseSidebar:   'Comprimi sidebar',
     removeMember:      'Rimuovi membro',
     sendMessage:       'Invia messaggio',
+    sessionDetail:     'Dettaglio sessione: {tool}',
+    runningProgress:   'Progresso: {current} di {total}',
+    completedStatus:   'Sessione completata',
+    failedStatus:      'Sessione fallita',
+    queuedStatus:      'Sessione in coda',
+  },
+  errorBoundary: {
+    title:     'Something went wrong',
+    retry:     'Try again',
   },
   wcag: {
     skipToContent: 'Vai al contenuto',
@@ -67,10 +80,20 @@ export const shared = {
     theme:    'Tema',
     soon:     'presto',
     deleteWorkspaceWarning: 'L\'eliminazione di "{name}" rimuoverà tutti gli asset, sessioni e conversazioni. Questa azione non può essere annullata.',
+    session:  'Sessione',
+    sessionWithTool: 'Sessione: {toolName}',
+    status:   'Stato',
+    steps:    'Step:',
+    created:  'Creato:',
   },
   chat: {
     failedToSend:       'Impossibile inviare il messaggio',
     typingReply:        'Risposta in arrivo...',
     typeYourMessage:    'Scrivi il tuo messaggio...',
+  },
+  session: {
+    interruptedMessage: 'Questa sessione è stata interrotta. Puoi riprovare avviando una nuova generazione dalla pagina ',
+    failedAtStep:       ' · Step {step}',
+    queuePosition:      'Posizione in coda: {position}',
   },
 } as const;

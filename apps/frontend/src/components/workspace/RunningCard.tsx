@@ -40,7 +40,10 @@ export function RunningCard({ session, onViewProgress, onCancel }: RunningCardPr
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
           <Typography variant="caption" color="text.secondary">
-            Step {(session.currentStepIndex ?? 0) + 1}/{session.stepCount}
+            {copy.t('toolPage.progress.stepLabel', {
+              current: String((session.currentStepIndex ?? 0) + 1),
+              total: String(session.stepCount),
+            })}
             {session.currentStepLabel ? ` · ${session.currentStepLabel}` : ''}
             {session.elapsedSeconds !== undefined ? ` · ${formatElapsed(session.elapsedSeconds)}` : ''}
           </Typography>
@@ -54,12 +57,12 @@ export function RunningCard({ session, onViewProgress, onCancel }: RunningCardPr
 
         <Box sx={{ display: 'flex', gap: 1 }}>
           {onViewProgress && (
-            <Button size="small" variant="text" onClick={onViewProgress}>
+            <Button size="small" variant="text" onClick={onViewProgress} aria-label={copy.t('shared.actions.viewAsset')}>
               {copy.t('shared.actions.viewAsset')}
             </Button>
           )}
           {onCancel && (
-            <Button size="small" color="error" variant="text" onClick={onCancel}>
+            <Button size="small" color="error" variant="text" onClick={onCancel} aria-label={copy.t('shared.actions.cancel')}>
               {copy.t('shared.actions.cancel')}
             </Button>
           )}

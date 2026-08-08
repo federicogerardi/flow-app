@@ -36,8 +36,8 @@ export default function SessionPage() {
   useEffect(() => {
       setBreadcrumbs([
         { label: copy.t('workspace.nav.home'), path: workspaceId ? `/workspaces/${workspaceId}` : '/dashboard' },
-        { label: 'Sessions', path: workspaceId ? `/workspaces/${workspaceId}/sessions` : '/dashboard' },
-        { label: session ? `Session: ${session.toolKey}` : 'Session' },
+        { label: copy.t('workspace.nav.sessions'), path: workspaceId ? `/workspaces/${workspaceId}/sessions` : '/dashboard' },
+        { label: session ? copy.t('shared.label.sessionWithTool', { toolName: session.toolKey }) : copy.t('shared.label.session') },
       ]);
   }, [workspaceId, session, setBreadcrumbs]);
 
@@ -71,12 +71,12 @@ export default function SessionPage() {
 
   return (
     <Box>
-      <PageHeader title={`Session: ${toolName}`} />
+      <PageHeader title={copy.t('shared.label.sessionWithTool', { toolName })} />
 
       {/* Interrupted session note */}
       {isInterrupted && (
         <Alert severity="info" sx={{ mb: 2 }}>
-          This session was interrupted. You can retry by starting a new generation from the{' '}
+          {copy.t('shared.session.interruptedMessage')}
           <Button
             variant="text"
             size="small"
@@ -92,8 +92,11 @@ export default function SessionPage() {
         <CardContent>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Typography variant="h3">Status</Typography>
-              <Chip label={session.status} color={statusColorMap[session.status] ?? 'default'} />
+              <Typography variant="h3">{copy.t('shared.label.status')}</Typography>
+              <Chip
+                label={copy.t(`shared.sessionStatus.${session.status}` as any)}
+                color={statusColorMap[session.status] ?? 'default'}
+              />
             </Box>
 
             {/* Cancel button for running sessions */}
@@ -105,8 +108,9 @@ export default function SessionPage() {
                 startIcon={<CancelIcon />}
                 onClick={handleCancel}
                 disabled={cancelling}
+                aria-label={copy.t('toolPage.cta.cancel')}
               >
-                {cancelling ? 'Cancelling...' : 'Cancel'}
+                {cancelling ? copy.t('shared.actions.cancelling') : copy.t('shared.actions.cancel')}
               </Button>
             )}
           </Box>
@@ -114,7 +118,7 @@ export default function SessionPage() {
           {/* Metadata row */}
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Typography variant="caption" color="text.secondary">Steps:</Typography>
+              <Typography variant="caption" color="text.secondary">{copy.t('shared.label.steps')}</Typography>
               <Typography variant="body2" fontWeight={600}>
                 {session.stepCount}
               </Typography>
@@ -130,7 +134,7 @@ export default function SessionPage() {
             )}
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Typography variant="caption" color="text.secondary">Created:</Typography>
+              <Typography variant="caption" color="text.secondary">{copy.t('shared.label.created')}</Typography>
               <Typography variant="body2">
                 {new Date(session.createdAt).toLocaleString()}
               </Typography>

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { setAccessToken } from './AuthContext';
+import { copy } from '@flow-app/copy';
 
 export function OAuthCallback() {
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ export function OAuthCallback() {
     >
       <CircularProgress />
       <Typography variant="body2" color="text.secondary">
-        Completing sign in...
+        {copy.t('auth.oauth.processing')}
       </Typography>
     </Box>
   );

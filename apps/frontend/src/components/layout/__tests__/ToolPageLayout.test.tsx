@@ -98,37 +98,9 @@ vi.mock('../../ErrorState', () => ({
   ),
 }));
 
-// Mock copy — pass through key for tests, with parameter interpolation
+// Mock copy — returns keys as values so tests assert on copy keys
 vi.mock('@flow-app/copy', () => ({
-  copy: {
-    t: (key: string, _params?: Record<string, string>): string => {
-      // Return last segment of key or a known Italian string
-      const parts = key.split('.');
-      const last = parts[parts.length - 1];
-      const map: Record<string, string> = {
-        home: 'Home',
-        loading: 'Loading...',
-        title: 'Configura',
-        submit: 'Genera',
-        submitting: 'Generazione in corso...',
-        new: 'Nuova generazione',
-        creditCost: 'Crediti: {count}',
-        backToWorkspace: 'Torna al workspace',
-        retry: 'Riprova',
-        cancel: 'Annulla',
-      };
-      let result = map[last] ?? last;
-      if (_params) {
-        for (const [k, v] of Object.entries(_params)) {
-          result = result.replace(`{${k}}`, v);
-        }
-      }
-      return result;
-    },
-    get raw() {
-      return {};
-    },
-  },
+  copy: { t: (key: string) => key },
 }));
 
 // Mock AssetPicker
@@ -167,7 +139,7 @@ describe('ToolPageLayout', () => {
 
     render(<ToolPageLayout workspaceId="ws-1" toolKey="blog-post" />);
 
-    const loadingText = screen.queryByText(/loading|caricamento/i);
+    const loadingText = screen.queryByText('shared.status.loading');
     // Loading state should show a progress bar + text
     const progressBar = document.querySelector('.MuiLinearProgress-root');
     expect(loadingText || progressBar).toBeTruthy();
@@ -194,7 +166,7 @@ describe('ToolPageLayout', () => {
       expect(screen.getByTestId('setup-panel')).toBeInTheDocument();
     });
 
-    const submitBtn = screen.getByRole('button', { name: /genera/i });
+    const submitBtn = screen.getByRole('button', { name: 'toolPage.cta.submit' });
     expect(submitBtn).toBeDisabled();
   });
 
@@ -204,8 +176,8 @@ describe('ToolPageLayout', () => {
     render(<ToolPageLayout workspaceId="ws-1" toolKey="blog-post" />);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /genera/i })).toBeInTheDocument();
-      expect(screen.getByText(/crediti/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'toolPage.cta.submit' })).toBeInTheDocument();
+      expect(screen.getByText('toolPage.config.creditCost')).toBeInTheDocument();
     });
   });
 
@@ -216,7 +188,7 @@ describe('ToolPageLayout', () => {
 
     await waitFor(() => {
       expect(mockSetBreadcrumbs).toHaveBeenCalledWith([
-        { label: 'Home', path: '/workspaces/ws-1' },
+        { label: 'workspace.nav.home', path: '/workspaces/ws-1' },
         { label: 'Blog Post' },
       ]);
     });

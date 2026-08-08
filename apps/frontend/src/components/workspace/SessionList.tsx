@@ -21,23 +21,38 @@ export function SessionList({ workspaceId }: SessionListProps) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabValue>('in-progress');
 
-  const { data: sessions, isLoading, mutate } = useSWR(
-    `sessions-${workspaceId}`,
-    () => api.listSessions({ workspaceId }),
-    { refreshInterval: 30000 },
-  );
+  // 4 per-status API calls with per-status limits (wiki spec: Session List — Live Status)
+  const fetcher = async () => {
+    const [queued, running, completed, failed] = await Promise.all([
+      api.listSessions({ workspaceId, status: 'queued' }),
+      api.listSessions({ workspaceId, status: 'running' }),
+      api.listSessions({ workspaceId, status: 'completed', limit: 20 }),
+      api.listSessions({ workspaceId, status: 'failed', limit: 20 }),
+    ]);
 
-  const allSessions = sessions?.data ?? [];
-  const queued = allSessions.filter((s) => s.status === 'queued');
-  const running = allSessions.filter((s) => s.status === 'running');
-  const completed = allSessions.filter((s) => s.status === 'completed');
-  const failed = allSessions.filter((s) => s.status === 'failed' || s.status === 'cancelled');
+    return {
+      queued: queued.data ?? [],
+      running: running.data ?? [],
+      completed: completed.data ?? [],
+      failed: failed.data ?? [],
+    };
+  };
 
+  const { data, isLoading, mutate } = useSWR(`sessions-${workspaceId}`, fetcher, {
+    refreshInterval: 30000,
+  });
+
+  const queued = data?.queued ?? [];
+  const running = data?.running ?? [];
+  const completed = data?.completed ?? [];
+  const failed = data?.failed ?? [];
   const inProgressCount = queued.length + running.length;
+
+  const allCount = inProgressCount + completed.length + failed.length;
 
   if (isLoading) return <LoadingSkeleton variant="list" />;
 
-  if (allSessions.length === 0) {
+  if (allCount === 0) {
     return <EmptyState title={copy.t('workspace.detail.noSessions')} message={copy.t('workspace.dashboard.noSessions')} />;
   }
 
@@ -50,7 +65,7 @@ export function SessionList({ workspaceId }: SessionListProps) {
       >
         <Tab
           label={
-            <Badge badgeContent={inProgressCount} color="primary" max={99}>
+            <Badge badgeContent={inProgressCount} color="primary" max={99} invisible={inProgressCount === 0}>
               <Box sx={{ px: 1 }}>{copy.t('workspace.sessions.tabs.inProgress')}</Box>
             </Badge>
           }
@@ -58,7 +73,7 @@ export function SessionList({ workspaceId }: SessionListProps) {
         />
         <Tab
           label={
-            <Badge badgeContent={completed.length} color="success" max={99}>
+            <Badge badgeContent={completed.length} color="success" max={99} invisible={completed.length === 0}>
               <Box sx={{ px: 1 }}>{copy.t('workspace.sessions.tabs.completed')}</Box>
             </Badge>
           }
@@ -66,7 +81,7 @@ export function SessionList({ workspaceId }: SessionListProps) {
         />
         <Tab
           label={
-            <Badge badgeContent={failed.length} color="error" max={99}>
+            <Badge badgeContent={failed.length} color="error" max={99} invisible={failed.length === 0}>
               <Box sx={{ px: 1 }}>{copy.t('workspace.sessions.tabs.failed')}</Box>
             </Badge>
           }

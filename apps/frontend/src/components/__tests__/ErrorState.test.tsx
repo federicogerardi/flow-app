@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ErrorState } from '../ErrorState';
 
 vi.mock('@flow-app/copy', () => ({
-  copy: { t: (key: string) => (key === 'shared.actions.retry' ? 'Retry' : key) },
+  copy: { t: (key: string) => key },
 }));
 
 describe('ErrorState', () => {
@@ -16,14 +16,14 @@ describe('ErrorState', () => {
   it('renders retry button when onRetry provided', () => {
     render(<ErrorState message="Something went wrong" onRetry={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'shared.actions.retry' })).toBeInTheDocument();
   });
 
   it('click calls onRetry', () => {
     const onRetry = vi.fn();
     render(<ErrorState message="Something went wrong" onRetry={onRetry} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    fireEvent.click(screen.getByRole('button', { name: 'shared.actions.retry' }));
     expect(onRetry).toHaveBeenCalledOnce();
   });
 });

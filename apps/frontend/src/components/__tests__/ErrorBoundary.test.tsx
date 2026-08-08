@@ -2,6 +2,10 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ErrorBoundary } from '../ErrorBoundary';
 
+vi.mock('@flow-app/copy', () => ({
+  copy: { t: (key: string) => key },
+}));
+
 function ThrowError({ msg }: { msg: string }): React.ReactElement {
   throw new Error(msg);
 }
@@ -26,7 +30,7 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>,
     );
 
-    expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+    expect(screen.getByText('shared.errorBoundary.title')).toBeInTheDocument();
     expect(screen.getByText('Kaboom!')).toBeInTheDocument();
 
     spy.mockRestore();
@@ -41,13 +45,13 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>,
     );
 
-    const tryAgain = screen.getByRole('button', { name: 'Try again' });
+    const tryAgain = screen.getByRole('button', { name: 'shared.errorBoundary.retry' });
     expect(tryAgain).toBeInTheDocument();
 
     // Clicking "Try again" re-renders children, which throw again,
     // so the boundary catches the error again. The button must still exist.
     fireEvent.click(tryAgain);
-    expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+    expect(screen.getByText('shared.errorBoundary.title')).toBeInTheDocument();
 
     spy.mockRestore();
   });

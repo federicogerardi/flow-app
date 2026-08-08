@@ -106,7 +106,10 @@ describe('DashboardPage', () => {
         error: undefined,
       },
       'sessions-ws-1': {
-        data: { data: [], total: 0 },
+        data: {
+          data: [],
+          total: 0,
+        },
         isLoading: false,
         error: undefined,
       },
@@ -127,7 +130,8 @@ describe('DashboardPage', () => {
       },
       'sessions-ws-1': {
         data: {
-          data: [
+          queued: [],
+          running: [
             {
               id: 'session-1',
               toolKey: 'blog-post',
@@ -139,6 +143,8 @@ describe('DashboardPage', () => {
               elapsedSeconds: 30,
               createdAt: '2024-01-15T10:30:00Z',
             },
+          ],
+          completed: [
             {
               id: 'session-2',
               toolKey: 'landing-page',
@@ -148,6 +154,8 @@ describe('DashboardPage', () => {
               durationSeconds: 120,
               createdAt: '2024-01-16T14:00:00Z',
             },
+          ],
+          failed: [
             {
               id: 'session-3',
               toolKey: 'brief',
@@ -159,7 +167,6 @@ describe('DashboardPage', () => {
               createdAt: '2024-01-17T09:00:00Z',
             },
           ],
-          total: 3,
         },
         isLoading: false,
         error: undefined,

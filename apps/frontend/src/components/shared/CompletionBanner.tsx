@@ -23,10 +23,12 @@ function formatDuration(seconds: number): string {
 export function CompletionBanner({ durationSeconds, stepCount, creditCost }: CompletionBannerProps) {
   return (
     <Box
+      role="alert"
+      aria-live="polite"
       sx={{
         p: 2,
         borderRadius: 2,
-        background: 'linear-gradient(135deg, #059669 0%, #0891B2 100%)',
+        background: 'linear-gradient(135deg, #059669 0%, #0E7490 100%)',
         color: 'white',
         animation: `${celebrate} 500ms ease-out`,
         mb: 3,
@@ -34,7 +36,7 @@ export function CompletionBanner({ durationSeconds, stepCount, creditCost }: Com
       }}
     >
       <Stack direction="row" spacing={2} alignItems="center">
-        <Typography variant="h5" component="span">✅</Typography>
+        <Typography variant="h5" component="span" aria-hidden="true">✅</Typography>
         <Stack>
           <Typography variant="h6" fontWeight={700}>
             {copy.t('toolPage.progress.completedIn', { duration: formatDuration(durationSeconds) })}

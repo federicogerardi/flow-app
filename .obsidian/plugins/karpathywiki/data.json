@@ -336,7 +336,23 @@
   ],
   "useCustomModel": false,
   "maxConversationHistory": 30,
-  "queryHistory": [],
+  "queryHistory": [
+    {
+      "role": "user",
+      "content": "cosa fa l'app descritta?\n",
+      "timestamp": 1786201596914
+    },
+    {
+      "role": "assistant",
+      "content": "<think>\nWe need to respond in English, as per the instructions: \"You MUST write ALL responses in English. Every answer, explanation, and label must be in English.\"\n\nThe user asked \"cosa fa l'app descritta?\" which is Italian for \"what does the described app do?\" However, the question references \"the described app\" but the wiki didn't contain any page about an app. The system message says: \"Relevant Wiki Pages (loaded with full content): No directly relevant pages found in Wiki. ... (No relevant pages found. The LLM should answer from general knowledge.)\"\n\nSo, there's no app description in the wiki. I must respond based on general knowledge? But the instructions say: \"Answer based on the Wiki pages above (not general knowledge)\" - yet there are none. The fallback says: \"If Wiki lacks relevant information: - Acknowledge it and suggest ingesting more sources - Do NOT make up information outside Wiki\"\n\nThus, I can't make up an app. I must tell the user that the wiki doesn't contain information about an app, and that I can't provide details. I'll respond in English.\n\nStructure: Acknowledge that there is no app described in the provided Wiki pages, and suggest they might need to ingest relevant sources. I'll then remind them that my answer is based on general knowledge? Actually, I should strictly follow: \"If Wiki lacks relevant information: - Acknowledge it and suggest ingesting more sources - Do NOT make up information outside Wiki\". So I won't say \"from my general knowledge\" because that might lead to making up information. I'll just say that the wiki doesn't contain any description of an app.\n\nSo the answer: \"The Wiki pages provided do not contain a description of any app. Therefore, I cannot answer what the described app does based on the knowledge base. To get an answer, you would need to ingest documents describing that app into the vault.\"\n\nI can suggest that they provide more context or ingest relevant sources.\n\nI'll add the reference note: Since there are no pages cited, I might skip the References section? The instructions say: \"CITATION REQUIREMENTS: - When referencing specific information from a Wiki page, include an inline wiki-link - At the end of your answer, add a \"## References\" section ...\" Since I'm not referencing any page, I could either omit or note no pages. I'll include a note: \"No relevant Wiki pages were referenced in this response.\" Perhaps that's fine.\n\nI'll respond in English as instructed.\n</think>\n\nThe provided Wiki pages do not contain any information about an app. I cannot describe what \"the described app\" does, because no app is described in the available knowledge base. To get an answer, you would need to ingest relevant documents (such as the app's documentation or a specification) into the vault.",
+      "timestamp": 1786201642693,
+      "retrieval": {
+        "arm": "LLM+KB",
+        "count": 0,
+        "topPaths": []
+      }
+    }
+  ],
   "enableSchema": true,
   "tagVocabularyMode": "default",
   "customEntityTags": "",

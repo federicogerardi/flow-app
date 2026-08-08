@@ -21,13 +21,13 @@ export function QueuedCard({ session, onCancel }: QueuedCardProps) {
             <Chip label={copy.t('shared.sessionStatus.queued')} size="small" color="default" variant="outlined" />
             <Typography variant="body2" color="text.secondary">
               {session.queuePosition !== undefined
-                ? `Queue position: ${session.queuePosition}`
+                ? copy.t('shared.session.queuePosition', { position: String(session.queuePosition) })
                 : copy.t('shared.status.loading')}
             </Typography>
           </Box>
         </Box>
         {onCancel && (
-          <Button size="small" color="error" variant="text" onClick={onCancel}>
+          <Button size="small" color="error" variant="text" onClick={onCancel} aria-label={copy.t('shared.actions.cancel')}>
             {copy.t('shared.actions.cancel')}
           </Button>
         )}

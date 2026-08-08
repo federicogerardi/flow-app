@@ -21,6 +21,10 @@ vi.mock('../../auth/AuthContext', () => ({
   setAccessToken: vi.fn(),
 }));
 
+vi.mock('@flow-app/copy', () => ({
+  copy: { t: (key: string) => key },
+}));
+
 function renderLoginPage(isAuthenticated = false) {
   vi.mocked(useAuth).mockReturnValue({
     login: mockLogin,
@@ -51,31 +55,31 @@ describe('LoginPage', () => {
     const passwordInput = document.querySelector('input[type="password"]');
     expect(passwordInput).toBeDefined();
 
-    expect(screen.getByRole('button', { name: 'Accedi' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'auth.login.submit' })).toBeDefined();
   });
 
   it('renders Google sign-in button', () => {
     renderLoginPage();
 
-    expect(screen.getByRole('button', { name: /Accedi con Google/i })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'auth.login.google' })).toBeDefined();
   });
 
   it('renders link to register page', () => {
     renderLoginPage();
 
-    expect(screen.getByText('Registrati')).toBeDefined();
+    expect(screen.getByText('auth.login.signUp')).toBeDefined();
   });
 
   it('renders the page title', () => {
     renderLoginPage();
 
-    expect(screen.getAllByText('Accedi').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('auth.login.title')).toBeDefined();
   });
 
   it('disables submit button when email and password are empty', () => {
     renderLoginPage();
 
-    const button = screen.getByRole('button', { name: 'Accedi' });
+    const button = screen.getByRole('button', { name: 'auth.login.submit' });
     expect(button).toBeDisabled();
   });
 
@@ -88,7 +92,7 @@ describe('LoginPage', () => {
     fireEvent.change(emailInput, { target: { value: 'user@example.com' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
 
-    const button = screen.getByRole('button', { name: 'Accedi' });
+    const button = screen.getByRole('button', { name: 'auth.login.submit' });
     expect(button).not.toBeDisabled();
   });
 
@@ -102,7 +106,7 @@ describe('LoginPage', () => {
 
     fireEvent.change(emailInput, { target: { value: 'user@example.com' } });
     fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Accedi' }));
+    fireEvent.click(screen.getByRole('button', { name: 'auth.login.submit' }));
 
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith('user@example.com', 'password123');
@@ -121,8 +125,9 @@ describe('LoginPage', () => {
 
     fireEvent.change(emailInput, { target: { value: 'user@example.com' } });
     fireEvent.change(passwordInput, { target: { value: 'wrong' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Accedi' }));
+    fireEvent.click(screen.getByRole('button', { name: 'auth.login.submit' }));
 
+    // Error message comes from err.message, not copy — it's runtime data
     await waitFor(() => {
       expect(screen.getByText('Invalid credentials')).toBeDefined();
     });

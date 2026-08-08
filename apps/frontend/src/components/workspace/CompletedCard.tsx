@@ -20,23 +20,40 @@ function formatDuration(seconds?: number): string {
   return `${min}m ${sec}s`;
 }
 
+function formatDate(dateStr?: string): string {
+  if (!dateStr) return '';
+  return new Date(dateStr).toLocaleDateString(undefined, {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 export function CompletedCard({ session, onView, onDownload, onPromote }: CompletedCardProps) {
   const toolLabel = session.toolKey.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
   return (
     <Card variant="outlined">
       <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
           <Typography variant="body1" fontWeight={600}>
             {toolLabel}
           </Typography>
-          <Chip
-            icon={<CheckCircleIcon />}
-            label={copy.t('shared.sessionStatus.completed')}
-            size="small"
-            color="success"
-            variant="outlined"
-          />
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
+            <Chip
+              icon={<CheckCircleIcon />}
+              label={copy.t('shared.sessionStatus.completed')}
+              size="small"
+              color="success"
+              variant="outlined"
+            />
+            {session.completedAt && (
+              <Typography variant="caption" color="text.secondary">
+                {formatDate(session.completedAt)}
+              </Typography>
+            )}
+          </Box>
         </Box>
 
         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
@@ -52,17 +69,17 @@ export function CompletedCard({ session, onView, onDownload, onPromote }: Comple
 
         <Box sx={{ display: 'flex', gap: 1 }}>
           {onView && (
-            <Button size="small" variant="text" onClick={onView}>
+            <Button size="small" variant="text" onClick={onView} aria-label={copy.t('shared.actions.viewAsset')}>
               {copy.t('shared.actions.viewAsset')}
             </Button>
           )}
           {onDownload && (
-            <Button size="small" variant="text" startIcon={<DownloadIcon />} onClick={onDownload}>
+            <Button size="small" variant="text" startIcon={<DownloadIcon />} onClick={onDownload} aria-label={copy.t('shared.actions.download')}>
               {copy.t('shared.actions.download')}
             </Button>
           )}
           {session.isPromotable && onPromote && (
-            <Button size="small" variant="contained" startIcon={<PushPinIcon />} onClick={onPromote}>
+            <Button size="small" variant="contained" startIcon={<PushPinIcon />} onClick={onPromote} aria-label={copy.t('shared.actions.promote')}>
               {copy.t('shared.actions.promote')}
             </Button>
           )}

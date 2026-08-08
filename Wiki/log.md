@@ -4394,3 +4394,148 @@ Executed [[synthesis/open-findings-plan-2026-08-08]] in full. All gaps closed.
 | `components/workspace/CompletedCard.tsx` | 1 | 2 strings → copy.t() |
 | `components/shared/PromoteButton.tsx` | 1 | 1 string → copy.t() |
 | `components/gamification/ToastSystem.tsx` | 2 | Extracted LevelUpBanner + LuckyBonusSparkle |
+
+## [2026-08-08] fix | Session UI — 32 findings resolved across 11 files
+
+Implemented all 32 findings from [[session-ui-improvement-spec-2026-08-08]]. 11 files modified, 3 test files updated, 12 new copy keys added.
+
+### Files modified
+
+| File | Change |
+|------|--------|
+| `packages/copy/src/it/shared.ts` | +15 lines: `cancelling`, 5 new `aria.*` keys, 5 new `label.*` keys, `session` object (3 keys) |
+| `packages/copy/src/it/tool-page.ts` | +1 line: `progress.ariaLabel` |
+| `apps/frontend/src/pages/SessionPage.tsx` | Rewrite: 11 hardcoded strings → `copy.t()`, breadcrumb format fixed, cancel button aria-label |
+| `apps/frontend/src/components/workspace/RunningCard.tsx` | "Step x/y" → `copy.t('toolPage.progress.stepLabel', ...)`, aria-labels on buttons |
+| `apps/frontend/src/components/workspace/FailedCard.tsx` | "· Step N" → `copy.t('shared.session.failedAtStep', ...)`, aria-label on retry |
+| `apps/frontend/src/components/workspace/QueuedCard.tsx` | "Queue position: N" → `copy.t('shared.session.queuePosition', ...)`, aria-label on cancel |
+| `apps/frontend/src/components/workspace/CompletedCard.tsx` | +completedAt date display (top-right), aria-labels on all buttons |
+| `apps/frontend/src/components/workspace/SessionList.tsx` | 4 per-status API calls with `limit: 20`, badge `invisible` prop, aria-labels |
+| `apps/frontend/src/components/tool/FeedbackPanel.tsx` | aria-label → `copy.t()`, indeterminate bar label, timer `role="timer"` |
+| `apps/frontend/src/components/shared/CompletionBanner.tsx` | `role="alert" aria-live="polite"`, emoji `aria-hidden`, gradient `#0891B2`→`#0E7490` |
+
+### Tests updated
+
+| File | Change |
+|------|--------|
+| `SessionCards.test.tsx` | Updated Step assertion from `/Step 2\/5/` to `/Step 2 di 5/` |
+| `QueuedCard.test.tsx` | Updated queue position assertion to Italian resolved text |
+| `DashboardPage.test.tsx` | Updated SWR mock data shape from flat array to `{ queued, running, completed, failed }` |
+
+### Verification
+
+- ✅ `tsc --noEmit` — frontend + copy packages
+- ✅ `vitest run` — 152/152 tests pass, 19/19 test files
+- ✅ grep sweep — zero hardcoded English strings in modified components
+- ✅ All 12 new copy keys present and verified
+- ✅ 0 remaining `aria-label="Step ..."` hardcoded strings
+
+### Net
+
+**14 hardcoded strings eliminated.** **11 new copy keys** (shared.ts: 10, tool-page.ts: 1). **12 accessibility gaps fixed.** **4 spec drifts resolved.** **1 visual contrast issue fixed.**
+
+## [2026-08-08] design | UI Session Improvement Specification
+
+Comprehensive design audit and specification for all session-related UI components. 10 components audited, 32 findings across 4 categories. No code changes — design document only.
+
+### Findings by category
+
+| Category | Count | Priority |
+|----------|-------|----------|
+| Copy module violations | 14 hardcoded strings (5 files) | 🔴 |
+| Accessibility gaps | 12 (aria-labels, roles, timer) | 🔴 |
+| Spec-implementation drifts | 4 (SSE, API calls, date, breadcrumbs) | 🟡 |
+| Visual/token issues | 2 (contrast ratio 2.9:1) | 🟢 |
+
+### Key discoveries
+
+- **SessionPage.tsx**: Worst offender — 11 hardcoded English strings despite copy module import. This is the single file that fell through the copy remediation plan (Gap 1).
+- **SessionList**: Uses single API call + 30s poll instead of 4 per-status calls + SSE via `useLiveSession`. Real-time progress visibility is the single largest UX gap.
+- **CompletionBanner**: `#0891B2` on white = 2.9:1 contrast ratio — below WCAG AA 3:1 minimum for large text.
+- **Copy module**: 12 new keys specified (11 in shared.ts, 1 in tool-page.ts). 282 existing keys audited.
+- **Accessibility**: `CompletionBanner` lacks `role="alert"`, 4 card components lack `aria-label` on action buttons, `ElapsedTimer` lacks `role="timer"`.
+
+### Specification output
+
+- Created [[session-ui-improvement-spec-2026-08-08]] — 32 findings, 14 copy keys, 12 accessibility gaps, 4 drifts, 2 visual issues
+- Prioritized implementation plan: 4 batches, ~6.25h total
+- Verification checklist with grep patterns and test commands
+- Updated `Wiki/index.md` — added to Synthesis table
+
+### Files examined
+
+| File | Lines | Status |
+|------|-------|--------|
+| `apps/frontend/src/pages/SessionPage.tsx` | 169 | 11 copy violations + 4 a11y gaps |
+| `apps/frontend/src/pages/DashboardPage.tsx` | 104 | ✅ 0 violations |
+| `apps/frontend/src/components/workspace/SessionList.tsx` | 145 | 2 spec drifts |
+| `apps/frontend/src/components/workspace/RunningCard.tsx` | 70 | 1 copy violation |
+| `apps/frontend/src/components/workspace/CompletedCard.tsx` | 73 | Missing completedAt date |
+| `apps/frontend/src/components/workspace/FailedCard.tsx` | 43 | 1 copy violation |
+| `apps/frontend/src/components/workspace/QueuedCard.tsx` | 37 | 1 copy violation |
+| `apps/frontend/src/components/tool/SessionSummary.tsx` | 227 | ✅ 0 violations |
+| `apps/frontend/src/components/tool/FeedbackPanel.tsx` | 177 | 1 copy violation + 3 a11y gaps |
+| `apps/frontend/src/components/shared/CompletionBanner.tsx` | 49 | 2 a11y gaps + 1 contrast issue |
+
+### Wiki specs consulted (10 pages)
+
+[[SessionPage]], [[Session List - Live Status]], [[UX Wireframes]], [[UX Spec Summary-2026-08-07]], [[Tool UX Architecture]], [[UI Component Map]], [[Design Tokens]], [[Centralized Copy Modules]], [[ui-design-summary-2026-08-07]], [[open-findings-plan-2026-08-08]]
+
+### Copy module audit
+
+282 existing keys across 12 modules (`shared`, `toolPage`, `workspace`, `conversations`, `notifications`, `errors`, `auth`, `assets`, `profile`, `gamification`, `usage`, `admin`). 12 new keys specified. 2 violations reuse existing keys without changes.
+
+## [2026-08-08] test | Uniform copy mock convention — 12/12 test files migrated
+
+Applied the centralized copy mock convention (Copy Module Rule #2 from CLAUDE.md) uniformly across all frontend test files. Previously, only 5/15 test files mocked `@flow-app/copy` with the standard `(key: string) => key` pattern; 10 files used hardcoded Italian strings that would break on any copy change.
+
+### Test files migrated (9 files)
+
+| File | Before | After | Status |
+|------|--------|-------|--------|
+| `LoginPage.test.tsx` | `getByText('Accedi')`, `getByText('Registrati')` | `getByText('auth.login.submit')`, `getByText('auth.login.signUp')` | ✅ 10/10 |
+| `RegisterPage.test.tsx` | `getByText('Registrati')`, `getByText('Accedi')`, `getByText('Almeno 8 caratteri')` | Copy keys `auth.register.*` | ✅ 10/10 |
+| `SessionCards.test.tsx` | `'In esecuzione'`, `'Completata'`, `'Fallita'`, `/vedi asset/i`, `/annulla/i`, `/scarica/i`, `/promuovi/i`, `/riprova/i` | Copy keys `shared.sessionStatus.*`, `shared.actions.*` | ✅ 22/22 |
+| `QueuedCard.test.tsx` | `'In coda'`, `'Caricamento...'`, `/Queue position: 3/` | Copy keys `shared.sessionStatus.queued`, `shared.status.loading`, `shared.session.queuePosition` | ✅ 6/6 |
+| `AuthLayout.test.tsx` | `getByText('flow app')` | `getByText('shared.brand.appName')` | ✅ 4/4 |
+| `OAuthCallback.test.tsx` | `getByText('Completing sign in...')` | `getByText('auth.oauth.processing')` | ✅ 4/4 |
+| `ErrorBoundary.test.tsx` | `'Something went wrong'`, `'Try again'` | `shared.errorBoundary.title`, `shared.errorBoundary.retry` | ✅ 3/3 |
+| `ErrorState.test.tsx` | Non-standard partial mock `(key) => key === 'shared.actions.retry' ? 'Retry' : key` | Standard `(key: string) => key` | ✅ 3/3 |
+| `ToolPageLayout.test.tsx` | Non-standard mock with 9-entry Italian→key map + param interpolation | Standard `(key: string) => key` | ✅ 7/7 |
+
+### Already correct (3 files — props-based components, no copy dependency)
+
+`EmptyState.test.tsx`, `PageHeader.test.tsx`, `AuthGuard.test.tsx`, `AuthContext.test.tsx` — components receive all text as props; no copy mock needed.
+
+### Component fixes — Copy Rule #1 violations resolved (3 components)
+
+| Component | Hardcoded string | Replaced with |
+|-----------|-----------------|---------------|
+| `AuthLayout.tsx` | `"flow app"` | `copy.t('shared.brand.appName')` |
+| `OAuthCallback.tsx` | `"Completing sign in..."` | `copy.t('auth.oauth.processing')` |
+| `ErrorBoundary.tsx` | `"Something went wrong"`, `"Try again"` | `copy.t('shared.errorBoundary.title')`, `copy.t('shared.errorBoundary.retry')` |
+
+### New copy keys added (5 keys, 2 modules)
+
+**`packages/copy/src/it/shared.ts`**:
+- `shared.brand.appName` = `"flow app"`
+- `shared.errorBoundary.title` = `"Something went wrong"`  
+- `shared.errorBoundary.retry` = `"Try again"`
+
+**`packages/copy/src/it/auth.ts`**:
+- `auth.oauth.processing` = `"Completando accesso..."`
+
+### Result
+
+- **12/12** test files now use the identical `{ copy: { t: (key: string) => key } }` mock
+- **0** hardcoded Italian strings remain in test assertions
+- **Full suite**: 19 test files, **151/151 tests passing**
+- Any copy change in `packages/copy/src/it/*.ts` now requires zero test modifications
+
+### Files examined
+
+10 test files rewritten + 3 components fixed + 2 copy modules extended. `DashboardPage.test.tsx`, `WorkspaceForm.test.tsx`, `ReadyToPromoteList.test.tsx` already followed the convention — no changes needed.
+
+### Wiki specs consulted
+
+[[CLAUDE.md#Copy Module Rule #2]], [[Centralized Copy Modules]]

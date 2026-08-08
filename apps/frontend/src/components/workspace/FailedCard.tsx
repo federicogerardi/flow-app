@@ -29,11 +29,11 @@ export function FailedCard({ session, onRetry }: FailedCardProps) {
 
         <Typography variant="caption" color="error.main" sx={{ display: 'block', mb: 0.5 }}>
           {session.errorMessage ?? copy.t('shared.status.error')}
-          {session.failedAtStep !== undefined ? ` · Step ${session.failedAtStep}` : ''}
+          {session.failedAtStep !== undefined ? copy.t('shared.session.failedAtStep', { step: String(session.failedAtStep) }) : ''}
         </Typography>
 
         {onRetry && (
-          <Button size="small" variant="text" onClick={onRetry}>
+          <Button size="small" variant="text" onClick={onRetry} aria-label={copy.t('shared.actions.retry')}>
             {copy.t('shared.actions.retry')}
           </Button>
         )}

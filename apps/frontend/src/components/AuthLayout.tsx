@@ -1,5 +1,6 @@
 import { Box, Card, CardContent, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
+import { copy } from '@flow-app/copy';
 
 interface AuthLayoutProps {
   title: string;
@@ -37,7 +38,7 @@ export function AuthLayout({ title, children, footer }: AuthLayoutProps) {
               fontFamily: '"Plus Jakarta Sans", "Inter", sans-serif',
             }}
           >
-            flow app
+            {copy.t('shared.brand.appName')}
           </Typography>
           <Typography
             variant="body2"
