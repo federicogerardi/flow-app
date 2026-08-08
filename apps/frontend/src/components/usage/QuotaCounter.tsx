@@ -1,5 +1,4 @@
-import { Box, LinearProgress, Typography, Tooltip, Chip, Alert } from '@mui/material';
-import WarningIcon from '@mui/icons-material/Warning';
+import { Box, LinearProgress, Typography, Tooltip, Alert } from '@mui/material';
 import useSWR from 'swr';
 import { api } from '../../api/client';
 import { copy } from '@flow-app/copy';
@@ -24,18 +23,17 @@ export function QuotaCounter() {
     );
   }
 
-  const { credits, artifacts } = data;
-  const artifactsLow = artifacts.remaining < artifacts.limit * 0.1;
+  const { credits } = data;
   const creditsLow = credits.remaining <= 10;
 
   return (
     <Box sx={{ px: 2, py: 1 }}>
-      {/* Credits */}
+      {/* Credits with progress bar */}
       <Tooltip
         title={`${credits.used}/${credits.limit} ${copy.t('usage.credits.label')} — ${data.period}`}
         placement="right"
       >
-        <Box sx={{ mb: 1 }}>
+        <Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
             <Typography variant="caption" color="text.secondary" fontWeight={500}>
               {copy.t('usage.credits.label')}
@@ -60,27 +58,6 @@ export function QuotaCounter() {
           />
         </Box>
       </Tooltip>
-
-      {/* Artifact Gate */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="caption" color="text.secondary" fontWeight={500}>
-          {copy.t('usage.artifacts.label')}
-        </Typography>
-        {artifactsLow ? (
-          <Chip
-            icon={<WarningIcon />}
-            label={`${artifacts.remaining}`}
-            size="small"
-            color="warning"
-            variant="outlined"
-            sx={{ height: 20, '& .MuiChip-label': { px: 0.75, fontSize: '0.65rem' } }}
-          />
-        ) : (
-          <Typography variant="caption" color="text.secondary">
-            {artifacts.remaining}
-          </Typography>
-        )}
-      </Box>
 
       {/* Quota exceeded banner */}
       {credits.remaining <= 0 && (

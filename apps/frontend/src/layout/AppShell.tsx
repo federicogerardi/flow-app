@@ -19,6 +19,7 @@ import { useThemeMode } from '../theme/ThemeProvider';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
+import { QuotaCounter } from '../components/usage/QuotaCounter';
 import { GamificationZone } from '../components/gamification/GamificationZone';
 import { WorkspaceForm } from '../components/workspace/WorkspaceForm';
 import { copy } from '@flow-app/copy';
@@ -265,6 +266,9 @@ export function AppShell() {
         {!sidebarCollapsed && (
           <Box>
             <Divider sx={{ mx: 2 }} />
+
+            {/* Credits quota */}
+            <QuotaCounter />
 
             {/* Gamification */}
             <GamificationZone />
