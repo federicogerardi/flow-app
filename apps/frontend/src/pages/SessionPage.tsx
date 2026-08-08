@@ -59,8 +59,6 @@ export default function SessionPage() {
     ? new Date(completedAt).getTime() - new Date(startedAt).getTime()
     : null;
 
-  const xpEarned = (session as unknown as Record<string, unknown>).xpEarned as number | undefined;
-
   if (loading) return <LoadingSkeleton />;
   if (error) return <ErrorState message={error.message} />;
   if (!session) return <LoadingSkeleton />;
@@ -69,6 +67,8 @@ export default function SessionPage() {
   const isCompleted = session.status === 'completed';
   const isFailed = session.status === 'failed';
   const isInterrupted = session.status === 'queued' || session.status === 'draft' || session.status === 'ready';
+
+  const xpEarned = (session as unknown as Record<string, unknown>).xpEarned as number | undefined;
 
   return (
     <Box>
