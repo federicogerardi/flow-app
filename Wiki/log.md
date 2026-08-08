@@ -4099,3 +4099,30 @@ TypeScript: ✅ compila. Test ToolPageLayout: 7/7 ✅.
 Files modified: `SessionSummary.tsx`.
 
 Wiki updated: [[log]] (this entry).
+
+## [2026-08-08] fix | Gamification worker orphan — zero XP registration
+
+### Root cause
+
+`createGamificationWorker()` was defined in `gamification-worker.ts` (205 lines, full pipeline: dedup → XP calculation → optimistic-lock PlayerProfile → transaction log → achievement evaluation → workspace challenges → leaderboard) but **never instantiated** in any entry point. `GamificationEventPublisher` correctly published `SessionCompleted`, `MessageAdded`, and `MemberJoined` events to the BullMQ `gamification-events` queue from all three event sources (`session-worker.ts`, `send-message.usecase.ts`, `accept-invitation.usecase.ts`). But **no Worker was registered to consume the queue**. All gamification events accumulated unprocessed in Redis — zero XP, zero achievements, zero streaks, zero leaderboard scores.
+
+### Fix
+
+Wired `createGamificationWorker()` into both entry points:
+
+| File | Changes |
+|------|---------|
+| `apps/backend/src/server.ts` | +5 imports (worker + 4 infra repos), worker instantiation with 6 deps, graceful shutdown |
+| `apps/backend/src/generation/worker/worker-process.ts` | +6 imports (worker + 4 infra repos + 2 Kysely repos), worker instantiation, graceful shutdown |
+
+### Verification
+
+- TypeScript: `tsc --noEmit` ✅ clean
+- Railway dev deploy: ✅ `eaf83d9a` → SUCCESS
+- Runtime log confirms: `Gamification worker started`
+
+### Files modified
+
+`apps/backend/src/server.ts`, `apps/backend/src/generation/worker/worker-process.ts`.
+
+Wiki updated: [[log]] (this entry), [[Maintenance Log]], [[Gamification]].

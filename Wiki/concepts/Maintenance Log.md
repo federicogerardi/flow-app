@@ -11,6 +11,10 @@ confidence: high
 
 > Chronological log of wiki and codebase maintenance operations. Append-only — newest entries at the top.
 
+## 2026-08-08
+
+- ✅ **Gamification worker wired — orphan fix** — `createGamificationWorker()` was defined but never instantiated. Events published to `gamification-events` BullMQ queue accumulated unprocessed. Fix: wired worker into `server.ts` and `worker-process.ts` with 6 deps (PlayerProfileRepo, WorkspaceChallengeRepo, ProcessedEventRepo, XPTransactionRepo, LeaderboardRepo, GamificationStatsRepo). Deploy to Railway dev: ✅ runtime log confirms `Gamification worker started`. XP, achievements, streaks, leaderboard now fully operational. See [[log]].
+
 ## 2026-08-04
 
 - ✅ **Sprint 4 executed** — Asset CRUD backend (AssetRepository + KyselyAssetRepository + 5 API routes, `AssetsTable` in DB types) + frontend (AssetList, AssetCoverageBar, ConfirmDialog, CompletionBanner, QuickGenerateBar) + Dark mode toggle (light/dark/system, localStorage). All 4 sprints complete: ~22h, 4 commits, 69/674 tests. Wiki: gap analysis fully updated — all tracks ✅, P1 asset blockers resolved, component inventory refreshed. See [[log]].

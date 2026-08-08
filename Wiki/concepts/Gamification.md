@@ -11,6 +11,8 @@ confidence: high
 # Gamification
 
 > 🟢 **Implemented** (2026-08-04). New Supporting Bounded Context — overlay on the operational layer. `packages/domain/src/gamification/`
+>
+> 🔧 **Worker wired** (2026-08-08). `createGamificationWorker()` was defined but never instantiated — events accumulated unprocessed in the BullMQ queue. Fixed in `server.ts` and `worker-process.ts`. XP, achievements, streaks, and leaderboard now operational.
 
 ## Definition
 
