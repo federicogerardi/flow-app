@@ -6,7 +6,6 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import PeopleIcon from '@mui/icons-material/People';
 import DescriptionIcon from '@mui/icons-material/Description';
 import HistoryIcon from '@mui/icons-material/History';
-import BoltIcon from '@mui/icons-material/Bolt';
 import AddIcon from '@mui/icons-material/Add';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -51,9 +50,18 @@ const DRAWER_WIDTH = 280;
 function NavItem({ icon, label, path, disabled, collapsed }: { icon: React.ReactNode; label: string; path: string; disabled?: boolean; collapsed?: boolean }) {
   const navigate = useNavigate();
   return (
-    <ListItemButton onClick={() => !disabled && navigate(path)} disabled={disabled} sx={{ borderRadius: 1, mx: 0.5, justifyContent: collapsed ? 'center' : 'flex-start', px: collapsed ? 1 : undefined }}>
-      <ListItemIcon sx={{ minWidth: collapsed ? 'auto' : 36 }}>{icon}</ListItemIcon>
-      {!collapsed && <ListItemText primary={label} />}
+    <ListItemButton onClick={() => !disabled && navigate(path)} disabled={disabled} sx={{ borderRadius: 1, mx: 0.5, justifyContent: 'flex-start', px: 1.5 }}>
+      <ListItemIcon sx={{ minWidth: 36 }}>{icon}</ListItemIcon>
+      <ListItemText
+        primary={label}
+        sx={{
+          visibility: collapsed ? 'hidden' : 'visible',
+          width: collapsed ? 0 : 'auto',
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
+          m: 0,
+        }}
+      />
       {disabled && !collapsed && <Chip label={copy.t('shared.status.soon')} size="small" variant="outlined" sx={{ fontSize: '0.65rem' }} />}
     </ListItemButton>
   );
@@ -92,7 +100,6 @@ export function AppShell() {
 
   const navItems = [
     { label: copy.t('workspace.nav.home'), icon: <DashboardIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}` : '/dashboard' },
-    { label: copy.t('workspace.nav.tools'), icon: <BoltIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/tools/blog-post` : '/dashboard' },
     { label: copy.t('workspace.nav.sessions'), icon: <PlayCircleIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/sessions` : '/dashboard' },
     { label: copy.t('workspace.nav.assets'), icon: <InventoryIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/assets` : '/dashboard' },
     { label: copy.t('workspace.nav.team'), icon: <PeopleIcon />, path: activeWorkspaceId ? `/workspaces/${activeWorkspaceId}/team` : '/dashboard' },
@@ -275,8 +282,8 @@ export function AppShell() {
 
             <Divider sx={{ mx: 2 }} />
 
-            {/* Workspace Switcher + Create */}
-            <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            {/* Workspace Switcher + Create — footer area with breathing room */}
+            <Box sx={{ px: 2, py: 2, display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <Button
                 fullWidth
                 size="small"
@@ -332,25 +339,6 @@ export function AppShell() {
                 />
               ))}
             </Popover>
-
-            {/* Quick Generate CTA */}
-            <Box sx={{ px: 2, py: 2 }}>
-              <Button
-                variant="contained"
-                fullWidth
-                startIcon={<AddIcon />}
-                disabled={!activeWorkspaceId}
-                onClick={() => activeWorkspaceId && navigate(`/workspaces/${activeWorkspaceId}/tools/blog-post`)}
-                sx={{
-                  bgcolor: accent,
-                  '&:hover': { bgcolor: 'primary.dark' },
-                  textTransform: 'none',
-                  fontWeight: 600,
-                }}
-              >
-                {copy.t('workspace.nav.newGeneration')}
-              </Button>
-            </Box>
           </Box>
         )}
       </Drawer>
