@@ -4712,3 +4712,54 @@ Activated the dead-code CTA path in EmptyState and fixed all copy violations acr
 
 ### Wiki specs consulted
 [[session-ui-improvement-spec-2026-08-08]], [[Centralized Copy Modules]]
+
+## [2026-08-08] design → implement | Project Improvement UI — 25 findings across 3 blocks
+
+### Block 1 — Zero-states + CTA (9 findings)
+Activated dead-code CTA path in EmptyState, fixed 4 copy violations (SessionsPage, AssetsPage, AssetList), wired CTA on SessionList and AssetList global empties, replaced per-tab `<Typography>` with EmptyState component.
+
+### Block 2 — Dashboard density + SessionPage (12 findings)
+- V3/V4: SessionSummary reverse artifact order + final-result visual hierarchy
+- V5: WorkspaceDashboard element reorder
+- V6: ShareMembersDialog (replaces inline WorkspaceMembers)
+- V7: PageHeader multi-action IconButton support
+- V8: ToolCard redesign — emoji → MUI outline icons, outline variant, CSS Grid fluid layout
+- V9: Remove QuickGenerateBar (redundant with ToolCards)
+- V10: AssetCoverageBar → achievement Chip badges
+- V11: ReadyToPromoteList → compact table rows
+- V12: Sidebar nav-first layout (icon drift fix) + GamificationZone compact (150px → 56px)
+- QuotaCounter: removed artifact gate, credits-only with progress bar
+- SessionSummary: removed "Generazione completata" header (duplicate), equalized download/promote buttons
+- Sidebar: removed Tools nav item + QuickGenerate CTA
+
+### Block 3 — Domain registry (3 findings)
+- Created `ToolOutputCategory` value object (asset | content per DDD Rule #4)
+- Classified all tools in domain registry (single source of truth)
+- Backend exposes `outputCategory` in `/api/tools`
+- Frontend AssetCoverageBar and WorkspaceDashboard now data-driven via SWR
+- Fixed placeholder tool names in registry (6 tools showed "Blog Post")
+- Both chip states (✓/+) navigate to tool form — unblocked asset generation after first promotion
+
+### Key architectural changes
+- `ToolOutputCategory` in `packages/domain/src/generation/value-objects/`
+- `outputCategory` field on `ToolDefinition` interface
+- `getAssetProducerTools()` / `getContentProducerTools()` query helpers
+- `ASSET_TOOL_MAP` moved to `constants/assets.ts`
+- `api.listTools()` added to frontend API client
+- `PageHeader` gained `meta` slot for inline chips/stats
+- `SessionSummary` `stepCount` prop removed (info now in PageHeader meta)
+
+### Files changed across all phases
+**31 files modified, 4 created** (ToolOutputCategory.ts, ShareMembersDialog.tsx, project-improvement-ui-2026-08-08.md, session-ui-improvement-addendum-2026-08-08.md)
+
+### Verification
+- Domain: 490/490 tests
+- Backend: tsc clean
+- Frontend: 151/151 tests, 19/19 test files, tsc 0 errors
+
+### Remaining
+- C1: SWR optimization (low, deferred)
+- U4: AssetCoverageBar at zero assets (low, deferred)
+
+### Wiki specs consulted
+[[ui-design-summary-2026-08-07]], [[Design Tokens]], [[UI Component Map]], [[Centralized Copy Modules]], [[DDD Domain Design Rules]]

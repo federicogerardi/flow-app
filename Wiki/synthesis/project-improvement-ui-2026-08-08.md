@@ -11,8 +11,8 @@ confidence: medium
 
 # Project Improvement UI — Findings Collection
 
-> **Status**: ✅ 25/25 findings resolved 2026-08-08. All 4 restyling findings implemented: V9 (remove QuickGenerateBar), V10 (achievement badges), V11 (compact table rows), U8 (PageHeader meta slot). 1 deferred (U4 — low).  
-> **Verification**: `tsc --noEmit` 0 errors, `vitest run` 151/151 passing, 19/19 test files.
+> **Status**: ✅ 25/25 findings resolved 2026-08-08. 1 deferred (U4). Domain registry: ToolOutputCategory unified classification. All chips → tool form.  
+> **Verification**: domain 490/490, backend tsc clean, frontend 151/151 passing.
 > **Baseline**: [[ui-design-summary-2026-08-07]] (37 components, 97.3% completion, 151 tests, 0 deprecated MUI).
 
 ---
