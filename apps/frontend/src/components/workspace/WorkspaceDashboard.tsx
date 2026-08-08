@@ -1,5 +1,10 @@
 import { Box, Typography } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import ArticleIcon from '@mui/icons-material/Article';
+import FilterCenterFocusIcon from '@mui/icons-material/FilterCenterFocus';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import { useNavigate } from 'react-router';
 import { ToolCard } from '../tool/ToolCard';
 import { SessionList } from '../workspace/SessionList';
@@ -9,12 +14,12 @@ import { ReadyToPromoteList } from '../workspace/ReadyToPromoteList';
 import { copy } from '@flow-app/copy';
 
 const TOP_TOOLS = [
-  { key: 'blog-post', name: 'Blog Post', description: 'SEO article', icon: '📝' },
-  { key: 'landing-funnel', name: 'Landing Funnel', description: 'Landing + opt-in', icon: '🎯' },
-  { key: 'brief', name: 'Brief', description: 'Marketing brief', icon: '📋' },
-  { key: 'brand-voice', name: 'Brand Voice', description: 'Voice guidelines', icon: '🗣️' },
-  { key: 'buyer-persona', name: 'Buyer Persona', description: 'Target audience', icon: '👤' },
-  { key: 'marketing-angle', name: 'Marketing Angle', description: 'Strategic angle', icon: '💡' },
+  { key: 'blog-post', name: 'Blog Post', icon: <ArticleIcon fontSize="small" /> },
+  { key: 'landing-funnel', name: 'Landing Funnel', icon: <FilterCenterFocusIcon fontSize="small" /> },
+  { key: 'brief', name: 'Brief', icon: <AssignmentIcon fontSize="small" /> },
+  { key: 'brand-voice', name: 'Brand Voice', icon: <RecordVoiceOverIcon fontSize="small" /> },
+  { key: 'buyer-persona', name: 'Buyer Persona', icon: <PersonOutlineIcon fontSize="small" /> },
+  { key: 'marketing-angle', name: 'Marketing Angle', icon: <LightbulbOutlinedIcon fontSize="small" /> },
 ];
 
 interface WorkspaceDashboardProps {
@@ -36,24 +41,34 @@ export function WorkspaceDashboard({ workspaceId }: WorkspaceDashboardProps) {
         <AssetCoverageBar workspaceId={workspaceId} />
       </Box>
 
-      {/* Tools grid — compact (top 6 tools, 2-row) */}
+      {/* Tools grid — fluid multi-row, max 4 columns */}
       <Box sx={{ mt: 4 }}>
         <Typography variant="h3" sx={{ mb: 2 }}>
           {copy.t('workspace.dashboard.tools')}
         </Typography>
-        <Grid container spacing={2}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, 1fr)',
+              md: 'repeat(3, 1fr)',
+              lg: 'repeat(4, 1fr)',
+            },
+            gap: 1.5,
+          }}
+        >
           {TOP_TOOLS.map((tool) => (
-            <Grid size={{ xs: 6, sm: 4, md: 2 }} key={tool.key}>
-              <ToolCard
-                toolKey={tool.key}
-                name={tool.name}
-                description={tool.description}
-                icon={tool.icon}
-                workspaceId={workspaceId}
-              />
-            </Grid>
+            <ToolCard
+              key={tool.key}
+              toolKey={tool.key}
+              name={tool.name}
+              icon={tool.icon}
+              workspaceId={workspaceId}
+              variant="compact"
+            />
           ))}
-        </Grid>
+        </Box>
       </Box>
 
       {/* Ready to promote — compact */}

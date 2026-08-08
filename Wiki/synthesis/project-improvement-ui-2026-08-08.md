@@ -11,7 +11,7 @@ confidence: medium
 
 # Project Improvement UI — Findings Collection
 
-> **Status**: ✅ 19/20 findings resolved 2026-08-08 — 1 deferred (U4 — low). 3-phase implementation complete: SessionSummary sweep, Workspace header+layout, Contract gaps+labels+XP.  
+> **Status**: ✅ 20/21 findings resolved 2026-08-08 — 1 deferred (U4 — low). V8 ToolCard redesign complete: emoji → MUI outline icons, elevation → outline variant, compact mode.  
 > **Verification**: `tsc --noEmit` 0 errors, `vitest run` 151/151 passing, 19/19 test files.
 > **Baseline**: [[ui-design-summary-2026-08-07]] (37 components, 97.3% completion, 151 tests, 0 deprecated MUI).
 
@@ -56,6 +56,7 @@ Findings about inconsistent spacing, alignment, typography, or visual hierarchy.
 | V5 | WorkspaceDashboard reordered: QuickGenerateBar → AssetCoverageBar → Tools (compact 6-tool grid) → ReadyToPromoteList → SessionList. Members removed from body (→ V6 dialog) | **high** | `WorkspaceDashboard.tsx` | ✅ Resolved |
 | V6 | `WorkspaceMembers` → `ShareMembersDialog`: combined share + members dialog with invite form + member list. Triggered by 👥 PeopleIcon in PageHeader (V7). Removed inline members section from dashboard body | **medium** | `ShareMembersDialog.tsx` (new), `DashboardPage.tsx` | ✅ Resolved |
 | V7 | `PageHeader` now supports `actions?: PageHeaderAction[]` (icon-only outline buttons with Tooltip). DashboardPage header: 👥 share+members, ⚙️ edit, 🗑️ delete. Old single `action` prop preserved for backward compat | **medium** | `PageHeader.tsx`, `DashboardPage.tsx` | ✅ Resolved |
+| V8 | ToolCard uses emoji icons + default filled `variant` — redesigned with `variant="outlined"`, monochrome MUI outline icons (`ArticleIcon`, `LightbulbOutlinedIcon`, etc.), compact mode (icon + name only). Consistent with WorkspaceCard/CompletedCard pattern | **high** | `ToolCard.tsx`, `WorkspaceDashboard.tsx` | ✅ Resolved |
 
 ### 2.3 Accessibility Gaps
 Findings related to WCAG AA compliance, ARIA, keyboard navigation, screen readers.
@@ -544,3 +545,144 @@ Phase 4 (deferred)
 - [[session-ui-improvement-spec-2026-08-08]] — previous session UI audit (32 findings, ✅ resolved)
 - [[session-ui-improvement-addendum-2026-08-08]] — addendum (7 SSE + a11y gaps, ✅ resolved)
 - [[frontend-drift-report-2026-08-07]] — 27 drift findings (✅ remediated)
+
+---
+
+## 6. ToolCard Redesign — V8 Proposal
+
+### 6.1 Problem
+
+Current `ToolCard` uses emoji strings (`📝`, `🎯`, `📋`) as icons and renders with default MUI `Card` variant (filled/elevated). This is inconsistent with every other card in the project:
+
+| Card | Variant | Icon style |
+|------|---------|------------|
+| WorkspaceCard | `outlined` | Accent dot (pure CSS) |
+| CompletedCard | `outlined` | MUI icons (CheckCircle, Download, PushPin) |
+| RunningCard | `outlined` | No icon |
+| FailedCard | `outlined` | No icon |
+| **ToolCard (current)** | **elevation (default)** | **Emoji strings** |
+
+The compact grid (`md: 2` per column, 6 tools) amplifies the problem — emoji icons don't scale well at small sizes and the filled card creates too much visual weight in an already information-dense dashboard.
+
+### 6.2 Proposed Design
+
+Switch to `variant="outlined"` with monochrome MUI icons, following the established `WorkspaceCard` pattern:
+
+```
+┌──────────────────────────────────┐
+│ 📝 Blog Post                     │   ← CURRENT: emoji + filled card
+│ SEO article                      │
+└──────────────────────────────────┘
+
+┌──────────────────────────────────┐
+│ 📰  Blog Post                    │   ← PROPOSED: MUI icon + outline
+│     SEO article                  │
+└──────────────────────────────────┘
+```
+
+#### Icon Mapping
+
+| Tool | MUI Icon | Import |
+|------|----------|--------|
+| Blog Post | `ArticleIcon` | `@mui/icons-material/Article` |
+| Landing Funnel | `FilterCenterFocusIcon` | `@mui/icons-material/FilterCenterFocus` |
+| Brief | `AssignmentIcon` | `@mui/icons-material/Assignment` |
+| Brand Voice | `RecordVoiceOverIcon` | `@mui/icons-material/RecordVoiceOver` |
+| Buyer Persona | `PersonOutlineIcon` | `@mui/icons-material/PersonOutline` |
+| Marketing Angle | `LightbulbOutlinedIcon` | `@mui/icons-material/LightbulbOutlined` |
+
+All icons: `fontSize="small"`, `color="primary"` (or `action` for muted).
+
+#### Compact Grid Layout
+
+```
+Current:                          Proposed:
+┌──────┬──────┬──────┬──────┐    ┌──────┬──────┬──────┬──────┬──────┬──────┐
+│ 📝   │ 🎯   │ 📋   │ 🗣️   │    │ 📰 B │ 🎯 L │ 📋 B │ 🗣️ B │ 👤 B │ 💡 M │
+│ Blog │ Land │ Brie │ Bran │ →  │ Post │ L.F. │ rief │ Voic │ uyer │ arke │
+│ Post │ ing  │ f    │ d V  │    │      │      │      │ e    │ Pers │ ting │
+└──────┴──────┴──────┴──────┘    └──────┴──────┴──────┴──────┴──────┴──────┘
+  md={3} — 4 cols                  md={2} — 6 cols (full-width)
+  emoji + description              icon + name only (no description)
+```
+
+#### Desktop variant (non-compact, ToolCard used on `/tools` page or similar)
+
+When space allows (non-dashboard context), the card keeps name + description:
+
+```
+┌────────────────────┐
+│ 📰  Blog Post      │  ← MUI icon, 20px, color="primary"
+│     SEO-optimized  │
+│     blog article   │  ← body2, text.secondary
+└────────────────────┘
+```
+
+#### Visual spec
+
+```
+Card variant:        "outlined"
+Card padding:        { py: 1.5, px: 2 }
+Content gap:         1.5 (icon ↔ text)
+Icon size:           fontSize="small" (~20px)
+Icon color:          color="primary" (or action for muted variant)
+
+Title:               variant="body2", fontWeight={600}
+Description:         variant="caption", color="text.secondary"
+
+Hover:               subtle bg change (same as WorkspaceCard via CardActionArea)
+Active/focus:        standard MUI ripple + focus ring
+```
+
+#### ToolCard interface change
+
+```typescript
+// Current
+interface ToolCardProps {
+  toolKey: string;
+  name: string;
+  description: string;
+  icon?: string;            // emoji string
+  workspaceId: string;
+}
+
+// Proposed
+interface ToolCardProps {
+  toolKey: string;
+  name: string;
+  description?: string;     // optional — compact mode omits description
+  icon?: React.ReactNode;   // MUI icon component
+  workspaceId: string;
+  variant?: 'default' | 'compact';  // compact: icon + name only, no description
+}
+```
+
+#### WorkspaceDashboard usage update
+
+```typescript
+import ArticleIcon from '@mui/icons-material/Article';
+import FilterCenterFocusIcon from '@mui/icons-material/FilterCenterFocus';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
+
+const TOP_TOOLS = [
+  { key: 'blog-post', name: 'Blog Post', icon: <ArticleIcon /> },
+  { key: 'landing-funnel', name: 'Landing Funnel', icon: <FilterCenterFocusIcon /> },
+  { key: 'brief', name: 'Brief', icon: <AssignmentIcon /> },
+  { key: 'brand-voice', name: 'Brand Voice', icon: <RecordVoiceOverIcon /> },
+  { key: 'buyer-persona', name: 'Buyer Persona', icon: <PersonOutlineIcon /> },
+  { key: 'marketing-angle', name: 'Marketing Angle', icon: <LightbulbOutlinedIcon /> },
+];
+```
+
+### 6.3 Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| `variant="outlined"` not `elevation` | Consistency with WorkspaceCard, CompletedCard, RunningCard. Dashboard is already dense — elevation adds unnecessary visual weight |
+| Outline icons (`Outlined` suffix) not filled | Matches the outline card aesthetic. Filled icons (`Article` vs `ArticleOutlined`) would create contrast imbalance |
+| `fontSize="small"` (~20px) | Proportional to `body2` title text. Larger icons would dominate the card at compact grid density |
+| `color="primary"` | Blue accent ties cards to the brand's primary action color; distinguishes from passive content cards |
+| Remove description in compact mode | At `md={2}` (6 columns), there's no room for descriptions. Tool names are sufficient — user already knows what each tool does from the QuickGenerateBar dropdown |
