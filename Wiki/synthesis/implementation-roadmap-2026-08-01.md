@@ -9,7 +9,7 @@ phase_count: 13
 phases_complete: 13
 phases_remaining: 0
 phase_12_backend: complete
-phase_12_frontend: pending
+phase_12_frontend: complete
 ---
 
 # Implementation Roadmap — Rational Development Sequence (2026-08-01)
@@ -501,9 +501,9 @@ Implementation (2026-08-04, branch `dev`):
 
 **Out of scope** (follow-up): EnsureQuotaUseCase, ConsumeCreditsUseCase, API routes, event subscriptions, frontend UI.
 
-### Phase 12 — Usage & Quota Wiring ✅ (Backend) / 🟡 (Frontend)
+### Phase 12 — Usage & Quota Wiring ✅ (Backend) / ✅ (Frontend)
 
-**Status**: ✅ Backend complete (2026-08-04), 🟡 Frontend pending.
+**Status**: ✅ Complete (2026-08-04 backend, 2026-08-10 frontend verified).
 
 **Discovery**: Phase 12 backend was implemented silently during Phases 11.5 and 13 — `ConsumeCreditsUseCase`, `GET /api/usage/credits`, and session worker wiring were all in place but never marked as complete in the roadmap. Audit on 2026-08-04 confirmed all 3 backend tasks done:
 
@@ -514,11 +514,11 @@ Implementation (2026-08-04, branch `dev`):
 | Session worker wiring | ✅ | `apps/backend/src/generation/worker/session-worker.ts:166-175` — `consumeCreditsUC.execute()` after every `SessionCompleted`, with structured error logging |
 | Worker process wiring | ✅ | `apps/backend/src/generation/worker/worker-process.ts:50-51` — `KyselyQuotaRepository` → `ConsumeCreditsUseCase` → injected into `SessionWorkerDeps` |
 | EventBridge wiring | Deferred | Out of scope — credit consumption is synchronous (reliable) |
-| Frontend UI | 🟡 Pending | Quota counter + "Crediti esauriti" blocking message — see [[frontend-gap-analysis-2026-08-04|Track A]] |
+| Frontend UI | ✅ Complete | Quota counter + "Crediti esauriti" blocking message — verified in codebase 2026-08-10. `QuotaCounter.tsx` in sidebar, `ToolPageLayout.tsx` catches QUOTA_EXCEEDED/ARTIFACT_GATE_EXCEEDED. |
 
 **Verification**: `tsc --build` clean, `eslint` 0/0, 80 usage domain tests passing.
 
-**Remaining**: only frontend — quota counter in sidebar, 429 QUOTA_EXCEEDED blocking UI, artifact gate warning. Track A of [[frontend-gap-analysis-2026-08-04]].
+**Remaining**: None — all tracks complete. `QuotaCounter.tsx` verified 2026-08-10.
 
 ### Phase 13 — Gamification (Week 18+) ✅ — [Implementation Plan](phase-13-implementation-plan.md)
 

@@ -58,8 +58,8 @@ export function RunningCard({ session, onViewProgress, onCancel }: RunningCardPr
 
         <Box sx={{ display: 'flex', gap: 1 }}>
           {onViewProgress && (
-            <Button size="small" variant="text" onClick={onViewProgress} aria-label={copy.t('shared.actions.viewAsset')}>
-              {copy.t('shared.actions.viewAsset')}
+            <Button size="small" variant="text" onClick={onViewProgress} aria-label={copy.t('shared.actions.viewSession')}>
+              {copy.t('shared.actions.viewSession')}
             </Button>
           )}
           {onCancel && (

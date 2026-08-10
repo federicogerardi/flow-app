@@ -11,7 +11,8 @@ confidence: medium
 
 # Project Improvement UI — Findings Collection
 
-> **Status**: ✅ 25/25 findings resolved 2026-08-08. 1 deferred (U4). Domain registry: ToolOutputCategory unified classification. All chips → tool form.  
+> **Status**: ✅ 24/26 findings resolved 2026-08-08. 1 open (C1 — low), 1 deferred (U4). Domain registry: ToolOutputCategory unified classification. All chips → tool form.  
+> **Codespace audit (2026-08-10)**: all Sprint 5 deferred items from [[frontend-gap-analysis-2026-08-04]] verified resolved. Only C1 remains open.  
 > **Verification**: domain 490/490, backend tsc clean, frontend 151/151 passing.
 > **Baseline**: [[ui-design-summary-2026-08-07]] (37 components, 97.3% completion, 151 tests, 0 deprecated MUI).
 

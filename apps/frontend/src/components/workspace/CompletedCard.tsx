@@ -1,8 +1,9 @@
 import { Box, Card, CardContent, Typography, Button, Chip } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DownloadIcon from '@mui/icons-material/Download';
-import PushPinIcon from '@mui/icons-material/PushPin';
 import { copy } from '@flow-app/copy';
+import { PromotedBadge } from '../shared/PromotedBadge';
+import { PromoteActionButton } from '../shared/PromoteActionButton';
 import type { SessionListItemDTO } from '@flow-app/contracts';
 
 interface CompletedCardProps {
@@ -10,6 +11,8 @@ interface CompletedCardProps {
   onView?: () => void;
   onDownload?: () => void;
   onPromote?: () => void;
+  /** If true, the artifact is already promoted — shows a disabled "Promosso ad asset" button */
+  promoted?: boolean;
 }
 
 function formatDuration(seconds?: number): string {
@@ -30,7 +33,7 @@ function formatDate(dateStr?: string): string {
   });
 }
 
-export function CompletedCard({ session, onView, onDownload, onPromote }: CompletedCardProps) {
+export function CompletedCard({ session, onView, onDownload, onPromote, promoted }: CompletedCardProps) {
   const toolLabel = session.toolKey.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
   return (
@@ -69,8 +72,8 @@ export function CompletedCard({ session, onView, onDownload, onPromote }: Comple
 
         <Box sx={{ display: 'flex', gap: 1 }}>
           {onView && (
-            <Button size="small" variant="text" onClick={onView} aria-label={copy.t('shared.actions.viewAsset')}>
-              {copy.t('shared.actions.viewAsset')}
+            <Button size="small" variant="text" onClick={onView} aria-label={copy.t('shared.actions.viewSession')}>
+              {copy.t('shared.actions.viewSession')}
             </Button>
           )}
           {onDownload && (
@@ -78,10 +81,9 @@ export function CompletedCard({ session, onView, onDownload, onPromote }: Comple
               {copy.t('shared.actions.download')}
             </Button>
           )}
-          {session.isPromotable && onPromote && (
-            <Button size="small" variant="contained" startIcon={<PushPinIcon />} onClick={onPromote} aria-label={copy.t('shared.actions.promote')}>
-              {copy.t('shared.actions.promote')}
-            </Button>
+          {session.isPromotable && promoted && <PromotedBadge />}
+          {session.isPromotable && !promoted && onPromote && (
+            <PromoteActionButton onClick={onPromote} />
           )}
         </Box>
       </CardContent>

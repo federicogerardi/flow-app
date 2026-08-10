@@ -41,6 +41,7 @@ export interface SessionListItemDTO {
   errorMessage?: string;            // failed sessions
   failedAtStep?: number;            // failed sessions
   isPromotable?: boolean;           // tool.produces !== undefined
+  promotedAssetId?: string | null;  // asset UUID if last artifact was promoted, null otherwise
   createdAt: string;
   completedAt?: string | null;
 }

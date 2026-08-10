@@ -13,6 +13,15 @@ export const ASSET_TOOL_MAP: Record<string, string> = {
   'persona': 'buyer-persona',
   'angle': 'marketing-angle',
 };
+
+/** Inverse of ASSET_TOOL_MAP — toolKey → assetType (produces) for promotable tools */
+export const TOOL_PRODUCES_MAP: Record<string, string> = {
+  'brief': 'brief',
+  'brand-voice': 'brand-voice',
+  'buyer-persona': 'persona',
+  'marketing-angle': 'angle',
+  'ad-copy': 'ad-copy',
+};
 export const ASSET_NAME_PLACEHOLDERS: Record<string, string> = {
   'brief': 'Campagna Estate 2026',
   'brand-voice': 'Voce brand principale',

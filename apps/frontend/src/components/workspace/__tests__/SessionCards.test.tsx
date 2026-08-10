@@ -63,7 +63,7 @@ describe('RunningCard', () => {
 
   it('renders View progress and Cancel buttons when callbacks provided', () => {
     render(<RunningCard session={makeSession()} onViewProgress={() => {}} onCancel={() => {}} />);
-    expect(screen.getByRole('button', { name: 'shared.actions.viewAsset' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'shared.actions.viewSession' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'shared.actions.cancel' })).toBeInTheDocument();
   });
 
@@ -72,7 +72,7 @@ describe('RunningCard', () => {
     const onCancel = vi.fn();
     render(<RunningCard session={makeSession()} onViewProgress={onView} onCancel={onCancel} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'shared.actions.viewAsset' }));
+    fireEvent.click(screen.getByRole('button', { name: 'shared.actions.viewSession' }));
     expect(onView).toHaveBeenCalledOnce();
 
     fireEvent.click(screen.getByRole('button', { name: 'shared.actions.cancel' }));
@@ -125,7 +125,7 @@ describe('CompletedCard', () => {
       onDownload={() => {}}
       onPromote={() => {}}
     />);
-    expect(screen.getByRole('button', { name: 'shared.actions.viewAsset' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'shared.actions.viewSession' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'shared.actions.download' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'shared.actions.promote' })).toBeInTheDocument();
   });
@@ -135,6 +135,16 @@ describe('CompletedCard', () => {
       session={makeSession({ status: 'completed', isPromotable: false })}
       onPromote={() => {}}
     />);
+    expect(screen.queryByRole('button', { name: 'shared.actions.promote' })).toBeNull();
+  });
+
+  it('shows "Promosso ad asset" indicator when promoted', () => {
+    render(<CompletedCard
+      session={makeSession({ status: 'completed', isPromotable: true })}
+      promoted
+    />);
+    expect(screen.getByText('notifications.asset.promoted')).toBeInTheDocument();
+    // Active promote button must not appear alongside the promoted indicator
     expect(screen.queryByRole('button', { name: 'shared.actions.promote' })).toBeNull();
   });
 
@@ -149,7 +159,7 @@ describe('CompletedCard', () => {
       onPromote={onPromote}
     />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'shared.actions.viewAsset' }));
+    fireEvent.click(screen.getByRole('button', { name: 'shared.actions.viewSession' }));
     fireEvent.click(screen.getByRole('button', { name: 'shared.actions.download' }));
     fireEvent.click(screen.getByRole('button', { name: 'shared.actions.promote' }));
 

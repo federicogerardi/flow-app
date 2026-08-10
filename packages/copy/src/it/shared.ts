@@ -13,6 +13,7 @@ export const shared = {
     download:  'Scarica',
     promote:   'Promuovi ad asset',
     rename:    'Rinomina',
+    viewSession: 'Vedi sessione',
     viewAsset: 'Vedi asset',
     close:     'Chiudi',
     send:      'Invia',

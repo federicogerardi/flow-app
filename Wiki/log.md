@@ -4863,3 +4863,62 @@ User resubmitted same inputs after session was cancelled/failed → idempotency 
 - Backend: 145/145 tests, tsc clean (all packages)
 - Frontend: 135/135 tests (19 files), tsc clean
 - New test: stores `replayed: true` in context when API returns replayed session
+
+## [2026-08-10] maintenance | Wiki → codespace alignment audit — 3 pages corrected
+
+Codespace audit of all FE open/pending/deferred findings from wiki tracked pages. Verified each finding against actual `apps/frontend/` code.
+
+### Findings
+- **C1 (SWR optimization)**: confirmed OPEN — 9+ independent SWR keys fire on DashboardPage load. Low severity, no user impact.
+- **7 deferred tech-debt items**: all RESOLVED in code (XState, DTO imports, Tool defs, SSE reconnect, Breadcrumb, Fonts, Dark mode). Wiki tables were stale.
+- **3 pending components**: all EXIST on disk (WorkspaceCard, AgentContextDrawer, QuotaCounter). Wiki tables were stale.
+- **Session UI addendum gaps (B–G)**: 5/6 confirmed resolved. Gap D (aria-describedby) has `role="status" aria-live="polite"` instead — functionally equivalent for simple alerts.
+- **Phase 12 frontend**: QuotaCounter + blocking UI confirmed functional. `ToolPageLayout.tsx:160-162` catches QUOTA_EXCEEDED.
+
+### Wiki updated
+- [[frontend-gap-analysis-2026-08-04]]: 11 table rows corrected (🟡→✅), remaining line cleared, `date_updated` → 2026-08-10
+- [[implementation-roadmap-2026-08-01]]: `phase_12_frontend` → `complete`, Phase 12 header + remaining line updated
+- [[project-improvement-ui-2026-08-08]]: frontmatter corrected to `24/26 resolved, 1 open (C1), 1 deferred (U4)`
+
+## [2026-08-10] unify | Asset Promotion — unified surfaces, shared components, dedup
+
+Unified the "Promote to asset" flow across all three surfaces. Removed inline two-click confirmation, standardized on `PromoteDialog` with optional name input everywhere. Extracted shared components and a hook to eliminate ~140 lines of duplication.
+
+### Changes (12 files)
+
+**Shared components (new)**:
+- `components/shared/PromoteActionButton.tsx` — unified "Promuovi ad asset" button (`PushPinIcon`, `contained`/`outlined` variant)
+- `components/shared/PromotedBadge.tsx` — "Promosso ad asset" indicator (green, `pointer-events: none` instead of MUI `disabled`)
+- `hooks/usePromoteAction.tsx` — encapsulates dialog state, `isAlreadyPromoted()`, SWR invalidation. Shared by `SessionList` and `ReadyToPromoteList`
+
+**Refactored**:
+- `components/shared/PromoteButton.tsx` — removed inline confirmation state machine; now orchestrates `PromoteActionButton → PromoteDialog → PromotedBadge`
+- `components/tool/SessionSummary.tsx` — `PromoteButton` rendered only on `isFinal` (last step); intermediate steps show download only
+- `components/workspace/CompletedCard.tsx` — new `promoted` prop; shows `PromotedBadge` when already promoted (was hidden before)
+- `components/workspace/ReadyToPromoteList.tsx` — uses `usePromoteAction` hook + `PromoteActionButton` + `PromotedBadge`; removed inline dialog state
+- `components/workspace/SessionList.tsx` — wired `promoted` prop to `CompletedCard`; uses `usePromoteAction` hook; removed inline dialog state
+- `constants/assets.ts` — extracted `TOOL_PRODUCES_MAP` (toolKey → assetType)
+
+**Backend + Contracts**:
+- `apps/backend/src/api/generation.ts` — `listSessions` now batch-queries `assets` table for `source_ref IN (lastArtifactIds)`, returns `promotedAssetId` per session
+- `packages/contracts/src/generation/session.dto.ts` — `SessionListItemDTO.promotedAssetId?: string | null` added
+
+**Copy**:
+- `packages/copy/src/it/shared.ts` — added `viewSession: 'Vedi sessione'` (session card context); `viewAsset` stays for actual asset links
+- `assets.actions.promote` deprecated (same string as `shared.actions.promote`)
+
+**Tests**:
+- `components/workspace/__tests__/SessionCards.test.tsx` — added promoted badge test; updated `viewSession` key references
+
+### Key invariants now enforced
+1. **Unified flow**: all surfaces use `PromoteActionButton → PromoteDialog → PromotedBadge`
+2. **Only last step promotable**: `SessionSummary` checks `isFinal` before rendering `PromoteButton`
+3. **State persists across refreshes**: `promotedAssetId` returned by both detail and list endpoints
+4. **Re-promotion after asset deletion**: deleting the asset → `promotedAssetId` becomes `null` → artifact becomes promotable again
+5. **Green promoted state**: `pointer-events: none` instead of `disabled` preserves `color="success"`
+6. **Copy boundary**: `viewSession` (session cards) ≠ `viewAsset` (actual asset links)
+
+### Verification
+- Backend: 145/145 tests, tsc clean
+- Frontend: 136/136 tests (19 files), tsc clean
+- [[Asset Promotion]] wiki page updated with 2026-08-10 changes

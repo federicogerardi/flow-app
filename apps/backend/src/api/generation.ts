@@ -75,6 +75,23 @@ export function createGenerationRoutes(
         const sessionIds = sessions.map(s => s.sessionId);
         const lastArtifactMap = await sessionRepo.findLastArtifactsBySessionIds(sessionIds);
 
+        // Batch load promoted assets for persistent "Promoted" state in list views
+        const lastArtifactIds = [...lastArtifactMap.values()]
+          .map(a => a.artifactId)
+          .filter(Boolean);
+        const promotedAssetRows = lastArtifactIds.length > 0
+          ? await db
+              .selectFrom('assets')
+              .where('source', '=', 'generated')
+              .where('source_ref', 'in', lastArtifactIds)
+              .select(['id', 'source_ref'])
+              .execute()
+          : [];
+        const promotedMap = new Map<string, string>();
+        for (const row of promotedAssetRows) {
+          if (row.source_ref) promotedMap.set(row.source_ref, row.id);
+        }
+
         return res.json({
           data: sessions.map((s) => {
             const tool = toolDefMap.get(s.toolKey.toString());
@@ -108,6 +125,7 @@ export function createGenerationRoutes(
                 : undefined,
               // Step 5: promote action
               isPromotable: !!(tool?.produces),
+              promotedAssetId: promotedMap.get(lastArtifact?.artifactId ?? '') ?? null,
               createdAt: s.createdAt.toISOString(),
             };
           }),

@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/workspace
   - wiki/generation
-date_updated: 2026-08-06
-source_count: 6
+date_updated: 2026-08-10
+source_count: 7
 confidence: high
 ---
 
@@ -22,9 +22,9 @@ Asset Promotion transforms a `final` [[Artifact]] (produced by the last step of 
 ```
 Content Generation                    Workspace & Assets
 ─────────────────                    ──────────────────
-User clicks "Promote" button
+User clicks "Promote" button (any surface — see below)
   │
-  ├── PromoteDialog opens
+  ├── PromoteDialog opens (unified: same dialog everywhere)
   │     │ Name: [optional, e.g. "Decision Maker B2B"]
   │     │ Enter → Promuovi
   │     └── POST /api/artifacts/:id/promote
@@ -32,11 +32,40 @@ User clicks "Promote" button
   │                 └── Asset.create({ ..., name })
   │                       └── assetRepo.save(asset)
   │
-  └── Snackbar: '"{name}" promosso ad asset'
-        └── [Vedi asset →] link to AssetDetailPage
+  └── Button becomes "Promosso ad asset" (green, non-interactive)
+        └── State persists via promotedAssetId across refreshes
+              └── If asset is deleted → promotedAssetId becomes null → promotable again
 
 (SessionCompleted event → PromoteToAssetUseCase path deferred)
 ```
+
+### Promotion Surfaces (2026-08-10 — unified)
+
+All three surfaces share the same flow via shared components:
+
+| Surface | Component | Route | Shared components |
+|---------|-----------|-------|-------------------|
+| **SessionDetail** | `PromoteButton` in `SessionSummary` | `/workspaces/:wid/sessions/:sid` | `PromoteActionButton` → `PromoteDialog` → `PromotedBadge` |
+| **SessionList** | `CompletedCard` in `SessionList` | `/workspaces/:wid/sessions` (tab Completed) | `PromoteActionButton` → `PromoteDialog` → `PromotedBadge` |
+| **WorkspaceDashboard** | `ReadyToPromoteList` | `/workspaces/:wid` | `PromoteActionButton` → `PromoteDialog` → `PromotedBadge` |
+
+Shared architecture:
+```
+hooks/usePromoteAction.tsx          ← dialog state + isAlreadyPromoted + SWR invalidation
+components/shared/
+├── PromoteActionButton.tsx         ← unified "Promuovi ad asset" (PushPinIcon, contained/outlined)
+├── PromoteDialog.tsx               ← name input dialog
+├── PromotedBadge.tsx               ← "Promosso ad asset" indicator (green, non-interactive)
+└── PromoteButton.tsx               ← orchestrator: button → dialog → badge
+```
+
+Key invariants:
+- **Only last step** is promotable — `SessionSummary` renders `PromoteButton` only on `isFinal` (first artifact after reverse sort)
+- **No inline confirmation** — the two-click `idle → confirming → promoting` state machine was removed. All surfaces go through `PromoteDialog` with optional name input
+- **Green promoted state** — uses `pointer-events: none` instead of MUI `disabled` to preserve `color="success"` green styling
+- **State persistence** — `promotedAssetId` from backend survives page refreshes. Backend now returns `promotedAssetId` in both `GET /api/sessions/:id` (session detail) and `GET /api/sessions` (list) endpoints
+- **Re-promotion** — deleting an asset removes its DB row → next list/detail fetch returns `promotedAssetId: null` → artifact becomes promotable again
+- **Copy boundary** — session-level CTAs use `shared.actions.viewSession` ("Vedi sessione"), not `shared.actions.viewAsset` (reserved for actual asset links)
 
 ## ToolKey → AssetType Mapping
 
@@ -77,12 +106,19 @@ Content tools (`landing-funnel`, `video-script-long-form`, `blog-post`, etc.) an
 | `api.updateAsset` | ✅ | Now accepts `{ content?, name? }` — PATCH semantics |
 | `assetType` derivation from `tool.produces` | ✅ | `AssetType.from(tool.produces)` — domain-driven, not from request body |
 | `AssetRepository.save()` with provenance | ✅ | `sourceSessionId` + `sourceArtifactId` tracked |
-| `PromoteButton` persistent state | ✅ | `promotedAssetId` in session detail response → button starts in "done" state across page refreshes |
+| `PromoteButton` persistent state | ✅ | `promotedAssetId` in **both** session detail AND list responses → button starts in "done" state across page refreshes on all surfaces (2026-08-10: extended to list endpoints) |
 | Toast notification post-promotion | ✅ | MUI Snackbar + Alert with name when present (`"{name}" promosso ad asset`), type fallback |
 | `AssetDetailPage` | ✅ | `/workspaces/:wid/assets/:aid` — full markdown view, header + breadcrumbs use `asset.name ?? typeLabel` |
 | `AssetList` rename + name display | ✅ | Edit icon triggers `RenameAssetDialog`. Card title: `name ?? typeLabel`. Secondary line shows type when name present |
 | `AssetPicker` name display | ✅ | Label prefers `asset.name`, shows content snippet as secondary line when name exists |
 | `AssetList` click-to-detail | ✅ | Cards navigate to AssetDetailPage, delete stopPropagation-protected |
+| Unified promote flow (all surfaces) | ✅ | `PromoteActionButton` + `PromoteDialog` + `PromotedBadge` shared across `SessionSummary`, `CompletedCard`, `ReadyToPromoteList`. No inline confirmation — dialog always opens for naming (2026-08-10) |
+| `usePromoteAction` hook | ✅ | Encapsulates dialog state, `isAlreadyPromoted()`, SWR invalidation. Shared by `SessionList` and `ReadyToPromoteList` (2026-08-10) |
+| `TOOL_PRODUCES_MAP` constant | ✅ | Extracted to `constants/assets.ts`. `toolKey → assetType` mapping shared across surfaces (2026-08-10) |
+| Only last step promotable | ✅ | `SessionSummary` shows `PromoteButton` only on `isFinal` (i === 0 after reverse sort). Intermediate steps show download only (2026-08-10) |
+| Green promoted state | ✅ | `PromotedBadge` uses `pointer-events: none` instead of MUI `disabled` — preserves `color="success"` green styling (2026-08-10) |
+| `listSessions` promotedAssetId | ✅ | Backend batch-queries `assets` table for `source_ref IN (lastArtifactIds)`. `SessionListItemDTO.promotedAssetId` added to contracts (2026-08-10) |
+| Copy boundary: viewSession vs viewAsset | ✅ | `shared.actions.viewSession` = "Vedi sessione" for session cards; `shared.actions.viewAsset` = "Vedi asset" for actual asset links (2026-08-10) |
 | EventBus wiring (`SessionCompleted → PromoteToAssetUseCase`) | 🔴 | Use case invoked via API handler, not via `eventBus.subscribe()` |
 | `AssetCreated` domain event on promotion | 🔴 | Not published — `Workspace.addAsset()` doesn't emit events |
 
@@ -96,3 +132,4 @@ Content tools (`landing-funnel`, `video-script-long-form`, `blog-post`, etc.) an
 - [[sources/APP-CONCEPT]] — AssetFieldMapping
 - [[log]] — 2026-08-06 implementation + name field
 - [[log]] — 2026-08-06 promote dialog + rename dialog
+- [[log]] — 2026-08-10 unified surfaces, shared components, dedup, promotedAssetId in list endpoint

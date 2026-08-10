@@ -1,4 +1,4 @@
-import type { ApiError, SessionDetailDTO, SessionStatusDTO, ArtifactDTO as ContractArtifactDTO, WorkspaceDTO, MessageDTO, ConversationDTO, ConversationListItemDTO, AgentDTO, PlayerProfileDTO, LeaderboardEntryDTO, WorkspaceHealthDTO, ChallengeDTO, SeasonDTO, AssetDTO } from '@flow-app/contracts';
+import type { ApiError, SessionDetailDTO, SessionStatusDTO, ArtifactDTO as ContractArtifactDTO, WorkspaceDTO, MessageDTO, ConversationDTO, ConversationListItemDTO, AgentDTO, PlayerProfileDTO, LeaderboardEntryDTO, WorkspaceHealthDTO, ChallengeDTO, SeasonDTO, AssetDTO, SessionListItemDTO } from '@flow-app/contracts';
 import { getAccessToken, attemptTokenRefresh } from '../auth/AuthContext';
 
 // ── DTOs (match API response shapes) ─────────────────────────────────────────
@@ -18,7 +18,7 @@ export interface ArtifactDTO extends ContractArtifactDTO {
 }
 
 export interface SessionListResponse {
-  data: SessionDTO[];
+  data: SessionListItemDTO[];
   total: number;
 }
 

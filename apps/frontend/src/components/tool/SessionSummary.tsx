@@ -125,13 +125,16 @@ export function SessionSummary({ artifacts, workspaceId, produces }: SessionSumm
                   artifactId={artifact.id}
                   index={i}
                 />
-                <PromoteButton
-                  artifactId={artifact.id}
-                  workspaceId={workspaceId ?? ''}
-                  produces={produces}
-                  promotedAssetId={artifact.promotedAssetId}
-                  onPromoted={handlePromoted}
-                />
+                {/* Only the final result (last step) is promotable to an Asset */}
+                {isFinal && (
+                  <PromoteButton
+                    artifactId={artifact.id}
+                    workspaceId={workspaceId ?? ''}
+                    produces={produces}
+                    promotedAssetId={artifact.promotedAssetId}
+                    onPromoted={handlePromoted}
+                  />
+                )}
               </Box>
             </Box>
             <Card

@@ -11,6 +11,7 @@ import { RunningCard } from './RunningCard';
 import { CompletedCard } from './CompletedCard';
 import { FailedCard } from './FailedCard';
 import { copy } from '@flow-app/copy';
+import { usePromoteAction } from '../../hooks/usePromoteAction';
 import type { SessionListItemDTO } from '@flow-app/contracts';
 
 interface SessionListProps {
@@ -74,6 +75,11 @@ function LiveQueuedCard({ session, onCancel, onViewProgress }: {
 export function SessionList({ workspaceId, emptyCtaLabel, onEmptyCta, emptyMessage }: SessionListProps) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabValue>('in-progress');
+
+  const { isAlreadyPromoted, openPromoteDialog, promoteDialog } = usePromoteAction({
+    workspaceId,
+    mutateKeys: [`sessions-${workspaceId}`],
+  });
 
   // 4 per-status API calls with per-status limits (wiki spec: Session List — Live Status)
   const fetcher = async () => {
@@ -184,13 +190,18 @@ export function SessionList({ workspaceId, emptyCtaLabel, onEmptyCta, emptyMessa
               <CompletedCard
                 key={s.id}
                 session={s}
+                promoted={isAlreadyPromoted(s)}
                 onView={() => navigate(`/workspaces/${workspaceId}/sessions/${s.id}`)}
                 onDownload={() => {
-                  const artifactId = (s as unknown as Record<string, unknown>).lastArtifactId as string | undefined;
-                  if (artifactId) {
-                    api.downloadArtifact(artifactId, 'md');
+                  if (s.lastArtifactId) {
+                    api.downloadArtifact(s.lastArtifactId, 'md');
                   }
                 }}
+                onPromote={
+                  s.isPromotable && !isAlreadyPromoted(s)
+                    ? () => openPromoteDialog(s)
+                    : undefined
+                }
               />
             ))}
             {completed.length === 0 && (
@@ -220,6 +231,8 @@ export function SessionList({ workspaceId, emptyCtaLabel, onEmptyCta, emptyMessa
           </>
         )}
       </Box>
+
+      {promoteDialog}
     </Box>
   );
 }
