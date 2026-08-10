@@ -922,6 +922,146 @@ Checklist:
 
 ---
 
+## UI Component Unification Rules
+
+Prevent duplication and inconsistency across surfaces discovered during the 2026-08-10 promote-to-asset unification session. Apply when the same domain action (button, indicator, dialog) appears in ≥2 surfaces.
+
+### 1 — Same domain action = same component
+
+A domain action (e.g. "Promote to asset", "Cancel session") must render identically regardless of which surface triggers it. Variations in `variant` (contained/outlined) or `size` are props, not reasons to duplicate the component.
+
+```typescript
+// ❌ Three different <Button> implementations for "Promote" across SessionDetail, SessionList, Dashboard
+// ✅ One <PromoteActionButton variant="contained|outlined" onClick={...} />
+```
+
+Checklist:
+- [ ] Grep for the domain action's copy key or API call across `components/`, `pages/`, `layout/`
+- [ ] If ≥2 surfaces render the same action, extract a shared component in `components/shared/`
+- [ ] Shared component accepts `variant` and `onClick` as minimum props
+
+### 2 — Non-interactive state indicators use `pointer-events: none`, not `disabled`
+
+MUI's `disabled` prop overrides color (e.g. `color="success"` → gray). An indicator that communicates state ("Promoted", "Completed") must preserve its semantic color. Use `sx={{ pointerEvents: 'none' }}` to prevent clicks without losing the color.
+
+```tsx
+// ❌ <Button color="success" disabled>Promosso ad asset</Button>  → gray, not green
+// ✅ <Button color="success" sx={{ pointerEvents: 'none' }}>Promosso ad asset</Button>
+```
+
+Checklist:
+- [ ] Button is purely informational (no interaction expected)
+- [ ] Button communicates a terminal/positive state (success, completed, done)
+- [ ] `pointer-events: none` used instead of `disabled`
+- [ ] Alternative: consider a `<Chip>` if MUI's disabled styling cannot be cleanly overridden
+
+### 3 — State machines live in hooks, not components
+
+A multi-step flow (e.g. idle → dialog → saving → done) couples UI and control logic when embedded in a component. Extract the state machine into a custom hook; the component becomes a thin orchestrator of shared sub-components.
+
+```
+❌ PromoteButton.tsx (68 lines):
+   useState('idle'|'confirming'|'promoting'|'done')
+   + inline confirmation UI
+   + inline API call
+
+✅ PromoteButton.tsx (42 lines):
+   usePromoteAction()           ← hook: dialog state, isAlreadyPromoted, SWR invalidation
+   → PromoteActionButton        ← shared: "Promuovi ad asset" button
+   → PromoteDialog              ← shared: name input dialog
+   → PromotedBadge              ← shared: "Promosso ad asset" indicator
+```
+
+Checklist:
+- [ ] Multi-step flow with ≥3 states extracted to `hooks/use<ActionName>.ts`
+- [ ] Hook returns `{ openDialog, closeDialog, isDone, <Dialog /> }` or similar declarative API
+- [ ] Component file reduced to <50 lines of orchestration
+
+### 4 — Duplication audit is feature-scoped, not directory-scoped
+
+Duplication spans directories. A `components/`-only scan misses `pages/`. Audit by **domain action**, not by file tree.
+
+```bash
+# Right: search by domain action
+rg "promoteArtifact|PromoteButton|copy\.t\('.*promote" apps/frontend/src/ --iglob '*.tsx'
+
+# Wrong: search by directory
+rg "Promote" apps/frontend/src/components/
+```
+
+Checklist before refactoring a feature:
+- [ ] Grep the API call name (e.g. `promoteArtifact`) across `pages/`, `components/`, `hooks/`
+- [ ] Grep the copy key (e.g. `shared.actions.promote`) across the same scope
+- [ ] Grep the component name (e.g. `PromoteButton`) to find all consumers
+- [ ] List every file rendering the action; if ≥3, extraction is mandatory
+
+### 5 — Extract constants to a canonical location
+
+Maps duplicated across components (e.g. `toolKey → assetType`) drift independently. Place them in the same file as their inverse or related constants.
+
+```typescript
+// ❌ TOOL_PRODUCES_MAP in ReadyToPromoteList.tsx AND SessionList.tsx
+// ✅ constants/assets.ts — alongside ASSET_TOOL_MAP (its inverse) and ASSET_TYPE_LABELS
+```
+
+Checklist:
+- [ ] Check `constants/` directory for existing related maps
+- [ ] If an inverse map exists, add the new map to the same file
+- [ ] Remove the inline constant from all components; import from `constants/`
+
+### 6 — Backend serves the frontend's state needs
+
+If the frontend needs to know "is this already in state X?" to render correctly on page load, the backend endpoint must return that information. Local state alone cannot survive page refreshes.
+
+```
+❌ Frontend uses only local Set<string> for "already promoted"
+   → state lost on refresh, button re-enabled incorrectly
+
+✅ Backend batch-queries related table (assets WHERE source_ref IN (...))
+   → returns promotedAssetId in list response
+   → frontend combines backend state (persistent) + local state (immediate feedback)
+```
+
+Checklist:
+- [ ] Does the UI need to show a terminal state on page load?
+- [ ] Does the list/detail endpoint return the state field?
+- [ ] If not, add a batch query in the backend (follow existing patterns like `findLastArtifactsBySessionIds`)
+- [ ] Add the field to the contracts DTO
+- [ ] Frontend uses `backendField || localState` for the combined state
+
+### 7 — Copy keys respect bounded contexts
+
+A copy key used in a session card must not reference "asset" if the destination is a session. Create separate keys for separate domain contexts, even if the action is superficially similar.
+
+```typescript
+// ❌ CompletedCard navigates to session page but uses viewAsset ("Vedi asset")
+// ✅ CompletedCard uses viewSession ("Vedi sessione")
+//    SessionSummary snackbar link to actual asset uses viewAsset ("Vedi asset")
+```
+
+Checklist:
+- [ ] What domain object does the CTA navigate to? (session, asset, workspace, tool)
+- [ ] Does the copy key's namespace match the destination context?
+- [ ] If not, create a new key (e.g. `shared.actions.view<DomainObject>`)
+- [ ] Verify no duplicate keys with identical strings (e.g. `assets.actions.promote` = `shared.actions.promote`)
+
+### 8 — Test behavior, not implementation
+
+Asserting on MUI props (`toBeDisabled()`) couples tests to styling mechanism. Assert on **what the user perceives**: presence/absence of elements, visible text, interactive vs non-interactive state.
+
+```typescript
+// ❌ expect(btn).toBeDisabled();                           // implementation detail
+// ✅ expect(screen.getByText('notifications.asset.promoted')).toBeInTheDocument();
+//    expect(screen.queryByRole('button', { name: '...promote' })).toBeNull();  // active button absent
+```
+
+Checklist:
+- [ ] Test asserts on visible text or ARIA role presence
+- [ ] Test verifies mutual exclusivity (active button absent when indicator present, and vice versa)
+- [ ] No assertions on MUI-specific DOM attributes (`disabled`, `aria-disabled`) unless those attributes are the feature under test
+
+---
+
 ### Tools
 
 - **Obsidian CLI**: `obsidian read file="..."`, `obsidian search query="..."`, etc. (symlinked to `~/.local/bin/obsidian`)

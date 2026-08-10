@@ -4922,3 +4922,4 @@ Unified the "Promote to asset" flow across all three surfaces. Removed inline tw
 - Backend: 145/145 tests, tsc clean
 - Frontend: 136/136 tests (19 files), tsc clean
 - [[Asset Promotion]] wiki page updated with 2026-08-10 changes
+- [[CLAUDE.md]] schema evolved: added "UI Component Unification Rules" (8 rules) from session patterns
