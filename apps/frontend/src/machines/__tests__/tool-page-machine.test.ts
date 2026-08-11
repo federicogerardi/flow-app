@@ -52,14 +52,6 @@ vi.mock('../../api/client', () => {
 
 import { api } from '../../api/client';
 
-// ── Helper: drive machine to ready state ─────────────────────────────────────────
-
-async function goToReady(actor: ReturnType<typeof createActor<typeof toolPageMachine>>) {
-  actor.send({ type: 'SUBMIT' });
-  // SUBMIT guard passes because topic is already filled from setup
-  await waitFor(actor, (s) => s.matches('submitting') || s.matches('submitted') || s.matches('ready'));
-}
-
 /** Pre-configure actor with tool loaded and required input filled */
 function setupActor() {
   const actor = createActor(toolPageMachine);

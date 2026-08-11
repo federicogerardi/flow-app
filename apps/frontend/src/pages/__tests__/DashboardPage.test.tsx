@@ -66,7 +66,6 @@ describe('DashboardPage', () => {
   };
 
   const MOCK_TOOLS_RESPONSE = { data: TOOLS_DATA, isLoading: false as const, error: undefined };
-  const mockAssetsEmpty = { data: { assets: [] }, isLoading: false as const, error: undefined };
 
   it('shows loading skeleton while workspaces are loading', () => {
     mockSwrReturns({
