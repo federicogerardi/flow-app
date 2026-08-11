@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/generation
-date_updated: 2026-08-01
+date_updated: 2026-08-11
 source_count: 5
 confidence: high
 ---
@@ -13,6 +13,8 @@ confidence: high
 
 > Cross-tab resilient session tracking: queued, running, completed, failed  
 > `apps/frontend/src/components/workspace/SessionList.tsx`
+>
+> **2026-08-11 (G3)**: `currentStepLabel` now populated from tool definition in `GET /api/sessions`. `queuePosition` is a stub (always `undefined`) — BullMQ introspection not yet implemented.
 
 ## Principle
 
@@ -424,6 +426,8 @@ interface SessionListItemDTO {
 ```
 
 ### Queue Position
+
+> **2026-08-11**: `queuePosition` is a **stub** — always returns `undefined`. The algorithm below is **planned** but not yet implemented. BullMQ introspection via `Queue.getJobs(['waiting'])` requires a dedicated implementation pass. The frontend `QueuedCard` handles `undefined` gracefully (shows `'...'`).
 
 Queue position shown to users must represent relative order, not global waiting count.
 

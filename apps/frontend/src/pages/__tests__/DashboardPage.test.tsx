@@ -200,12 +200,7 @@ describe('DashboardPage', () => {
         isLoading: false,
         error: undefined,
       },
-      // Provide SWR keys for AssetCoverageBar and WorkspaceMembers to prevent loading states
-      'assets-ws-1-coverage': {
-        data: { assets: [] },
-        isLoading: false,
-        error: undefined,
-      },
+      // Provide SWR keys for WorkspaceMembers to prevent loading states
       'members-ws-1': {
         data: [],
         isLoading: false,

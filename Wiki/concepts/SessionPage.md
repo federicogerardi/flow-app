@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/generation
-date_updated: 2026-08-08
+date_updated: 2026-08-11
 source_count: 5
 confidence: high
 ---
@@ -26,6 +26,8 @@ Mounted in `App.tsx` with `<ErrorBoundary>` wrapper. Route parameters: `workspac
 
 **2026-08-08 (replay detection)**: When the redirect includes `?replayed=true` (idempotency hit — same inputs as a previous generation), a banner alerts the user that this is a previously completed result and suggests modifying inputs for a fresh generation.
 
+**2026-08-11 (G2)**: SessionPage now extracts `stepArtifacts` from `useSession` and passes mapped artifact content to `FeedbackPanel` for live output previews during generation (see [[log#2026-08-11 fix G1-G4 generation SSE & DTO remediation|log]]).
+
 ## Component Structure
 
 ```
@@ -39,7 +41,7 @@ SessionPage
 │   ├── Steps count
 │   ├── Duration (startedAt → completedAt)
 │   ├── Created date
-│   ├── FeedbackPanel (running: progress bar + step label)
+│   ├── FeedbackPanel (running: progress bar + step label + live artifact previews from SSE stepArtifacts)
 │   └── ErrorState (failed: error message + retry CTA)
 ├── SessionSummary (completed: artifact list + download/promote)
 └── CTA buttons
@@ -125,10 +127,10 @@ On `completed` status, renders:
 
 | Dependency | Purpose |
 |------------|---------|
-| `useSession(sessionId)` | Fetches session + subscribes to SSE |
+| `useSession(sessionId)` | Fetches session + subscribes to SSE + returns `stepArtifacts` for live previews |
 | `useBreadcrumbs()` | Sets page breadcrumbs |
 | `api.cancelSession()` | Cancels running session |
-| `FeedbackPanel` | Progress bar + step label for running sessions |
+| `FeedbackPanel` | Progress bar + step label + artifact content previews for running sessions |
 | `SessionSummary` | Artifact list rendering |
 | `CompletionBanner` | Success summary banner |
 | `LoadingSkeleton` | Loading state |

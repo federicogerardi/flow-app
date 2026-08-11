@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import { ToolPageLayout } from '../ToolPageLayout';
 import type { ToolDefinitionData } from '../../tool/SetupPanel';
 import type { SessionDTO } from '../../../api/client';
@@ -108,7 +108,9 @@ describe('ToolPageLayout', () => {
   it('renders loading state on mount', async () => {
     mockFetchToolDefs.mockReturnValue(new Promise(() => {}));
 
-    render(<ToolPageLayout workspaceId="ws-1" toolKey="blog-post" />);
+    await act(async () => {
+      render(<ToolPageLayout workspaceId="ws-1" toolKey="blog-post" />);
+    });
 
     // Loading state should show a progress bar
     const progressBar = document.querySelector('.MuiLinearProgress-root');

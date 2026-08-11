@@ -2,6 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createAgentChatRoutes } from '../agent-chat.js';
 import type { Request, Response, NextFunction } from 'express';
 
+// Suppress BullMQ Redis connection attempt — tests don't need Redis
+vi.mock('../../generation/jobs/gamification-queue.js', () => ({
+  getGamificationQueue: vi.fn(() => ({
+    add: vi.fn().mockResolvedValue(undefined),
+    close: vi.fn().mockResolvedValue(undefined),
+  })),
+}));
+
 function mockReq(overrides: Record<string, unknown> = {}) {
   return {
     params: {},
@@ -109,7 +117,7 @@ describe('Agent Chat Routes', () => {
     vi.clearAllMocks();
     conversationRepo = createMockConversationRepo();
     llmGateway = createMockLlmGateway();
-    routes = createAgentChatRoutes(conversationRepo, llmGateway);
+    routes = createAgentChatRoutes(conversationRepo, llmGateway, 'redis://mock:6379');
   });
 
   describe('listAgents', () => {

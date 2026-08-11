@@ -259,15 +259,16 @@ async function processSessionJob(
           completedAt: session.completedAt?.toISOString(),
         },
       });
-    } else if (finalMachineState === 'failed') {
+} else if (finalMachineState === 'failed') {
       deps.eventBridge.publish(sessionId, {
         event: 'session_failed',
         data: {
           sessionId,
           status: 'failed',
+          failedAtStep: session.currentStepIndex,
           error: {
             code: session.errorCode ?? 'SESSION_FAILED',
-            message: session.errorMessage ?? 'Session processing failed',
+            message: session.errorMessage ?? 'Session failed',
           },
         },
       });

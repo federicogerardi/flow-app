@@ -5,10 +5,10 @@ tags:
   - wiki/frontend
   - wiki/ux
   - wiki/design-spec
-date_updated: 2026-08-08
+date_updated: 2026-08-11
 source_count: 5
 confidence: high
-resolution: all 7 remaining gaps resolved 2026-08-08. 32/32 findings now complete. See [[log#2026-08-08 fix Session UI — 7 remaining gaps resolved|log entry]]
+resolution: all 7 remaining gaps resolved 2026-08-08. 32/32 findings complete. See [[log#2026-08-08 fix Session UI — 7 remaining gaps resolved|log entry]] and [[log#2026-08-11 fix G1-G4 generation SSE & DTO remediation|log entry for follow-up runtime fixes]].
 ---
 
 # Session UI — Improvement Addendum (2026-08-08)

@@ -10,6 +10,11 @@ interface StepProgress {
   label?: string;
 }
 
+interface StepArtifact {
+  stepNumber: number;
+  content: string;
+}
+
 export type LiveSession = SessionListItemDTO & {
   currentStepIndex?: number;
   currentStepLabel?: string;
@@ -21,6 +26,7 @@ export type LiveSession = SessionListItemDTO & {
 export function useSession(sessionId: string | null) {
   const [session, setSession] = useState<SessionDTO | null>(null);
   const [progress, setProgress] = useState<StepProgress | null>(null);
+  const [stepArtifacts, setStepArtifacts] = useState<StepArtifact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -29,13 +35,30 @@ export function useSession(sessionId: string | null) {
 
     setLoading(true);
     setError(null);
+    setStepArtifacts([]);
     api.getSession(sessionId)
       .then(setSession)
       .catch(setError)
       .finally(() => setLoading(false));
 
     const unsubscribe = sseClient.connect(sessionId, {
-      onStep: (data) => setProgress(data.progress as StepProgress),
+      onStep: (data) => {
+        setProgress(data.progress as StepProgress);
+        const artifact = data.artifact as Record<string, unknown> | null;
+        if (artifact?.stepNumber != null && artifact?.content) {
+          setStepArtifacts((prev) => {
+            const sn = artifact.stepNumber as number;
+            const content = String(artifact.content);
+            const existing = prev.findIndex((a) => a.stepNumber === sn);
+            if (existing >= 0) {
+              const updated = [...prev];
+              updated[existing] = { stepNumber: sn, content };
+              return updated;
+            }
+            return [...prev, { stepNumber: sn, content }];
+          });
+        }
+      },
       onCompleted: () => api.getSession(sessionId).then(setSession),
       onFailed: () => api.getSession(sessionId).then(setSession),
     });
@@ -43,7 +66,7 @@ export function useSession(sessionId: string | null) {
     return unsubscribe;
   }, [sessionId]);
 
-  return { session, progress, loading, error };
+  return { session, progress, stepArtifacts, loading, error };
 }
 
 /**

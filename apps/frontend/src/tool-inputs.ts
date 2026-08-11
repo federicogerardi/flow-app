@@ -66,7 +66,7 @@ const TOOL_INPUTS: Record<string, TextInput[]> = {
   'video-description': DEFAULT_INPUTS,
   'ad-copy': AD_COPY_INPUTS,
   'brief': BRIEF_INPUTS,
-  'brand-voice': DEFAULT_INPUTS,
+  'brand-voice': [],   // no text inputs — uses brief asset + optional file
   'buyer-persona': [],   // no text inputs — uses brief asset + optional file
   'marketing-angle': [],   // no text inputs — uses brief + persona assets
   'ai-overview-analysis': DEFAULT_INPUTS,
@@ -74,6 +74,9 @@ const TOOL_INPUTS: Record<string, TextInput[]> = {
 
 const TOOL_FILES: Record<string, FileInput[]> = {
   'brief': BRIEF_FILES,
+  'brand-voice': [
+    { key: 'material', label: 'Materiale aggiuntivo', accept: ['.txt', '.md', '.docx'], required: false, description: 'Opzionale: specifiche aggiuntive sulla brand identity' },
+  ],
   'buyer-persona': [
     { key: 'instructions', label: 'Dati supplementari', accept: ['.txt', '.md', '.docx'], required: false, description: 'Opzionale: survey, competitor analysis...' },
   ],

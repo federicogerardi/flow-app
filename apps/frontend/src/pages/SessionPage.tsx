@@ -10,6 +10,7 @@ import { PageHeader } from '../components/PageHeader';
 import { useBreadcrumbs } from '../layout/AppShell';
 import { FeedbackPanel } from '../components/tool/FeedbackPanel';
 import { SessionSummary } from '../components/tool/SessionSummary';
+import type { ArtifactDTO } from '../api/client';
 import { LoadingSkeleton } from '../components/LoadingSkeleton';
 import { ErrorState } from '../components/ErrorState';
 import { copy } from '@flow-app/copy';
@@ -28,7 +29,7 @@ export default function SessionPage() {
   const [searchParams] = useSearchParams();
   const isReplayed = searchParams.get('replayed') === 'true';
   const navigate = useNavigate();
-  const { session, progress, loading, error } = useSession(sessionId ?? null);
+  const { session, progress, stepArtifacts, loading, error } = useSession(sessionId ?? null);
   const { setBreadcrumbs } = useBreadcrumbs();
   const [cancelling, setCancelling] = useState(false);
 
@@ -154,7 +155,14 @@ export default function SessionPage() {
 
             {isRunning && (
               <Box sx={{ mt: 2 }}>
-                <FeedbackPanel progress={progress} status={session.status} />
+                <FeedbackPanel
+                  progress={progress}
+                  status={session.status}
+                  artifacts={stepArtifacts.map((a) => ({
+                    stepNumber: a.stepNumber,
+                    content: a.content,
+                  } as ArtifactDTO))}
+                />
               </Box>
             )}
 

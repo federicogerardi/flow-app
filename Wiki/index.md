@@ -2,7 +2,7 @@
 type: index
 tags:
   - wiki/index
-date_updated: 2026-08-08
+date_updated: 2026-08-11
 ---
 
 # Wiki Index — Flow App
@@ -21,6 +21,7 @@ date_updated: 2026-08-08
 | prompt_extraction.md, prompt_personas_generation.md | [[sources/personas-generator]] | 2026-08-06 |
 | prompt_root.md, prompt_extraction.md, prompt_context_and_angle_matrix.md, prompt_angle_prioritization.md, prompt_creative_activation.md | [[sources/angle-generator]] | 2026-08-07 |
 | prompt_extraction.md, prompt_context_generation.md, prompt_ads_generation.md | [[sources/meta-ads]] | 2026-08-07 |
+| prompt_extraction.md, prompt_tov_generation.md | [[sources/tov-generator]] | 2026-08-11 |
 
 ## Entities
 
@@ -42,7 +43,7 @@ date_updated: 2026-08-08
 
 | Page | Confidence | Source Count |
 |------|------------|--------------|
-| [[API Client + SSE Client]] | high | 4 |
+| [[API Client + SSE Client]] | high | 4 [+G2 runtime fix] |
 | [[API Contract Baseline v1]] | high | 7 |
 | [[API Documentation - OpenAPI]] | high | 3 |
 | [[API Routes]] | high | 4 |
@@ -100,9 +101,9 @@ date_updated: 2026-08-08
 | [[ReadinessPolicy]] | high | 3 |
 | [[ReadinessSnapshot UI]] | high | 4 |
 | [[Seed Data]] | high | 2 |
-| [[Session List - Live Status]] | high | 5 |
+| [[Session List - Live Status]] | high | 5 [+G3 stub annotation] |
 | [[Session Machine (XState v5)]] | high | 4 |
-| [[SessionPage]] | high | 5 |
+| [[SessionPage]] | high | 5 [+G2 fix] |
 | [[Secure SDLC Controls]] | high | 7 |
 | [[Testing Strategy]] | high | 3 |
 | [[Tool as Static Configuration]] | high | 4 |
@@ -148,12 +149,12 @@ date_updated: 2026-08-08
 | [[synthesis/ui-design-summary-2026-08-07]] | UI Design Summary — full-stack design reference: 37-component inventory with status, complete design tokens, layout architecture, component props/interfaces/MUI internals/state bindings, gamification visual system, WCAG 2.1 AA requirements, implementation priority | 2026-08-07 |
 | [[synthesis/frontend-drift-report-2026-08-07]] | Frontend drift report — 91 files examined, 15 critical + 12 high drifts: XState skeletal, missing variants, DTO gaps, SSE contract mismatch | 2026-08-07 |
 | [[synthesis/frontend-drift-remediation-plan-2026-08-07]] | Frontend drift remediation plan — 27 findings across 8 phases, 40+ files, phased dependency chain | 2026-08-07 |
-| [[synthesis/be-coordination-session-dto-2026-08-07]] | Backend coordination plan — 11 missing SessionListItemDTO fields, SSE payload fixes, 2 ghost endpoints, ~3h effort | 2026-08-07 |
+| [[synthesis/be-coordination-session-dto-2026-08-07]] | Backend coordination plan — Steps 0–11 resolved 2026-08-11. queuePosition deferred (stub). xpEarned deferred. | 2026-08-11 |
 | [[synthesis/testing-plan-xstate-toolpage-2026-08-07]] | Testing plan — ✅ 79 unit/component tests implemented: 34 machine + 10 deriveUIState + 7 ToolPageLayout + 28 session cards | 2026-08-08 |
 | [[synthesis/e2e-test-plan-tool-page-2026-08-07]] | E2E test plan — ✅ 8 Playwright scenarios scaffolded: happy path, upload, asset, error+retry, SSE resilience, accessibility, session list, gamification | 2026-08-08 |
 | [[synthesis/open-findings-plan-2026-08-08]] | Open findings remediation — 4 gaps: 55 copy violations (8 files), 2 embedded gamification components, 2 missing tests, 1 migration deploy. ~5.75h, 1 day | 2026-08-08 |
-| [[synthesis/session-ui-improvement-spec-2026-08-08]] | Session UI improvement spec — 32 findings: 14 copy violations, 12 a11y gaps, 4 drifts, 2 visual issues. ✅ 32/32 resolved | 2026-08-08 |
-| [[synthesis/session-ui-improvement-addendum-2026-08-08]] | Session UI addendum — 7 remaining gaps resolved: 1 SSE integration + 6 a11y ARIA refinements. 4 new copy keys. ✅ | 2026-08-08 |
+| [[synthesis/session-ui-improvement-spec-2026-08-08]] | Session UI improvement spec — 32 findings: 14 copy violations, 12 a11y gaps, 4 drifts, 2 visual issues. ✅ 32/32 resolved | 2026-08-11 |
+| [[synthesis/session-ui-improvement-addendum-2026-08-08]] | Session UI addendum — 7 remaining gaps resolved: 1 SSE integration + 6 a11y ARIA refinements. ✅ | 2026-08-11 |
 | [[synthesis/railway-deploy-40x-2026-08-08]] | Railway deploy 40X analysis — 1 real bug (missing PUT /api/me/profile) + 14x 401 race condition. Implementation plan for streak mode + silent retry guard | 2026-08-08 |
 | [[synthesis/project-improvement-ui-2026-08-08]] | Project Improvement UI — active findings collection for the 2026-08-08 improvement session. Baseline audit: 48 .tsx files, 288 sx={{ }}, 4 hardcoded gradients, 0 CSS modules | 2026-08-08 |
 | [[overview]] | High-level synthesis (v3) | 2026-08-04 |

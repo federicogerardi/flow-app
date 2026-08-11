@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/infrastructure
-date_updated: 2026-08-06
+date_updated: 2026-08-11
 source_count: 4
 confidence: high
 ---
@@ -225,6 +225,10 @@ export const sseClient = new SSEClient();
 
 ## React Hooks
 
+### `useSession` — SessionPage detail hook
+
+Fetches session detail + subscribes to SSE for live progress. **2026-08-11 (G2 remediation)**: now extracts `artifact.content` from SSE `step_completed` events into a `stepArtifacts` array, enabling live output previews in `FeedbackPanel` during generation.
+
 ```typescript
 // apps/frontend/src/api/hooks.ts
 
@@ -232,10 +236,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { api } from './client';
 import { sseClient } from './sse-client';
 
-// Hook for a single session with SSE progress
+interface StepArtifact {
+  stepNumber: number;
+  content: string;
+}
+
+// Hook for a single session with SSE progress + live artifact previews
 function useSession(sessionId: string | null) {
   const [session, setSession] = useState<SessionDTO | null>(null);
   const [progress, setProgress] = useState<StepProgress | null>(null);
+  const [stepArtifacts, setStepArtifacts] = useState<StepArtifact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -244,6 +254,7 @@ function useSession(sessionId: string | null) {
 
     setLoading(true);
     setError(null);
+    setStepArtifacts([]);
 
     // Initial load (with error handling)
     api.getSession(sessionId)
@@ -253,7 +264,24 @@ function useSession(sessionId: string | null) {
 
     // SSE for real-time updates
     const unsubscribe = sseClient.connect(sessionId, {
-      onStep: (data) => setProgress(data.progress as StepProgress),
+      onStep: (data) => {
+        setProgress(data.progress as StepProgress);
+        // Extract artifact content for live previews in FeedbackPanel (G2)
+        const artifact = data.artifact as Record<string, unknown> | null;
+        if (artifact?.stepNumber != null && artifact?.content) {
+          setStepArtifacts((prev) => {
+            const sn = artifact.stepNumber as number;
+            const content = String(artifact.content);
+            const existing = prev.findIndex((a) => a.stepNumber === sn);
+            if (existing >= 0) {
+              const updated = [...prev];
+              updated[existing] = { stepNumber: sn, content };
+              return updated;
+            }
+            return [...prev, { stepNumber: sn, content }];
+          });
+        }
+      },
       onCompleted: () => api.getSession(sessionId).then(setSession),
       onFailed: () => api.getSession(sessionId).then(setSession),
     });
@@ -261,7 +289,19 @@ function useSession(sessionId: string | null) {
     return unsubscribe;
   }, [sessionId]);
 
-  return { session, progress, loading, error };
+  return { session, progress, stepArtifacts, loading, error };
+}
+```
+
+### `useLiveSession` — SessionList card hook
+
+Hook for live session tracking in the workspace session list. Subscribes to SSE for real-time step/progress/artifact updates, with API catch-up for cross-tab resilience.
+
+```typescript
+function useLiveSession(sessionId: string | null): { liveSession: LiveSession | null; loading: boolean } {
+  // API catch-up on mount (cross-tab resilience)
+  // SSE subscription: onStep → updates currentStepIndex, currentStepLabel, lastArtifactPreview
+  //                  onCompleted/onFailed → re-fetch from API
 }
 
 // Hook for workspace listing

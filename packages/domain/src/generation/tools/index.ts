@@ -259,6 +259,51 @@ description: 'Genera copy per campagne Meta (Facebook/Instagram) con sistema clu
   ],
 };
 
+const brandVoiceTool: ToolDefinition = {
+  toolKey: 'brand-voice',
+  name: 'Brand Voice',
+  description: 'Estrae il tone of voice da un brief e materiali aziendali, producendo linee guida complete per la comunicazione del brand su ogni canale',
+  creditCost: 1,
+  outputCategory: ToolOutputCategory.AssetProducer,
+  produces: 'brand-voice',
+  defaultComponents: ['anti-hallucination/v1', 'output-plain-text/v1', 'italian-formal/v1'],
+  acquisition: {
+    assets: [
+      { assetType: 'brief', required: true },
+    ],
+    files: [
+      { key: 'material', label: 'Materiale aggiuntivo', accept: ['.txt', '.md', '.docx'], required: false, description: 'Opzionale: carica documenti con specifiche aggiuntive sulla brand identity, esempi di comunicazione, o linee guida esistenti' },
+    ],
+    userText: [],
+  },
+  steps: [
+    {
+      order: 1,
+      label: 'extraction',
+      enrichment: 'serial',
+      prompt: {
+        templateId: 'brand-voice/extraction',
+        version: '1.0.0',
+        model: ModelTier.Balanced,
+        components: ['output-json/v1'],
+      },
+      execution: { timeoutMs: 60000, maxRetries: 2 },
+    },
+    {
+      order: 2,
+      label: 'tov-generation',
+      enrichment: 'serial',
+      prompt: {
+        templateId: 'brand-voice/tov-generation',
+        version: '1.0.0',
+        model: ModelTier.Premium,
+        components: ['output-plain-text/v1', 'italian-formal/v1'],
+      },
+      execution: { timeoutMs: 120000, maxRetries: 2 },
+    },
+  ],
+};
+
 export const toolRegistry: Record<ToolKeyValue, ToolDefinition> = {
   'blog-post': blogPostTool,
   'brief': briefTool,
@@ -303,15 +348,7 @@ export const toolRegistry: Record<ToolKeyValue, ToolDefinition> = {
     outputCategory: ToolOutputCategory.ContentProducer,
   },
 
-  // Asset producer — inherits blogPostTool structure
-  'brand-voice': {
-    ...blogPostTool,
-    toolKey: 'brand-voice' as ToolKeyValue,
-    name: 'Brand Voice',
-    description: 'Brand voice guidelines',
-    outputCategory: ToolOutputCategory.AssetProducer,
-    produces: 'brand-voice',
-  },
+  'brand-voice': brandVoiceTool,
 };
 
 export function getTool(key: ToolKey): ToolDefinition | undefined {

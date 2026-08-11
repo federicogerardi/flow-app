@@ -11,6 +11,10 @@ import {
 
 let inMemoryToken: string | null = null;
 let refreshPromise: Promise<string | null> | null = null;
+let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** Refresh at 80% of TTL so the token never expires while the tab is open */
+const REFRESH_MARGIN = 0.8;
 
 export function getAccessToken(): string | null {
   return inMemoryToken;
@@ -18,6 +22,23 @@ export function getAccessToken(): string | null {
 
 export function setAccessToken(token: string | null): void {
   inMemoryToken = token;
+}
+
+function scheduleProactiveRefresh(expiresIn: number): void {
+  clearRefreshTimer();
+  const delay = Math.floor(expiresIn * 1000 * REFRESH_MARGIN);
+  // Minimum 60s to avoid tight loops on misconfigured TTLs
+  const clamped = Math.max(delay, 60_000);
+  refreshTimer = setTimeout(() => {
+    attemptTokenRefresh();
+  }, clamped);
+}
+
+function clearRefreshTimer(): void {
+  if (refreshTimer) {
+    clearTimeout(refreshTimer);
+    refreshTimer = null;
+  }
 }
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -87,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     async function trySilentRefresh() {
       try {
-const response = await fetch(`${API_BASE}/api/auth/refresh`, {
+        const response = await fetch(`${API_BASE}/api/auth/refresh`, {
           method: 'POST',
           credentials: 'include',
         });
@@ -120,6 +141,7 @@ const response = await fetch(`${API_BASE}/api/auth/refresh`, {
         if (!cancelled) {
           setAccessToken(data.accessToken);
           setUser(data.user);
+          scheduleProactiveRefresh(data.expiresIn);
         }
       } catch {
         // Network error — user will see login page
@@ -140,15 +162,18 @@ const response = await fetch(`${API_BASE}/api/auth/refresh`, {
     const data = await authFetch('/login', { email, password });
     setAccessToken(data.accessToken);
     setUser(data.user);
+    scheduleProactiveRefresh(data.expiresIn);
   }, []);
 
   const register = useCallback(async (email: string, password: string) => {
     const data = await authFetch('/register', { email, password });
     setAccessToken(data.accessToken);
     setUser(data.user);
+    scheduleProactiveRefresh(data.expiresIn);
   }, []);
 
   const logout = useCallback(async () => {
+    clearRefreshTimer();
     try {
       await fetch(`${API_BASE}/api/auth/logout`, {
         method: 'POST',
@@ -202,6 +227,7 @@ export async function attemptTokenRefresh(): Promise<boolean> {
 
       const data: AuthResponse = await response.json();
       setAccessToken(data.accessToken);
+      scheduleProactiveRefresh(data.expiresIn);
       return data.accessToken;
     } catch {
       return null;

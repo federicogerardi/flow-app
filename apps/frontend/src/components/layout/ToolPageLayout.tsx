@@ -85,10 +85,12 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
     ]);
   }, [workspaceId, title, setBreadcrumbs]);
 
-  // Load tool definition via LOAD event
+  // Load tool definition via LOAD event — resets on toolKey change
   useEffect(() => {
+    let cancelled = false;
     fetchToolDefinitions(toolKey)
       .then((defs) => {
+        if (cancelled) return;  // ignore stale responses
         const toolDef: ToolDefinition = {
           key: toolKey,
           label: title,
@@ -101,6 +103,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
         send({ type: 'LOAD', tool: toolDef, workspaceId });
       })
       .catch(() => {
+        if (cancelled) return;  // ignore stale errors
         // Fallback: create empty tool def
         const toolDef: ToolDefinition = {
           key: toolKey,
@@ -113,6 +116,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
         };
         send({ type: 'LOAD', tool: toolDef, workspaceId });
       });
+    return () => { cancelled = true; };
   }, [toolKey, workspaceId, send, title]);
 
   // Load workspace assets

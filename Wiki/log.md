@@ -1,4 +1,20 @@
 
+## [2026-08-11] fix | Proactive token refresh — eliminates 12×401 burst pattern
+
+**Root cause**: `expiresIn` (900s) returned by every auth endpoint (`POST /api/auth/login`, `/register`, `/refresh`) was never consumed by the frontend. The access token silently expired after 15 minutes, causing the next batch of SWR requests (12 endpoints in parallel: workspaces, sessions×4, members, assets, tools, profile, credits) to all receive 401 before the `POST /api/auth/refresh` dance completed. This wasted ~48 backend 401 cycles per hour of active use.
+
+**Fix** (`apps/frontend/src/auth/AuthContext.tsx`):
+- `scheduleProactiveRefresh(expiresIn)`: schedules `attemptTokenRefresh()` at 80% of TTL (12 min), clamped to ≥60s minimum
+- Called after login, register, silent mount refresh, and every successful `attemptTokenRefresh()` (recursive re-scheduling)
+- `clearRefreshTimer()` called on logout and before re-scheduling (no timer leaks)
+- Existing `refreshPromise` dedup singleton unchanged — concurrent 401s still coalesce into 1 refresh call
+
+**Tests** (`apps/frontend/src/auth/__tests__/AuthContext.test.tsx`): +5 tests — timer scheduling, clear-on-logout, reschedule, no-schedule-on-failure, minimum clamp
+
+**Wiki**: extended [[Auth Dependencies#Frontend Proactive Refresh]] with flow diagram, code reference, and behavioral guards
+
+**Net effect**: 0 requests hit the backend with an expired token during a single tab session. The 12×401 burst pattern is eliminated.
+
 ## [2026-08-08] unify | Maintenance Log → log.md — redundant concept removed
 
 Merged [[Maintenance Log]] into [[log]] (canonical operation log). The Maintenance Log was a redundant less-detailed duplicate created 2026-08-03 to work around a YAML duplicate-key issue in index.md. All entries were already present in log.md with more detail. Actions:
@@ -4880,7 +4896,34 @@ Codespace audit of all FE open/pending/deferred findings from wiki tracked pages
 - [[implementation-roadmap-2026-08-01]]: `phase_12_frontend` → `complete`, Phase 12 header + remaining line updated
 - [[project-improvement-ui-2026-08-08]]: frontmatter corrected to `24/26 resolved, 1 open (C1), 1 deferred (U4)`
 
-## [2026-08-10] unify | Asset Promotion — unified surfaces, shared components, dedup
+## [2026-08-11] implement | Brand Voice tool — de-stubbed, real 2-step definition deployed
+
+Replaced the `brand-voice` stub in `toolRegistry` (was inheriting `blogPostTool`) with a real `ToolDefinition`. New tool is a 2-step Asset Producer consuming a `brief` asset + optional supplementary file, producing a promotable `brand-voice` artifact.
+
+### Changes (6 files)
+
+**Domain** (`packages/domain/src/generation/tools/index.ts`):
+- Added `brandVoiceTool: ToolDefinition` — 2 steps (extraction + tov-generation), no userText, consumes `brief` (required) + `material` file (optional)
+
+**Frontend** (`apps/frontend/src/tool-inputs.ts`):
+- `brand-voice`: text inputs → `[]` (was `DEFAULT_INPUTS`), file inputs → `material` (optional supplementary)
+
+**Prompt templates** (4 new files):
+- `apps/backend/src/prompts/brand-voice/extraction/versions/1.0.0/system.md` — 5-field extraction (brand_or_company, target_audience, tone, product_or_service, market), anti-hallucination guardrails, good/bad examples
+- `apps/backend/src/prompts/brand-voice/extraction/versions/1.0.0/user.md` — context injection instructions
+- `apps/backend/src/prompts/brand-voice/tov-generation/versions/1.0.0/system.md` — 8-section TOV synthesis, downstream-first design, safe inference taxonomy, channel adaptations, awareness levels
+- `apps/backend/src/prompts/brand-voice/tov-generation/versions/1.0.0/user.md` — synthesis instructions
+
+**No changes needed**: `ToolKey.ts` (already had `BrandVoice`), copy module (generic toolPage covers all), any UI components (SetupPanel/FeedbackPanel/SessionSummary are generic)
+
+### Verification
+- Domain: 490/490 tests, tsc clean ✅
+- Frontend: 136/136 tests, tsc clean ✅
+
+### Wiki updated
+- Created `Wiki/sources/tov-generator.md` — source summary for the 2 prototype prompts used as design base
+- Updated `Wiki/overview.md` — brand-voice catalog entry: ✅ implemented
+- Added `tov-generator` to `Wiki/index.md` Processed Sources table
 
 Unified the "Promote to asset" flow across all three surfaces. Removed inline two-click confirmation, standardized on `PromoteDialog` with optional name input everywhere. Extracted shared components and a hook to eliminate ~140 lines of duplication.
 
@@ -4923,3 +4966,29 @@ Unified the "Promote to asset" flow across all three surfaces. Removed inline tw
 - Frontend: 136/136 tests (19 files), tsc clean
 - [[Asset Promotion]] wiki page updated with 2026-08-10 changes
 - [[CLAUDE.md]] schema evolved: added "UI Component Unification Rules" (8 rules) from session patterns
+
+## [2026-08-11] fix | G1–G4 — Generation SSE & DTO remediation (4 runtime gaps)
+
+**Audit**: filesystem audit of 15 files across backend worker, API handler, contracts, frontend hooks, SSE client, 6 React components, and XState machine. Confirmed all wiki addendum gaps (B–G) resolved in runtime. Found 4 new gaps from code-contract drift.
+
+**G1** — `session_failed` SSE from XState machine path missing `failedAtStep` (only catch block had it):
+- File: `apps/backend/src/generation/worker/session-worker.ts:270` — added `failedAtStep: session.currentStepIndex` to machine-failure path
+
+**G2** — `useSession` hook not extracting artifact content from SSE for `FeedbackPanel` on `SessionPage`:
+- File: `apps/frontend/src/api/hooks.ts:9-65` — new `StepArtifact` interface, `stepArtifacts` state, extracts `artifact.content` from `step_completed` SSE events
+- File: `apps/frontend/src/pages/SessionPage.tsx:31,158-162` — destructures `stepArtifacts`, passes mapped artifacts to `FeedbackPanel`
+
+**G3** — `GET /api/sessions` handler missing `currentStepLabel` and `queuePosition`:
+- File: `apps/backend/src/api/generation.ts:112-115` — `currentStepLabel` populated from tool definition (when running); `queuePosition` stub as `undefined` (BullMQ introspection deferred)
+
+**G4** — `GET /api/sessions/:id` artifacts missing `stepLabel`; contract type mismatch:
+- File: `apps/backend/src/api/generation.ts:359` — `stepLabel` populated from tool definition on each artifact
+- File: `packages/contracts/src/generation/session.dto.ts:25` — `SessionDetailDTO.artifacts` type changed from `ArtifactListItemDTO[]` to `ArtifactDTO[]`
+
+**Deferred**: `xpEarned` — no backend XP computation wired (needs gamification domain wiring). `queuePosition` — stub `undefined` (needs BullMQ introspection).
+
+### Verification
+- Backend: `tsc --noEmit` ✅, 145/145 tests ✅
+- Frontend: `tsc --noEmit` ✅, 141/141 tests ✅
+- Contracts: `tsc --noEmit` ✅
+- Wiki pages updated: API Client + SSE Client, SessionPage, Session List — Live Status, be-coordination-session-dto, session-ui-improvement-spec, session-ui-improvement-addendum

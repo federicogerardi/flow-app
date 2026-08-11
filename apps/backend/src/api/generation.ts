@@ -109,6 +109,10 @@ export function createGenerationRoutes(
               stepCount: tool?.steps?.length ?? 1,
               // Step 3: status-dependent fields
               currentStepIndex: isRunning ? s.currentStepIndex : undefined,
+              currentStepLabel: isRunning
+                ? tool?.steps[s.currentStepIndex]?.label
+                : undefined,
+              queuePosition: undefined, // DEFERRED: requires BullMQ introspection (see be-coordination-session-dto)
               completedAt: s.completedAt?.toISOString() ?? undefined,
               errorMessage: isFailed ? (s.errorMessage ?? undefined) : undefined,
               errorCode: isFailed ? (s.errorCode ?? undefined) : undefined,
@@ -356,6 +360,7 @@ export function createGenerationRoutes(
           artifacts: artifactRows.map((a) => ({
             id: a.id,
             stepNumber: a.step_number,
+            stepLabel: tool?.steps[a.step_number - 1]?.label ?? `Step ${a.step_number}`,
             content: a.content,
             status: a.status,
             createdAt: a.created_at?.toISOString?.() ?? null,

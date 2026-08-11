@@ -22,7 +22,7 @@ export interface SessionDetailDTO extends SessionDTO {
   startedAt: string | null;
   completedAt: string | null;
   xpEarned?: number;
-  artifacts: ArtifactListItemDTO[];
+  artifacts: ArtifactDTO[];
 }
 
 export interface SessionListItemDTO {

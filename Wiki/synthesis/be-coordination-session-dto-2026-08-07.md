@@ -5,17 +5,35 @@ tags:
   - wiki/backend
   - wiki/contracts
   - wiki/plan
-date_updated: 2026-08-07
+date_updated: 2026-08-11
 source_count: 5
 confidence: high
+resolution: Steps 0-8 (P0) + Steps 9-11 (P1) resolved 2026-08-11. queuePosition deferred as stub (undefined). xpEarned deferred (needs gamification wiring). See [[log#2026-08-11 fix G1-G4 generation SSE & DTO remediation|log]].
+
+resolved:
+  - "Step 0: createdAt domain entity"
+  - "Step 1: Fix createdAt in API"
+  - "Step 2: stepCount from tool def"
+  - "Step 3: currentStepIndex/currentStepLabel, completedAt, errorMessage, errorCode"
+  - "Step 4: lastArtifactId/Preview (SessionRepository method)"
+  - "Step 5: isPromotable"
+  - "Step 6: elapsed/duration"
+  - "Step 7: Fix step_completed SSE"
+  - "Step 8: Fix session_completed SSE"
+  - "Step 9: Publish session_started/failed events"
+  - "Step 10: GET /activity endpoint"
+  - "Step 11: POST /challenges/vote endpoint"
+deferred:
+  - "Step 6b: queuePosition — stub (undefined). BullMQ introspection not implemented."
+  - "xpEarned in getSession — no backend XP computation wired yet."
 ---
 
-# Backend Coordination Plan — SessionListItemDTO & SSE Alignment
+# Backend Coordination Plan — SessionListItemDTO & SSE Alignment ✅
 
 > Coordinates backend changes required by [[frontend-drift-remediation-plan-2026-08-07|Phase 3]] of the frontend drift remediation.
-> The frontend now expects 16 fields on `SessionListItemDTO` and artifact content in SSE events. The backend currently returns 5 fields and omits artifact data from SSE payloads.
+> **2026-08-11**: Steps 0–11 resolved. `queuePosition` deferred as stub (`undefined`). `xpEarned` deferred (requires gamification domain wiring).
 >
-> **DDD-reviewed 2026-08-07**: 7 inaccuracies found and corrected. Plan now includes Step 0 (domain entity `createdAt`), no `ArtifactRepository` creation (aggregate boundary preserved), all SSE timestamps use domain values. DDD compliance score: 9/10.
+> **DDD-reviewed 2026-08-07**: 7 inaccuracies found and corrected.
 
 ## Overview
 
@@ -466,23 +484,23 @@ GET /api/sessions/:id (detail)
   └─ sessionRepo.findById() → Session (with artifacts) → SessionDetailDTO
 ```
 
-## Priority Order
+## Priority Order (Resolved 2026-08-11)
 
-| Step | Effort | Impact | Priority |
-|------|--------|--------|----------|
-| 0. Add `createdAt` to domain entity | 30min | Foundation for correct timestamps | P0 |
-| 1. Fix createdAt in API | 5min | Correct timestamps (depends on Step 0) | P0 |
-| 2. stepCount | 15min | Card shows step count | P0 |
-| 3. currentStepIndex, completedAt, errorMessage, errorCode (list + detail) | 20min | Card status info + detail consistency | P0 |
-| 7. Fix step_completed SSE | 30min | Live progress + artifact preview | P0 |
-| 8. Fix session_completed SSE | 15min | Final artifact in SSE | P0 |
-| 9. Publish session_started/failed | 20min | SSE event coverage (use domain startedAt) | P1 |
-| 4. lastArtifactId/Preview (SessionRepository method) | 45min | Card artifact preview | P1 |
-| 5. isPromotable | 5min | Promote button on cards | P1 |
-| 6. elapsed/duration | 10min | Time display | P2 |
-| 6b. queuePosition (deferred) | TBD | Queue position — needs BullMQ investigation | P3 |
-| 10. GET /activity | 15min | Gamification UX | P2 |
-| 11. POST /challenges/vote | 10min | Gamification UX | P2 |
+| Step | Effort | Impact | Status |
+|------|--------|--------|--------|
+| 0. Add `createdAt` to domain entity | 30min | Foundation for correct timestamps | ✅ Resolved |
+| 1. Fix createdAt in API | 5min | Correct timestamps (depends on Step 0) | ✅ Resolved |
+| 2. stepCount | 15min | Card shows step count | ✅ Resolved |
+| 3. currentStepIndex, currentStepLabel, completedAt, errorMessage, errorCode (list + detail) | 20min | Card status info + detail consistency | ✅ Resolved |
+| 7. Fix step_completed SSE | 30min | Live progress + artifact preview | ✅ Resolved |
+| 8. Fix session_completed SSE | 15min | Final artifact in SSE | ✅ Resolved |
+| 9. Publish session_started/failed | 20min | SSE event coverage (use domain startedAt) | ✅ Resolved |
+| 4. lastArtifactId/Preview (SessionRepository method) | 45min | Card artifact preview | ✅ Resolved |
+| 5. isPromotable | 5min | Promote button on cards | ✅ Resolved |
+| 6. elapsed/duration | 10min | Time display | ✅ Resolved |
+| 6b. queuePosition (deferred) | — | Queue position — stub `undefined` | 🔵 Deferred |
+| 10. GET /activity | 15min | Gamification UX | ✅ Resolved |
+| 11. POST /challenges/vote | 10min | Gamification UX | ✅ Resolved |
 
 **Total estimated effort**: ~3h (core) + deferred queuePosition investigation
 

@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-08-02
+date_updated: 2026-08-11
 source_count: 8
 confidence: high
 ---
@@ -52,6 +52,47 @@ Login (email/pw) ───▶ bcrypt.compare() ───▶ jwt.sign() ───
 OAuth (Google)  ───▶ passport.authenticate('google') ───▶ same token flow
 Every request   ───▶ Authorization: Bearer <accessToken> ───▶ jwt.verify() ───▶ req.user
 Token expired   ───▶ POST /auth/refresh (reads httpOnly cookie) ───▶ new accessToken
+Proactive refresh ──▶ setTimeout at 80% TTL (12 min) ───▶ silent POST /auth/refresh ───▶ new accessToken (no 401)
+```
+
+The refresh endpoint (`POST /api/auth/refresh`) returns `{ user, accessToken, expiresIn }` and rotates the refresh token (old session deleted, new one created). The `expiresIn` field enables the frontend to schedule the next silent refresh before the token expires — see [[#Frontend Proactive Refresh]].
+
+### Frontend Proactive Refresh
+
+**File**: `apps/frontend/src/auth/AuthContext.tsx`
+
+The frontend uses `expiresIn` to schedule a silent refresh at **80% of the access token TTL** (12 minutes for the default 15m TTL). This eliminates the 401-then-refresh pattern: the token is refreshed before it ever expires.
+
+```
+scheduleProactiveRefresh(expiresIn)
+  │
+  └── setTimeout(() => attemptTokenRefresh(), expiresIn × 0.8 × 1000)
+        │
+        └── POST /api/auth/refresh → OK
+              │
+              ├── setAccessToken(newToken)
+              └── scheduleProactiveRefresh(newExpiresIn)  // re-schedule recursively
+```
+
+**Key behaviors**:
+
+- **Minimum clamp**: delay is clamped to ≥60 seconds to prevent tight loops on misconfigured TTLs
+- **Timer cleanup**: `clearRefreshTimer()` on logout and before re-scheduling — no timer leaks
+- **Dedup queue**: `attemptTokenRefresh()` uses a module-level `refreshPromise` singleton — concurrent 401s from the API client interceptor coalesce into a single `POST /api/auth/refresh` call
+- **No proactive refresh on failure**: if mount refresh fails (no session), no timer is scheduled — the user sees the login page
+
+**Net effect**: 0 requests hit the backend with an expired token during a single tab session. The 12×401 burst pattern (every 15 minutes, all SWR hooks fire before the refresh completes) is eliminated.
+
+```typescript
+// Module-level timer state (apps/frontend/src/auth/AuthContext.tsx)
+let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleProactiveRefresh(expiresIn: number): void {
+  clearRefreshTimer();
+  const delay = Math.floor(expiresIn * 1000 * 0.8);
+  const clamped = Math.max(delay, 60_000);  // minimum 60s
+  refreshTimer = setTimeout(() => { attemptTokenRefresh(); }, clamped);
+}
 ```
 
 ---

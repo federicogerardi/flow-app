@@ -126,19 +126,21 @@ export const toolPageMachine = setup({
     replayed: false,
     error: null,
   },
+  // ── Root-level transitions: reset to configuring on LOAD from any state ──────
+  on: {
+    LOAD: {
+      target: '.configuring',
+      actions: assign({
+        tool: ({ event }) => event.tool,
+        workspaceId: ({ event }) => event.workspaceId,
+        inputs: () => emptyInputs(),
+      }),
+    },
+  },
   states: {
     // ── No tool loaded, no inputs ──────────────────────────────────────────────
     draftEmpty: {
-      on: {
-        LOAD: {
-          target: 'configuring',
-          actions: assign({
-            tool: ({ event }) => event.tool,
-            workspaceId: ({ event }) => event.workspaceId,
-            inputs: () => emptyInputs(),
-          }),
-        },
-      },
+      // LOAD is handled by root-level on — no explicit handler needed
     },
 
     // ── User is filling inputs ─────────────────────────────────────────────────

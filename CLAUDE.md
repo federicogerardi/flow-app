@@ -58,31 +58,9 @@ Every code commit must be preceded by Wiki alignment. Code must never be pushed 
 
 ## Linguistic Separation Policy
 
-Every document belongs to exactly one language category. Never mix languages within a single document body.
+**Wiki pages are 100% English.** No coexistence with other languages in any wiki document. Translate any Italian prose immediately.
 
-| Category | Language | Examples |
-|----------|----------|----------|
-| Technical documents | English | Architecture, code comments, API docs, DB schemas, README |
-| Product documents | Italian | PRD, user stories, product briefs, marketing specs |
-| Proposals & implementation plans | English | RFC, design proposals, milestone planning, gap analysis |
-
-**Consistency rules:**
-- Never mix English and Italian in the body of the same document
-- Title and section headings must match body language
-- YAML frontmatter keys are always English
-- **Wiki pages are 100% English** — translate any Italian prose immediately. Exception: `concepts/Centralized Copy Modules` where Italian strings are the app's copy content (not prose).
-
-### Prompt Templates (LLM Instructions)
-
-Separate by channel:
-
-| Channel | Language | Content |
-|---------|----------|---------|
-| System instructions | English | Rules, constraints, format, behavior |
-| Generated output | Italian | Artifact the LLM produces, visible to end user |
-| Awareness labels | Italian | UI strings: "Generazione in corso...", "Step 2 di 5", error messages |
-
-Separating instruction channel (English) from output channel (Italian) produces more predictable model behavior.
+**Exception**: `concepts/Centralized Copy Modules` where Italian strings are the app's UI copy content (not prose). Copy tokens (`copy.t('...')`) are English keys — the resolved Italian strings are UI, not wiki content.
 
 ---
 
@@ -93,7 +71,7 @@ Implements the [llm-wiki pattern](https://gist.github.com/karpathy/442a6bf555914
 ### Architecture
 
 Three layers:
-1. **Raw sources** — immutable documents in `doodle/`. Read only, never modify.
+1. **Raw sources** — immutable documents in `Wiki/sources/`. Read only, never modify.
 2. **The wiki** (`Wiki/`) — LLM-generated: source summaries, entity pages, concept pages, synthesis.
 3. **The schema** — this file. Makes the LLM a disciplined wiki maintainer.
 
@@ -152,7 +130,7 @@ Check: orphan pages, broken wikilinks, stale pages, contradictions, concepts wit
 
 ### Critical Rules
 
-1. **Raw sources are IMMUTABLE.** Never modify `doodle/` or any source directory.
+1. **Raw sources are IMMUTABLE.** Never modify raw source documents in `Wiki/sources/` or any ingested source directory.
 2. **Always update `Wiki/index.md` and `Wiki/log.md`** on every wiki change.
 3. **Keep source summaries factual.** Interpretation goes in concept/synthesis pages.
 4. **When sources contradict**, note contradictions explicitly; never silently overwrite.
