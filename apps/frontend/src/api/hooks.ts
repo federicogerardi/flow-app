@@ -23,11 +23,11 @@ export type LiveSession = SessionListItemDTO & {
   errorMessage?: string;
 };
 
-export function useSession(sessionId: string | null) {
-  const [session, setSession] = useState<SessionDTO | null>(null);
+export function useSession(sessionId: string | null, initialData?: SessionDTO) {
+  const [session, setSession] = useState<SessionDTO | null>(initialData ?? null);
   const [progress, setProgress] = useState<StepProgress | null>(null);
   const [stepArtifacts, setStepArtifacts] = useState<StepArtifact[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(initialData == null);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {

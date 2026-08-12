@@ -12,6 +12,7 @@ const mockSetBreadcrumbs = vi.fn();
 
 vi.mock('react-router', () => ({
   useNavigate: () => mockNavigate,
+  useSearchParams: () => [new URLSearchParams(), vi.fn()],
   BrowserRouter: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 

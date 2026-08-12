@@ -1,4 +1,5 @@
 import { Box, Card, CardContent, Typography, Button, LinearProgress, Chip } from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { copy } from '@flow-app/copy';
 import type { SessionListItemDTO } from '@flow-app/contracts';
 import { formatToolLabel, formatElapsedSeconds } from '../../shared/session-utils';
@@ -28,19 +29,24 @@ export function RunningCard({ session, onViewProgress, onCancel }: RunningCardPr
         <LinearProgress
           variant="determinate"
           value={progressValue}
-          sx={{ height: 6, borderRadius: 3, mb: 1, bgcolor: 'action.hover' }}
+          sx={{ height: 8, borderRadius: 4, mb: 1, bgcolor: 'action.hover' }}
           aria-label={copy.t('shared.aria.runningProgress', { current: String((session.currentStepIndex ?? 0) + 1), total: String(session.stepCount) })}
         />
 
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+          <CheckCircleIcon color="success" fontSize="small" />
           <Typography variant="caption" color="text.secondary">
             {copy.t('toolPage.progress.stepLabel', {
               current: String((session.currentStepIndex ?? 0) + 1),
               total: String(session.stepCount),
             })}
             {session.currentStepLabel ? ` · ${session.currentStepLabel}` : ''}
-            {session.elapsedSeconds !== undefined ? ` · ${formatElapsedSeconds(session.elapsedSeconds)}` : ''}
           </Typography>
+          {session.elapsedSeconds !== undefined && (
+            <Typography variant="caption" color="text.secondary" role="timer" aria-label={copy.t('toolPage.progress.elapsedTime', { mins: String(Math.floor(session.elapsedSeconds / 60)), secs: String(session.elapsedSeconds % 60) })}>
+              · {formatElapsedSeconds(session.elapsedSeconds)}
+            </Typography>
+          )}
         </Box>
 
         {session.lastArtifactPreview && (

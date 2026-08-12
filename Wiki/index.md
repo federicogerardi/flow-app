@@ -160,3 +160,4 @@ date_updated: 2026-08-12
 | [[overview]] | High-level synthesis (v3) | 2026-08-04 |
 | [[synthesis/worker-gamification-fix-2026-08-08]] | Worker gamification fix — 2 bugs: terminal session crash + XP/credits for failed/cancelled. Implementation plan: 1 file, 2 phases, 7 new tests | 2026-08-08 |
 | [[synthesis/generation-sse-wiring-remediation-2026-08-12]] | Generation SSE & FE wiring unified remediation — 15-file diagnostic (4 audits), 13-file plan (~110 lines): fix duplicate 2N-1→N SSE events, error propagation, label bugs, timer drift, UI disorganization | 2026-08-12 |
+| [[synthesis/generation-ux-ui-refinement-2026-08-12]] | Generation UX/UI refinement — eliminate redirect, inline generation, side-by-side layout, crossfade transitions, visual token alignment. Co-designed by design-ux-architect + design-ui-designer. 3-phase rollout, ~+450 lines. | 2026-08-12 |

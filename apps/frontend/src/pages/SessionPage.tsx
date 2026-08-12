@@ -8,9 +8,7 @@ import { useSession } from '../api/hooks';
 import { api } from '../api/client';
 import { PageHeader } from '../components/PageHeader';
 import { useBreadcrumbs } from '../layout/AppShell';
-import { FeedbackPanel } from '../components/tool/FeedbackPanel';
-import { SessionSummary } from '../components/tool/SessionSummary';
-import type { ArtifactDTO } from '../api/client';
+import { GenerationSlot } from '../components/tool/GenerationSlot';
 import { LoadingSkeleton } from '../components/LoadingSkeleton';
 import { ErrorState } from '../components/ErrorState';
 import { copy } from '@flow-app/copy';
@@ -34,7 +32,6 @@ export default function SessionPage() {
   const { setBreadcrumbs } = useBreadcrumbs();
   const [cancelling, setCancelling] = useState(false);
 
-  // Format tool name for display
   const toolName = session?.toolKey ? formatToolLabel(session.toolKey) : '';
 
   useEffect(() => {
@@ -57,29 +54,22 @@ export default function SessionPage() {
     }
   };
 
-  // Compute duration
-  const startedAt = session?.startedAt ?? null;
-  const completedAt = session?.completedAt ?? null;
-  const durationMs = startedAt && completedAt
-    ? new Date(completedAt).getTime() - new Date(startedAt).getTime()
-    : null;
-
-  if (loading) return <LoadingSkeleton />;
   if (error) return <ErrorState message={error.message} />;
-  if (!session) return <LoadingSkeleton />;
+  if (loading) return <LoadingSkeleton variant="session-detail" />;
+  if (!session) return <LoadingSkeleton variant="session-detail" />;
 
   const isRunning = session.status === 'running';
-  const isCompleted = session.status === 'completed';
-  const isFailed = session.status === 'failed';
-  const isQueued = session.status === 'queued' || session.status === 'draft' || session.status === 'ready';
-
+  const isTerminal = session.status === 'completed' || session.status === 'failed' || session.status === 'cancelled';
+  const durationMs = session.startedAt && session.completedAt
+    ? new Date(session.completedAt).getTime() - new Date(session.startedAt).getTime()
+    : undefined;
   const xpEarned = (session as unknown as Record<string, unknown>).xpEarned as number | undefined;
 
   return (
     <Box>
       <PageHeader
         title={toolName}
-        meta={isCompleted ? (
+        meta={session.status === 'completed' ? (
           <>
             <Chip icon={<CheckCircleIcon />} label={copy.t(`shared.sessionStatus.completed` as any)} color="success" size="small" />
             <Typography variant="caption" color="text.secondary">
@@ -91,35 +81,30 @@ export default function SessionPage() {
         ) : undefined}
       />
 
-      {/* Replayed session — user submitted same inputs as a previous generation */}
       {isReplayed && (
         <Alert severity="info" sx={{ mb: 2 }} role="status" aria-live="polite">
           {copy.t('shared.session.replayedMessage')}
         </Alert>
       )}
 
-      {/* Pending session — friendly "in elaborazione" message */}
-      {isQueued && (
-        <Alert severity="info" sx={{ mb: 2 }} role="status" aria-live="polite">
-          {copy.t('shared.session.queuedMessage')}
-        </Alert>
-      )}
-
-      {/* Metadata card — only for running/failed/pending (completed merges into PageHeader) */}
-      {!isCompleted && (
-        <Card sx={{ mb: 1.5 }} aria-label={copy.t('shared.aria.sessionDetail', { tool: toolName })}>
-          <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: isRunning || isQueued ? 2 : 0 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Typography variant="h3">{copy.t('shared.label.status')}</Typography>
+      <Card sx={{ mb: 1.5 }}>
+        <CardContent>
+          {!isTerminal && (
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Chip
                   label={copy.t(`shared.sessionStatus.${session.status}` as any)}
                   color={statusColorMap[session.status] ?? 'default'}
+                  size="small"
                   aria-label={copy.t(`shared.sessionStatus.${session.status}` as any)}
                 />
+                <Typography variant="caption" color="text.secondary">
+                  {copy.t('shared.label.steps')} {session.stepCount}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {copy.t('shared.label.created')} {new Date(session.createdAt).toLocaleString()}
+                </Typography>
               </Box>
-
-              {/* Cancel button for running sessions */}
               {isRunning && (
                 <Button
                   variant="outlined"
@@ -134,59 +119,26 @@ export default function SessionPage() {
                 </Button>
               )}
             </Box>
+          )}
 
-            {/* Metadata row — for running and queued */}
-            {(isRunning || isQueued) && (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Typography variant="caption" color="text.secondary">{copy.t('shared.label.steps')}</Typography>
-                  <Typography variant="body2" fontWeight={600}>
-                    {session.stepCount}
-                  </Typography>
-                </Box>
+          <GenerationSlot
+            status={session.status}
+            progress={progress}
+            stepArtifacts={stepArtifacts}
+            startedAt={session.startedAt}
+            artifacts={session.artifacts ?? []}
+            workspaceId={workspaceId}
+            produces={session.produces}
+            totalSteps={session.stepCount}
+            durationMs={durationMs ?? undefined}
+            creditCost={(session as unknown as Record<string, unknown>).creditCost as number | undefined}
+            xpEarned={xpEarned}
+            onRetry={() => navigate(`/workspaces/${workspaceId}/tools/${session.toolKey}`)}
+          />
+        </CardContent>
+      </Card>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Typography variant="caption" color="text.secondary">{copy.t('shared.label.created')}</Typography>
-                  <Typography variant="body2">
-                    {new Date(session.createdAt).toLocaleString()}
-                  </Typography>
-                </Box>
-              </Box>
-            )}
-
-            {isRunning && (
-              <Box sx={{ mt: 2 }}>
-                <FeedbackPanel
-                  progress={progress}
-                  status={session.status}
-                  startedAt={session.startedAt}
-                  artifacts={stepArtifacts.map((a) => ({
-                    stepNumber: a.stepNumber,
-                    content: a.content,
-                  } as ArtifactDTO))}
-                />
-              </Box>
-            )}
-
-            {isFailed && (
-              <Box sx={{ mt: 2 }}>
-                <ErrorState message={copy.t('errors.generation.failed')} onRetry={() => navigate(`/workspaces/${workspaceId}/tools/${session.toolKey}`)} />
-              </Box>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {isCompleted && session.artifacts && (
-        <SessionSummary
-          artifacts={session.artifacts}
-          workspaceId={workspaceId}
-          produces={session.produces}
-        />
-      )}
-
-      {/* CTA: New generation with same tool */}
-      {(isCompleted || isFailed || isQueued) && (
+      {isTerminal && (
         <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
           <Button
             variant="contained"

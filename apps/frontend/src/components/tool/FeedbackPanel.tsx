@@ -1,19 +1,10 @@
-import { Box, Typography, LinearProgress, Stack, keyframes } from '@mui/material';
+import { Box, Typography, LinearProgress, Stack, Chip } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import { copy } from '@flow-app/copy';
 import { useEffect, useRef, useState } from 'react';
 import type { ArtifactDTO } from '../../api/client';
-
-const slideInFade = keyframes`
-  from { transform: translateX(-8px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-`;
-
-const stepPulse = keyframes`
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
-`;
+import { slideInFade, stepPulse } from '../../shared/animations';
 
 interface StepProgressData {
   current: number;
@@ -23,9 +14,10 @@ interface StepProgressData {
 interface FeedbackPanelProps {
   progress: StepProgressData | null;
   status: string;
-  /** Artifact content for live previews during generation */
   artifacts?: ArtifactDTO[];
   startedAt?: string | null;
+  layoutMode?: 'compact' | 'side-by-side';
+  totalSteps?: number;
 }
 
 function ElapsedTimer({ startedAt }: { startedAt: number }) {
@@ -73,13 +65,11 @@ function StepIndicator({ index, isCompleted, isActive, total, artifactPreview }:
         borderRadius: 1,
         bgcolor: isActive ? 'action.selected' : 'transparent',
         opacity: isCompleted || isActive ? 1 : 0.4,
-        // L5: slideInFade on completed, stepPulse on active
         animation: isCompleted
           ? `${slideInFade} 300ms ease-out`
           : isActive
             ? `${stepPulse} 1.5s ease-in-out infinite`
             : 'none',
-        // L8: respect reduced motion
         '@media (prefers-reduced-motion: reduce)': {
           animation: 'none',
         },
@@ -125,19 +115,58 @@ function StepIndicator({ index, isCompleted, isActive, total, artifactPreview }:
   );
 }
 
-export function FeedbackPanel({ progress, artifacts = [], startedAt }: FeedbackPanelProps) {
+export function FeedbackPanel({ progress, status, artifacts = [], startedAt, layoutMode = 'compact', totalSteps }: FeedbackPanelProps) {
   const timerStartMs = startedAt ? new Date(startedAt).getTime() : Date.now();
 
   if (!progress) {
+    const isQueued = status === 'queued' || status === 'draft';
+
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4 }}>
-        <LinearProgress sx={{ width: '60%', mb: 2 }} aria-label={copy.t('toolPage.progress.starting')} />
-        <Typography variant="body2" color="text.secondary">
-          {copy.t('toolPage.progress.starting')}
+        {totalSteps != null && totalSteps > 1 && (
+          <Chip
+            label={copy.t('toolPage.progress.stepCount', { count: String(totalSteps) })}
+            size="small"
+            variant="outlined"
+            color="primary"
+            sx={{ mb: 2 }}
+          />
+        )}
+        <LinearProgress
+          sx={{ width: '60%', mb: 2 }}
+          aria-label={isQueued ? copy.t('toolPage.progress.queued') : copy.t('toolPage.progress.starting')}
+        />
+        <Typography variant="body2" color="text.secondary" textAlign="center">
+          {isQueued ? copy.t('toolPage.progress.queued') : copy.t('toolPage.progress.starting')}
         </Typography>
+        {isQueued && (
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+            {copy.t('toolPage.progress.queuedHint')}
+          </Typography>
+        )}
       </Box>
     );
   }
+
+  const stepList = (
+    <Stack spacing={0.5}>
+      {Array.from({ length: progress.total }, (_, i) => {
+        const artifact = artifacts.find((a) => a.stepNumber === i + 1);
+        return (
+          <StepIndicator
+            key={i}
+            index={i}
+            isCompleted={i < progress.current}
+            isActive={i === progress.current}
+            total={progress.total}
+            artifactPreview={artifact?.content?.slice(0, 150)}
+          />
+        );
+      })}
+    </Stack>
+  );
+
+  const latestArtifact = artifacts.length > 0 ? artifacts[artifacts.length - 1] : null;
 
   return (
     <Box role="status" aria-live="polite">
@@ -168,21 +197,53 @@ export function FeedbackPanel({ progress, artifacts = [], startedAt }: FeedbackP
         />
       </Box>
 
-      <Stack spacing={0.5}>
-        {Array.from({ length: progress.total }, (_, i) => {
-          const artifact = artifacts.find((a) => a.stepNumber === i + 1);
-          return (
-            <StepIndicator
-              key={i}
-              index={i}
-              isCompleted={i < progress.current}
-              isActive={i === progress.current}
-              total={progress.total}
-              artifactPreview={artifact?.content?.slice(0, 150)}
-            />
-          );
-        })}
-      </Stack>
+      {layoutMode === 'side-by-side' ? (
+        <Box sx={{ display: 'flex', gap: 3, mt: 2, flexDirection: { xs: 'column', md: 'row' } }}>
+          <Box sx={{ flex: { md: '0 0 40%' }, minWidth: 0 }}>
+            {stepList}
+          </Box>
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              p: 2,
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 1,
+              bgcolor: 'grey.50',
+              maxHeight: { md: '60vh' },
+              overflow: 'auto',
+            }}
+            aria-live="polite"
+            aria-label={copy.t('toolPage.progress.livePreviewAria')}
+          >
+            {latestArtifact?.content ? (
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                  {copy.t('toolPage.progress.lastCompletedStep', { step: String(latestArtifact.stepNumber) })}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  component="pre"
+                  sx={{
+                    whiteSpace: 'pre-wrap',
+                    fontFamily: 'inherit',
+                    m: 0,
+                  }}
+                >
+                  {latestArtifact.content}
+                </Typography>
+              </Box>
+            ) : (
+              <Typography variant="body2" color="text.disabled" fontStyle="italic">
+                {copy.t('toolPage.progress.waitingForContent')}
+              </Typography>
+            )}
+          </Box>
+        </Box>
+      ) : (
+        stepList
+      )}
     </Box>
   );
 }

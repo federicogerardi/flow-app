@@ -1,4 +1,29 @@
 
+## [2026-08-12] plan | Generation UX/UI Refinement
+
+**Premise**: the structural SSE wiring fix ([[synthesis/generation-sse-wiring-remediation-2026-08-12|13 files, ~110 lines]]) is confirmed. The generation flow is functionally correct but has UX inefficiencies: unnecessary redirects, redundant loading states, visual jumps between states, and disconnected progress/results presentation.
+
+**Co-designed by two agents**:
+- **design-ux-architect**: UX flow simplification — eliminate redirect (ToolPageLayout→SessionPage), inline generation on tool page, merge preparation states, deep-linking via `?s=sessionId`
+- **design-ui-designer**: UI visual refinement — GenerationSlot crossfade wrapper, side-by-side layout with live preview, enhanced FeedbackPanel states, RunningCard visual token alignment, centralized animations
+
+**Unified 4-phase plan**: ~+450 lines across 12 files (3 new, 9 modified).
+
+| Phase | Scope | Files | Risk |
+|-------|-------|-------|------|
+| 1 | Shared infrastructure | `animations.ts` (new), copy keys (+4) | Low |
+| 2 | FeedbackPanel + RunningCard | `FeedbackPanel.tsx`, `RunningCard.tsx` | Medium (opt-in) |
+| 3 | GenerationSlot + SessionPage | `GenerationSlot.tsx` (new), `SessionPage.tsx` (-60/+30) | Medium |
+| 4 | Inline generation | `InlineSessionTracker.tsx` (new), `ToolPageLayout.tsx`, `derive-ui-state.ts` | Medium (highest UX impact) |
+
+**Key decisions**:
+- `toolPageMachine` needs zero changes — existing `RESET` in `submitted` state handles "Nuova generazione" in-place
+- SessionPage remains at `/sessions/:id` for deep-linking and cross-tab access
+- Inline flow uses `?s=sessionId` query param (replaceState, no page reload)
+- FeedbackPanel stays in DOM with `visibility:hidden` during crossfade (accessibility: screen readers don't lose live region)
+
+**Wiki**: synthesis at [[synthesis/generation-ux-ui-refinement-2026-08-12]].
+
 ## [2026-08-12] plan | Generation SSE & FE Wiring — Unified Remediation
 
 **Diagnostic**: end-to-end audit of 15 files across 4 surfaces (backend worker, SSE hooks, SessionPage/FeedbackPanel, SessionList/cards, ToolPageLayout/machine). Two agents (engineering-backend-architect + expert-react-frontend-engineer.agent) co-designed remediation.

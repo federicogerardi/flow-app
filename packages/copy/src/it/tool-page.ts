@@ -39,6 +39,11 @@ export const toolPage = {
     stepActive:       'Step {current} di {total}: in corso',
     stepPending:      'Step {current} di {total}: in attesa',
     elapsedTime:      'Tempo trascorso: {mins}m {secs}s',
+    queued:           'In attesa di elaborazione...',
+    queuedHint:       'La generazione inizierà a breve.',
+    waitingForContent:'Il contenuto apparirà qui man mano che viene generato...',
+    livePreviewAria:  'Anteprima live del contenuto in generazione',
+    lastCompletedStep:'Ultimo step completato ({step})',
   },
   feedback: {
     sessionStarted:   'Generazione avviata',
@@ -79,5 +84,8 @@ export const toolPage = {
     nameHelperText:   'Facoltativo. Lascia vuoto per usare il tipo come nome.',
     confirmCta:       'Promuovi',
     saving:           'Promozione in corso...',
+  },
+  generation: {
+    started:         'Generazione avviata',
   },
 } as const;

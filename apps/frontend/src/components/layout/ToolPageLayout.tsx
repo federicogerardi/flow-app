@@ -1,13 +1,15 @@
 import { Box, Button, Card, CardContent, Typography, Alert, LinearProgress } from '@mui/material';
 import { useMachine } from '@xstate/react';
-import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router';
 import { api } from '../../api/client';
 import { PageHeader } from '../PageHeader';
 import { useBreadcrumbs } from '../../layout/AppShell';
 import { ReadinessSnapshot } from '../tool/ReadinessSnapshot';
 import { SetupPanel, fetchToolDefinitions } from '../tool/SetupPanel';
 import { toolPageMachine } from '../../machines/tool-page-machine';
+import { InlineSessionTracker } from '../tool/InlineSessionTracker';
+import { useToast } from '../gamification/ToastSystem';
 import type { ToolDefinition, TextInput, FileInput, AssetInput } from '../../tool-inputs';
 import { copy } from '@flow-app/copy';
 import { AssetPicker } from '../shared/AssetPicker';
@@ -16,7 +18,7 @@ import { ASSET_TYPE_LABELS } from '../../constants/assets';
 
 // ── UI state derivation ────────────────────────────────────────────────────────
 
-type UIState = 'loading' | 'setup' | 'submitting';
+type UIState = 'loading' | 'setup' | 'submitting' | 'generating';
 
 function deriveUIState(state: { value: unknown }): UIState {
   const v = String(state.value);
@@ -24,7 +26,7 @@ function deriveUIState(state: { value: unknown }): UIState {
   if (v === 'configuring') return 'setup';
   if (v === 'ready') return 'setup';
   if (v === 'submitting') return 'submitting';
-  if (v === 'submitted') return 'submitting'; // brief flash before redirect
+  if (v === 'submitted') return 'generating';
   return 'loading';
 }
 
@@ -37,29 +39,44 @@ interface ToolPageLayoutProps {
 
 export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [state, send] = useMachine(toolPageMachine);
   const [workspaceAssets, setWorkspaceAssets] = useState<Array<{ id: string; assetType: string; name: string | null; createdAt: string }>>([]);
   const { setBreadcrumbs } = useBreadcrumbs();
-  const navigateRef = useRef(navigate);
   const [stuck, setStuck] = useState(false);
-
-  // Keep navigate stable in ref
-  useEffect(() => { navigateRef.current = navigate; }, [navigate]);
+  const { showInfo } = useToast();
+  const urlSessionId = searchParams.get('s');
 
   const uiState = deriveUIState(state);
   const { tool, inputs, session, replayed, error } = state.context;
 
-  // ── Redirect to SessionPage after successful submit ────────────────────────
+  // ── URL management (I4) ──────────────────────────────────────────────────
   useEffect(() => {
     if (state.matches('submitted') && session?.id) {
-      const query = replayed ? '?replayed=true' : '';
-      navigateRef.current(`/workspaces/${workspaceId}/sessions/${session.id}${query}`);
+      const query = replayed ? `?s=${session.id}&replayed=true` : `?s=${session.id}`;
+      window.history.replaceState(null, '', `${window.location.pathname}${query}`);
     }
-  }, [state, session?.id, workspaceId, replayed]);
+    if (!state.matches('submitted') && !state.matches('submitting')) {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('s')) {
+        url.searchParams.delete('s');
+        url.searchParams.delete('replayed');
+        window.history.replaceState(null, '', url.pathname);
+      }
+    }
+  }, [state, session?.id, replayed]);
 
-  // ── Escape hatch: if stuck in submitted state for 5s, show retry button ────
+  // ── Toast on submit (I5) ─────────────────────────────────────────────────
   useEffect(() => {
-    if (!state.matches('submitted')) {
+    if (state.matches('submitted')) {
+      showInfo(copy.t('toolPage.generation.started'));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.matches('submitted')]);
+
+  // ── Escape hatch ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!state.matches('submitted') && !state.matches('submitting')) {
       setStuck(false);
       return;
     }
@@ -83,12 +100,10 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
 
   const title = toolKey?.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) ?? 'Tool';
 
-  // Debug: write phase to document title
   useEffect(() => {
     document.title = `[${uiState}] ${title}${session?.id ? ` #${session.id.slice(0, 8)}` : ''}`;
   }, [uiState, title, session?.id]);
 
-  // Set breadcrumbs
   useEffect(() => {
     setBreadcrumbs([
       { label: copy.t('workspace.nav.home'), path: `/workspaces/${workspaceId}` },
@@ -96,12 +111,12 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
     ]);
   }, [workspaceId, title, setBreadcrumbs]);
 
-  // Load tool definition via LOAD event — resets on toolKey change
+  // Load tool definition
   useEffect(() => {
     let cancelled = false;
     fetchToolDefinitions(toolKey)
       .then((defs) => {
-        if (cancelled) return;  // ignore stale responses
+        if (cancelled) return;
         const toolDef: ToolDefinition = {
           key: toolKey,
           label: title,
@@ -114,8 +129,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
         send({ type: 'LOAD', tool: toolDef, workspaceId });
       })
       .catch(() => {
-        if (cancelled) return;  // ignore stale errors
-        // Fallback: create empty tool def
+        if (cancelled) return;
         const toolDef: ToolDefinition = {
           key: toolKey,
           label: title,
@@ -137,7 +151,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
       .catch(() => {});
   }, [workspaceId]);
 
-  // Handle input changes — send CONFIGURE with partial inputs
+  // Handle input changes
   const handleInputChange = (key: string, value: string) => {
     send({ type: 'CONFIGURE', inputs: { text: { [key]: value } } });
   };
@@ -146,7 +160,6 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
     if (file) {
       send({ type: 'CONFIGURE', inputs: { files: { [key]: file } } });
     } else {
-      // Remove file — send updated files map without that key
       const newFiles = { ...inputs.files };
       delete newFiles[key];
       send({ type: 'CONFIGURE', inputs: { files: newFiles } });
@@ -154,7 +167,6 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
   };
 
   const handleAssetSelectionChange = (selectedIds: string[]) => {
-    // Group by asset type
     const selectedAssetsByType: Record<string, string[]> = {};
     for (const asset of workspaceAssets) {
       if (selectedIds.includes(asset.id)) {
@@ -167,11 +179,30 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
     send({ type: 'CONFIGURE', inputs: { selectedAssetIds: selectedIds, selectedAssetsByType } });
   };
 
+  // ── Deep-link: render session inline if ?s= is present ──────────────────
+  if (urlSessionId && uiState !== 'generating') {
+    return (
+      <Box>
+        <PageHeader title={title} />
+        <InlineSessionTracker
+          sessionId={urlSessionId}
+          initialSession={{ id: urlSessionId, toolKey, workspaceId, status: 'running', stepCount: tool?.stepCount ?? 1, createdAt: '', artifacts: [] } as unknown as import('../../api/client').SessionDTO}
+          workspaceId={workspaceId}
+          produces={tool?.label}
+          toolKey={toolKey}
+          onReset={() => {
+            window.history.replaceState(null, '', window.location.pathname);
+            send({ type: 'RESET' });
+          }}
+        />
+      </Box>
+    );
+  }
+
   return (
     <Box>
       <PageHeader title={title} />
 
-      {/* Quota errors */}
       {error && (error.code === 'QUOTA_EXCEEDED' || error.code === 'ARTIFACT_GATE_EXCEEDED') && (
         <Alert severity="error" sx={{ mb: 2 }} role="alert">{error.message}</Alert>
       )}
@@ -181,19 +212,17 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
         </Alert>
       )}
 
-      {/* UI State: loading */}
       {uiState === 'loading' && (
         <Card>
-          <CardContent>
-            <LinearProgress sx={{ mb: 3 }} />
-            <Typography variant="body2" color="text.secondary" textAlign="center">
+          <CardContent sx={{ textAlign: 'center', py: 4 }}>
+            <LinearProgress sx={{ width: '60%', mx: 'auto', mb: 2 }} />
+            <Typography variant="body2" color="text.secondary">
               {copy.t('shared.status.loading')}
             </Typography>
           </CardContent>
         </Card>
       )}
 
-      {/* UI State: setup */}
       {uiState === 'setup' && tool && (
         <Card>
           <CardContent>
@@ -256,16 +285,18 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
         </Card>
       )}
 
-      {/* UI State: submitting */}
       {uiState === 'submitting' && (
         <Card>
-          <CardContent>
-            <LinearProgress sx={{ mb: 2 }} />
-            <Typography variant="body2" color="text.secondary" textAlign="center">
+          <CardContent sx={{ textAlign: 'center', py: 4 }}>
+            <LinearProgress sx={{ width: '60%', mx: 'auto', mb: 2 }} />
+            <Typography variant="body1" fontWeight={600} sx={{ mb: 0.5 }}>
               {copy.t('toolPage.cta.submitting')}
             </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {copy.t('toolPage.progress.starting')}
+            </Typography>
             {stuck && (
-              <Box sx={{ mt: 2, textAlign: 'center' }}>
+              <Box sx={{ mt: 2 }}>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   {copy.t('shared.status.error')}
                 </Typography>
@@ -276,6 +307,17 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {uiState === 'generating' && session?.id && (
+        <InlineSessionTracker
+          sessionId={session.id}
+          initialSession={{ ...session, workspaceId, toolKey } as any}
+          workspaceId={workspaceId}
+          produces={tool?.label}
+          toolKey={toolKey}
+          onReset={() => send({ type: 'RESET' })}
+        />
       )}
     </Box>
   );
