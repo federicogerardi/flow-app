@@ -493,3 +493,4 @@ The `SessionList` replaces the static "Recent Sessions" section in the `Workspac
 - [[Session Machine (XState v5)]] — Session lifecycle
 - [[ToolPage Machine (XState v5)]] — Tool page SSE integration
 - [[sources/USER-STORIES]] — US-W03 (session history), US-GF01-04 (workflow)
+- [[synthesis/generation-sse-wiring-remediation-2026-08-12]] — 2026-08-12 unified remediation: B2 label fix, B3 onStarted, M1-M3 card cleanup

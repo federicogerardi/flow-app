@@ -41,6 +41,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
   const [workspaceAssets, setWorkspaceAssets] = useState<Array<{ id: string; assetType: string; name: string | null; createdAt: string }>>([]);
   const { setBreadcrumbs } = useBreadcrumbs();
   const navigateRef = useRef(navigate);
+  const [stuck, setStuck] = useState(false);
 
   // Keep navigate stable in ref
   useEffect(() => { navigateRef.current = navigate; }, [navigate]);
@@ -55,6 +56,16 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
       navigateRef.current(`/workspaces/${workspaceId}/sessions/${session.id}${query}`);
     }
   }, [state, session?.id, workspaceId, replayed]);
+
+  // ── Escape hatch: if stuck in submitted state for 5s, show retry button ────
+  useEffect(() => {
+    if (!state.matches('submitted')) {
+      setStuck(false);
+      return;
+    }
+    const timer = setTimeout(() => setStuck(true), 5000);
+    return () => clearTimeout(timer);
+  }, [state]);
 
   // Derived readiness
   const textMissing = (tool?.textInputs ?? []).some(
@@ -162,7 +173,12 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
 
       {/* Quota errors */}
       {error && (error.code === 'QUOTA_EXCEEDED' || error.code === 'ARTIFACT_GATE_EXCEEDED') && (
-        <Alert severity="error" sx={{ mb: 2 }}>{error.message}</Alert>
+        <Alert severity="error" sx={{ mb: 2 }} role="alert">{error.message}</Alert>
+      )}
+      {error && error.code !== 'QUOTA_EXCEEDED' && error.code !== 'ARTIFACT_GATE_EXCEEDED' && (
+        <Alert severity="error" sx={{ mb: 2 }} role="alert">
+          {copy.t('errors.generation.failedToStart')}: {error.message}
+        </Alert>
       )}
 
       {/* UI State: loading */}
@@ -248,6 +264,16 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
             <Typography variant="body2" color="text.secondary" textAlign="center">
               {copy.t('toolPage.cta.submitting')}
             </Typography>
+            {stuck && (
+              <Box sx={{ mt: 2, textAlign: 'center' }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  {copy.t('shared.status.error')}
+                </Typography>
+                <Button variant="outlined" size="small" onClick={() => send({ type: 'RESET' })}>
+                  {copy.t('shared.actions.retry')}
+                </Button>
+              </Box>
+            )}
           </CardContent>
         </Card>
       )}

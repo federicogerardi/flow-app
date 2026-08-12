@@ -2,7 +2,7 @@ import { Box, Typography, LinearProgress, Stack, keyframes } from '@mui/material
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import { copy } from '@flow-app/copy';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ArtifactDTO } from '../../api/client';
 
 const slideInFade = keyframes`
@@ -25,6 +25,7 @@ interface FeedbackPanelProps {
   status: string;
   /** Artifact content for live previews during generation */
   artifacts?: ArtifactDTO[];
+  startedAt?: string | null;
 }
 
 function ElapsedTimer({ startedAt }: { startedAt: number }) {
@@ -124,12 +125,8 @@ function StepIndicator({ index, isCompleted, isActive, total, artifactPreview }:
   );
 }
 
-export function FeedbackPanel({ progress, status, artifacts = [] }: FeedbackPanelProps) {
-  const [startedAt] = useState(() => Date.now());
-
-  if (status === 'completed' || status === 'failed') {
-    return null; // SessionSummary handles final state
-  }
+export function FeedbackPanel({ progress, artifacts = [], startedAt }: FeedbackPanelProps) {
+  const timerStartMs = startedAt ? new Date(startedAt).getTime() : Date.now();
 
   if (!progress) {
     return (
@@ -153,7 +150,7 @@ export function FeedbackPanel({ progress, status, artifacts = [] }: FeedbackPane
             <Typography variant="body2" color="text.secondary">
               {progress.current}/{progress.total}
             </Typography>
-            <ElapsedTimer startedAt={startedAt} />
+            <ElapsedTimer startedAt={timerStartMs} />
           </Box>
         </Box>
         <LinearProgress

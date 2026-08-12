@@ -330,3 +330,4 @@ Legacy note: older snippets may still mention `canStart`; treat it as a backward
 - [[sources/PRD]] — FR-W01, FR-W03 (resume), FR-W04 (cancel)
 - [[sources/STARTUP]] — Ordered Step Chain
 - [[sources/USER-STORIES]] — US-GF01 to US-GF04
+- [[synthesis/generation-sse-wiring-remediation-2026-08-12]] — 2026-08-12 unified remediation: B1 duplicate events fix (subscriber→count filter), failSession action

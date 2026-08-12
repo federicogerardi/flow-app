@@ -356,3 +356,4 @@ function ToolIntro({ tool }: { tool: ToolDefinition }) {
 - [[Asset Promotion]] — Promote button in SessionSummary
 - [[Session List - Live Status]] — Cross-tab live session tracking
 - [[sources/USER-STORIES]] — US-T01 to US-T10, US-GF01 to US-GF04
+- [[synthesis/generation-sse-wiring-remediation-2026-08-12]] — 2026-08-12 unified remediation: H3 error alerts, L3 dead code removal, H1 timer fix

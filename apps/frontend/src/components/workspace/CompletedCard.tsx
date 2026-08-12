@@ -5,6 +5,7 @@ import { copy } from '@flow-app/copy';
 import { PromotedBadge } from '../shared/PromotedBadge';
 import { PromoteActionButton } from '../shared/PromoteActionButton';
 import type { SessionListItemDTO } from '@flow-app/contracts';
+import { formatToolLabel, formatElapsedSeconds } from '../../shared/session-utils';
 
 interface CompletedCardProps {
   session: SessionListItemDTO;
@@ -13,14 +14,6 @@ interface CompletedCardProps {
   onPromote?: () => void;
   /** If true, the artifact is already promoted — shows a disabled "Promosso ad asset" button */
   promoted?: boolean;
-}
-
-function formatDuration(seconds?: number): string {
-  if (seconds === undefined || seconds === null) return '';
-  if (seconds < 60) return `${seconds}s`;
-  const min = Math.floor(seconds / 60);
-  const sec = seconds % 60;
-  return `${min}m ${sec}s`;
 }
 
 function formatDate(dateStr?: string): string {
@@ -34,10 +27,10 @@ function formatDate(dateStr?: string): string {
 }
 
 export function CompletedCard({ session, onView, onDownload, onPromote, promoted }: CompletedCardProps) {
-  const toolLabel = session.toolKey.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const toolLabel = formatToolLabel(session.toolKey);
 
   return (
-    <Card variant="outlined">
+    <Card variant="outlined" sx={{ borderLeft: 3, borderLeftColor: 'success.main' }}>
       <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
           <Typography variant="body1" fontWeight={600}>
@@ -61,7 +54,7 @@ export function CompletedCard({ session, onView, onDownload, onPromote, promoted
 
         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
           {session.stepCount} {session.stepCount === 1 ? copy.t('shared.sessionStatus.step') : copy.t('shared.sessionStatus.steps')}
-          {session.durationSeconds !== undefined ? ` · ${formatDuration(session.durationSeconds)}` : ''}
+          {session.durationSeconds !== undefined ? ` · ${formatElapsedSeconds(session.durationSeconds)}` : ''}
         </Typography>
 
         {session.lastArtifactPreview && (

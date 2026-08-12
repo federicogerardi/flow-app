@@ -15,6 +15,7 @@ import { LoadingSkeleton } from '../components/LoadingSkeleton';
 import { ErrorState } from '../components/ErrorState';
 import { copy } from '@flow-app/copy';
 import { statusColorMap } from '../shared/statusColors';
+import { formatToolLabel } from '../shared/session-utils';
 
 function formatDurationMs(ms: number): string {
   if (ms < 1000) return `${ms}ms`;
@@ -34,7 +35,7 @@ export default function SessionPage() {
   const [cancelling, setCancelling] = useState(false);
 
   // Format tool name for display
-  const toolName = (session?.toolKey ?? '').replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const toolName = session?.toolKey ? formatToolLabel(session.toolKey) : '';
 
   useEffect(() => {
       setBreadcrumbs([
@@ -158,6 +159,7 @@ export default function SessionPage() {
                 <FeedbackPanel
                   progress={progress}
                   status={session.status}
+                  startedAt={session.startedAt}
                   artifacts={stepArtifacts.map((a) => ({
                     stepNumber: a.stepNumber,
                     content: a.content,

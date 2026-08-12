@@ -1,4 +1,24 @@
 
+## [2026-08-12] plan | Generation SSE & FE Wiring — Unified Remediation
+
+**Diagnostic**: end-to-end audit of 15 files across 4 surfaces (backend worker, SSE hooks, SessionPage/FeedbackPanel, SessionList/cards, ToolPageLayout/machine). Two agents (engineering-backend-architect + expert-react-frontend-engineer.agent) co-designed remediation.
+
+**Root cause**: XState `actor.subscribe()` publishes on every state transition — `persistingStep→stepCompleted` (correct) + `stepCompleted→executingStep` (duplicate with inflated stepNumber/progress). For N steps: `2N-1` events instead of N.
+
+**19 findings** across 4 severity tiers:
+- 🔴 CRITICAL (3): B1 duplicate SSE events, B2 currentStepLabel always undefined, B3 session_started ignored
+- 🟠 HIGH (5): H1 timer from mount time, H2 REST artifacts lost, H3 non-quota errors silent, H4 SSE payloads discarded, H5 three different architectures
+- 🟡 MEDIUM (5): M1-M3 toolLabel/formatElapsed duplicated, M4 stuck screen risk, M5 file read errors silent
+- 🔵 LOW (3): L1 duplicate validation, L2 dead code, L3 unreachable check
+
+**Unified plan**: 13 files, ~110 net lines.
+- Backend: `session-machine.ts` (+failSession action), `session-worker.ts` (subscriber refactored to count-based filter → exactly N events)
+- Frontend: new `shared/session-utils.ts` (2 pure functions), `hooks.ts` (3 fixes), `FeedbackPanel.tsx` (startedAt prop), `SessionPage.tsx`, 4 card files, `ToolPageLayout.tsx`, `tool-page-machine.ts`
+
+**Deferred**: full hook unification, duplicated validation (L1), queuePosition, xpEarned.
+
+**Wiki**: synthesis at [[synthesis/generation-sse-wiring-remediation-2026-08-12]], backlinks on [[API Client + SSE Client]], [[Session Machine (XState v5)]], [[ToolPage Machine (XState v5)]], [[Session List - Live Status]], [[SessionPage]], [[Tool UX Architecture]].
+
 ## [2026-08-11] fix | Proactive token refresh — eliminates 12×401 burst pattern
 
 **Root cause**: `expiresIn` (900s) returned by every auth endpoint (`POST /api/auth/login`, `/register`, `/refresh`) was never consumed by the frontend. The access token silently expired after 15 minutes, causing the next batch of SWR requests (12 endpoints in parallel: workspaces, sessions×4, members, assets, tools, profile, credits) to all receive 401 before the `POST /api/auth/refresh` dance completed. This wasted ~48 backend 401 cycles per hour of active use.

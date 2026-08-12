@@ -2,7 +2,7 @@
 type: index
 tags:
   - wiki/index
-date_updated: 2026-08-11
+date_updated: 2026-08-12
 ---
 
 # Wiki Index — Flow App
@@ -159,3 +159,4 @@ date_updated: 2026-08-11
 | [[synthesis/project-improvement-ui-2026-08-08]] | Project Improvement UI — active findings collection for the 2026-08-08 improvement session. Baseline audit: 48 .tsx files, 288 sx={{ }}, 4 hardcoded gradients, 0 CSS modules | 2026-08-08 |
 | [[overview]] | High-level synthesis (v3) | 2026-08-04 |
 | [[synthesis/worker-gamification-fix-2026-08-08]] | Worker gamification fix — 2 bugs: terminal session crash + XP/credits for failed/cancelled. Implementation plan: 1 file, 2 phases, 7 new tests | 2026-08-08 |
+| [[synthesis/generation-sse-wiring-remediation-2026-08-12]] | Generation SSE & FE wiring unified remediation — 15-file diagnostic (4 audits), 13-file plan (~110 lines): fix duplicate 2N-1→N SSE events, error propagation, label bugs, timer drift, UI disorganization | 2026-08-12 |

@@ -1,6 +1,7 @@
 import { Box, Card, CardContent, Typography, Button, Chip } from '@mui/material';
 import { copy } from '@flow-app/copy';
 import type { SessionListItemDTO } from '@flow-app/contracts';
+import { formatToolLabel } from '../../shared/session-utils';
 
 interface QueuedCardProps {
   session: SessionListItemDTO;
@@ -8,7 +9,7 @@ interface QueuedCardProps {
 }
 
 export function QueuedCard({ session, onCancel }: QueuedCardProps) {
-  const toolLabel = session.toolKey.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const toolLabel = formatToolLabel(session.toolKey);
 
   return (
     <Card variant="outlined" sx={{ opacity: 0.7 }}>

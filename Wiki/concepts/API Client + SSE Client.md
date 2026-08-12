@@ -331,3 +331,4 @@ function useWorkspaces() {
 - [[ToolPage Machine (XState v5)]] — SSE consumption in state machine
 - [[Database Schema]] — resource shapes match table schemas
 - [[synthesis/railway-deploy-40x-2026-08-08]] — 401 token refresh retry analysis, deferred auth SWR guard
+- [[synthesis/generation-sse-wiring-remediation-2026-08-12]] — 2026-08-12 unified remediation: B2 label fix, B3 onStarted, H2 REST seed

@@ -63,6 +63,14 @@ export const sessionMachine = setup({
     completeSession: ({ context }) => {
       context.session.apply({ type: 'COMPLETE' });
     },
+    failSession: ({ context, event }) => {
+      const err = (event as unknown as { error: Error & { code?: string } }).error;
+      context.session.apply({
+        type: 'FAIL',
+        errorCode: err?.code ?? 'SESSION_FAILED',
+        errorMessage: err?.message ?? 'Session failed',
+      });
+    },
   },
 }).createMachine({
   id: 'session',
@@ -111,7 +119,7 @@ export const sessionMachine = setup({
               target: 'persistingStep',
               actions: ['updateStepResults', 'callApply'],
             },
-            onError: { target: '#session.failed' },
+            onError: { target: '#session.failed', actions: 'failSession' },
           },
         },
         persistingStep: {
@@ -119,7 +127,7 @@ export const sessionMachine = setup({
             src: 'persistSession',
             input: ({ context }) => ({ session: context.session }),
             onDone: { target: 'stepCompleted' },
-            onError: { target: '#session.failed' },
+            onError: { target: '#session.failed', actions: 'failSession' },
           },
         },
         stepCompleted: {

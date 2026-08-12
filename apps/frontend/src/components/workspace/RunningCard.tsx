@@ -1,6 +1,7 @@
 import { Box, Card, CardContent, Typography, Button, LinearProgress, Chip } from '@mui/material';
 import { copy } from '@flow-app/copy';
 import type { SessionListItemDTO } from '@flow-app/contracts';
+import { formatToolLabel, formatElapsedSeconds } from '../../shared/session-utils';
 
 interface RunningCardProps {
   session: SessionListItemDTO;
@@ -8,16 +9,8 @@ interface RunningCardProps {
   onCancel?: () => void;
 }
 
-function formatElapsed(seconds?: number): string {
-  if (seconds === undefined || seconds === null) return '';
-  if (seconds < 60) return `${seconds}s`;
-  const min = Math.floor(seconds / 60);
-  const sec = seconds % 60;
-  return `${min}m ${sec}s`;
-}
-
 export function RunningCard({ session, onViewProgress, onCancel }: RunningCardProps) {
-  const toolLabel = session.toolKey.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const toolLabel = formatToolLabel(session.toolKey);
   const progressValue = session.currentStepIndex !== undefined && session.stepCount > 0
     ? ((session.currentStepIndex + 1) / session.stepCount) * 100
     : 0;
@@ -46,7 +39,7 @@ export function RunningCard({ session, onViewProgress, onCancel }: RunningCardPr
               total: String(session.stepCount),
             })}
             {session.currentStepLabel ? ` · ${session.currentStepLabel}` : ''}
-            {session.elapsedSeconds !== undefined ? ` · ${formatElapsed(session.elapsedSeconds)}` : ''}
+            {session.elapsedSeconds !== undefined ? ` · ${formatElapsedSeconds(session.elapsedSeconds)}` : ''}
           </Typography>
         </Box>
 

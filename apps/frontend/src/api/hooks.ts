@@ -37,11 +37,31 @@ export function useSession(sessionId: string | null) {
     setError(null);
     setStepArtifacts([]);
     api.getSession(sessionId)
-      .then(setSession)
+      .then((session) => {
+        setSession(session);
+        if (session.artifacts?.length) {
+          setStepArtifacts(
+            session.artifacts.map((a) => ({
+              stepNumber: a.stepNumber,
+              content: a.content,
+            })),
+          );
+        }
+      })
       .catch(setError)
       .finally(() => setLoading(false));
 
     const unsubscribe = sseClient.connect(sessionId, {
+      onStarted: (data) => {
+        setSession((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            status: 'running',
+            startedAt: data.startedAt as string,
+          };
+        });
+      },
       onStep: (data) => {
         setProgress(data.progress as StepProgress);
         const artifact = data.artifact as Record<string, unknown> | null;
@@ -102,6 +122,12 @@ export function useLiveSession(sessionId: string | null) {
 
     // SSE subscription for live updates
     const unsubscribe = sseClient.connect(sessionId, {
+      onStarted: () => {
+        setLiveSession((prev) => {
+          if (!prev) return prev;
+          return { ...prev, status: 'running' };
+        });
+      },
       onStep: (data) => {
         const progress = data.progress as StepProgress;
         setLiveSession((prev) => {
@@ -109,7 +135,7 @@ export function useLiveSession(sessionId: string | null) {
           return {
             ...prev,
             currentStepIndex: progress.current,
-            currentStepLabel: progress.label,
+            currentStepLabel: data.stepLabel as string | undefined,
             lastArtifactPreview: (data.artifact as Record<string, unknown>)?.content
               ? String((data.artifact as Record<string, unknown>).content).slice(0, 150)
               : prev.lastArtifactPreview,

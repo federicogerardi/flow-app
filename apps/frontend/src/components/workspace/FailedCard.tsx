@@ -2,6 +2,7 @@ import { Box, Card, CardContent, Typography, Button, Chip } from '@mui/material'
 import ErrorIcon from '@mui/icons-material/Error';
 import { copy } from '@flow-app/copy';
 import type { SessionListItemDTO } from '@flow-app/contracts';
+import { formatToolLabel } from '../../shared/session-utils';
 
 interface FailedCardProps {
   session: SessionListItemDTO;
@@ -9,7 +10,7 @@ interface FailedCardProps {
 }
 
 export function FailedCard({ session, onRetry }: FailedCardProps) {
-  const toolLabel = session.toolKey.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const toolLabel = formatToolLabel(session.toolKey);
 
   return (
     <Card variant="outlined" sx={{ borderLeft: 3, borderLeftColor: 'error.main' }}>

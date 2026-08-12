@@ -225,3 +225,4 @@ function ToolPageLayout({ workspaceId, toolKey }: Props) {
 - [[Session Machine (XState v5)]] — backend equivalent machine
 - [[Tool UX Architecture]] — setup-only UX, redirect to SessionPage
 - [[SessionPage]] — canonical post-submit destination for progress + results
+- [[synthesis/generation-sse-wiring-remediation-2026-08-12]] — 2026-08-12 unified remediation: M4 stuck-screen escape, M5 file read errors

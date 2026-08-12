@@ -147,3 +147,4 @@ On `completed` status, renders:
 - [[Session Machine (XState v5)]] — SSE events consumed by useSession
 - [[Session]] — Session aggregate root with lifecycle states
 - [[Tool UX Architecture]] — 2026-08-08 simplification: redirect from ToolPage to SessionPage
+- [[synthesis/generation-sse-wiring-remediation-2026-08-12]] — 2026-08-12 unified remediation: H1 startedAt timer, H2 REST seed, M1 shared utility

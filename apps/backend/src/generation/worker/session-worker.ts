@@ -176,33 +176,36 @@ async function processSessionJob(
 
     const actor = createActor(machine, { input: { session, tool } });
 
+    let lastPublishedArtifactCount = 0;
+
     actor.subscribe((state) => {
-      // Only publish step_completed during execution; session_completed
-      // is published manually after the final DB persist below.
       if (state.value === 'completed' || state.value === 'failed') return;
 
-      const stepIndex = state.context.currentStepIndex;
-      const artifact = state.context.stepResults[state.context.stepResults.length - 1];
-      const stepDef = state.context.tool.steps[Math.min(stepIndex, state.context.tool.steps.length - 1)];
+      const artifactCount = state.context.stepResults.length;
+      if (artifactCount <= lastPublishedArtifactCount) return;
+      lastPublishedArtifactCount = artifactCount;
+
+      const artifact = state.context.stepResults[artifactCount - 1];
+      const stepDef = state.context.tool.steps[artifactCount - 1];
 
       deps.eventBridge.publish(sessionId, {
         event: 'step_completed',
         data: {
           sessionId,
-          stepNumber: stepIndex,
-          stepLabel: stepDef?.label ?? `Step ${stepIndex + 1}`,
+          stepNumber: artifact.stepNumber,
+          stepLabel: stepDef?.label ?? `Step ${artifact.stepNumber}`,
           progress: {
-            current: stepIndex + 1,
+            current: artifactCount,
             total: state.context.tool.steps.length,
           },
-          artifact: artifact ? {
+          artifact: {
             id: artifact.artifactId,
             stepNumber: artifact.stepNumber,
             status: artifact.status.toString(),
             createdAt: artifact.createdAt?.toISOString() ?? new Date().toISOString(),
             sessionId: artifact.sessionId,
             content: artifact.content,
-          } : null,
+          },
         },
       });
     });

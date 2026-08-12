@@ -95,7 +95,7 @@ export const toolPageMachine = setup({
           const content = await readFileContent(file);
           fileContents.push({ key, content });
         } catch {
-          // File read failed — submit without this file
+          throw new Error(`Failed to read uploaded file "${file.name}". Please try re-uploading.`);
         }
       }
 
@@ -217,9 +217,11 @@ export const toolPageMachine = setup({
       },
     },
 
-    // ── Session created — the ToolPageLayout navigates away immediately ────────
+    // ── Session created — redirect handled by ToolPageLayout; RESET escapes stuck state ────────
     submitted: {
-      type: 'final',
+      on: {
+        RESET: { target: 'draftEmpty' },
+      },
     },
   },
 });
