@@ -40,6 +40,10 @@ export function useSession(sessionId: string | null, initialData?: SessionDTO) {
       .then((session) => {
         setSession(session);
         if (session.artifacts?.length) {
+          setProgress({
+            current: session.artifacts.length,
+            total: session.stepCount,
+          });
           setStepArtifacts(
             session.artifacts.map((a) => ({
               stepNumber: a.stepNumber,
