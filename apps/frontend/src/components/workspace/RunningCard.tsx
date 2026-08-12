@@ -12,8 +12,9 @@ interface RunningCardProps {
 
 export function RunningCard({ session, onViewProgress, onCancel }: RunningCardProps) {
   const toolLabel = formatToolLabel(session.toolKey);
-  const progressValue = session.currentStepIndex !== undefined && session.stepCount > 0
-    ? ((session.currentStepIndex + 1) / session.stepCount) * 100
+  const completedSteps = session.currentStepIndex ?? 0;
+  const progressValue = completedSteps > 0 && session.stepCount > 0
+    ? (completedSteps / session.stepCount) * 100
     : 0;
 
   return (
@@ -30,14 +31,14 @@ export function RunningCard({ session, onViewProgress, onCancel }: RunningCardPr
           variant="determinate"
           value={progressValue}
           sx={{ height: 8, borderRadius: 4, mb: 1, bgcolor: 'action.hover' }}
-          aria-label={copy.t('shared.aria.runningProgress', { current: String((session.currentStepIndex ?? 0) + 1), total: String(session.stepCount) })}
+          aria-label={copy.t('shared.aria.runningProgress', { current: String(completedSteps), total: String(session.stepCount) })}
         />
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
           <CheckCircleIcon color="success" fontSize="small" />
           <Typography variant="caption" color="text.secondary">
             {copy.t('toolPage.progress.stepLabel', {
-              current: String((session.currentStepIndex ?? 0) + 1),
+              current: String(completedSteps),
               total: String(session.stepCount),
             })}
             {session.currentStepLabel ? ` · ${session.currentStepLabel}` : ''}
