@@ -35,8 +35,8 @@ export interface ToolDefinition {
 }
 
 const BLOG_POST_INPUTS: TextInput[] = [
-  { key: 'topic', label: 'Topic', required: true, type: 'short' },
-  { key: 'language', label: 'Language', required: false, type: 'select', options: ['it', 'en'], placeholder: 'it' },
+  { key: 'topic', label: 'Titolo articolo', required: true, type: 'short' },
+  { key: 'instructions', label: 'Istruzioni personalizzate', required: false, type: 'long', placeholder: 'Aggiungi istruzioni per la generazione...' },
 ];
 
 const AD_COPY_INPUTS: TextInput[] = [

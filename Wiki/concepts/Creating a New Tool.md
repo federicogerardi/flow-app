@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/generation
   - wiki/howto
-date_updated: 2026-08-08
-source_count: 7
+date_updated: 2026-08-13
+source_count: 8
 confidence: high
 ---
 
@@ -32,11 +32,12 @@ Before writing any code, answer these questions:
 |---|------|--------|---------|
 | 1 | `packages/domain/src/generation/value-objects/ToolKey.ts` | Modify | Add `toolKey` to `ToolKeyValue` union type + static instance |
 | 2 | `packages/domain/src/generation/tools/index.ts` | Modify | Add `ToolDefinition` object + register in `toolRegistry` |
-| 3 | `apps/backend/src/prompts/{tool-key}/{step-label}/versions/1.0.0/system.md` | Create | System prompt for each step |
-| 4 | `apps/backend/src/prompts/{tool-key}/{step-label}/versions/1.0.0/user.md` | Create | User prompt for each step |
-| 5 | `apps/frontend/src/tool-inputs.ts` | Modify | Text + file input definitions (mirrors domain acquisition) |
-| 6 | `packages/copy/src/it/tool-page.ts` | Modify (optional) | Only if tool needs unique UI strings beyond what API provides |
-| 7 | `Wiki/concepts/Creating a New Tool.md` | Reference | You are here — follow this checklist |
+| 3 | `packages/domain/src/generation/prompting/default-components.ts` | Modify | Add/update `DEFAULT_COMPONENTS[toolKey]` — runtime fallback for prompt component injection |
+| 4 | `apps/backend/src/prompts/{tool-key}/{step-label}/versions/1.0.0/system.md` | Create | System prompt for each step |
+| 5 | `apps/backend/src/prompts/{tool-key}/{step-label}/versions/1.0.0/user.md` | Create | User prompt for each step |
+| 6 | `apps/frontend/src/tool-inputs.ts` | Modify | Text + file input definitions (mirrors domain acquisition) |
+| 7 | `packages/copy/src/it/tool-page.ts` | Modify (optional) | Only if tool needs unique UI strings beyond what API provides |
+| 8 | `Wiki/concepts/Creating a New Tool.md` | Reference | You are here — follow this checklist |
 
 **Files that DO NOT need changes** (generic, work for all tools):
 - `SetupPanel.tsx` — renders any `ToolDefinition.acquisition` dynamically
@@ -181,6 +182,66 @@ export const toolRegistry: Record<ToolKeyValue, ToolDefinition> = {
 
 > **Important**: Replace the existing stub in `toolRegistry` instead of adding a duplicate. Many tool keys currently map to `blogPostTool` as a placeholder — this must be replaced with your real definition.
 
+### Prompt Component Resolution
+
+Prompt components (`anti-hallucination/v1`, `output-markdown/v1`, `italian-formal/v1`, etc.) are injected into the system prompt at runtime. Understanding the resolution order is critical to getting per-step component differentiation right.
+
+**Resolution order** (in `session-worker.ts` line 120-122):
+
+```
+step.prompt.components           ← 1. Per-step (highest priority — REPLACES, does NOT merge)
+  ?? DEFAULT_COMPONENTS[toolKey] ← 2. Per-tool fallback (in default-components.ts)
+  ?? ['anti-hallucination/v1']   ← 3. Hardcoded global default
+```
+
+**Key behavior**: `step.prompt.components` **REPLACES** entirely — it does NOT merge with `DEFAULT_COMPONENTS`. If you set `components: ['output-json/v1']` on a step, that step gets ONLY `output-json/v1` — all `DEFAULT_COMPONENTS` are dropped.
+
+#### Two-Layer Design
+
+| Layer | File | Purpose | Used at runtime? |
+|-------|------|---------|:---:|
+| `ToolDefinition.defaultComponents` | `tools/index.ts` | Declared in the tool config | ❌ No — not wired to the worker |
+| `DEFAULT_COMPONENTS[toolKey]` | `default-components.ts` | Runtime fallback per tool key | ✅ Yes |
+
+> **Important**: `ToolDefinition.defaultComponents` is the **declarative** contract, but the worker reads `DEFAULT_COMPONENTS` from `default-components.ts`. Always update BOTH files when changing per-tool defaults.
+
+#### How to Choose: `defaultComponents` vs Per-Step `components`
+
+| Scenario | Approach | Example |
+|----------|----------|---------|
+| Same components for ALL steps | Set `DEFAULT_COMPONENTS[toolKey]` + set `ToolDefinition.defaultComponents` — no per-step `components` needed | `brand-voice`: 2 steps both need `['anti-hallucination/v1', 'output-plain-text/v1', 'italian-formal/v1']` |
+| Different format per step, same guardrails | Per-step `components` on steps that differ; omit on steps that use defaults | `brief`: Step 1 needs `['output-json/v1']` (replaces format), Step 2 uses defaults |
+| Different guardrails per step | Every step MUST declare its full `components` list explicitly. Do NOT use `defaultComponents` | `blog-post`: Steps 1-2 need anti-hallucination, Step 3 does not (creative synthesis) |
+
+#### Pattern: Mixed Anti-Hallucination
+
+When some steps need `anti-hallucination/v1` and some don't:
+
+```typescript
+// ❌ WRONG — per-step REPLACES, so Step 1 loses output-markdown
+defaultComponents: ['output-markdown/v1'],
+steps: [
+  { prompt: { components: ['anti-hallucination/v1'] } },          // only gets anti-hallucination
+  { prompt: { components: ['output-markdown/v1'] } },             // no anti-hallucination ✅
+]
+
+// ✅ CORRECT — every step declares full component list
+// defaultComponents NOT set (every step is explicit)
+steps: [
+  { prompt: { components: ['output-markdown/v1', 'anti-hallucination/v1'] } },  // both
+  { prompt: { components: ['output-markdown/v1'] } },                           // no anti-hallucination ✅
+]
+```
+
+#### Runtime verification
+
+To verify what components are actually injected:
+
+```bash
+# Check session-worker logs for prompt_composed entries
+rg "prompt_composed" apps/backend/logs/ | jq '.components'
+```
+
 ### Asset Tools — Special Considerations
 
 Asset tools that **consume** other assets (e.g., `buyer-persona` requires `brief`) have additional requirements beyond the template above:
@@ -202,7 +263,7 @@ Asset tools that **consume** other assets (e.g., `buyer-persona` requires `brief
 | `description` | `string` | Yes | Shown in `ToolIntro` before configuration |
 | `creditCost` | `number` | No | Defaults to 1. Complex tools (4+ steps, premium models) can cost 2-3 |
 | `produces` | `string` | No | AssetType this tool creates. Only for asset tools |
-| `defaultComponents` | `string[]` | No | Prompt components applied to every step. Override per-step with `components` |
+| `defaultComponents` | `string[]` | No | Prompt components applied to every step. **Caution**: per-step `components` REPLACES, does not merge. If any step needs different components, do NOT use `defaultComponents` — declare full `components` on every step instead. Must also update `DEFAULT_COMPONENTS[toolKey]` in `default-components.ts`. |
 | `acquisition` | object | Yes | What data the tool collects before starting |
 | `acquisition.userText` | `TextInput[]` | No | Text fields rendered in SetupPanel |
 | `acquisition.files` | `FileInput[]` | No | File upload zones |
@@ -244,7 +305,7 @@ for m in json.load(sys.stdin)['data']:
 | `premium` | `anthropic/claude-sonnet-5` | `openai/gpt-4o` | Creative synthesis, final output generation |
 | `balanced` | `openai/gpt-4o-mini` | `google/gemini-2.5-flash` | Structured extraction, intermediate steps (default) |
 | `light` | `google/gemini-2.5-flash-lite` | `meta-llama/llama-4-maverick` | Simple classification, low-stakes formatting |
-| `search` | `google/gemini-2.5-pro` | `perplexity/sonar-reasoning-pro` | AI overview analysis, web-augmented steps |
+| `search` | `perplexity/sonar-reasoning-pro` | `google/gemini-2.5-pro` | AI overview analysis, web-augmented steps |
 
 > **⚠️ Model deprecation**: OpenRouter model IDs change frequently. Model IDs that worked 3 months ago may return 400 today. Always run the verification command above before deploying a new tool, and update `model-registry.ts` if any model ID is invalid.
 
@@ -320,12 +381,17 @@ The user prompt should reference these data sources generically ("the briefing i
 
 ### Anti-hallucination guardrails
 
-Every system prompt must include anti-hallucination rules (see [[Brief Tool - Prompt Architecture#Anti-Hallucination Guardrails]]):
+Anti-hallucination rules are **step-dependent** — not a universal requirement for all steps:
 
-- Never invent data, metrics, or entities not present in the source
-- Use `"non disponibile"` for missing data
-- Mark inferred values with `"(inferred)"`
-- Never add promotional or comparative language not in source
+- **Extraction/research steps**: MUST include anti-hallucination guardrails in the system prompt (see [[Brief Tool - Prompt Architecture#Anti-Hallucination Guardrails]]):
+  - Never invent data, metrics, or entities not present in the source
+  - Use `"non disponibile"` for missing data
+  - Mark inferred values with `"(inferred)"`
+  - Never add promotional or comparative language not in source
+
+- **Creative synthesis steps** (final article, landing page copy, ad generation): Anti-hallucination guardrails are **deliberately omitted** from the system prompt. These steps are expected to elaborate on research data with context, examples, and narrative depth. Structural constraints (H1/H2, output format) provide sufficient guardrails.
+
+- **Implementation**: use per-step `components` to control which steps receive the `anti-hallucination/v1` prompt component (see [[#Prompt Component Resolution]] above).
 
 ---
 
@@ -420,14 +486,17 @@ Before merging, verify each layer:
 - [ ] Last step produces the final output
 - [ ] `produces` is set only for asset tools, matches an `AssetType`
 - [ ] `creditCost` reflects tool complexity
+- [ ] `DEFAULT_COMPONENTS[toolKey]` is added/updated in `packages/domain/src/generation/prompting/default-components.ts`
 - [ ] Tool is registered in `toolRegistry` (replaces stub if one exists)
+- [ ] Every step that needs anti-hallucination has `anti-hallucination/v1` in its `components` (or via `DEFAULT_COMPONENTS`)
+- [ ] Steps that should NOT have anti-hallucination (creative synthesis) explicitly omit it from their `components`
 - [ ] `npx tsc --noEmit` passes in `packages/domain`
 
 ### Prompt Templates
 - [ ] One `system.md` + `user.md` per step
 - [ ] Directory path matches `templateId` in `StepDefinition.prompt`
 - [ ] Version directory is `1.0.0/`
-- [ ] System prompt includes anti-hallucination guardrails
+- [ ] System prompt includes anti-hallucination guardrails (extraction/research steps only — omit for creative synthesis steps)
 - [ ] User prompt references context data generically (no hardcoded slot names; `ContextEnricher` handles injection)
 - [ ] Output format is specified (JSON, Markdown, plain text)
 - [ ] Good vs. Bad examples provided for structured extraction steps
@@ -469,6 +538,7 @@ Before merging, verify each layer:
 | Required file in `tool-inputs.ts` but optional in domain | Readiness mismatch between FE fallback and API | Keep `required` values in sync |
 | Hardcoded Italian strings in component | Violates [[Centralized Copy Modules]] | Move to `packages/copy/src/it/` |
 | Missing anti-hallucination rules | LLM fabricates data | Add guardrails to system prompt |
+| **Per-step `components` replaces instead of merging** | Step gets only the per-step components, losing `DEFAULT_COMPONENTS` like `output-markdown/v1` | Every step must declare its FULL `components` list. Never assume merge semantics — see [[#Prompt Component Resolution]] |
 | Wrong model tier | Expensive model for simple extraction or weak model for creative synthesis | Review model tier table above |
 | **Invalid model ID** | Worker `llm_generate_primary_failed: 400 ... is not a valid model ID` | Run OpenRouter model verification command above; model IDs change frequently |
 | **Workspace assets not loaded** | `InvalidAssetSelectionError: [...] not found in workspace` on every session start | `KyselyWorkspaceRepository.findById` must query `assets` table and pass results to `Workspace.reconstitute()` |
@@ -481,11 +551,11 @@ Before merging, verify each layer:
 
 | Tool type | New files | Modified files | Total |
 |-----------|-----------|----------------|-------|
-| Simple content (1-2 steps, no API) | 2-4 (prompts) | 3 (ToolKey, registry, tool-inputs) | 5-7 |
-| Complex content (3+ steps) | 6-8 (prompts) | 3 (ToolKey, registry, tool-inputs) | 9-11 |
-| Asset tool (1 step) | 2 (prompts) | 3 (ToolKey, registry, tool-inputs) | 5 |
-| Asset tool (2+ steps) | 4-6 (prompts) | 3 (ToolKey, registry, tool-inputs) | 7-9 |
-| Analysis tool (with API) | 4-8 (prompts) | 3 (ToolKey, registry, tool-inputs) | 7-11 |
+| Simple content (1-2 steps, no API) | 2-4 (prompts) | 4 (ToolKey, registry, default-components, tool-inputs) | 6-8 |
+| Complex content (3+ steps) | 6-8 (prompts) | 4 (ToolKey, registry, default-components, tool-inputs) | 10-12 |
+| Asset tool (1 step) | 2 (prompts) | 4 (ToolKey, registry, default-components, tool-inputs) | 6 |
+| Asset tool (2+ steps) | 4-6 (prompts) | 4 (ToolKey, registry, default-components, tool-inputs) | 8-10 |
+| Analysis tool (with API) | 4-8 (prompts) | 4 (ToolKey, registry, default-components, tool-inputs) | 8-12 |
 
 ## Sources
 
@@ -495,4 +565,5 @@ Before merging, verify each layer:
 - [[Content Generation]] — Unified tool model, acquisition → elaboration → output
 - [[Centralized Copy Modules]] — No hardcoded strings governance
 - [[Persona Generator - Prompt Architecture]] — Reference implementation (asset tool consuming assets)
+- [[Blog Article Generator - Prompt Architecture]] — Reference for per-step anti-hallucination differentiation (mixed guardrails pattern)
 - [[log]] — 2026-08-06 buyer-persona: lessons learned (idempotency, models, workspace assets, cancelled phase)

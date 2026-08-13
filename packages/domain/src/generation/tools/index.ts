@@ -15,44 +15,39 @@ export class ToolNotFoundError extends DomainError {
 
 const blogPostTool: ToolDefinition = {
   toolKey: 'blog-post',
-  name: 'Blog Post',
-  description: 'Generate a complete blog article with SEO optimization',
+  name: 'Articolo Blog',
+  description: 'Genera un articolo blog ottimizzato SEO a partire da un titolo e istruzioni personalizzate',
   creditCost: 1,
   outputCategory: ToolOutputCategory.ContentProducer,
-  defaultComponents: ['anti-hallucination/v1', 'output-markdown/v1', 'seo-optimized/v1'],
+  // produces is NOT set — content tool, output is not promotable to an asset
+  // defaultComponents is NOT set — every step declares its full component list explicitly.
+  // This is because per-step components REPLACE (not merge). See Creating a New Tool#Prompt Component Resolution.
   acquisition: {
     userText: [
-      { key: 'topic', label: 'Topic', required: true, type: 'short' },
-      { key: 'language', label: 'Language', required: false, type: 'select', options: ['it', 'en'] },
-    ],
-    files: [
-      { key: 'briefing', label: 'Briefing', accept: ['.txt', '.md', '.docx'], required: false },
-    ],
-    assets: [
-      { assetType: 'brand-voice', required: false },
-      { assetType: 'persona', required: false },
+      { key: 'topic', label: 'Titolo articolo', required: true, type: 'short' },
+      { key: 'instructions', label: 'Istruzioni personalizzate', required: false, type: 'long', placeholder: 'Aggiungi istruzioni per la generazione...' },
     ],
   },
   steps: [
     {
       order: 1,
-      label: 'SEO Structure',
+      label: 'seo-structure',
       enrichment: 'serial',
-      prompt: { templateId: 'blog-post/seo-structure', version: '1.0.0', model: ModelTier.Balanced },
-      execution: { timeoutMs: 60000, maxRetries: 2 },
+      prompt: { templateId: 'blog-post/seo-structure', version: '1.0.0', model: ModelTier.Search, components: ['output-markdown/v1', 'anti-hallucination/v1'] },
+      execution: { timeoutMs: 90000, maxRetries: 2 },
     },
     {
       order: 2,
-      label: 'Outline',
+      label: 'research',
       enrichment: 'serial',
-      prompt: { templateId: 'blog-post/outline', version: '1.0.0', model: ModelTier.Balanced },
-      execution: { timeoutMs: 60000, maxRetries: 2 },
+      prompt: { templateId: 'blog-post/research', version: '1.0.0', model: ModelTier.Balanced, components: ['anti-hallucination/v1'] },
+      execution: { timeoutMs: 90000, maxRetries: 2 },
     },
     {
       order: 3,
-      label: 'Article',
+      label: 'article',
       enrichment: 'serial',
-      prompt: { templateId: 'blog-post/article', version: '1.0.0', model: ModelTier.Premium },
+      prompt: { templateId: 'blog-post/article', version: '1.0.0', model: ModelTier.Premium, components: ['output-markdown/v1', 'seo-optimized/v1', 'italian-formal/v1'] },
       execution: { timeoutMs: 120000, maxRetries: 2 },
     },
   ],

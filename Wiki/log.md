@@ -1,4 +1,32 @@
 
+## [2026-08-13] ingest | Blog Article Generator prompt prototypes
+
+**Source**: `Wiki/sources/blog-article-generator/` — 3 prompt files: `prompt_blog_seo_structure.md`, `prompt_blog_research.md`, `prompt_blog_article.md`.
+
+**Name mapping**: `blog-article-generator` → `blog-post` (v1 → v3 rename). Canonical tool key is `blog-post`.
+
+**Tool profile**: Content producer (non-promotable), 3-step serial pipeline:
+- Step 1 — SEO Structure (search tier): real-time online research, Italian sources, H2 skeleton
+- Step 2 — Research (balanced tier): in-depth data per H2 section, structured output
+- Step 3 — Article (premium tier): ~800-word Italian article, non-negotiable H1/H2 constraints
+
+**Acquisition**: article title (required, short) + custom instructions (optional, long textarea) + Brand Voice / Persona workspace assets (optional).
+
+**Wiki files created/modified** (5):
+| File | Action |
+|------|--------|
+| `Wiki/sources/blog-article-generator.md` | NEW — source summary with step details, cross-step dependencies, design decisions |
+| `Wiki/concepts/Blog Article Generator - Prompt Architecture.md` | NEW — concept page with full ToolDefinition, model tier rationale, implementation guide, codebase alignment diff |
+| `Wiki/index.md` | MODIFIED — added source entry + concept entry (alphabetical) |
+| `Wiki/overview.md` | MODIFIED — updated `blog-post` tool catalog entry with status + concept link |
+| `Wiki/log.md` | This entry |
+
+**Codebase alignment notes**: The current `blogPostTool` in `tools/index.ts` (lines 16–59) has different step structure (SEO Structure → Outline → Article, all Balanced/Premium) and different acquisition (`topic` + `language` select vs `topic` + `instructions` textarea). No prompt templates exist for `blog-post` yet (`apps/backend/src/prompts/blog-post/` is empty). The concept page documents the full delta between current code and target prompt architecture.
+
+**2026-08-13 refinement**: Anti-hallucination guardrails removed from Step 3 (Article). Step 3 is the creative synthesis step — it CAN elaborate beyond raw research data with context, examples, and narrative depth. Guardrails remain on Steps 1-2 (SEO Structure + Research).
+
+**2026-08-13 component resolution audit**: Discovered that `step.prompt.components` REPLACES (does not merge with) `DEFAULT_COMPONENTS`. Updated blog-post `ToolDefinition` to declare full `components` on every step (no `defaultComponents`). Enriched [[Creating a New Tool]] with "Prompt Component Resolution" section documenting the replace semantics, two-layer design (`ToolDefinition.defaultComponents` vs `DEFAULT_COMPONENTS[toolKey]`), mixed anti-hallucination pattern, and per-step component verification. Added `default-components.ts` to the files-to-modify table (now 4 modified files instead of 3). Updated anti-hallucination guardrails section from universal to step-dependent. Updated Verification Checklist with `DEFAULT_COMPONENTS` check + per-step anti-hallucination items. Added Common Pitfall row for replace-vs-merge behavior. Updated blog-post codebase changes table with 5 additional rows documenting full per-step `components` + `DEFAULT_COMPONENTS` changes.
+
 ## [2026-08-13] fix | SSE resilience — spurious "failed" under network instability
 
 **Symptom**: starting `brand-voice` (step "tov-generation") briefly showed "Errore nella generazione", then the session proceeded normally. Both FE and BE are on Railway; the browser had flaky network.

@@ -22,6 +22,7 @@ date_updated: 2026-08-13
 | prompt_root.md, prompt_extraction.md, prompt_context_and_angle_matrix.md, prompt_angle_prioritization.md, prompt_creative_activation.md | [[sources/angle-generator]] | 2026-08-07 |
 | prompt_extraction.md, prompt_context_generation.md, prompt_ads_generation.md | [[sources/meta-ads]] | 2026-08-07 |
 | prompt_extraction.md, prompt_tov_generation.md | [[sources/tov-generator]] | 2026-08-11 |
+| prompt_blog_seo_structure.md, prompt_blog_research.md, prompt_blog_article.md | [[sources/blog-article-generator]] | 2026-08-13 |
 
 ## Entities
 
@@ -57,6 +58,7 @@ date_updated: 2026-08-13
 | [[AssetResolver]] | high | 5 |
 | [[Auth Dependencies]] | high | 8 |
 | [[Auth Middleware]] | high | 5 |
+| [[Blog Article Generator - Prompt Architecture]] | high | 4 |
 | [[Brief Tool - Prompt Architecture]] | high | 3 |
 | [[BullMQ Worker Wiring]] | high | 5 |
 | [[CI-CD Promotion Policy]] | high | 7 |

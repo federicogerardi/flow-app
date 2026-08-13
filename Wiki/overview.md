@@ -42,7 +42,7 @@ Flow App is an AI-powered content generation platform for B2B marketing teams. I
 | `landing-page` | Landing page + thank-you |
 | `video-script-long-form` | Long-form video script (6 steps) |
 | `video-description` | Video description |
-| `blog-post` | SEO blog article |
+| `blog-post` | SEO blog article | ✅ 3-step search→research→article. [[Blog Article Generator - Prompt Architecture|Prompt architecture]] documented. |
 | `ad-copy` | Ad copy | ✅ 3-step cluster→angle→awareness. Meta Ads specialization. |
 
 ### Asset
