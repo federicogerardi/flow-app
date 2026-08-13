@@ -114,7 +114,7 @@ All phases through 13 + the Brief Tool + Multi-Asset Promotion + Frontend Drift 
 | Gap | Status |
 |-----|--------|
 | **Credits auto-create** | ✅ Fixed — migration 009 (`version` column on `quotas`) was missing on Railway. Applied manually + auto-migration runner now ensures all migrations run on every deploy. [[Migration Tooling]] |
-| **5 other tool definitions** | 🟡 Stubs — `landing-funnel`, `landing-page`, `video-script-long-form`, `video-description`, `brand-voice`, `ai-overview-analysis` all map to `blogPostTool`. `brief`, `buyer-persona`, `marketing-angle`, and `ad-copy` have real definitions. |
+| **5 other tool definitions** | 🟡 Stubs — `landing-funnel`, `landing-page`, `video-script-long-form`, `video-description`, `ai-overview-analysis` all map to `blogPostTool`. `brief`, `buyer-persona`, `brand-voice`, `marketing-angle`, and `ad-copy` have real definitions. |
 | **CrawlData value object** | 🟡 Implemented in domain layer (`CrawlData.create()` / `reconstitute()`). `ai-overview-analysis` session worker integration still pending. |
 | **Worker deployment** | ✅ Fixed — worker now runs inline in `server.ts` (same process as API). `worker-process.ts` retained as standalone reference. Verified on Railway: pending sessions auto-picked and completed on deploy. |
 

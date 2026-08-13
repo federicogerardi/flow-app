@@ -59,6 +59,7 @@ date_updated: 2026-08-13
 | [[Auth Dependencies]] | high | 8 |
 | [[Auth Middleware]] | high | 5 |
 | [[Blog Article Generator - Prompt Architecture]] | high | 4 |
+| [[Brand Voice - Prompt Architecture]] | high | 2 |
 | [[Brief Tool - Prompt Architecture]] | high | 3 |
 | [[BullMQ Worker Wiring]] | high | 5 |
 | [[CI-CD Promotion Policy]] | high | 7 |
