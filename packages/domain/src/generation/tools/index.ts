@@ -163,7 +163,7 @@ const marketingAngleTool: ToolDefinition = {
       enrichment: 'serial',
       prompt: {
         templateId: 'marketing-angle/extraction',
-        version: '1.0.0',
+        version: '1.1.0',
         model: ModelTier.Balanced,
         components: ['output-json/v1'],
       },
@@ -175,7 +175,7 @@ const marketingAngleTool: ToolDefinition = {
       enrichment: 'serial',
       prompt: {
         templateId: 'marketing-angle/angle-matrix',
-        version: '1.0.0',
+        version: '1.1.0',
         model: ModelTier.Premium,
         components: ['output-plain-text/v1', 'italian-formal/v1'],
       },
@@ -187,7 +187,7 @@ const marketingAngleTool: ToolDefinition = {
       enrichment: 'serial',
       prompt: {
         templateId: 'marketing-angle/creative-activation',
-        version: '1.0.0',
+        version: '1.1.0',
         model: ModelTier.Premium,
         components: ['output-plain-text/v1', 'italian-formal/v1'],
       },

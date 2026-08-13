@@ -4,13 +4,18 @@ tags:
   - wiki/concept
   - wiki/generation
   - wiki/prompting
-date_updated: 2026-08-07
+date_updated: 2026-08-13
 source_count: 6
 confidence: high
-implementation: planned
+implementation: deployed
+current_version: 1.1.0
 ---
 
 # Angle Generator — Prompt Architecture
+
+> 3-step extraction→matrix→activation pipeline for the `marketing-angle` asset tool  
+> Prompt prototypes from [[sources/angle-generator]] — raw source for the `marketing-angle` `ToolDefinition`  
+> **Current prompt version**: `1.1.0` (2026-08-13) — data-anchored scoring, awareness classification examples, proof honesty
 
 > 3-step extraction→matrix→activation pipeline for the `marketing-angle` asset tool  
 > Prompt prototypes from [[sources/angle-generator]] — raw source for the `marketing-angle` `ToolDefinition`
@@ -297,6 +302,35 @@ Angles are consumed by content tools that need creative direction:
 | `landing-funnel` | Awareness-stage alignment for funnel messaging |
 | `landing-page` | Angle-driven value propositions and proof selection |
 | `video-script-long-form` | Hook angles, narrative framing |
+
+## v1.1.0 — Data-Anchored Scoring & Awareness Classification Examples (2026-08-13)
+
+**Problem**: Lo scoring model (Step 2) valutava gli angoli 1-5 su dimensioni non supportate dai dati: ROI (richiedeva market size, conversion probability), Differentiation (richiedeva competitor data), Credibility (richiedeva proof data). 3 dimensioni su 4 senza fondamento — il modello produceva punteggi pseudoscientifici.
+
+Inoltre, l'extraction (Step 1) non aveva esempi di awareness classification — il task più soggettivo dell'intera pipeline.
+
+### Modifiche
+
+| File | Cambiamento |
+|------|-------------|
+| `extraction/1.1.0/system.md` | +2 good/bad examples per awareness classification (Solution Aware vs Product Aware, Problem Aware vs Solution Aware). +1 checklist item. |
+| `extraction/1.1.0/user.md` | Documentata struttura contesto (`[Asset - brief]`, `[Asset - persona]`, `[Asset - persona #2]`). Aggiunte Extraction Priority rules. Aggiunte Critical Rules. |
+| `angle-matrix/1.1.0/system.md` | **Scoring model riscritto**: ROI → Strategic Fit (allineamento obiettivo campagna), Differentiation → Audience Resonance (ancoraggio pain point), Ease → Communication Clarity, Credibility → Evidence Anchoring (supporto da dati estratti). Ogni dimensione ora si valuta sui dati REALI dell'extraction. Nota esplicita: "Scores are strategic estimates based on available data, not quantitative predictions." Aggiunto Strategic Guardrail #6 (Honest about evidence gaps). Output structure: +Risk Notes and Data Gaps section. |
+| `angle-matrix/1.1.0/user.md` | Aggiunta tabella Field→Matrix Output mapping. Aggiunte Ranking Instructions con ancoraggio ai dati. |
+| `creative-activation/1.1.0/system.md` | `Proof Assets Required` reso condizionale: se nessun proof data nella pipeline, formato `[Raccomandazione] Tipo di prova suggerita: ...`. Aggiunto Strategic Guardrail #6 (Proof awareness). |
+| `creative-activation/1.1.0/user.md` | Aggiunta tabella Matrix Field→Creative Output mapping. Aggiunte Output Instructions. |
+| `tools/index.ts` | Tutti e 3 gli step: `version: '1.0.0'` → `version: '1.1.0'` |
+
+### Principio guida
+
+**Data-anchored scoring**: ogni dimensione di valutazione deve essere rispondibile con i dati presenti nell'extraction. Se un dato non c'è, il modello lo dichiara — non lo inventa. I punteggi sono stime strategiche, non previsioni quantitative.
+
+### Verification
+
+```
+tsc --noEmit  →  domain ✅  backend ✅
+vitest        →  domain 490/490 ✅  backend 145/145 ✅
+```
 
 ## Sources
 

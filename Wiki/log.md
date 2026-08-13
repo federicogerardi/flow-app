@@ -1,4 +1,25 @@
 
+## [2026-08-13] improve | Marketing Angle — prompt v1.1.0 data-anchored scoring & awareness examples
+
+**Analysis**: Lo scoring model Step 2 valutava angoli su dimensioni senza fondamento dati (ROI richiedeva market size, Differentiation richiedeva competitor, Credibility richiedeva proof — 3/4 assenti). Extraction senza esempi di awareness classification (task più soggettivo della pipeline).
+
+**Principio**: "Data-anchored scoring" — ogni dimensione rispondibile con dati dell'extraction. Punteggi = stime strategiche, non previsioni quantitative.
+
+**Files creati/modificati** (9):
+| File | Action |
+|------|--------|
+| `apps/backend/src/prompts/marketing-angle/extraction/versions/1.1.0/system.md` | NEW — +2 awareness classification examples (Solution vs Product, Problem vs Solution) |
+| `apps/backend/src/prompts/marketing-angle/extraction/versions/1.1.0/user.md` | NEW — struttura contesto, priority rules, critical rules |
+| `apps/backend/src/prompts/marketing-angle/angle-matrix/versions/1.1.0/system.md` | NEW — scoring model riscritto: ROI→Strategic Fit, Differentiation→Audience Resonance, Credibility→Evidence Anchoring. +Risk Notes section. +Honest guardrail. |
+| `apps/backend/src/prompts/marketing-angle/angle-matrix/versions/1.1.0/user.md` | NEW — field→output mapping, ranking instructions |
+| `apps/backend/src/prompts/marketing-angle/creative-activation/versions/1.1.0/system.md` | NEW — Proof Assets Required condizionale: raccomandazioni marcate, non fatti |
+| `apps/backend/src/prompts/marketing-angle/creative-activation/versions/1.1.0/user.md` | NEW — field→output mapping, output instructions |
+| `packages/domain/src/generation/tools/index.ts` | MODIFIED — 3 step: `version: '1.0.0'` → `version: '1.1.0'` |
+| `Wiki/concepts/Angle Generator - Prompt Architecture.md` | MODIFIED — +v1.1.0 section, +current_version, implementation: planned→deployed |
+| `Wiki/log.md` | This entry |
+
+**Verification**: `tsc --noEmit` domain ✅ backend ✅. `vitest run` domain 490/490 ✅ backend 145/145 ✅.
+
 ## [2026-08-13] improve | Buyer Persona — prompt v1.1.0 good example realism & anti-hallucination alignment
 
 **Analysis**: I good examples del system prompt mostravano metriche specifiche (% lead, ore/settimana, €) assenti dall'extraction reale. Conflitto diretto con guardrail «NEVER invent data.» Inoltre `Nota sull'Input` chiedeva auto-valutazione inaffidabile.
