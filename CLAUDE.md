@@ -653,13 +653,26 @@ rg 'Elapsed|elapsed|duration|Duration' apps/frontend/src/components/ --iglob '*.
   | rg -v 'role="timer"'
 ```
 
-**Minimum bar**: every `<Button>` and `<IconButton>` with an action must have `aria-label={copy.t('...')}`. Banner components showing completion/error state changes must have `role="alert" aria-live="polite"`.
+**Minimum bar**: every `<Button>` and `<IconButton>` with an action must have `aria-label={copy.t('...')}`. Banner components showing completion/error state changes must have `role="alert"` (which already implies a live region — do NOT add redundant `aria-live="polite"`).
+
+**Additional rules discovered 2026-08-13:**
+
+4. **No nested `aria-live` regions**: a single status update wrapped in multiple `role="status" aria-live="polite"` containers causes triple screen-reader announcements. Keep ONE live region at the outermost level; strip from inner containers.
+
+5. **`role="alert"` is self-contained**: `role="alert"` already implies `aria-live="assertive"` + `aria-atomic="true"`. Adding `aria-live="polite"` is contradictory and causes lint noise. Use `role="alert"` alone.
+
+6. **`role="listitem"` requires `role="list"` parent**: `<Stack>` renders a `<div>`. If children have `role="listitem"`, the container must have `role="list"` (or use semantic `<ul>`/`<ol>`).
+
+7. **Every animation must have `@media (prefers-reduced-motion: reduce)` guard**: one missing guard is all it takes. Audit all `animation:` / `keyframes` usages — not just the ones you wrote.
 
 Checklist:
 - [ ] Every `onClick` on a button element has an accompanying `aria-label`
-- [ ] Completion/celebration/error banners have `role="alert"`
+- [ ] Completion/celebration/error banners have `role="alert"` (no redundant `aria-live`)
 - [ ] Time-based UI elements have `role="timer"`
-- [ ] Dynamic content regions use `aria-live="polite"`
+- [ ] Dynamic content regions use `aria-live="polite"` (max ONE per component tree)
+- [ ] No nested live regions — strip `aria-live` from inner containers
+- [ ] `role="listitem"` elements are inside `role="list"` / `<ul>` / `<ol>`
+- [ ] Every `animation:` / `keyframes` has `prefers-reduced-motion` guard
 
 ---
 
@@ -737,6 +750,17 @@ Status chips, tab labels, challenge states, and UI state labels live in `package
 Available keys (check `packages/copy/src/it/shared.ts`):
 - `shared.sessionStatus.queued` / `running` / `completed` / `failed` / `cancelled` / `draft`
 - `workspace.sessions.tabs.inProgress` / `completed` / `failed`
+
+### 5 — `copy.t()` accepts `string` natively — no `as any` needed
+
+`copy.t(key: string)` is typed to accept any string. Wrapping template literals in `as any` is unnecessary noise. The 2026-08-13 cleanup removed 3 such casts — they were all dead weight.
+
+```typescript
+// ❌ copy.t(`shared.sessionStatus.${status}` as any)     // as any is noise
+// ✅ copy.t(`shared.sessionStatus.${status}`)            // copy.t accepts string
+```
+
+Lint: this pattern triggers `@typescript-eslint/no-explicit-any`. Remove the cast, not the lint rule.
 
 ---
 
@@ -858,6 +882,28 @@ When creating an implementation plan:
 #    Batch 3: Integration test
 ```
 
+### 2 — Multi-agent audit before large-scale refactoring
+
+Before any refactoring touching >10 files or spanning frontend + backend, launch a multi-agent audit with specialized lenses. The 2026-08-13 session ran 5 agents (type-design-analyzer, design-ux-architect, design-ui-designer, code-reviewer, code-simplifier) on the FE generation perimeter. **Overlap between their findings was <20%** — each agent caught bugs the others missed.
+
+**Agent roster and lenses:**
+| Agent | Lens | Finds what others miss |
+|-------|------|----------------------|
+| `type-design-analyzer` | DTO shapes, type drift, unsafe casts | `as any` masks real data gaps, type duplicates |
+| `design-ux-architect` | Flow redundancy, state machine states, URL deep-linking | Unreachable states, race conditions, refresh resilience |
+| `design-ui-designer` | Visual coherence, animation, accessibility, token consistency | Gradient contrast failures, dead animation code, nested live regions |
+| `code-reviewer` | Correctness, leaks, performance | rAF loops, race conditions, silent error swallowing |
+| `code-simplifier` | Duplication, dead code, DRY violations | Copy-paste twins, unused exports, 4+ formatDuration variants |
+
+**Process:**
+1. Load the full perimeter into session (all files in the scope, all wiki entries)
+2. Launch all agents in **parallel** — each gets the full scope + a tailored mandate
+3. Merge findings into a unified report organized by cross-cutting theme
+4. Derive a phased implementation plan from the merged report
+5. Implement in dependency order
+
+**One agent is worth ~5-8 findings. Five agents running in parallel (same cost as one) are worth ~40 findings with <20% redundancy.**
+
 ---
 
 ## Code Quality Rules
@@ -897,6 +943,22 @@ Checklist:
 | >300 lines, single change | Targeted edit, 5+ lines context | `edit` |
 
 **Never use `edit` for renaming across an entire file — use `write`.** After batch `write`, verify with `tsc --noEmit`.
+
+### 4 — Semantic field naming: rename when meaning bifurcates
+
+A single field interpreted three different ways across three surfaces is the most expensive class of bug — no type system catches it because `number` is correct everywhere. The 2026-08-13 audit found `progress.current` consumed as a COUNT (progress bar), an INDEX (active step), and a CURRENT_STEP_INDEX (RunningCard) — all from the same field.
+
+```typescript
+// ❌ progress.current — "current" is ambiguous: count? index? step number?
+// ✅ progress.completedCount — explicit: "count of completed steps"
+```
+
+**Rule**: when a field name could mean two things and both are valid interpretations in different contexts, rename it. The rename cost is trivial (grep + replace). The cost of NOT renaming is three surfaces silently disagreeing on what the value means.
+
+Checklist:
+- [ ] Does this field have ≥2 consumers that interpret its meaning differently?
+- [ ] If yes, rename to make the producer's semantics explicit (count, index, timestamp, flag)
+- [ ] Document the semantics as a JSDoc on the type definition
 
 ---
 
@@ -1037,6 +1099,71 @@ Checklist:
 - [ ] Test asserts on visible text or ARIA role presence
 - [ ] Test verifies mutual exclusivity (active button absent when indicator present, and vice versa)
 - [ ] No assertions on MUI-specific DOM attributes (`disabled`, `aria-disabled`) unless those attributes are the feature under test
+
+### 9 — Duplicate surface detection: ≥2 surfaces rendering the same lifecycle = mandatory extraction
+
+When two page-level components (e.g., `SessionPage` and `InlineSessionTracker`) render the same session lifecycle (cancel, status derivation, GenerationSlot props, terminal CTAs), they WILL diverge. The 2026-08-13 audit found 4 independent drifts between these two surfaces after only 2 weeks of co-existence.
+
+**Detection**: grep for the domain action's copy key or API call across `pages/` AND `components/`. If ≥2 surfaces render the same lifecycle, extract a single canonical component immediately.
+
+```bash
+# Audit for surface duplication BEFORE writing any feature:
+rg "cancelSession|GenerationSlot|handleCancel" apps/frontend/src/pages/ apps/frontend/src/components/ --iglob '*.tsx' -l | sort
+```
+
+Checklist:
+- [ ] Grep for the lifecycle-defining API call (e.g., `cancelSession`) across `pages/` + `components/`
+- [ ] If ≥2 files match, extract a shared component (e.g., `SessionTracker`) BEFORE the drift compounds
+- [ ] The shared component owns loading/error guards + status derivation + cancel + terminal CTAs — surfaces become thin wrappers
+
+### 10 — Don't duplicate functions in tests; extract to a real module
+
+Never replicate a function in a test file because "it's private." The test asserts on a COPY, and a future change to the real function passes the suite while breaking the app. The 2026-08-13 session fixed `deriveUIState` which had exactly this anti-pattern.
+
+```typescript
+// ❌ Test file replicates deriveUIState verbatim (line comment: "reproduced here for testing")
+// ❌ Test asserts on a COPY — real function can drift undetected
+
+// ✅ Function lives in its own module (machines/derive-ui-state.ts)
+// ✅ Component imports it, test imports it — single source of truth
+```
+
+Checklist:
+- [ ] If a function is complex enough to need unit tests, it belongs in its own module
+- [ ] Never write `// Replicate the X function from Y — reproduced here for testing`
+- [ ] Test file imports the real module, doesn't copy-paste
+
+### 11 — Don't fallback to replacement when merging live data with base data
+
+SSE hooks (`useLiveSession`) produce partial updates. When combining SSE data with base REST data (SWR), use **merge** (`{ ...base, ...live }`) — never **replace** (`live ?? base`). Replace silently drops fields the SSE doesn't touch (e.g., `elapsedSeconds`, `durationSeconds`, `isPromotable`).
+
+```typescript
+// ❌ const display = liveSession ?? session;  // replace drops elapsedSeconds on first SSE mount
+// ✅ const display = liveSession ? { ...session, ...liveSession } : session;  // merge preserves REST fields
+```
+
+Checklist:
+- [ ] Are there fields on the base data that SSE never updates? (elapsed time, isPromotable, promotedAssetId)
+- [ ] Is the merge operator used, not the fallback operator?
+- [ ] Does the hook's mount catch-up map ALL fields the card renders? (currentStepIndex, completedAt, etc.)
+
+### 12 — SSE label semantics must align with list endpoint label semantics
+
+The SSE `stepLabel` points backward ("last completed step"). The list endpoint `currentStepLabel` pointed forward ("next step to execute") — two different semantics for the same UI field. The card showed label jitter: "Draft" (forward) → "Analysis" (backward) on first SSE event. After the 2026-08-13 fix, both use backward-looking semantics.
+
+```typescript
+// ❌ listSessions: steps[s.currentStepIndex]?.label   → forward-looking ("next step")
+// ❌ SSE onStep:   steps[artifactCount - 1]?.label     → backward-looking ("last completed")
+
+// ✅ Both use backward-looking: completed steps label
+// listSessions: steps[s.currentStepIndex - 1]?.label (when index > 0)
+// SSE onStep:   steps[artifactCount - 1]?.label
+```
+
+Checklist:
+- [ ] When a label comes from ≥2 data sources (list endpoint + SSE), verify they use the SAME semantic direction
+- [ ] If `currentStepIndex` is a forward-looking index, the label must be backward-looking (`index - 1`)
+- [ ] Test with both sources: initial REST load AND first SSE event — label must not change direction
 
 ---
 
