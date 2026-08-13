@@ -1,5 +1,21 @@
 
-## [2026-08-13] improve | Marketing Angle — prompt v1.1.0 data-anchored scoring & awareness examples
+## [2026-08-13] improve | Brand Voice — prompt v1.1.0 user prompt enrichment + synthetic TOV transparency
+
+**Analysis**: Extraction user.md incorrectly referenced "brief asset" as data source — the v1.0.0 prompt was written for file-only acquisition but the ToolDefinition uses `assets: [{ assetType: 'brief', required: true }]` + optional file. Both user.md files were thin (5 lines each) with no context structure documentation or field mapping.
+
+**Additionally**: If the extraction has `tone = "non disponibile"` (no explicit tone in source), the TOV is 100% synthetic — derived entirely from market and audience inference. v1.0.0 didn't flag this. v1.1.0 adds a mandatory synthetic TOV warning.
+
+**Files created/modified** (6):
+| File | Action |
+|------|--------|
+| `apps/backend/src/prompts/brand-voice/extraction/versions/1.1.0/system.md` | NEW — updated role description to reference brief as primary source |
+| `apps/backend/src/prompts/brand-voice/extraction/versions/1.1.0/user.md` | NEW — documented context structure ([Asset - brief] primary, [File - material] supplemental), extraction priority, field list |
+| `apps/backend/src/prompts/brand-voice/tov-generation/versions/1.1.0/system.md` | NEW — +Guardrail #6 (Synthetic TOV transparency warning when tone = "non disponibile"), +checklist item |
+| `apps/backend/src/prompts/brand-voice/tov-generation/versions/1.1.0/user.md` | NEW — Field→Section mapping table, Section-Specific Instructions, Synthetic TOV rules |
+| `packages/domain/src/generation/tools/index.ts` | MODIFIED — both steps: `version: '1.0.0'` → `version: '1.1.0'` |
+| `Wiki/log.md` | This entry |
+
+**Verification**: `tsc --noEmit` domain ✅ backend ✅. `vitest run` domain 490/490 ✅ backend 145/145 ✅.
 
 **Analysis**: The Step 2 scoring model evaluated angles on dimensions with no data foundation (ROI required market size, Differentiation required competitor data, Credibility required proof — 3 of 4 absent). Extraction had no awareness classification examples (the most subjective task in the pipeline).
 

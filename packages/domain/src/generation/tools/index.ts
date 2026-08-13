@@ -278,7 +278,7 @@ const brandVoiceTool: ToolDefinition = {
       enrichment: 'serial',
       prompt: {
         templateId: 'brand-voice/extraction',
-        version: '1.0.0',
+        version: '1.1.0',
         model: ModelTier.Balanced,
         components: ['output-json/v1'],
       },
@@ -290,7 +290,7 @@ const brandVoiceTool: ToolDefinition = {
       enrichment: 'serial',
       prompt: {
         templateId: 'brand-voice/tov-generation',
-        version: '1.0.0',
+        version: '1.1.0',
         model: ModelTier.Premium,
         components: ['output-plain-text/v1', 'italian-formal/v1'],
       },
