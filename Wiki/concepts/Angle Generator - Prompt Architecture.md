@@ -305,25 +305,25 @@ Angles are consumed by content tools that need creative direction:
 
 ## v1.1.0 — Data-Anchored Scoring & Awareness Classification Examples (2026-08-13)
 
-**Problem**: Lo scoring model (Step 2) valutava gli angoli 1-5 su dimensioni non supportate dai dati: ROI (richiedeva market size, conversion probability), Differentiation (richiedeva competitor data), Credibility (richiedeva proof data). 3 dimensioni su 4 senza fondamento — il modello produceva punteggi pseudoscientifici.
+**Problem**: The Step 2 scoring model evaluated angles 1-5 on dimensions unsupported by available data: ROI (required market size, conversion probability), Differentiation (required competitor data), Credibility (required proof data). 3 of 4 dimensions had no data foundation — the model was producing pseudoscientific scores.
 
-Inoltre, l'extraction (Step 1) non aveva esempi di awareness classification — il task più soggettivo dell'intera pipeline.
+Additionally, the Step 1 extraction had no examples of awareness classification — the most subjective task in the entire pipeline.
 
-### Modifiche
+### Changes
 
-| File | Cambiamento |
-|------|-------------|
-| `extraction/1.1.0/system.md` | +2 good/bad examples per awareness classification (Solution Aware vs Product Aware, Problem Aware vs Solution Aware). +1 checklist item. |
-| `extraction/1.1.0/user.md` | Documentata struttura contesto (`[Asset - brief]`, `[Asset - persona]`, `[Asset - persona #2]`). Aggiunte Extraction Priority rules. Aggiunte Critical Rules. |
-| `angle-matrix/1.1.0/system.md` | **Scoring model riscritto**: ROI → Strategic Fit (allineamento obiettivo campagna), Differentiation → Audience Resonance (ancoraggio pain point), Ease → Communication Clarity, Credibility → Evidence Anchoring (supporto da dati estratti). Ogni dimensione ora si valuta sui dati REALI dell'extraction. Nota esplicita: "Scores are strategic estimates based on available data, not quantitative predictions." Aggiunto Strategic Guardrail #6 (Honest about evidence gaps). Output structure: +Risk Notes and Data Gaps section. |
-| `angle-matrix/1.1.0/user.md` | Aggiunta tabella Field→Matrix Output mapping. Aggiunte Ranking Instructions con ancoraggio ai dati. |
-| `creative-activation/1.1.0/system.md` | `Proof Assets Required` reso condizionale: se nessun proof data nella pipeline, formato `[Raccomandazione] Tipo di prova suggerita: ...`. Aggiunto Strategic Guardrail #6 (Proof awareness). |
-| `creative-activation/1.1.0/user.md` | Aggiunta tabella Matrix Field→Creative Output mapping. Aggiunte Output Instructions. |
-| `tools/index.ts` | Tutti e 3 gli step: `version: '1.0.0'` → `version: '1.1.0'` |
+| File | Change |
+|------|--------|
+| `extraction/1.1.0/system.md` | +2 good/bad examples for awareness classification (Solution Aware vs Product Aware, Problem Aware vs Solution Aware). +1 checklist item. |
+| `extraction/1.1.0/user.md` | Documented context structure (`[Asset - brief]`, `[Asset - persona]`, `[Asset - persona #2]`). Added Extraction Priority rules. Added Critical Rules. |
+| `angle-matrix/1.1.0/system.md` | **Scoring model rewritten**: ROI → Strategic Fit (campaign objective alignment), Differentiation → Audience Resonance (pain point anchoring), Ease → Communication Clarity, Credibility → Evidence Anchoring (support from extracted data). Every dimension is now answerable from REAL extraction data. Explicit note: "Scores are strategic estimates based on available data, not quantitative predictions." Added Strategic Guardrail #6 (Honest about evidence gaps). Output structure: +Risk Notes and Data Gaps section. |
+| `angle-matrix/1.1.0/user.md` | Added Field→Matrix Output mapping table. Added Ranking Instructions with data anchoring. |
+| `creative-activation/1.1.0/system.md` | `Proof Assets Required` made conditional: if no proof data in pipeline, format `[Raccomandazione] Suggested proof type: ...`. Added Strategic Guardrail #6 (Proof awareness). |
+| `creative-activation/1.1.0/user.md` | Added Matrix Field→Creative Output mapping table. Added Output Instructions. |
+| `tools/index.ts` | All 3 steps: `version: '1.0.0'` → `version: '1.1.0'` |
 
-### Principio guida
+### Guiding principle
 
-**Data-anchored scoring**: ogni dimensione di valutazione deve essere rispondibile con i dati presenti nell'extraction. Se un dato non c'è, il modello lo dichiara — non lo inventa. I punteggi sono stime strategiche, non previsioni quantitative.
+**Data-anchored scoring**: every evaluation dimension must be answerable from data present in the extraction. If data is missing, the model declares it — it doesn't invent it. Scores are strategic estimates, not quantitative predictions.
 
 ### Verification
 

@@ -1,20 +1,20 @@
 
 ## [2026-08-13] improve | Marketing Angle — prompt v1.1.0 data-anchored scoring & awareness examples
 
-**Analysis**: Lo scoring model Step 2 valutava angoli su dimensioni senza fondamento dati (ROI richiedeva market size, Differentiation richiedeva competitor, Credibility richiedeva proof — 3/4 assenti). Extraction senza esempi di awareness classification (task più soggettivo della pipeline).
+**Analysis**: The Step 2 scoring model evaluated angles on dimensions with no data foundation (ROI required market size, Differentiation required competitor data, Credibility required proof — 3 of 4 absent). Extraction had no awareness classification examples (the most subjective task in the pipeline).
 
-**Principio**: "Data-anchored scoring" — ogni dimensione rispondibile con dati dell'extraction. Punteggi = stime strategiche, non previsioni quantitative.
+**Principle**: "Data-anchored scoring" — every dimension answerable from extraction data. Scores = strategic estimates, not quantitative predictions.
 
-**Files creati/modificati** (9):
+**Files created/modified** (9):
 | File | Action |
 |------|--------|
 | `apps/backend/src/prompts/marketing-angle/extraction/versions/1.1.0/system.md` | NEW — +2 awareness classification examples (Solution vs Product, Problem vs Solution) |
-| `apps/backend/src/prompts/marketing-angle/extraction/versions/1.1.0/user.md` | NEW — struttura contesto, priority rules, critical rules |
-| `apps/backend/src/prompts/marketing-angle/angle-matrix/versions/1.1.0/system.md` | NEW — scoring model riscritto: ROI→Strategic Fit, Differentiation→Audience Resonance, Credibility→Evidence Anchoring. +Risk Notes section. +Honest guardrail. |
+| `apps/backend/src/prompts/marketing-angle/extraction/versions/1.1.0/user.md` | NEW — context structure, priority rules, critical rules |
+| `apps/backend/src/prompts/marketing-angle/angle-matrix/versions/1.1.0/system.md` | NEW — scoring model rewritten: ROI→Strategic Fit, Differentiation→Audience Resonance, Credibility→Evidence Anchoring. +Risk Notes section. +Honest guardrail. |
 | `apps/backend/src/prompts/marketing-angle/angle-matrix/versions/1.1.0/user.md` | NEW — field→output mapping, ranking instructions |
-| `apps/backend/src/prompts/marketing-angle/creative-activation/versions/1.1.0/system.md` | NEW — Proof Assets Required condizionale: raccomandazioni marcate, non fatti |
+| `apps/backend/src/prompts/marketing-angle/creative-activation/versions/1.1.0/system.md` | NEW — Proof Assets Required conditional: recommendations marked, not facts |
 | `apps/backend/src/prompts/marketing-angle/creative-activation/versions/1.1.0/user.md` | NEW — field→output mapping, output instructions |
-| `packages/domain/src/generation/tools/index.ts` | MODIFIED — 3 step: `version: '1.0.0'` → `version: '1.1.0'` |
+| `packages/domain/src/generation/tools/index.ts` | MODIFIED — 3 steps: `version: '1.0.0'` → `version: '1.1.0'` |
 | `Wiki/concepts/Angle Generator - Prompt Architecture.md` | MODIFIED — +v1.1.0 section, +current_version, implementation: planned→deployed |
 | `Wiki/log.md` | This entry |
 
@@ -22,18 +22,18 @@
 
 ## [2026-08-13] improve | Buyer Persona — prompt v1.1.0 good example realism & anti-hallucination alignment
 
-**Analysis**: I good examples del system prompt mostravano metriche specifiche (% lead, ore/settimana, €) assenti dall'extraction reale. Conflitto diretto con guardrail «NEVER invent data.» Inoltre `Nota sull'Input` chiedeva auto-valutazione inaffidabile.
+**Analysis**: The system prompt's good examples showed specific metrics (percentages, hours/week, € price points) absent from real extractions. Direct conflict with "NEVER invent data" guardrail. Additionally, `Nota sull'Input` asked for unreliable self-assessment.
 
-**Principio**: "Specificity from extraction, not from imagination" — elaborare su dati REALI, non inventare dettagli plausibili.
+**Principle**: "Specificity from extraction, not from imagination" — elaborate on REAL data, don't invent plausible details.
 
-**Files creati/modificati** (7):
+**Files created/modified** (7):
 | File | Action |
 |------|--------|
-| `apps/backend/src/prompts/buyer-persona/extraction/versions/1.1.0/system.md` | NEW — invariato da v1.0.0 (già solido) |
-| `apps/backend/src/prompts/buyer-persona/extraction/versions/1.1.0/user.md` | NEW — struttura contesto, extraction priority, gerarchia fonti |
-| `apps/backend/src/prompts/buyer-persona/personas-generation/versions/1.1.0/system.md` | NEW — good examples riscritti con payload estrazione di partenza, +Guardrail #7, Nota sull'Input→Provenienza Dati, Cosa Deve Vedere condizionale |
-| `apps/backend/src/prompts/buyer-persona/personas-generation/versions/1.1.0/user.md` | NEW — mappatura campo→sezione, Section-Specific Instructions, Critical Rules |
-| `packages/domain/src/generation/tools/index.ts` | MODIFIED — entrambi step: `version: '1.0.0'` → `version: '1.1.0'` |
+| `apps/backend/src/prompts/buyer-persona/extraction/versions/1.1.0/system.md` | NEW — unchanged from v1.0.0 (already solid) |
+| `apps/backend/src/prompts/buyer-persona/extraction/versions/1.1.0/user.md` | NEW — context structure, extraction priority, source hierarchy |
+| `apps/backend/src/prompts/buyer-persona/personas-generation/versions/1.1.0/system.md` | NEW — good examples rewritten with extraction payload context, +Guardrail #7, Nota sull'Input→Provenienza Dati, Cosa Deve Vedere conditional |
+| `apps/backend/src/prompts/buyer-persona/personas-generation/versions/1.1.0/user.md` | NEW — field→section mapping, Section-Specific Instructions, Critical Rules |
+| `packages/domain/src/generation/tools/index.ts` | MODIFIED — both steps: `version: '1.0.0'` → `version: '1.1.0'` |
 | `Wiki/concepts/Persona Generator - Prompt Architecture.md` | MODIFIED — +v1.1.0 section, +current_version frontmatter |
 | `Wiki/log.md` | This entry |
 
@@ -41,19 +41,19 @@
 
 ## [2026-08-13] improve | Brief Generator — prompt v1.1.0 structural gap fix
 
-**Analysis**: Confrontati i 4 prompt deployati (`versions/1.0.0/`) con i prototipi di design. Trovati 7 gap, di cui 2 strutturali: (1) 3 sezioni su 11 del brief richiedevano dati non presenti nell'extraction, causando output vuoti o fabbricati; (2) incoerenza template output vs good example in Panoramica (mancava `Azienda`).
+**Analysis**: Compared the 4 deployed prompts (`versions/1.0.0/`) with the design prototypes. Found 7 gaps, 2 structural: (1) 3 of 11 brief sections required data not present in the extraction, causing empty or fabricated output; (2) output template inconsistency vs good example in Panoramica (missing `Azienda`).
 
-**Strategy C (ibrida)**: 2 nuovi campi opportunistici in extraction + 3 conditional sections in brief generation.
+**Strategy C (hybrid)**: 2 new opportunistic extraction fields + 3 conditional sections in brief generation.
 
-**Files creati/modificati** (7):
+**Files created/modified** (7):
 | File | Action |
 |------|--------|
-| `apps/backend/src/prompts/brief/extraction/versions/1.1.0/system.md` | NEW — +2 campi opportunistici, +2 esempi, +2 checklist item |
-| `apps/backend/src/prompts/brief/extraction/versions/1.1.0/user.md` | NEW — documentata struttura contesto, gerarchia file/objective, lista 8 campi |
-| `apps/backend/src/prompts/brief/brief-generation/versions/1.1.0/system.md` | NEW — +3 Conditional Sections, fix Panoramica template, rimosso conflitto actionable/no-fabrication, +esempi condizionali |
-| `apps/backend/src/prompts/brief/brief-generation/versions/1.1.0/user.md` | NEW — +mappatura campo→sezione, +Section-Specific Instructions, +Critical Rules |
-| `packages/domain/src/generation/tools/index.ts` | MODIFIED — entrambi gli step: `version: '1.0.0'` → `version: '1.1.0'` |
-| `Wiki/concepts/Brief Tool - Prompt Architecture.md` | MODIFIED — +v1.1.0 section, +current_version frontmatter, +header aggiornato |
+| `apps/backend/src/prompts/brief/extraction/versions/1.1.0/system.md` | NEW — +2 opportunistic fields, +2 examples, +2 checklist items |
+| `apps/backend/src/prompts/brief/extraction/versions/1.1.0/user.md` | NEW — documented context structure, file/objective hierarchy, 8-field list |
+| `apps/backend/src/prompts/brief/brief-generation/versions/1.1.0/system.md` | NEW — +3 Conditional Sections, fixed Panoramica template, removed actionable/no-fabrication conflict, +conditional examples |
+| `apps/backend/src/prompts/brief/brief-generation/versions/1.1.0/user.md` | NEW — +field→section mapping, +Section-Specific Instructions, +Critical Rules |
+| `packages/domain/src/generation/tools/index.ts` | MODIFIED — both steps: `version: '1.0.0'` → `version: '1.1.0'` |
+| `Wiki/concepts/Brief Tool - Prompt Architecture.md` | MODIFIED — +v1.1.0 section, +current_version frontmatter, +updated header |
 | `Wiki/log.md` | This entry |
 
 **Verification**: `tsc --noEmit` domain ✅ backend ✅ frontend ✅. `vitest run` domain 490/490 ✅ backend 145/145 ✅.

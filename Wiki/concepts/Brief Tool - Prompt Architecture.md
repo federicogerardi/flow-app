@@ -232,29 +232,32 @@ For frontend:
 
 ## v1.1.0 — Structural Gap Fix (2026-08-13)
 
-**Problem**: 3 sezioni su 11 del brief generation richiedevano dati non presenti nell'extraction payload (`Mercato e Competizione`, `Proof e Credibilità`, `Pilastri di Messaggio`). Queste sezioni finivano popolate da `"Non specificato"` o, peggio, da dati inventati dal modello per soddisfare il template.
+**Problem**: 3 of the 11 brief generation sections required data not present in the extraction payload (`Mercato e Competizione`, `Proof e Credibilità`, `Pilastri di Messaggio`). These sections ended up populated with `"Non specificato"` or, worse, with fabricated data the model invented to satisfy the template.
 
-**Principio guida**: l'output del brief non deve MAI contenere dati fabbricati. Le sezioni senza dati lo dichiarano esplicitamente e diventano placeholder popolabili manualmente dal team marketing.
+**Guiding principle**: the brief output must NEVER contain fabricated data. Sections without data explicitly declare this and become placeholders that the marketing team can populate manually.
 
-### Modifiche
+### Changes
 
-| File | Cambiamento |
-|------|-------------|
-| `extraction/1.1.0/system.md` | +2 campi opportunistici: `extracted_competitors` e `extracted_proof_elements` — estratti SOLO se menzionati nel file, altrimenti `"non disponibile"`. +2 esempi good/bad. +2 checklist item per la verifica dei campi opportunistici. |
-| `extraction/1.1.0/user.md` | Documentata la struttura del contesto iniettato (`[File - briefing]`, `[Input - objective]`). Aggiunta gerarchia: file > objective. Lista esplicita degli 8 campi da estrarre. |
-| `brief-generation/1.1.0/system.md` | Aggiunte 3 Conditional Sections (Mercato, Proof, Pilastri) con istruzioni precise: se l'extraction è `"non disponibile"` → output a singolo bullet placeholder. Corretto il template di output di Panoramica (aggiunto `- Azienda:`). Rimosso il conflitto interno tra "actionable" e "no fabrication". Aggiunti esempi good/bad per sezioni condizionali. |
-| `brief-generation/1.1.0/user.md` | Aggiunta tabella Field→Section mapping esplicita. Aggiunte Section-Specific Instructions. Aggiunte Critical Rules. |
-| `tools/index.ts` | Entrambi gli step: `version: '1.0.0'` → `version: '1.1.0'` |
+| File | Change |
+|------|--------|
+| `extraction/1.1.0/system.md` | +2 opportunistic fields: `extracted_competitors` and `extracted_proof_elements` — extracted ONLY if mentioned in the source file, otherwise `"non disponibile"`. +2 good/bad examples. +2 checklist items for opportunistic field verification. |
+| `extraction/1.1.0/user.md` | Documented injected context structure (`[File - briefing]`, `[Input - objective]`). Added file > objective hierarchy. Explicit list of the 8 fields to extract. |
+| `brief-generation/1.1.0/system.md` | Added 3 Conditional Sections (Market, Proof, Pillars) with precise instructions: if extraction is `"non disponibile"` → single bullet placeholder output. Fixed Panoramica output template (added `- Azienda:`). Removed internal conflict between "actionable" and "no fabrication". Added good/bad examples for conditional sections. |
+| `brief-generation/1.1.0/user.md` | Added explicit Field→Section mapping table. Added Section-Specific Instructions. Added Critical Rules. |
+| `tools/index.ts` | Both steps: `version: '1.0.0'` → `version: '1.1.0'` |
 
-### Risultato
+### Result
 
-- **8 campi di estrazione** (6 mandatory + 2 opportunistic) invece dei precedenti 6
-- **3 sezioni condizionali** nel brief: producono dati reali se disponibili, placeholder onesti se assenti
-- **Zero dati fabbricati**: il conflitto "actionable vs no fabrication" è risolto — il brief dichiara apertamente i suoi limiti
-- **User prompt strutturati**: il modello sa esattamente come sono organizzati i dati iniettati e come mapparli alle sezioni output
+- **8 extraction fields** (6 mandatory + 2 opportunistic) instead of the previous 6
+- **3 conditional sections** in the brief: produce real data when available, honest placeholders when absent
+- **Zero fabricated data**: the "actionable vs no fabrication" conflict is resolved — the brief openly declares its limitations
+- **Structured user prompts**: the model knows exactly how injected data is organized and how to map it to output sections
 
 ### Verification
 
+```
+tsc --noEmit  →  domain ✅  backend ✅  frontend ✅
+vitest        →  domain 490/490 ✅  backend 145/145 ✅
 ```
 tsc --noEmit  →  domain ✅  backend ✅  frontend ✅
 vitest        →  domain 490/490 ✅  backend 145/145 ✅

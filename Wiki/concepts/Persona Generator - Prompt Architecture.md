@@ -261,23 +261,23 @@ For frontend (`apps/frontend/src/tool-inputs.ts`):
 
 ## v1.1.0 — Good Example Realism & Anti-Hallucination Alignment (2026-08-13)
 
-**Problem**: I good examples del system prompt mostravano metriche specifiche (percentuali, ore/settimana, prezzi in €) che in un'estrazione reale non sarebbero mai presenti. Questo creava un conflitto diretto con le guardrail anti-hallucination («NEVER invent data» vs «sii specifico come l'esempio»). Il modello veniva spinto a fabbricare dettagli per raggiungere la qualità dimostrata negli esempi.
+**Problem**: The system prompt's good examples showed specific metrics (percentages, hours/week, € price points) that would never be present in a real extraction. This created a direct conflict with the anti-hallucination guardrails ("NEVER invent data" vs "be specific like the example"). The model was being pushed to fabricate details to match the quality shown in the examples.
 
-Inoltre, la sezione `Nota sull'Input` chiedeva al modello di auto-valutare la qualità dei dati — un task meta-cognitivo inaffidabile che produceva testo semanticamente vuoto.
+Additionally, the `Nota sull'Input` section asked the model to self-assess data quality — an unreliable meta-cognitive task producing semantically empty text.
 
-### Modifiche
+### Changes
 
-| File | Cambiamento |
-|------|-------------|
-| `extraction/1.1.0/system.md` | Invariato (già solido in v1.0.0) |
-| `extraction/1.1.0/user.md` | Documentata struttura contesto (`[Asset - brief]`, `[File - instructions]`). Aggiunte Extraction Priority rules. Gerarchia: brief > file opzionale. |
-| `personas-generation/1.1.0/system.md` | **Good examples completamente riscritti**: ogni esempio include il payload di estrazione di partenza. La specificità deriva dall'elaborazione di dati REALI dell'extraction, non da numeri inventati. Aggiunto Strategic Guardrail #7 («Specificity from extraction, not from imagination»). `Nota sull'Input` → `Provenienza Dati`: sezione meccanica (quali campi avevano dati, quali no, safe inferences applicate) invece di auto-valutazione. `Cosa Deve Vedere per Convertire` reso condizionale. |
-| `personas-generation/1.1.0/user.md` | Aggiunta tabella Field→Section mapping. Aggiunte Section-Specific Instructions. Aggiunte Critical Rules (no numeri inventati, specificità dall'extraction). |
-| `tools/index.ts` | Entrambi gli step: `version: '1.0.0'` → `version: '1.1.0'` |
+| File | Change |
+|------|--------|
+| `extraction/1.1.0/system.md` | Unchanged (already solid in v1.0.0) |
+| `extraction/1.1.0/user.md` | Documented context structure (`[Asset - brief]`, `[File - instructions]`). Added Extraction Priority rules. Hierarchy: brief > optional file. |
+| `personas-generation/1.1.0/system.md` | **Good examples completely rewritten**: each example includes the extraction payload it starts from. Specificity derives from elaborating REAL extraction data, not invented numbers. Added Strategic Guardrail #7 ("Specificity from extraction, not from imagination"). `Nota sull'Input` → `Provenienza Dati`: mechanical section (which fields had data, which were missing, safe inferences applied) instead of self-assessment. `Cosa Deve Vedere per Convertire` made conditional. |
+| `personas-generation/1.1.0/user.md` | Added Field→Section mapping table. Added Section-Specific Instructions. Added Critical Rules (no invented numbers, specificity from extraction). |
+| `tools/index.ts` | Both steps: `version: '1.0.0'` → `version: '1.1.0'` |
 
-### Principio guida
+### Guiding principle
 
-**Specificity from extraction, not from imagination.** Quando l'extraction dice "il target è frustrato dalla complessità degli strumenti," puoi scrivere "Frustrato da tool che richiedono settimane di onboarding prima di vedere il primo risultato" — stai elaborando un pain point REALE. Quando l'extraction non dice nulla sul budget, NON scrivere "Disposto a spendere €3.000/mese" — è fabbricazione. Elabora ciò che C'È nell'extraction; non inventare ciò che non c'è.
+**Specificity from extraction, not from imagination.** When the extraction says "the target is frustrated by tool complexity," you can write "Frustrated by tools that require weeks of onboarding before seeing the first result" — you're elaborating on a REAL pain point. When the extraction says nothing about budget, do NOT write "Willing to spend €3,000/month" — that's fabrication. Elaborate on what IS in the extraction; don't invent what isn't.
 
 ### Verification
 
