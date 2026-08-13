@@ -4,17 +4,19 @@ tags:
   - wiki/concept
   - wiki/generation
   - wiki/prompting
-date_updated: 2026-08-06
+date_updated: 2026-08-13
 source_count: 3
 confidence: high
 implementation: complete
 smoke_test: passed
+current_version: 1.1.0
 ---
 
 # Brief Tool — Prompt Architecture
 
 > 2-step extraction→generation pipeline for the `brief` asset tool  
-> Prompt prototypes from [[sources/brief-generator]] — raw source for the `brief` `ToolDefinition`
+> Prompt prototypes from [[sources/brief-generator]] — raw source for the `brief` `ToolDefinition`  
+> **Current prompt version**: `1.1.0` (2026-08-13) — structural gap fix: extraction → generation data flow
 
 ## Architecture
 
@@ -227,6 +229,36 @@ For frontend:
 - [ ] `ReadinessSnapshot` must support `files` input type (currently only shows `userText`)
 - [ ] `SetupPanel` must render `FileUpload` component for `files` acquisition type (currently only renders `userText`)
 - [ ] `tool-inputs.ts` has `BRIEF_INPUTS` with 1 field (`objective` only) — company and product are file-extracted
+
+## v1.1.0 — Structural Gap Fix (2026-08-13)
+
+**Problem**: 3 sezioni su 11 del brief generation richiedevano dati non presenti nell'extraction payload (`Mercato e Competizione`, `Proof e Credibilità`, `Pilastri di Messaggio`). Queste sezioni finivano popolate da `"Non specificato"` o, peggio, da dati inventati dal modello per soddisfare il template.
+
+**Principio guida**: l'output del brief non deve MAI contenere dati fabbricati. Le sezioni senza dati lo dichiarano esplicitamente e diventano placeholder popolabili manualmente dal team marketing.
+
+### Modifiche
+
+| File | Cambiamento |
+|------|-------------|
+| `extraction/1.1.0/system.md` | +2 campi opportunistici: `extracted_competitors` e `extracted_proof_elements` — estratti SOLO se menzionati nel file, altrimenti `"non disponibile"`. +2 esempi good/bad. +2 checklist item per la verifica dei campi opportunistici. |
+| `extraction/1.1.0/user.md` | Documentata la struttura del contesto iniettato (`[File - briefing]`, `[Input - objective]`). Aggiunta gerarchia: file > objective. Lista esplicita degli 8 campi da estrarre. |
+| `brief-generation/1.1.0/system.md` | Aggiunte 3 Conditional Sections (Mercato, Proof, Pilastri) con istruzioni precise: se l'extraction è `"non disponibile"` → output a singolo bullet placeholder. Corretto il template di output di Panoramica (aggiunto `- Azienda:`). Rimosso il conflitto interno tra "actionable" e "no fabrication". Aggiunti esempi good/bad per sezioni condizionali. |
+| `brief-generation/1.1.0/user.md` | Aggiunta tabella Field→Section mapping esplicita. Aggiunte Section-Specific Instructions. Aggiunte Critical Rules. |
+| `tools/index.ts` | Entrambi gli step: `version: '1.0.0'` → `version: '1.1.0'` |
+
+### Risultato
+
+- **8 campi di estrazione** (6 mandatory + 2 opportunistic) invece dei precedenti 6
+- **3 sezioni condizionali** nel brief: producono dati reali se disponibili, placeholder onesti se assenti
+- **Zero dati fabbricati**: il conflitto "actionable vs no fabrication" è risolto — il brief dichiara apertamente i suoi limiti
+- **User prompt strutturati**: il modello sa esattamente come sono organizzati i dati iniettati e come mapparli alle sezioni output
+
+### Verification
+
+```
+tsc --noEmit  →  domain ✅  backend ✅  frontend ✅
+vitest        →  domain 490/490 ✅  backend 145/145 ✅
+```
 
 ## Sources
 

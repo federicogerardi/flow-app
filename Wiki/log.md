@@ -1,5 +1,22 @@
 
-## [2026-08-13] ingest | Blog Article Generator prompt prototypes
+## [2026-08-13] improve | Brief Generator — prompt v1.1.0 structural gap fix
+
+**Analysis**: Confrontati i 4 prompt deployati (`versions/1.0.0/`) con i prototipi di design. Trovati 7 gap, di cui 2 strutturali: (1) 3 sezioni su 11 del brief richiedevano dati non presenti nell'extraction, causando output vuoti o fabbricati; (2) incoerenza template output vs good example in Panoramica (mancava `Azienda`).
+
+**Strategy C (ibrida)**: 2 nuovi campi opportunistici in extraction + 3 conditional sections in brief generation.
+
+**Files creati/modificati** (7):
+| File | Action |
+|------|--------|
+| `apps/backend/src/prompts/brief/extraction/versions/1.1.0/system.md` | NEW — +2 campi opportunistici, +2 esempi, +2 checklist item |
+| `apps/backend/src/prompts/brief/extraction/versions/1.1.0/user.md` | NEW — documentata struttura contesto, gerarchia file/objective, lista 8 campi |
+| `apps/backend/src/prompts/brief/brief-generation/versions/1.1.0/system.md` | NEW — +3 Conditional Sections, fix Panoramica template, rimosso conflitto actionable/no-fabrication, +esempi condizionali |
+| `apps/backend/src/prompts/brief/brief-generation/versions/1.1.0/user.md` | NEW — +mappatura campo→sezione, +Section-Specific Instructions, +Critical Rules |
+| `packages/domain/src/generation/tools/index.ts` | MODIFIED — entrambi gli step: `version: '1.0.0'` → `version: '1.1.0'` |
+| `Wiki/concepts/Brief Tool - Prompt Architecture.md` | MODIFIED — +v1.1.0 section, +current_version frontmatter, +header aggiornato |
+| `Wiki/log.md` | This entry |
+
+**Verification**: `tsc --noEmit` domain ✅ backend ✅ frontend ✅. `vitest run` domain 490/490 ✅ backend 145/145 ✅.
 
 **Source**: `Wiki/sources/blog-article-generator/` — 3 prompt files: `prompt_blog_seo_structure.md`, `prompt_blog_research.md`, `prompt_blog_article.md`.
 

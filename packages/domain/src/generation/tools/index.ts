@@ -75,7 +75,7 @@ const briefTool: ToolDefinition = {
       enrichment: 'serial',
       prompt: {
         templateId: 'brief/extraction',
-        version: '1.0.0',
+        version: '1.1.0',
         model: ModelTier.Balanced,
         components: ['output-json/v1'],
       },
@@ -87,7 +87,7 @@ const briefTool: ToolDefinition = {
       enrichment: 'serial',
       prompt: {
         templateId: 'brief/brief-generation',
-        version: '1.0.0',
+        version: '1.1.0',
         model: ModelTier.Balanced,
         components: ['output-plain-text/v1', 'italian-formal/v1'],
       },
