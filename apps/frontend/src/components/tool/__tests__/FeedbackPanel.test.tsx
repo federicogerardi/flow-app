@@ -13,7 +13,7 @@ vi.mock('@flow-app/copy', () => ({
 
 beforeAll(() => {
   let rafId = 0;
-  (globalThis as unknown as Record<string, unknown>).requestAnimationFrame = (cb: FrameRequestCallback) => {
+  (globalThis as unknown as Record<string, unknown>).requestAnimationFrame = (_cb: FrameRequestCallback) => {
     rafId += 1;
     return rafId;
   };
