@@ -14,7 +14,7 @@ export default function SessionPage() {
   const [searchParams] = useSearchParams();
   const isReplayed = searchParams.get('replayed') === 'true';
   const navigate = useNavigate();
-  const { session, progress, stepArtifacts, loading, error } = useSession(sessionId ?? null);
+  const { session, progress, stepArtifacts, loading, error, reconnecting } = useSession(sessionId ?? null);
   const { setBreadcrumbs } = useBreadcrumbs();
 
   const toolName = session?.toolKey ? formatToolLabel(session.toolKey) : '';
@@ -57,6 +57,7 @@ export default function SessionPage() {
             stepArtifacts={stepArtifacts}
             loading={loading}
             error={error}
+            reconnecting={reconnecting}
             workspaceId={workspaceId ?? ''}
             produces={session?.produces}
             replayed={isReplayed}

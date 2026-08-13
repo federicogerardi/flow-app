@@ -21,6 +21,8 @@ export interface SessionTrackerProps {
   stepArtifacts: StepArtifact[];
   loading: boolean;
   error: Error | null;
+  /** True when the SSE connection dropped and is reconnecting (transient network loss). */
+  reconnecting?: boolean;
   workspaceId: string;
   produces?: string;
   /** When true, shows the replay banner ("Questa generazione è stata già completata..."). */
@@ -49,6 +51,7 @@ export function SessionTracker({
   stepArtifacts,
   loading,
   error,
+  reconnecting,
   workspaceId,
   produces,
   replayed,
@@ -91,6 +94,13 @@ export function SessionTracker({
       {replayed && (
         <Alert severity="info" sx={{ mb: 2 }} role="status" aria-live="polite">
           {copy.t('shared.session.replayedMessage')}
+        </Alert>
+      )}
+
+      {/* Reconnecting banner — transient network loss, not a real failure */}
+      {reconnecting && !isTerminal && (
+        <Alert severity="warning" sx={{ mb: 2 }} role="status">
+          {copy.t('toolPage.progress.reconnecting')}
         </Alert>
       )}
 

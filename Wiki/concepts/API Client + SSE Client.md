@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/infrastructure
-date_updated: 2026-08-11
-source_count: 4
+date_updated: 2026-08-13
+source_count: 7
 confidence: high
 ---
 
@@ -324,6 +324,16 @@ function useWorkspaces() {
 }
 ```
 
+## Resilience Hardening (2026-08-13)
+
+Network instability between the browser and Railway exposed three failure modes that produced a spurious "Generazione fallita" (`errors.generation.failed`) despite the backend completing cleanly. All three are fixed:
+
+1. **`SSEClient` reconnect + `onGiveUp`** — the client retries with exponential backoff (base 1s, cap 30s, max 5). A new `onGiveUp` callback fires when retries are exhausted instead of failing silently. `onError` is now wired in `useSession` to drive a `reconnecting` flag.
+2. **Terminal payload fallback** — `useSession`/`useLiveSession` now set `status`/`completedAt`/`failed` **optimistically from the SSE event payload** (`session_completed` carries `status: 'completed'` + `completedAt`; `session_failed` carries `status: 'failed'` + `error`), then refetch with `.catch(() => {})`. A flaky refetch can no longer leave the UI stuck in `running` or drop into a transient error state.
+3. **`reconnecting` UI** — `useSession` returns a `reconnecting` boolean (`true` on SSE `onerror`, cleared on any successful event, cleared on `onGiveUp`). `SessionTracker` renders a `role="status"` warning banner (`toolPage.progress.reconnecting`) when live.
+
+Backend companion fix (cross-session event leak): `apps/backend/src/infrastructure/job-event-bridge.ts` `subscribe()` now checks `ch === channel` before dispatching — the old handler ignored the channel argument, so a `session_failed` from session A could reach session B's SSE stream. See [[log]].
+
 ## Sources
 
 - [[API Routes]] — all endpoint definitions
@@ -332,3 +342,4 @@ function useWorkspaces() {
 - [[Database Schema]] — resource shapes match table schemas
 - [[synthesis/railway-deploy-40x-2026-08-08]] — 401 token refresh retry analysis, deferred auth SWR guard
 - [[synthesis/generation-sse-wiring-remediation-2026-08-12]] — 2026-08-12 unified remediation: B2 label fix, B3 onStarted, H2 REST seed
+- [[log]] — 2026-08-13 SSE resilience hardening entry

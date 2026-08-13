@@ -66,7 +66,8 @@ export class JobEventBridge {
 
     const channel = `session:${sessionId}:events`;
 
-    const messageHandler = (_ch: string, message: string) => {
+    const messageHandler = (ch: string, message: string) => {
+      if (ch !== channel) return; // ignore events from other sessions' channels
       try {
         onEvent(JSON.parse(message) as SSEPayload);
       } catch {

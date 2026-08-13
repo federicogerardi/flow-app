@@ -1,4 +1,31 @@
 
+## [2026-08-13] fix | SSE resilience — spurious "failed" under network instability
+
+**Symptom**: starting `brand-voice` (step "tov-generation") briefly showed "Errore nella generazione", then the session proceeded normally. Both FE and BE are on Railway; the browser had flaky network.
+
+**DB verification** (via `DATABASE_URL` from `.env`): session `1c9a4c6d-dd0b-4039-9299-4f2753d484f8` = `completed`, 2 artifacts (extraction + tov-generation), `error_code`/`error_message` NULL. Workspace history: 36 completed / 9 ready / 7 cancelled / **0 failed**. The backend never failed a session — the "failed" state was a client-side misrender.
+
+**Root causes** (3, all fixed):
+1. **Backend channel leak** — `job-event-bridge.ts` `subscribe()` message handler ignored the channel argument, so every subscriber received every session's events. A `session_failed` from session A could reach session B's SSE stream. (delegated to engineering-backend-architect)
+2. **FE terminal refetch fragility** — `useSession`/`useLiveSession` `onCompleted`/`onFailed` did a bare `api.getSession().then(setSession)` with no `.catch`; a flaky refetch left the UI stuck or dropped into a transient error state.
+3. **Contract drift** — `packages/contracts/src/generation/events.ts` `StepProgress` still declared `current`/`label?` while the backend worker emits `completedCount` (Fase 3 rename). Also `finalArtifact`/`completedAt` were typed required but can be `undefined`; the SSE `artifact` shape omits `stepLabel`/`promotedAssetId`.
+
+**Files changed** (7):
+
+| File | Change |
+|------|--------|
+| `apps/backend/src/infrastructure/job-event-bridge.ts` | `messageHandler` now checks `ch === channel` before dispatching (cross-session event leak fixed) |
+| `apps/frontend/src/api/sse-client.ts` | Added `onGiveUp?: () => void` callback, fired when `handleReconnect` exceeds `MAX_RETRIES` (was silent) |
+| `apps/frontend/src/api/hooks.ts` | `useSession`: new `reconnecting` flag; `onStarted`/`onStep`/terminal events clear it; `onError` sets it; terminal events now optimistically set `status` from the SSE payload then refetch with `.catch(() => {})`. `useLiveSession`: same payload fallback + `.catch`. |
+| `apps/frontend/src/components/tool/SessionTracker.tsx` | New `reconnecting` prop → `role="status"` warning banner `toolPage.progress.reconnecting` when live + not terminal |
+| `apps/frontend/src/components/tool/InlineSessionTracker.tsx` | Passes `reconnecting` through |
+| `apps/frontend/src/pages/SessionPage.tsx` | Passes `reconnecting` through |
+| `packages/contracts/src/generation/events.ts` | `StepProgress` → `{ completedCount, total }`; new `SSEArtifact` type (reduced, no `stepLabel`/`promotedAssetId`); `finalArtifact?`/`completedAt?` optional |
+
+**Test results**: FE 21 files / 159 tests, BE 19 files / 145 tests, 0 failures. `tsc --noEmit` clean on contracts + backend + frontend.
+
+**Net UX effect**: under network instability the user now sees a "Riconnessione in corso..." banner instead of a spurious "Generazione fallita", and terminal state is set from the SSE payload rather than a refetch that can fail.
+
 ## [2026-08-13] impl | FE Generation Perimeter — Unification & De-Drift
 
 **All 5 phases of [[synthesis/fe-generation-unification-plan-2026-08-13]] implemented.** 21 files modified across frontend + backend.

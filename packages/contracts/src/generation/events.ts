@@ -1,9 +1,31 @@
-import type { ArtifactDTO } from './session.dto';
+import type { ArtifactStatusValue } from '@flow-app/domain';
 
+/**
+ * Progress snapshot embedded in `step_completed` SSE events.
+ *
+ * `completedCount` is a COUNT of completed steps (0 = none). The step at
+ * index === completedCount is "awaiting execution". The backend worker
+ * publishes this exact shape (`session-worker.ts`), so the field name must
+ * stay in sync with the runtime payload.
+ */
 export interface StepProgress {
-  current: number;
+  completedCount: number;
   total: number;
-  label?: string;
+}
+
+/**
+ * Artifact shape carried inside SSE events. This is a REDUCED subset of the
+ * full `ArtifactDTO` — the SSE payload omits `stepLabel` and `promotedAssetId`
+ * (the label travels at the top level of `step_completed`, not inside the
+ * artifact object).
+ */
+export interface SSEArtifact {
+  id: string;
+  stepNumber: number;
+  status: ArtifactStatusValue;
+  createdAt: string;
+  sessionId: string;
+  content: string;
 }
 
 export type SSEEvent =
@@ -18,7 +40,7 @@ export type SSEEvent =
         stepNumber: number;
         stepLabel: string;
         progress: StepProgress;
-        artifact: ArtifactDTO;  // artifact content for live preview
+        artifact: SSEArtifact; // artifact content for live preview
       };
     }
   | {
@@ -26,8 +48,10 @@ export type SSEEvent =
       data: {
         sessionId: string;
         status: 'completed';
-        finalArtifact: ArtifactDTO;  // full artifact object (was finalArtifactId: string)
-        completedAt: string;
+        /** Undefined when the session completed with no artifacts (edge case). */
+        finalArtifact?: SSEArtifact;
+        /** Undefined when `completedAt` was never set (e.g. cancelled mid-flight). */
+        completedAt?: string;
       };
     }
   | {

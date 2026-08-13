@@ -23,7 +23,7 @@ export function InlineSessionTracker({
   produces,
   onReset,
 }: InlineSessionTrackerProps) {
-  const { session, progress, stepArtifacts, loading, error } = useSession(sessionId, initialSession);
+  const { session, progress, stepArtifacts, loading, error, reconnecting } = useSession(sessionId, initialSession);
 
   return (
     <SessionTracker
@@ -32,6 +32,7 @@ export function InlineSessionTracker({
       stepArtifacts={stepArtifacts}
       loading={loading}
       error={error}
+      reconnecting={reconnecting}
       workspaceId={workspaceId}
       produces={produces}
       onReset={onReset}

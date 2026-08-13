@@ -21,6 +21,7 @@ export function useSession(sessionId: string | null, initialData?: SessionDTO) {
   const [stepArtifacts, setStepArtifacts] = useState<StepArtifact[]>([]);
   const [loading, setLoading] = useState(initialData == null);
   const [error, setError] = useState<Error | null>(null);
+  const [reconnecting, setReconnecting] = useState(false);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -60,6 +61,7 @@ export function useSession(sessionId: string | null, initialData?: SessionDTO) {
 
     const unsubscribe = sseClient.connect(sessionId, {
       onStarted: (data) => {
+        setReconnecting(false);
         setSession((prev) => {
           if (!prev) return prev;
           return {
@@ -70,6 +72,7 @@ export function useSession(sessionId: string | null, initialData?: SessionDTO) {
         });
       },
       onStep: (data) => {
+        setReconnecting(false);
         setProgress(data.progress as StepProgress);
         const artifact = data.artifact as Record<string, unknown> | null;
         if (artifact?.stepNumber != null && artifact?.content) {
@@ -86,14 +89,28 @@ export function useSession(sessionId: string | null, initialData?: SessionDTO) {
           });
         }
       },
-      onCompleted: () => api.getSession(sessionId).then(setSession),
-      onFailed: () => api.getSession(sessionId).then(setSession),
+      onCompleted: (data) => {
+        setReconnecting(false);
+        // Optimistically mark terminal from the SSE payload so a flaky
+        // refetch cannot leave the UI stuck in "running".
+        setSession((prev) =>
+          prev ? { ...prev, status: 'completed', completedAt: data.completedAt as string } : prev,
+        );
+        api.getSession(sessionId).then(setSession).catch(() => {});
+      },
+      onFailed: () => {
+        setReconnecting(false);
+        setSession((prev) => (prev ? { ...prev, status: 'failed' } : prev));
+        api.getSession(sessionId).then(setSession).catch(() => {});
+      },
+      onError: () => setReconnecting(true),
+      onGiveUp: () => setReconnecting(false),
     });
 
     return unsubscribe;
   }, [sessionId]);
 
-  return { session, progress, stepArtifacts, loading, error };
+  return { session, progress, stepArtifacts, loading, error, reconnecting };
 }
 
 /**
@@ -151,7 +168,8 @@ export function useLiveSession(sessionId: string | null) {
           };
         });
       },
-      onCompleted: () => {
+      onCompleted: (data) => {
+        setLiveSession((prev) => (prev ? { ...prev, status: 'completed', completedAt: data.completedAt as string } : prev));
         // Fetch final state from API
         api.getSession(sessionId).then((session) => {
           setLiveSession((prev) => {
@@ -162,9 +180,10 @@ export function useLiveSession(sessionId: string | null) {
               completedAt: session.completedAt ?? undefined,
             };
           });
-        });
+        }).catch(() => {});
       },
       onFailed: () => {
+        setLiveSession((prev) => (prev ? { ...prev, status: 'failed' } : prev));
         api.getSession(sessionId).then((session) => {
           setLiveSession((prev) => {
             if (!prev) return prev;
@@ -174,7 +193,7 @@ export function useLiveSession(sessionId: string | null) {
               errorMessage: 'Session failed',
             };
           });
-        });
+        }).catch(() => {});
       },
     });
 

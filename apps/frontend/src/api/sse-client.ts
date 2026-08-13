@@ -11,6 +11,8 @@ type SSECallbacks = {
   onCompleted?: (data: Record<string, unknown>) => void;
   onFailed?: (data: Record<string, unknown>) => void;
   onError?: (error: Event) => void;
+  /** Fired when the connection gave up after MAX_RETRIES — no further reconnect attempts. */
+  onGiveUp?: () => void;
 };
 
 const MAX_RETRIES = 5;
@@ -60,6 +62,7 @@ export class SSEClient {
   private handleReconnect(sessionId: string): void {
     const count = (this.retryCount.get(sessionId) ?? 0) + 1;
     if (count > MAX_RETRIES) {
+      this.callbacks.get(sessionId)?.onGiveUp?.();
       this.cleanup(sessionId);
       return;
     }
