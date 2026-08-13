@@ -1,4 +1,25 @@
 
+## [2026-08-13] improve | Blog Post — prompt v1.1.0 asset wiring + instructions + context documentation
+
+**Analysis**: 4 critical gaps in v1.0.0: (1) `instructions` input silently ignored — collected in UI, zero prompt files consumed it. (2) Brand Voice and Persona assets referenced in system prompts but not wired in ToolDefinition — prompts described "Persona Asset Usage" that could never be present. (3) Bare placeholders `{{titolo}}` and `{{output_step_*}}` passed through unresolved — PromptComposer gets `{}` empty context; the model compensated by reading injected data but placeholders were noise. (4) Feedback Incorporation section in Step 3 system prompt was incomplete (4 truncated lines).
+
+**Files created/modified** (9):
+| File | Action |
+|------|--------|
+| `apps/backend/src/prompts/blog-post/seo-structure/versions/1.1.0/system.md` | NEW — +Asset Usage (Persona, Brand Voice, Instructions), instructions as SEO strategy override |
+| `apps/backend/src/prompts/blog-post/seo-structure/versions/1.1.0/user.md` | NEW — documented context structure, replaced `{{titolo}}` with labeled sections, research priority chain |
+| `apps/backend/src/prompts/blog-post/research/versions/1.1.0/system.md` | NEW — +Asset Usage for all 3 assets (now wired) |
+| `apps/backend/src/prompts/blog-post/research/versions/1.1.0/user.md` | NEW — documented context: 5 labeled sections, instructions-as-research-weight |
+| `apps/backend/src/prompts/blog-post/article/versions/1.1.0/system.md` | NEW — +Asset Usage (wired), completed Feedback Incorporation (5 rules: adjust-only, structure priority, missing data, additive feedback) |
+| `apps/backend/src/prompts/blog-post/article/versions/1.1.0/user.md` | NEW — documented context: 6 sections, Data Priority chain (H1/H2 > Research > Brand Voice > Instructions > Persona) |
+| `packages/domain/src/generation/tools/index.ts` | MODIFIED — +`assets: [brand-voice, persona]` to acquisition. All 3 steps: `version: '1.0.0'` → `version: '1.1.0'` |
+| `packages/domain/src/generation/prompting/default-components.ts` | MODIFIED — +`italian-formal/v1` to `DEFAULT_COMPONENTS['blog-post']` |
+| `Wiki/concepts/Blog Article Generator - Prompt Architecture.md` | MODIFIED — updated to v1.1.0: added `implementation: complete`, `current_version: 1.1.0`, v1.1.0 changelog, replaced implementation guide with completed status |
+
+**Verification**: `tsc --noEmit` domain ✅ backend ✅. `vitest run` domain 490/490 ✅ backend 145/145 ✅.
+
+**Result**: `instructions` now influences all 3 steps. Brand Voice + Persona wired via `ContextEnricher` → `[Asset - brand-voice]`, `[Asset - persona]`. Zero bare placeholders — context documented in prose (Brief v1.1.0 pattern). Feedback Incorporation complete with constraint resolution rules.
+
 ## [2026-08-13] improve | Brand Voice — prompt v1.1.0 user prompt enrichment + synthetic TOV transparency
 
 **Analysis**: Extraction user.md incorrectly referenced "brief asset" as data source — the v1.0.0 prompt was written for file-only acquisition but the ToolDefinition uses `assets: [{ assetType: 'brief', required: true }]` + optional file. Both user.md files were thin (5 lines each) with no context structure documentation or field mapping.

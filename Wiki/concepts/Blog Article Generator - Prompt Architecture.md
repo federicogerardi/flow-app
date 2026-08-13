@@ -7,11 +7,14 @@ tags:
 date_updated: 2026-08-13
 source_count: 11
 confidence: high
+implementation: complete
+current_version: 1.1.0
 ---
 
 # Blog Article Generator — Prompt Architecture
 
 > **Canonical tool key**: `blog-post`. **v1 name**: `blog-article-generator`. Content producer — output is NOT promotable to a [[Asset|workspace asset]].
+> **Current prompt version**: `1.1.0` (2026-08-13) — `instructions` wired to all steps, brand-voice + persona assets connected, context documentation, Feedback Incorporation completed
 
 ## Overview
 
@@ -22,9 +25,9 @@ The Blog Article Generator produces ~800-word SEO-optimized articles in Italian 
 | Input | Key | Type | Required | Notes |
 |-------|-----|------|----------|-------|
 | Article title | `topic` | `short` text | Yes | Becomes the H1 — never rewritten |
-| Custom instructions | `instructions` | `long` text (textarea) | No | User-provided guidance for generation |
-| Brand Voice | `brand-voice` asset | workspace asset | No | Injected into article step for tone |
-| Persona | `persona` asset | workspace asset | No | Abstract reference — never named in article |
+| Custom instructions | `instructions` | `long` text (textarea) | No | Wired to all 3 steps (v1.1.0). Step 1: guides SEO strategy; Step 2: weights research depth; Step 3: adjusts emphasis/tone/scope |
+| Brand Voice | `brand-voice` asset | workspace asset | No | Wired to all 3 steps (v1.1.0). Injected via `[Asset - brand-voice]` context. Calibrates tone register throughout pipeline |
+| Persona | `persona` asset | workspace asset | No | Wired to all 3 steps (v1.1.0). Calibrates reading level, example relevance, information depth |
 
 ## Pipeline
 
@@ -57,29 +60,31 @@ User Input (title + instructions)
 
 ### Step 1 — SEO Structure
 
-**Prompt**: [[sources/blog-article-generator#Step 1 — SEO Structure (prompt_blog_seo_structure.md)|prompt_blog_seo_structure.md]]
+**Prompt**: `blog-post/seo-structure/versions/1.1.0/system.md` + `user.md`
 
 Acts as a Senior SEO Strategist. Performs **real-time online research** on the topic (blocking requirement — cannot proceed from memory). Analyzes top-ranking Italian-language results to determine the optimal H2 information architecture.
 
-**Output**: Markdown with 1 H1 (exact topic title) + 2–4 H2 sections + list of consulted sources.
+**Context documented** (v1.1.0): `[Input - topic]`, `[Input - instructions]`, `[Asset - brand-voice]`, `[Asset - persona]` — no bare placeholders. Instructions are authoritative supplements that can override default SEO strategy decisions (e.g., "focus on cost comparison" → prioritize cost-oriented H2s).
 
-**Placeholders**: `{{titolo}}`
+**Output**: Markdown with 1 H1 (exact topic title) + 2–4 H2 sections + list of consulted sources.
 
 ### Step 2 — Research
 
-**Prompt**: [[sources/blog-article-generator#Step 2 — Research (prompt_blog_research.md)|prompt_blog_research.md]]
+**Prompt**: `blog-post/research/versions/1.1.0/system.md` + `user.md`
 
 Takes the SEO structure from Step 1 and performs in-depth research on each H2 section. Produces structured data: key information, concrete data/statistics, semantically related keywords, practical examples — all focused on the Italian market.
 
-**Output**: Structured content organized by H2 section. First line is research data (no preamble).
+**Context documented** (v1.1.0): `[Input - topic]`, `[Input - instructions]`, `[Asset - brand-voice]`, `[Asset - persona]`, `[Previous Step 1]`. Instructions weight research depth across sections.
 
-**Placeholders**: `{{output_step_blog_seo_structure}}`, `{{titolo}}`
+**Output**: Structured content organized by H2 section. First line is research data (no preamble).
 
 ### Step 3 — Article
 
-**Prompt**: [[sources/blog-article-generator#Step 3 — Article (prompt_blog_article.md)|prompt_blog_article.md]]
+**Prompt**: `blog-post/article/versions/1.1.0/system.md` + `user.md`
 
 Acts as a professional copywriter. Writes the final ~800-word article in Italian, filling the SEO-validated H2 skeleton with research-backed content. **Anti-hallucination guardrails are intentionally NOT applied here** — this step can elaborate beyond raw research data with context, examples, and narrative depth. Includes a **gold standard example** (React 19 article excerpt) as a quality benchmark.
+
+**Context documented** (v1.1.0): `[Input - topic]`, `[Input - instructions]`, `[Asset - brand-voice]`, `[Asset - persona]`, `[Previous Step 1]`, `[Previous Step 2]`. Data priority explicit: H1/H2 (fixed) > Research Data > Brand Voice > Instructions > Persona.
 
 **Non-negotiable constraints**:
 - H1 = exactly the user-provided title (SEO requirement)
@@ -88,7 +93,7 @@ Acts as a professional copywriter. Writes the final ~800-word article in Italian
 - Prose rules: max 1 bullet list, no bold at paragraph start, rhythmic variety
 - Output determinism: first character = H1, zero preamble
 
-**Placeholders**: `{{output_step_blog_research}}`, `{{output_step_blog_seo_structure}}`, `{{titolo}}`
+**Feedback Incorporation** (v1.1.0 — completed section): adjusts only sections mentioned in feedback; never changes uncriticized sections; prioritizes H1/H2 structure over feedback if they conflict; adds `## Note sulla Rigenerazione` for constraint explanations.
 
 ## Model Tier Rationale
 
@@ -100,25 +105,21 @@ Acts as a professional copywriter. Writes the final ~800-word article in Italian
 
 ## Domain Definition
 
-**File**: `packages/domain/src/generation/tools/index.ts`
+**File**: `packages/domain/src/generation/tools/index.ts` (lines 16–58)
 
 ```typescript
 const blogPostTool: ToolDefinition = {
   toolKey: 'blog-post',
-  name: 'Blog Post',
-  description: 'Generate a complete blog article with SEO optimization',
+  name: 'Articolo Blog',
+  description: 'Genera un articolo blog ottimizzato SEO a partire da un titolo e istruzioni personalizzate',
   creditCost: 1,
   outputCategory: ToolOutputCategory.ContentProducer,
   // produces is NOT set — content tool, output is not promotable to an asset
   // defaultComponents is NOT set — every step declares its full component list explicitly.
-  // This is because per-step components REPLACE, not merge (see [[Creating a New Tool#Prompt Component Resolution]]).
   acquisition: {
     userText: [
-      { key: 'topic', label: 'Title', required: true, type: 'short' },
-      { key: 'instructions', label: 'Custom Instructions', required: false, type: 'long', placeholder: 'Additional generation instructions...' },
-    ],
-    files: [
-      { key: 'briefing', label: 'Briefing', accept: ['.txt', '.md', '.docx'], required: false },
+      { key: 'topic', label: 'Titolo articolo', required: true, type: 'short' },
+      { key: 'instructions', label: 'Istruzioni personalizzate', required: false, type: 'long', placeholder: 'Aggiungi istruzioni per la generazione...' },
     ],
     assets: [
       { assetType: 'brand-voice', required: false },
@@ -130,48 +131,44 @@ const blogPostTool: ToolDefinition = {
       order: 1,
       label: 'seo-structure',
       enrichment: 'serial',
-      prompt: { templateId: 'blog-post/seo-structure', version: '1.0.0', model: ModelTier.Search, components: ['output-markdown/v1', 'anti-hallucination/v1'] },
+      prompt: { templateId: 'blog-post/seo-structure', version: '1.1.0', model: ModelTier.Search, components: ['output-markdown/v1', 'anti-hallucination/v1'] },
       execution: { timeoutMs: 90000, maxRetries: 2 },
     },
     {
       order: 2,
       label: 'research',
       enrichment: 'serial',
-      prompt: { templateId: 'blog-post/research', version: '1.0.0', model: ModelTier.Balanced, components: ['anti-hallucination/v1'] },
+      prompt: { templateId: 'blog-post/research', version: '1.1.0', model: ModelTier.Balanced, components: ['anti-hallucination/v1'] },
       execution: { timeoutMs: 90000, maxRetries: 2 },
     },
     {
       order: 3,
       label: 'article',
       enrichment: 'serial',
-      // No anti-hallucination component — this is the creative synthesis step.
-      // Full format components: markdown output + SEO guidelines + Italian tone.
-      prompt: { templateId: 'blog-post/article', version: '1.0.0', model: ModelTier.Premium, components: ['output-markdown/v1', 'seo-optimized/v1', 'italian-formal/v1'] },
+      prompt: { templateId: 'blog-post/article', version: '1.1.0', model: ModelTier.Premium, components: ['output-markdown/v1', 'seo-optimized/v1', 'italian-formal/v1'] },
       execution: { timeoutMs: 120000, maxRetries: 2 },
     },
   ],
 };
 ```
 
-### Required codebase changes to align with this prompt architecture
+## Prompt Template Files
 
-The current `blogPostTool` in `toolRegistry` (lines 16–59 of `tools/index.ts`) defines steps as `SEO Structure → Outline → Article` with `Balanced`, `Balanced`, `Premium` model tiers. To align with this prompt architecture:
-
-| Change | Current | Target |
-|--------|---------|--------|
-| Step 1 model tier | `Balanced` | `Search` (requires online research) |
-| Step 2 label | `Outline` | `research` (in-depth data, not outline) |
-| Step 2 model tier | `Balanced` | `Balanced` (unchanged) |
-| Step 3 label | `Article` | `article` (kebab-case consistency) |
-| `acquisition.userText` | `topic` + `language` select | `topic` (short) + `instructions` (long textarea) |
-| `defaultComponents` | `['anti-hallucination/v1', 'output-markdown/v1', 'seo-optimized/v1']` (applies to all steps) | Removed — every step declares full `components` list explicitly |
-| Step 1 `components` | (none, inherited from default) | `['output-markdown/v1', 'anti-hallucination/v1']` |
-| Step 2 `components` | (none, inherited from default) | `['anti-hallucination/v1']` |
-| Step 3 `components` | (none, inherited from default) | `['output-markdown/v1', 'seo-optimized/v1', 'italian-formal/v1']` (NO anti-hallucination) |
-| `DEFAULT_COMPONENTS['blog-post']` | `['anti-hallucination/v1', 'output-markdown/v1', 'seo-optimized/v1']` | `['output-markdown/v1', 'seo-optimized/v1']` (safe fallback without anti-hallucination) |
-| Prompt templates | None exist | Create `blog-post/seo-structure/`, `blog-post/research/`, `blog-post/article/` under `versions/1.0.0/` |
-
-> **Note**: the current `blogPostTool` has no corresponding prompt templates (`apps/backend/src/prompts/blog-post/` does not exist). The tool runs with the old Blog Post stubs. This prompt architecture represents the first real implementation.
+```
+apps/backend/src/prompts/blog-post/
+├── seo-structure/
+│   └── versions/1.1.0/
+│       ├── system.md    # Senior SEO Strategist — H2 skeleton, anti-hallucination, asset usage
+│       └── user.md      # Context documented: [Input - topic], [Input - instructions], assets, research priority
+├── research/
+│   └── versions/1.1.0/
+│       ├── system.md    # Research Analyst — per-H2 research, anti-hallucination, asset usage
+│       └── user.md      # Context documented: 5 labeled sections, instructions guidance
+└── article/
+    └── versions/1.1.0/
+        ├── system.md    # Professional Copywriter — gold standard example, Feedback Incorporation, asset-aware
+        └── user.md      # Context documented: 6 labeled sections, data priority chain
+```
 
 ## Anti-Hallucination Guardrails
 
@@ -189,49 +186,41 @@ The current `blogPostTool` in `toolRegistry` (lines 16–59 of `tools/index.ts`)
 - Source citation rules: cite primary/authoritative sources (laws, studies, institutes); never mention container blogs/sites or insert hyperlinks
 - Feedback incorporation: on regeneration, adjust only sections mentioned in feedback — do not rewrite from scratch
 
-## Step-by-Step Implementation Guide
+## v1.1.0 — Asset Wiring & Context Documentation (2026-08-13)
 
-Follow [[Creating a New Tool]] with these specifics:
+**Problem**: 4 critical gaps in v1.0.0:
+1. **`instructions` input was silently ignored** — collected in the UI but consumed by zero prompt files
+2. **Brand Voice and Persona assets were referenced in system prompts but not wired** — prompts described "Persona Asset Usage" and "Brand Voice" that could never be present
+3. **Bare placeholders `{{titolo}}` and `{{output_step_*}}` passed through unresolved** — PromptComposer gets `{}` empty context, the session-worker appends enriched context after `---`. The model compensated by reading data from the injected context, but the placeholders were noise
+4. **Feedback Incorporation section was incomplete** — missing constraint resolution rules and regeneration notes format
 
-### 1. Tool Key
-Already exists as `blog-post` in `ToolKey.ts` (line 9, line 27, line 39). **No change needed**.
+### Changes
 
-### 2. Domain Definition
-Modify `tools/index.ts` lines 16–59 — replace the existing `blogPostTool` definition with the updated one above (3-step: search → balanced → premium, `instructions` textarea).
+| File | Change |
+|------|--------|
+| `tools/index.ts` | Added `assets: [{ assetType: 'brand-voice' }, { assetType: 'persona' }]` to acquisition. All 3 steps: `version: '1.0.0'` → `version: '1.1.0'` |
+| `default-components.ts` | Added `italian-formal/v1` to `DEFAULT_COMPONENTS['blog-post']` — safe fallback now includes language guidance |
+| `seo-structure/1.1.0/system.md` | Added Asset Usage (Persona, Brand Voice, Instructions) sections. Instructions are authoritative supplements for SEO strategy |
+| `seo-structure/1.1.0/user.md` | Replaced `{{titolo}}` with documented context structure: `[Input - topic]`, `[Input - instructions]`, `[Asset - brand-voice]`, `[Asset - persona]`. Added research priority chain with instructions as #3 |
+| `research/1.1.0/system.md` | Added Asset Usage sections for all 3 assets. Persona/Brand-voice now wired — no longer orphan instructions |
+| `research/1.1.0/user.md` | Replaced `{{titolo}}` + `{{output_step_blog_seo_structure}}` with documented context: 5 labeled sections. Added instructions-as-research-weight guidance |
+| `article/1.1.0/system.md` | Added Asset Usage sections for all 3 assets (now wired). Completed Feedback Incorporation section: 5 rules covering adjust-only, structure priority, missing data handling, additive vs scope-expanding feedback |
+| `article/1.1.0/user.md` | Replaced `{{titolo}}` + 2 `{{output_step_*}}` placeholders with documented context: 6 labeled sections. Added Data Priority chain: H1/H2 > Research > Brand Voice > Instructions > Persona |
 
-### 3. Prompt Templates
-Create 6 files (2 per step):
+### Result
+
+- **`instructions` now influences all 3 steps**: Step 1 (SEO strategy override), Step 2 (research depth weighting), Step 3 (emphasis/tone/scope adjustment)
+- **Brand Voice and Persona assets are now wired** — `ContextEnricher` injects them as `[Asset - brand-voice]` and `[Asset - persona]` into all 3 steps
+- **No bare placeholders** — context structure is documented in prose, matching the Brief Tool v1.1.0 pattern
+- **Feedback Incorporation is complete** — 5 explicit rules with constraint resolution and regeneration notes format
+- **Zero drift** between prompts and code: the system prompts now describe only assets that can actually be present
+
+### Verification
 
 ```
-apps/backend/src/prompts/blog-post/seo-structure/versions/1.0.0/system.md
-apps/backend/src/prompts/blog-post/seo-structure/versions/1.0.0/user.md
-apps/backend/src/prompts/blog-post/research/versions/1.0.0/system.md
-apps/backend/src/prompts/blog-post/research/versions/1.0.0/user.md
-apps/backend/src/prompts/blog-post/article/versions/1.0.0/system.md
-apps/backend/src/prompts/blog-post/article/versions/1.0.0/user.md
+tsc --noEmit  →  domain ✅  backend ✅
+vitest        →  domain 490/490 ✅  backend 145/145 ✅
 ```
-
-Source material: `Wiki/sources/blog-article-generator/prompt_blog_seo_structure.md`, `prompt_blog_research.md`, `prompt_blog_article.md`.
-
-The `system.md` should contain the role definition, rules, output format, and (for Steps 1-2 only) anti-hallucination guardrails. Step 3's `system.md` must NOT include anti-hallucination rules — it should focus on writing quality, prose style, and editorial rhythm. The `user.md` should contain the task instruction with placeholder references.
-
-### 4. Frontend Input Definitions
-Modify `apps/frontend/src/tool-inputs.ts`:
-
-```typescript
-const BLOG_POST_INPUTS: TextInput[] = [
-  { key: 'topic', label: 'Titolo articolo', required: true, type: 'short' },
-  { key: 'instructions', label: 'Istruzioni personalizzate', required: false, type: 'long', placeholder: 'Istruzioni aggiuntive per la generazione...' },
-];
-```
-
-Replace the existing `BLOG_POST_INPUTS` (lines 37–40) which only has `topic` + `language` select. The `language` field is removed — Italian is enforced in the prompt.
-
-### 5. Copy Module
-No changes needed — the tool uses generic copy keys from `packages/copy/src/it/tool-page.ts`.
-
-### 6. Registration
-Already registered at `toolRegistry['blog-post']` (line 308). Replace the existing definition — no new entry needed.
 
 ## Sources
 

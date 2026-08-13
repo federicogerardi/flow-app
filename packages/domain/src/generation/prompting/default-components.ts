@@ -143,7 +143,7 @@ export const DEFAULT_COMPONENTS: Record<string, string[]> = {
   'landing-page': ['anti-hallucination/v1', 'output-markdown/v1', 'marketing-tone/v1'],
   'video-script-long-form': ['anti-hallucination/v1', 'output-markdown/v1'],
   'video-description': ['anti-hallucination/v1', 'output-markdown/v1'],
-  'blog-post': ['output-markdown/v1', 'seo-optimized/v1'],
+  'blog-post': ['output-markdown/v1', 'seo-optimized/v1', 'italian-formal/v1'],
   'ad-copy': ['anti-hallucination/v1', 'output-plain-text/v1', 'marketing-tone/v1'],
   'brief': ['anti-hallucination/v1', 'output-plain-text/v1', 'italian-formal/v1'],
   'brand-voice': ['anti-hallucination/v1', 'output-plain-text/v1', 'italian-formal/v1'],
