@@ -73,7 +73,7 @@ export function PromoteDialog({
           {copy.t('toolPage.promote.nameHelperText')}
         </Typography>
         {state === 'error' && (
-          <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+          <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }} role="alert">
             {errorMsg}
           </Typography>
         )}

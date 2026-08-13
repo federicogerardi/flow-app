@@ -206,12 +206,3 @@ interface ApiToolResponse {
     stepCount: tool?.stepCount ?? (tool?.acquisition?.userText?.length || tool?.acquisition?.files?.length || 1),
   };
 }
-
-/**
- * @deprecated Use fetchToolDefinitions() instead — returns both text and file inputs.
- * Kept for backward compatibility with components that only need text inputs.
- */
-export async function fetchToolInputs(toolKey: string): Promise<ToolTextInput[]> {
-  const { textInputs } = await fetchToolDefinitions(toolKey);
-  return textInputs;
-}

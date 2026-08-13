@@ -195,7 +195,7 @@ async function processSessionJob(
           stepNumber: artifact.stepNumber,
           stepLabel: stepDef?.label ?? `Step ${artifact.stepNumber}`,
           progress: {
-            current: artifactCount,
+            completedCount: artifactCount,
             total: state.context.tool.steps.length,
           },
           artifact: {

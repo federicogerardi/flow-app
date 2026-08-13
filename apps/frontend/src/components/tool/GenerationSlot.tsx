@@ -5,16 +5,13 @@ import { CompletionBanner } from '../shared/CompletionBanner';
 import { ErrorState } from '../ErrorState';
 import { fadeSlideUp } from '../../shared/animations';
 import { copy } from '@flow-app/copy';
+import { isTerminalStatus, isCompletedStatus, isFailedStatus } from '../../shared/session-utils';
+import type { StepProgress } from '../../api/hooks';
 import type { ArtifactDTO } from '../../api/client';
-
-interface StepProgress {
-  current: number;
-  total: number;
-  label?: string;
-}
+import type { SessionStatusDTO } from '@flow-app/contracts';
 
 interface GenerationSlotProps {
-  status: string;
+  status: SessionStatusDTO;
   progress: StepProgress | null;
   stepArtifacts: { stepNumber: number; content: string }[];
   startedAt: string | null;
@@ -28,16 +25,14 @@ interface GenerationSlotProps {
   onRetry?: () => void;
 }
 
-const TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled']);
-
 export function GenerationSlot({
   status, progress, stepArtifacts, startedAt,
   artifacts, workspaceId, produces, totalSteps,
   durationMs, creditCost, xpEarned, onRetry,
 }: GenerationSlotProps) {
-  const isTerminal = TERMINAL_STATUSES.has(status);
-  const isCompleted = status === 'completed';
-  const isFailed = status === 'failed';
+  const isTerminal = isTerminalStatus(status);
+  const isCompleted = isCompletedStatus(status);
+  const isFailed = isFailedStatus(status);
 
   return (
     <Box>
@@ -59,6 +54,7 @@ export function GenerationSlot({
             progress={progress}
             status={status}
             startedAt={startedAt}
+            isTerminal={isTerminal}
             artifacts={stepArtifacts.map((a) => ({
               id: `step-${a.stepNumber}`,
               stepNumber: a.stepNumber,

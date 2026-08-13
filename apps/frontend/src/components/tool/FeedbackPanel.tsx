@@ -4,27 +4,25 @@ import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import { copy } from '@flow-app/copy';
 import { useEffect, useRef, useState } from 'react';
 import type { ArtifactDTO } from '../../api/client';
+import type { StepProgress } from '../../api/hooks';
 import { slideInFade, stepPulse } from '../../shared/animations';
 
-interface StepProgressData {
-  current: number;
-  total: number;
-}
-
 interface FeedbackPanelProps {
-  progress: StepProgressData | null;
+  progress: StepProgress | null;
   status: string;
   artifacts?: ArtifactDTO[];
   startedAt?: string | null;
   layoutMode?: 'compact' | 'side-by-side';
   totalSteps?: number;
+  isTerminal?: boolean;
 }
 
-function ElapsedTimer({ startedAt }: { startedAt: number }) {
+function ElapsedTimer({ startedAt, isTerminal }: { startedAt: number; isTerminal?: boolean }) {
   const [elapsed, setElapsed] = useState(0);
   const rafRef = useRef<number>(null);
 
   useEffect(() => {
+    if (isTerminal) return; // Stop the rAF loop after the session ends — no point ticking forever
     const tick = () => {
       setElapsed(Math.floor((Date.now() - startedAt) / 1000));
       rafRef.current = requestAnimationFrame(tick);
@@ -105,7 +103,7 @@ function StepIndicator({ index, isCompleted, isActive, total, artifactPreview }:
           <Typography
             variant="caption"
             color="text.secondary"
-            sx={{ display: 'block', fontStyle: 'italic', mt: 0.25, animation: `${slideInFade} 300ms ease-out` }}
+            sx={{ display: 'block', fontStyle: 'italic', mt: 0.25, animation: `${slideInFade} 300ms ease-out`, '@media (prefers-reduced-motion: reduce)': { animation: 'none' } }}
           >
             {artifactPreview}
           </Typography>
@@ -115,7 +113,7 @@ function StepIndicator({ index, isCompleted, isActive, total, artifactPreview }:
   );
 }
 
-export function FeedbackPanel({ progress, status, artifacts = [], startedAt, layoutMode = 'compact', totalSteps }: FeedbackPanelProps) {
+export function FeedbackPanel({ progress, status, artifacts = [], startedAt, layoutMode = 'compact', totalSteps, isTerminal }: FeedbackPanelProps) {
   const timerStartMs = startedAt ? new Date(startedAt).getTime() : Date.now();
 
   if (!progress) {
@@ -149,15 +147,15 @@ export function FeedbackPanel({ progress, status, artifacts = [], startedAt, lay
   }
 
   const stepList = (
-    <Stack spacing={0.5}>
+    <Stack spacing={0.5} role="list">
       {Array.from({ length: progress.total }, (_, i) => {
         const artifact = artifacts.find((a) => a.stepNumber === i + 1);
         return (
           <StepIndicator
             key={i}
             index={i}
-            isCompleted={i < progress.current}
-            isActive={i === progress.current}
+            isCompleted={i < progress.completedCount}
+            isActive={i === progress.completedCount}
             total={progress.total}
             artifactPreview={artifact?.content?.slice(0, 150)}
           />
@@ -177,21 +175,21 @@ export function FeedbackPanel({ progress, status, artifacts = [], startedAt, lay
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             <Typography variant="body2" color="text.secondary">
-              {progress.current}/{progress.total}
+              {progress.completedCount}/{progress.total}
             </Typography>
-            <ElapsedTimer startedAt={timerStartMs} />
+            <ElapsedTimer startedAt={timerStartMs} isTerminal={isTerminal} />
           </Box>
         </Box>
         <LinearProgress
           variant="determinate"
-          value={(progress.current / progress.total) * 100}
+          value={(progress.completedCount / progress.total) * 100}
           sx={{
             height: 8,
             borderRadius: 4,
             bgcolor: 'action.hover',
           }}
           aria-label={copy.t('toolPage.progress.ariaLabel', {
-            current: String(progress.current),
+            current: String(progress.completedCount),
             total: String(progress.total),
           })}
         />

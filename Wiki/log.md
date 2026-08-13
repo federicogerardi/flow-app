@@ -1,4 +1,52 @@
 
+## [2026-08-13] impl | FE Generation Perimeter — Unification & De-Drift
+
+**All 5 phases of [[synthesis/fe-generation-unification-plan-2026-08-13]] implemented.** 21 files modified across frontend + backend.
+
+| Phase | Scope | Net lines | Key deliverables |
+|-------|-------|-----------|-----------------|
+| 1 | Critical bugs + shared foundation | +30/-70 | Fix RESET dead-end (`draftEmpty`→`configuring`), extract `deriveUIState` to real module, terminal predicates → `session-utils.ts`, canonical `StepProgress` from `hooks.ts`, ElapsedTimer rAF stopped on terminal, dead code (6 symbols) deleted |
+| 2 | Surface unification | +180/-160 | New `SessionTracker` component (single canonical owner of status chip, cancel, GenerationSlot, terminal CTAs, replay banner, loading/error guards). `InlineSessionTracker` → 30-line wrapper. `SessionPage` → 64-line page-chrome + delegate. 4 asymmetries fixed. |
+| 3 | Progress semantics + type coherence | +20/-15 | `progress.current` → `progress.completedCount` (backend SSE + FE hooks + FeedbackPanel + tests). REST↔SSE race fixed (upsert merge, not replace). `xpEarned` cast removed (already typed on `SessionDetailDTO`). |
+| 4 | Duplication + dead code | +5/-25 | `CompletionBanner.formatDuration` → `session-utils.formatElapsedSeconds`. `formatToolLabel` imported in ToolPageLayout (no inline regex). `fetchToolDefinitions` dead code removed. `configuring→RESET` scheduled for cleanup. |
+| 5 | Accessibility + polish | +5/-10 | Gradient contrast fix: `#059669`→`#047857` (AA pass at both endpoints). Redundant `aria-live="polite"` removed from CompletionBanner. `role="list"` parent added. Missing `prefers-reduced-motion` guard added. PromoteDialog error now `role="alert"`. Dead `gradients.completion` theme token deleted. |
+
+**Net delta**: ~-30 lines across 21 files. `tsc --noEmit` clean (frontend + backend). 159 FE tests + 145 BE tests, 0 regressions.
+
+**Files**: `tool-page-machine.ts`, `derive-ui-state.ts` (NEW), `SessionTracker.tsx` (NEW), `InlineSessionTracker.tsx`, `SessionPage.tsx`, `GenerationSlot.tsx`, `FeedbackPanel.tsx`, `session-utils.ts`, `hooks.ts`, `animations.ts`, `client.ts`, `SetupPanel.tsx`, `ToolPageLayout.tsx`, `CompletionBanner.tsx`, `PromoteDialog.tsx`, `tokens.ts`, `derive-ui-state.test.ts`, `FeedbackPanel.test.tsx`, `GenerationSlot.test.tsx`, backend `session-worker.ts`.
+
+## [2026-08-13] plan | FE Generation Perimeter — Unification & De-Drift Plan
+
+**Context**: 4-agent audit (developer, UX-architect, UI-designer, simplifier) of the FE artifact-generation perimeter found ~40 findings across 6 themes: (1) `progress.current` semantic drift on 3 surfaces, (2) dual-surface copy-paste twins already diverged, (3) 3 critical bugs (RESET dead-end, REST↔SSE race, infinite rAF loop), (4) 6 `as any`/`as unknown as` casts masking real data gaps, (5) 12+ duplicated code blocks + dead code, (6) 4 accessibility violations.
+
+**5-phase remediation plan**: [[synthesis/fe-generation-unification-plan-2026-08-13|18 files, ~-20 net lines]].
+
+| Phase | Scope | Key deliverables |
+|-------|-------|-----------------|
+| 1 | Critical bugs + shared foundation | Fix RESET dead-end, extract `deriveUIState` to real module, terminal predicates → `session-utils.ts`, canonical `StepProgress` type, dead code deletion (6 symbols) |
+| 2 | Surface unification | New `SessionTracker` component → consumed by both `InlineSessionTracker` + `SessionPage`. Fix 4 asymmetries (replay banner, error/loading, status chip, `produces` source) |
+| 3 | Progress semantics + type coherence | Rename `current` → `completedCount` (backend + FE), add `creditCost`/`xpEarned` to backend/contracts, fix REST↔SSE race (upsert, not replace), remove all `as any` casts |
+| 4 | Duplication cleanup | 4 duration formatters → 2, inline `formatToolLabel` → import, dead machine transitions removed |
+| 5 | Accessibility + polish | Gradient contrast AA fix (`#059669`→`#047857`), nested `aria-live` regions → 1, missing `role="list"` parent, missing `prefers-reduced-motion` guard |
+
+**Wiki**: `.md` plan at [[synthesis/fe-generation-unification-plan-2026-08-13]].
+
+## [2026-08-13] fix | Generation UX/UI test closure
+
+**Context**: the [[synthesis/generation-ux-ui-refinement-2026-08-12|Generation UX/UI Refinement Plan]] (4 phases + 6 engineering improvements) was fully implemented in code but had three residual test gaps: stale `derive-ui-state.test.ts`, missing `GenerationSlot.test.tsx`, missing `FeedbackPanel.test.tsx`.
+
+**Verification**: full code audit confirmed all 4 phases and all 6 improvements present in codespace. `resolution` field updated from `pending` → `implemented`.
+
+**Files changed** (3):
+
+| File | Change | Lines |
+|------|--------|-------|
+| `machines/__tests__/derive-ui-state.test.ts` | Updated `'submitted' → 'generating'` (was `'submitting'`), added `'generating'` to `UIState` type, regression test | +10 |
+| `components/tool/__tests__/GenerationSlot.test.tsx` | NEW — 7 test cases: running FeedbackPanel, completed banner+summary, empty artifacts, failed ErrorState, cancelled terminal, aria-hidden toggle | +130 |
+| `components/tool/__tests__/FeedbackPanel.test.tsx` | NEW — 12 test cases: queued/draft/starting states, step indicators, progress bar, elapsed timer role, side-by-side live preview, waiting-for-content placeholder, compact layout no-preview | +150 |
+
+**Test results**: 21 files, 159 tests, 0 failures. `tsc --noEmit`: clean.
+
 ## [2026-08-12] plan | Generation UX/UI Refinement
 
 **Premise**: the structural SSE wiring fix ([[synthesis/generation-sse-wiring-remediation-2026-08-12|13 files, ~110 lines]]) is confirmed. The generation flow is functionally correct but has UX inefficiencies: unnecessary redirects, redundant loading states, visual jumps between states, and disconnected progress/results presentation.

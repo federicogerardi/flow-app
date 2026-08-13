@@ -53,7 +53,6 @@ export const rarityDark = {
 // ── Gradient Tokens ───────────────────────────────────────────────────────────
 export const gradients = {
   brand:      'linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)',
-  completion: 'linear-gradient(135deg, #059669 0%, #0891B2 100%)',
   hero:       'linear-gradient(135deg, #1E40AF 0%, #6D28D9 100%)',
 } as const;
 

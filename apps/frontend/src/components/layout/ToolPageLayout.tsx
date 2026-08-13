@@ -8,6 +8,7 @@ import { useBreadcrumbs } from '../../layout/AppShell';
 import { ReadinessSnapshot } from '../tool/ReadinessSnapshot';
 import { SetupPanel, fetchToolDefinitions } from '../tool/SetupPanel';
 import { toolPageMachine } from '../../machines/tool-page-machine';
+import { deriveUIState } from '../../machines/derive-ui-state';
 import { InlineSessionTracker } from '../tool/InlineSessionTracker';
 import { useToast } from '../gamification/ToastSystem';
 import type { ToolDefinition, TextInput, FileInput, AssetInput } from '../../tool-inputs';
@@ -15,20 +16,7 @@ import { copy } from '@flow-app/copy';
 import { AssetPicker } from '../shared/AssetPicker';
 import { ASSET_TOOL_MAP } from '../../constants/assets';
 import { ASSET_TYPE_LABELS } from '../../constants/assets';
-
-// ── UI state derivation ────────────────────────────────────────────────────────
-
-type UIState = 'loading' | 'setup' | 'submitting' | 'generating';
-
-function deriveUIState(state: { value: unknown }): UIState {
-  const v = String(state.value);
-  if (v === 'draftEmpty') return 'loading';
-  if (v === 'configuring') return 'setup';
-  if (v === 'ready') return 'setup';
-  if (v === 'submitting') return 'submitting';
-  if (v === 'submitted') return 'generating';
-  return 'loading';
-}
+import { formatToolLabel } from '../../shared/session-utils';
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
@@ -98,7 +86,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
   });
   const requiredMissing = textMissing || fileMissing || assetMissing;
 
-  const title = toolKey?.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) ?? 'Tool';
+  const title = formatToolLabel(toolKey ?? '');
 
   useEffect(() => {
     document.title = `[${uiState}] ${title}${session?.id ? ` #${session.id.slice(0, 8)}` : ''}`;
@@ -189,7 +177,6 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
           initialSession={{ id: urlSessionId, toolKey, workspaceId, status: 'running', stepCount: tool?.stepCount ?? 1, createdAt: '', artifacts: [] } as unknown as import('../../api/client').SessionDTO}
           workspaceId={workspaceId}
           produces={tool?.label}
-          toolKey={toolKey}
           onReset={() => {
             window.history.replaceState(null, '', window.location.pathname);
             send({ type: 'RESET' });
@@ -312,10 +299,9 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
       {uiState === 'generating' && session?.id && (
         <InlineSessionTracker
           sessionId={session.id}
-          initialSession={{ ...session, workspaceId, toolKey } as any}
+          initialSession={{ ...session, workspaceId, toolKey }}
           workspaceId={workspaceId}
           produces={tool?.label}
-          toolKey={toolKey}
           onReset={() => send({ type: 'RESET' })}
         />
       )}

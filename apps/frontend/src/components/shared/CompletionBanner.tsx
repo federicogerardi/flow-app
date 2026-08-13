@@ -1,5 +1,6 @@
 import { Box, Typography, Stack, keyframes } from '@mui/material';
 import { copy } from '@flow-app/copy';
+import { formatElapsedSeconds } from '../../shared/session-utils';
 
 const celebrate = keyframes`
   0% { transform: scale(0.9); opacity: 0; }
@@ -14,22 +15,14 @@ interface CompletionBannerProps {
   xpEarned?: number;
 }
 
-function formatDuration(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const min = Math.floor(seconds / 60);
-  const sec = seconds % 60;
-  return `${min}m ${sec}s`;
-}
-
 export function CompletionBanner({ durationSeconds, stepCount, creditCost, xpEarned }: CompletionBannerProps) {
   return (
     <Box
       role="alert"
-      aria-live="polite"
       sx={{
         p: 2,
         borderRadius: 2,
-        background: 'linear-gradient(135deg, #059669 0%, #0E7490 100%)',
+        background: 'linear-gradient(135deg, #047857 0%, #0E7490 100%)',
         color: 'white',
         animation: `${celebrate} 500ms ease-out`,
         mb: 3,
@@ -40,7 +33,7 @@ export function CompletionBanner({ durationSeconds, stepCount, creditCost, xpEar
         <Typography variant="h5" component="span" aria-hidden="true">✅</Typography>
         <Stack>
           <Typography variant="h6" fontWeight={700}>
-            {copy.t('toolPage.progress.completedIn', { duration: formatDuration(durationSeconds) })}
+            {copy.t('toolPage.progress.completedIn', { duration: formatElapsedSeconds(durationSeconds) })}
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.9 }}>
             {copy.t('toolPage.progress.stepCountSummary', { count: String(stepCount) })} · {copy.t('toolPage.progress.creditCostSummary', { count: String(creditCost) })}

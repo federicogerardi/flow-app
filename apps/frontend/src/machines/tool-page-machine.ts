@@ -217,10 +217,10 @@ export const toolPageMachine = setup({
       },
     },
 
-    // ── Session created — redirect handled by ToolPageLayout; RESET escapes stuck state ────────
+    // ── Session created — inline generation renders on tool page; RESET returns to configuring for "Nuova generazione" ────────
     submitted: {
       on: {
-        RESET: { target: 'draftEmpty' },
+        RESET: { target: 'configuring' },
       },
     },
   },

@@ -4,24 +4,16 @@ import type { SessionDTO, WorkspaceDTO } from './client.js';
 import type { SessionListItemDTO } from '@flow-app/contracts';
 import { sseClient } from './sse-client.js';
 
-interface StepProgress {
-  current: number;
+export interface StepProgress {
+  /** Count of completed steps (0 = none). The step at index === completedCount is "awaiting execution". */
+  completedCount: number;
   total: number;
-  label?: string;
 }
 
-interface StepArtifact {
+export interface StepArtifact {
   stepNumber: number;
   content: string;
 }
-
-export type LiveSession = SessionListItemDTO & {
-  currentStepIndex?: number;
-  currentStepLabel?: string;
-  elapsedSeconds?: number;
-  lastArtifactPreview?: string;
-  errorMessage?: string;
-};
 
 export function useSession(sessionId: string | null, initialData?: SessionDTO) {
   const [session, setSession] = useState<SessionDTO | null>(initialData ?? null);
@@ -39,17 +31,28 @@ export function useSession(sessionId: string | null, initialData?: SessionDTO) {
     api.getSession(sessionId)
       .then((session) => {
         setSession(session);
-        if (session.artifacts?.length) {
-          setProgress({
-            current: session.artifacts.length,
-            total: session.stepCount,
+        // Merge rather than replace: the SSE subscription may have already
+        // advanced progress past this REST snapshot. Only apply the snapshot's
+        // artifacts count if it is AHEAD of the current live progress, and
+        // upsert artifacts by stepNumber so fresh SSE data is never clobbered.
+        const remotefacts = session.artifacts;
+        if (remotefacts?.length) {
+          setProgress((prev) => {
+            const incoming = remotefacts.length;
+            if (!prev || incoming > prev.completedCount) {
+              return { completedCount: incoming, total: session.stepCount };
+            }
+            return prev;
           });
-          setStepArtifacts(
-            session.artifacts.map((a) => ({
-              stepNumber: a.stepNumber,
-              content: a.content,
-            })),
-          );
+          setStepArtifacts((prev) => {
+            const next = [...prev];
+            for (const a of remotefacts) {
+              const idx = next.findIndex((x) => x.stepNumber === a.stepNumber);
+              if (idx >= 0) next[idx] = { stepNumber: a.stepNumber, content: a.content };
+              else next.push({ stepNumber: a.stepNumber, content: a.content });
+            }
+            return next;
+          });
         }
       })
       .catch(setError)
@@ -98,7 +101,7 @@ export function useSession(sessionId: string | null, initialData?: SessionDTO) {
  * Subscribes to SSE events for real-time updates, with API fallback for cross-tab resilience.
  */
 export function useLiveSession(sessionId: string | null) {
-  const [liveSession, setLiveSession] = useState<LiveSession | null>(null);
+  const [liveSession, setLiveSession] = useState<SessionListItemDTO | null>(null);
   const [loading, setLoading] = useState(true);
 
   // API catch-up on mount
@@ -138,7 +141,7 @@ export function useLiveSession(sessionId: string | null) {
           if (!prev) return prev;
           return {
             ...prev,
-            currentStepIndex: progress.current,
+            currentStepIndex: progress.completedCount,
             currentStepLabel: data.stepLabel as string | undefined,
             lastArtifactPreview: (data.artifact as Record<string, unknown>)?.content
               ? String((data.artifact as Record<string, unknown>).content).slice(0, 150)

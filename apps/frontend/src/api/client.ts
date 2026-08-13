@@ -13,9 +13,8 @@ export interface SessionDTO extends Omit<SessionDetailDTO, 'status' | 'artifacts
   artifacts?: ArtifactDTO[];
 }
 
-export interface ArtifactDTO extends ContractArtifactDTO {
-  artifactId?: string;
-}
+/** Artifact DTO — canonical contract type, no local extensions. */
+export type ArtifactDTO = ContractArtifactDTO;
 
 export interface SessionListResponse {
   data: SessionListItemDTO[];
