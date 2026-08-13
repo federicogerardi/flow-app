@@ -1,24 +1,48 @@
 
-## [2026-08-13] improve | Blog Post — prompt v1.1.0 asset wiring + instructions + context documentation
 
-**Analysis**: 4 critical gaps in v1.0.0: (1) `instructions` input silently ignored — collected in UI, zero prompt files consumed it. (2) Brand Voice and Persona assets referenced in system prompts but not wired in ToolDefinition — prompts described "Persona Asset Usage" that could never be present. (3) Bare placeholders `{{titolo}}` and `{{output_step_*}}` passed through unresolved — PromptComposer gets `{}` empty context; the model compensated by reading injected data but placeholders were noise. (4) Feedback Incorporation section in Step 3 system prompt was incomplete (4 truncated lines).
+## [2026-08-13] improve | Meta Ads -- prompt v1.1.0 tone wiring + context documentation + anti-hallucination safety net
+
+**Analysis**: 5 gaps in v1.0.0: (1) tone input silently ignored -- user selected Professional/Casual/Urgente/Empatico/Autorevole but zero prompt files consumed it. Extraction had no tone field; context-generation and ads-generation had no tone awareness. (2) Step 1 missing anti-hallucination/v1 component -- per-step components: ['output-json/v1'] REPLACED defaults, dropping safety net (inline rules covered it, but fragile). (3) creditCost: 1 for 3-step pipeline with 2 premium models (wiki said 2). (4) marketing-tone/v1 in DEFAULT_COMPONENTS but never applied -- dead code, Steps 2-3 override. (5) User prompts thin (9-16 lines) -- no context structure documentation.
+
+**Files created/modified** (10):
+| File | Action |
+|------|--------|
+| apps/backend/src/prompts/ad-copy/extraction/versions/1.1.0/system.md | NEW -- +tone as 11th field, updated extraction table, tone pass-through rule |
+| apps/backend/src/prompts/ad-copy/extraction/versions/1.1.0/user.md | NEW -- documented context: 6 labeled sections, extraction priority |
+| apps/backend/src/prompts/ad-copy/context-generation/versions/1.1.0/system.md | NEW -- +Tone Input Usage: 5-register calibration table (Professional->data-driven, Casual->conversational, Urgente->scarcity, Empatico->emotional, Autorevole->expert) |
+| apps/backend/src/prompts/ad-copy/context-generation/versions/1.1.0/user.md | NEW -- documented context: Field-to-Canvas mapping, tone calibration rule |
+| apps/backend/src/prompts/ad-copy/ads-generation/versions/1.1.0/system.md | NEW -- +Tone Input Usage: 6-register copy style table, tone-aware output structure, tone in QA checklist |
+| apps/backend/src/prompts/ad-copy/ads-generation/versions/1.1.0/user.md | NEW -- documented context: 5 data sources, Data Priority Chain, Tone Override Rule |
+| packages/domain/src/generation/tools/index.ts | MODIFIED -- creditCost: 1 -> 2. Step 1: +anti-hallucination/v1. All 3 steps: version: 1.0.0 -> 1.1.0 |
+| packages/domain/src/generation/prompting/default-components.ts | MODIFIED -- marketing-tone/v1 -> italian-formal/v1 (dead code -> aligned with per-step) |
+| Wiki/concepts/Meta Ads - Prompt Architecture.md | MODIFIED -- updated to v1.1.0: current_version: 1.1.0, ToolDefinition synced, v1.1.0 changelog, replaced implementation checklist |
+| Wiki/log.md | This entry |
+
+**Verification**: tsc --noEmit domain ok, backend ok. vitest run domain 490/490 ok, backend 145/145 ok.
+
+**Result**: tone now influences all 3 steps -- extracted (Step 1), calibrates cluster messaging tones via 5-register table (Step 2), controls copy register/rhythm/CTA/vocabulary via 6-register table (Step 3). anti-hallucination/v1 on Step 1 (inline + component safety net). creditCost: 2 reflects complexity. Context documented in all user prompts (Brief v1.1.0 pattern).
+
+
+## [2026-08-13] improve | Blog Post -- prompt v1.1.0 asset wiring + instructions + context documentation
+
+**Analysis**: 4 critical gaps in v1.0.0: (1) instructions input silently ignored -- collected in UI, zero prompt files consumed it. (2) Brand Voice and Persona assets referenced in system prompts but not wired in ToolDefinition -- prompts described 'Persona Asset Usage' that could never be present. (3) Bare placeholders {{titolo}} and {{output_step_*}} passed through unresolved -- PromptComposer gets {} empty context; the model compensated by reading injected data but placeholders were noise. (4) Feedback Incorporation section in Step 3 system prompt was incomplete (4 truncated lines).
 
 **Files created/modified** (9):
 | File | Action |
 |------|--------|
-| `apps/backend/src/prompts/blog-post/seo-structure/versions/1.1.0/system.md` | NEW — +Asset Usage (Persona, Brand Voice, Instructions), instructions as SEO strategy override |
-| `apps/backend/src/prompts/blog-post/seo-structure/versions/1.1.0/user.md` | NEW — documented context structure, replaced `{{titolo}}` with labeled sections, research priority chain |
-| `apps/backend/src/prompts/blog-post/research/versions/1.1.0/system.md` | NEW — +Asset Usage for all 3 assets (now wired) |
-| `apps/backend/src/prompts/blog-post/research/versions/1.1.0/user.md` | NEW — documented context: 5 labeled sections, instructions-as-research-weight |
-| `apps/backend/src/prompts/blog-post/article/versions/1.1.0/system.md` | NEW — +Asset Usage (wired), completed Feedback Incorporation (5 rules: adjust-only, structure priority, missing data, additive feedback) |
-| `apps/backend/src/prompts/blog-post/article/versions/1.1.0/user.md` | NEW — documented context: 6 sections, Data Priority chain (H1/H2 > Research > Brand Voice > Instructions > Persona) |
-| `packages/domain/src/generation/tools/index.ts` | MODIFIED — +`assets: [brand-voice, persona]` to acquisition. All 3 steps: `version: '1.0.0'` → `version: '1.1.0'` |
-| `packages/domain/src/generation/prompting/default-components.ts` | MODIFIED — +`italian-formal/v1` to `DEFAULT_COMPONENTS['blog-post']` |
-| `Wiki/concepts/Blog Article Generator - Prompt Architecture.md` | MODIFIED — updated to v1.1.0: added `implementation: complete`, `current_version: 1.1.0`, v1.1.0 changelog, replaced implementation guide with completed status |
+| apps/backend/src/prompts/blog-post/seo-structure/versions/1.1.0/system.md | NEW -- +Asset Usage (Persona, Brand Voice, Instructions), instructions as SEO strategy override |
+| apps/backend/src/prompts/blog-post/seo-structure/versions/1.1.0/user.md | NEW -- documented context structure, replaced {{titolo}} with labeled sections, research priority chain |
+| apps/backend/src/prompts/blog-post/research/versions/1.1.0/system.md | NEW -- +Asset Usage for all 3 assets (now wired) |
+| apps/backend/src/prompts/blog-post/research/versions/1.1.0/user.md | NEW -- documented context: 5 labeled sections, instructions-as-research-weight |
+| apps/backend/src/prompts/blog-post/article/versions/1.1.0/system.md | NEW -- +Asset Usage (wired), completed Feedback Incorporation (5 rules: adjust-only, structure priority, missing data, additive feedback) |
+| apps/backend/src/prompts/blog-post/article/versions/1.1.0/user.md | NEW -- documented context: 6 sections, Data Priority chain (H1/H2 > Research > Brand Voice > Instructions > Persona) |
+| packages/domain/src/generation/tools/index.ts | MODIFIED -- +assets: [brand-voice, persona] to acquisition. All 3 steps: version: 1.0.0 -> 1.1.0 |
+| packages/domain/src/generation/prompting/default-components.ts | MODIFIED -- +italian-formal/v1 to DEFAULT_COMPONENTS['blog-post'] |
+| Wiki/concepts/Blog Article Generator - Prompt Architecture.md | MODIFIED -- updated to v1.1.0: added implementation: complete, current_version: 1.1.0, v1.1.0 changelog, replaced implementation guide with completed status |
 
-**Verification**: `tsc --noEmit` domain ✅ backend ✅. `vitest run` domain 490/490 ✅ backend 145/145 ✅.
+**Verification**: tsc --noEmit domain ok, backend ok. vitest run domain 490/490 ok, backend 145/145 ok.
 
-**Result**: `instructions` now influences all 3 steps. Brand Voice + Persona wired via `ContextEnricher` → `[Asset - brand-voice]`, `[Asset - persona]`. Zero bare placeholders — context documented in prose (Brief v1.1.0 pattern). Feedback Incorporation complete with constraint resolution rules.
+**Result**: instructions now influences all 3 steps. Brand Voice + Persona wired via ContextEnricher -> [Asset - brand-voice], [Asset - persona]. Zero bare placeholders -- context documented in prose (Brief v1.1.0 pattern). Feedback Incorporation complete with constraint resolution rules.
 
 ## [2026-08-13] improve | Brand Voice — prompt v1.1.0 user prompt enrichment + synthetic TOV transparency
 

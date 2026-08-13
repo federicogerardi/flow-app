@@ -4,18 +4,18 @@ tags:
   - wiki/concept
   - wiki/generation
   - wiki/prompting
-date_updated: 2026-08-07
+date_updated: 2026-08-13
 source_count: 3
 confidence: high
 implementation: complete
-frontend_ready: true
-smoke_test: passed
+current_version: 1.1.0
 ---
 
 # Meta Ads — Prompt Architecture
 
 > 3-step extraction→context→generation pipeline for the `ad-copy` tool (Meta Ads specialization)  
-> Prompt prototypes from [[sources/meta-ads]] — raw source for the `ad-copy` `ToolDefinition`
+> Prompt prototypes from [[sources/meta-ads]] — raw source for the `ad-copy` `ToolDefinition`  
+> **Current prompt version**: `1.1.0` (2026-08-13) — `tone` input wired to all 3 steps, context documentation, anti-hallucination safety net on Step 1, `creditCost: 2`
 
 ## Architecture
 
@@ -89,7 +89,7 @@ User-selectable per generation via `copyLength` text input:
 
 **Step key**: `extraction`  
 **Model tier**: `balanced`  
-**Prompt component**: `output-json/v1`  
+**Prompt components**: `output-json/v1`, `anti-hallucination/v1`  
 **Enrichment**: `serial`
 
 Extracts structured ad context from brief + personas + angles + text inputs:
@@ -97,7 +97,7 @@ Extracts structured ad context from brief + personas + angles + text inputs:
 | Field | Source |
 |-------|--------|
 | Product/Service | brief asset |
-| Target Audience | personas + `audience` input |
+| Target Audience | personas |
 | Campaign Objective | `goal` input |
 | Primary Offer | brief |
 | Proof Points | brief + brand facts |
@@ -105,8 +105,11 @@ Extracts structured ad context from brief + personas + angles + text inputs:
 | Objections | personas + brief |
 | Cluster Opportunities | synthesized from personas |
 | Angle Candidates | synthesized from pain points + objectives |
+| **Tone** (v1.1.0) | `tone` input — direct pass-through from user selection |
 
 Output is JSON in English (prototype convention — extraction is the only English step).
+
+**Context documented** (v1.1.0): `[Asset - brief]`, `[Asset - persona]`, `[Asset - angle]`, `[Input - goal]`, `[Input - tone]`, `[Input - copyLength]` — 6 labeled sections with extraction priority.
 
 ## Step 2 — Context Generation
 
@@ -116,11 +119,15 @@ Output is JSON in English (prototype convention — extraction is the only Engli
 **Enrichment**: `serial`
 
 Transforms extraction into a strategy canvas in Italian:
-- Target Clusters (3+) with characteristics, pain points, desired outcomes, messaging tone
+- Target Clusters (3+) with characteristics, pain points, desired outcomes, **tone-calibrated messaging** (v1.1.0)
 - Messaging Angles (2 per cluster) with core narrative, awareness fit, differentiators
 - Brand Facts Bank (credibility markers, social proof, authority, trust signals)
 - Objection Handling Matrix (counter-message + required proof per objection)
 - Offer Positioning (core promise, mechanism, risk reversal)
+
+**Tone input** (v1.1.0): The user-selected tone calibrates the "Messaging Tone" for every cluster via a 5-register mapping table (Professional→data-driven, Casual→conversational, Urgente→scarcity, Empatico→emotional, Autorevole→expert). Applied consistently across all clusters.
+
+**Context documented** (v1.1.0): 11-field extraction mapping, Field→Canvas table, tone calibration rule.
 
 ## Step 3 — Ads Generation
 
@@ -130,14 +137,19 @@ Transforms extraction into a strategy canvas in Italian:
 **Enrichment**: `serial`
 
 Generates production-ready Meta Ads library in Italian. For every cluster × angle × awareness level:
-- **Primary Text** respecting selected copy length + strategic whitespace (long format)
+- **Primary Text** respecting selected copy length + **user-selected tone** (v1.1.0)
 - **Headline** (~40 chars)
 - **Description** (~30 chars)
 - **Targeting Suggestions** per cluster
 - **Visual Suggestions** per angle
-- **Psychological Triggers Matrix**
 
-## ToolDefinition (Planned)
+**Tone input** (v1.1.0): The tone affects register, rhythm, CTA style, hook approach, and vocabulary for ALL copy. 6-register mapping table (Professional/Casual/Urgente/Empatico/Autorevole/Not provided). Global directive — applied consistently across all clusters, angles, and awareness versions. QA checklist includes tone verification.
+
+**Context documented** (v1.1.0): 5 data sources with Data Priority Chain (Canvas > Tone > Copy Length > Brand Facts > Objections). Tone Override Rule: user's tone takes priority over cluster messaging tone.
+
+## ToolDefinition
+
+**File**: `packages/domain/src/generation/tools/index.ts` (lines 203–258)
 
 ```typescript
 const adCopyTool: ToolDefinition = {
@@ -145,7 +157,7 @@ const adCopyTool: ToolDefinition = {
   name: 'Meta Ads',
   description: 'Genera copy per campagne Meta (Facebook/Instagram) con sistema cluster → angolo → awareness',
   creditCost: 2,
-  defaultComponents: ['anti-hallucination/v1', 'output-plain-text/v1', 'italian-formal/v1'],
+  outputCategory: ToolOutputCategory.ContentProducer,
   acquisition: {
     userText: [
       { key: 'goal', label: 'Campaign Goal', required: true, type: 'select', options: ['Awareness', 'Traffic', 'Engagement', 'Leads', 'Sales'] },
@@ -165,9 +177,9 @@ const adCopyTool: ToolDefinition = {
       enrichment: 'serial',
       prompt: {
         templateId: 'ad-copy/extraction',
-        version: '1.0.0',
+        version: '1.1.0',
         model: ModelTier.Balanced,
-        components: ['output-json/v1'],
+        components: ['output-json/v1', 'anti-hallucination/v1'],
       },
       execution: { timeoutMs: 90000, maxRetries: 2 },
     },
@@ -177,7 +189,7 @@ const adCopyTool: ToolDefinition = {
       enrichment: 'serial',
       prompt: {
         templateId: 'ad-copy/context-generation',
-        version: '1.0.0',
+        version: '1.1.0',
         model: ModelTier.Premium,
         components: ['output-plain-text/v1', 'italian-formal/v1'],
       },
@@ -189,7 +201,7 @@ const adCopyTool: ToolDefinition = {
       enrichment: 'serial',
       prompt: {
         templateId: 'ad-copy/ads-generation',
-        version: '1.0.0',
+        version: '1.1.0',
         model: ModelTier.Premium,
         components: ['output-plain-text/v1', 'italian-formal/v1'],
       },
@@ -199,7 +211,7 @@ const adCopyTool: ToolDefinition = {
 };
 ```
 
-> **Current state**: `'ad-copy': blogPostTool` stub in `toolRegistry`. Replace with `adCopyTool`.
+> **Current state**: `'ad-copy': adCopyTool` in `toolRegistry`. Fully implemented.
 
 ## Platform Scope Decision
 
@@ -216,57 +228,58 @@ The prototype strongly favors option A — the cluster/angle/awareness system an
 
 ## Prompt Template Files
 
-6 files to create under `apps/backend/src/prompts/ad-copy/`:
-
 ```
-ad-copy/
+apps/backend/src/prompts/ad-copy/
 ├── extraction/
-│   └── versions/1.0.0/
-│       ├── system.md    # Ad Context Extractor — structured 13-field extraction in English
-│       └── user.md      # Extract from brief + personas + text inputs
+│   └── versions/1.1.0/
+│       ├── system.md    # Ad Context Extractor — 11-field JSON, anti-hallucination, tone pass-through
+│       └── user.md      # Context documented: 6 labeled sections, extraction priority
 ├── context-generation/
-│   └── versions/1.0.0/
-│       ├── system.md    # Meta Ads Strategist — cluster segmentation, angle development, objection matrix
-│       └── user.md      # Build strategy canvas from extraction
+│   └── versions/1.1.0/
+│       ├── system.md    # Meta Ads Strategist — tone-calibrated clusters, 5-register mapping table
+│       └── user.md      # Context documented: Field→Canvas mapping, tone calibration rule
 └── ads-generation/
-    └── versions/1.0.0/
-        ├── system.md    # Meta Ads Copywriter — cluster → angle → awareness with copy length control
-        └── user.md      # Generate ad library from strategy canvas + copy length format
+    └── versions/1.1.0/
+        ├── system.md    # Meta Ads Copywriter — tone-aware copy, 6-register mapping, QA checklist with tone verification
+        └── user.md      # Context documented: 5 data sources, Data Priority Chain, Tone Override Rule
 ```
 
-## Implementation Checklist
+## v1.1.0 — Tone Wiring & Context Documentation (2026-08-13)
 
-### Domain
-- [ ] `adCopyTool` definition replaces `blogPostTool` stub in `toolRegistry`
-- [ ] `acquisition.userText`: `goal`, `tone`, `copyLength` — all selects, no free-text inputs
-- [ ] `acquisition.assets`: `brief` (required), `persona` (optional, multiple), `angle` (optional, multiple)
-- [ ] `creditCost: 2` — 3 steps, 2 premium models
-- [ ] 3 steps: extraction (balanced) → context-generation (premium) → ads-generation (premium, 180s timeout)
-- [ ] `npx tsc --noEmit` passes in `packages/domain`
+**Problem**: 5 gaps in v1.0.0:
+1. **`tone` input silently ignored** — user selected Professional/Casual/Urgente/Empatico/Autorevole but zero prompt files used it. Extraction had no `tone` field. Context-generation and ads-generation had no tone awareness.
+2. **Step 1 missing `anti-hallucination/v1` component** — per-step `components: ['output-json/v1']` REPLACED defaults, dropping the safety net (inline rules covered it, but fragile)
+3. **`creditCost: 1`** for a 3-step pipeline with 2 premium models (wiki said 2)
+4. **`marketing-tone/v1` in DEFAULT_COMPONENTS but never applied** — Steps 2-3 override components entirely, making it dead code
+5. **User prompts thin** (9-16 lines each) — no context structure documentation
 
-### Prompt Templates
-- [ ] 6 files created under `apps/backend/src/prompts/ad-copy/`
-- [ ] `extraction/system.md` — Ad Context Extractor with cluster detection
-- [ ] `extraction/user.md` — extract from brief + personas + text
-- [ ] `context-generation/system.md` — Meta Ads Strategist with cluster → angle system
-- [ ] `context-generation/user.md` — build canvas from extraction
-- [ ] `ads-generation/system.md` — Meta Ads Copywriter with copy length + awareness matrix
-- [ ] `ads-generation/user.md` — generate ads from canvas
-- [ ] Persona asset rule in all non-extraction prompts
+### Changes
 
-### Frontend
-- [ ] `tool-inputs.ts`: replace `AD_COPY_INPUTS` with updated fields (remove `platform`, add `copyLength`)
-- [ ] No file inputs (tool has no `files` in acquisition)
-- [ ] `npx tsc --noEmit` passes in `apps/frontend`
+| File | Change |
+|------|--------|
+| `tools/index.ts` | `creditCost: 1` → `2`. Step 1: +`anti-hallucination/v1` to components. All 3 steps: `version: '1.0.0'` → `version: '1.1.0'` |
+| `default-components.ts` | Replaced `marketing-tone/v1` with `italian-formal/v1` (dead code → aligned with per-step reality) |
+| `extraction/1.1.0/system.md` | Added `tone` as 11th field. Updated extraction table. Added tone rule: direct pass-through, do not reinterpret |
+| `extraction/1.1.0/user.md` | Documented context: 6 labeled sections (`[Asset - brief]`, `[Asset - persona]`, `[Asset - angle]`, `[Input - goal/tone/copyLength]`). Added extraction priority |
+| `context-generation/1.1.0/system.md` | Added Tone Input Usage section: 5-register calibration table. Updated Strategic Snapshot to include Tone field. Updated cluster Messaging Tone annotation |
+| `context-generation/1.1.0/user.md` | Documented context: 11-field extraction. Added Field→Canvas mapping table. Added tone calibration rule |
+| `ads-generation/1.1.0/system.md` | Added Tone Input Usage section: 6-register copy style table (Professional/Casual/Urgente/Empatico/Autorevole/Not provided). Updated output structure with Tone header. Added tone to QA checklist |
+| `ads-generation/1.1.0/user.md` | Documented context: 5 data sources. Added Data Priority Chain. Added Tone Override Rule |
 
-### Backend
-- [ ] No API changes needed (generic tool API)
-- [ ] `npx tsc --noEmit` passes in `apps/backend`
+### Result
 
-### Testing
-- [ ] `npx vitest run` passes in all packages
-- [ ] Smoke test: start session, verify 3-step pipeline
-- [ ] Verify 3 clusters × 2 angles × 3 awareness levels = 18 ad variants in output
+- **`tone` now influences all 3 steps**: Step 1 extracts it, Step 2 calibrates cluster messaging tones (5-register mapping), Step 3 controls copy register/rhythm/CTA/vocabulary (6-register mapping)
+- **Step 1 has anti-hallucination safety net** — inline rules + component backup
+- **`creditCost: 2`** — reflects 3-step pipeline with 2 premium models
+- **`DEFAULT_COMPONENTS` aligned** — `marketing-tone/v1` (dead) → `italian-formal/v1` (matches per-step)
+- **Context documented in all user prompts** — following Brief v1.1.0 / Brand Voice v1.1.0 / blog-post v1.1.0 pattern
+
+### Verification
+
+```
+tsc --noEmit  →  domain ✅  backend ✅
+vitest        →  domain 490/490 ✅  backend 145/145 ✅
+```
 
 ## Key Differences from Angle Generator
 

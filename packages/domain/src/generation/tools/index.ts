@@ -203,8 +203,8 @@ const marketingAngleTool: ToolDefinition = {
 const adCopyTool: ToolDefinition = {
   toolKey: 'ad-copy',
   name: 'Meta Ads',
-description: 'Genera copy per campagne Meta (Facebook/Instagram) con sistema cluster → angolo → awareness',
-  creditCost: 1,
+  description: 'Genera copy per campagne Meta (Facebook/Instagram) con sistema cluster → angolo → awareness',
+  creditCost: 2,
   outputCategory: ToolOutputCategory.ContentProducer,
   acquisition: {
     userText: [
@@ -225,9 +225,9 @@ description: 'Genera copy per campagne Meta (Facebook/Instagram) con sistema clu
       enrichment: 'serial',
       prompt: {
         templateId: 'ad-copy/extraction',
-        version: '1.0.0',
+        version: '1.1.0',
         model: ModelTier.Balanced,
-        components: ['output-json/v1'],
+        components: ['output-json/v1', 'anti-hallucination/v1'],
       },
       execution: { timeoutMs: 90000, maxRetries: 2 },
     },
@@ -237,7 +237,7 @@ description: 'Genera copy per campagne Meta (Facebook/Instagram) con sistema clu
       enrichment: 'serial',
       prompt: {
         templateId: 'ad-copy/context-generation',
-        version: '1.0.0',
+        version: '1.1.0',
         model: ModelTier.Premium,
         components: ['output-plain-text/v1', 'italian-formal/v1'],
       },
@@ -249,7 +249,7 @@ description: 'Genera copy per campagne Meta (Facebook/Instagram) con sistema clu
       enrichment: 'serial',
       prompt: {
         templateId: 'ad-copy/ads-generation',
-        version: '1.0.0',
+        version: '1.1.0',
         model: ModelTier.Premium,
         components: ['output-plain-text/v1', 'italian-formal/v1'],
       },
