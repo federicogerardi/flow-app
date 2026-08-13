@@ -99,10 +99,10 @@ export function SessionTracker({
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Chip
-              label={copy.t(`shared.sessionStatus.${session.status}` as any)}
+              label={copy.t(`shared.sessionStatus.${session.status}`)}
               color={statusColorMap[session.status] ?? 'default'}
               size="small"
-              aria-label={copy.t(`shared.sessionStatus.${session.status}` as any)}
+              aria-label={copy.t(`shared.sessionStatus.${session.status}`)}
             />
             <Typography variant="caption" color="text.secondary">
               {copy.t('shared.label.steps')} {session.stepCount}

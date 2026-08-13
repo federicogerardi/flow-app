@@ -36,7 +36,7 @@ export default function SessionPage() {
 
   const completedMeta = session && isCompletedStatus(session.status) ? (
     <>
-      <Chip icon={<CheckCircleIcon />} label={copy.t('shared.sessionStatus.completed' as any)} color="success" size="small" />
+      <Chip icon={<CheckCircleIcon />} label={copy.t('shared.sessionStatus.completed')} color="success" size="small" />
       <Typography variant="caption" color="text.secondary">
         {durationMs ? `${copy.t('toolPage.progress.completedIn', { duration: formatDurationMs(durationMs) })} · ` : ''}
         {copy.t('toolPage.progress.stepCountSummary', { count: String(session.stepCount) })}

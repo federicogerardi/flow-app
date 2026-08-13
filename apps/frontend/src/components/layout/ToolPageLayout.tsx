@@ -59,7 +59,6 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
     if (state.matches('submitted')) {
       showInfo(copy.t('toolPage.generation.started'));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.matches('submitted')]);
 
   // ── Escape hatch ──────────────────────────────────────────────────────────
