@@ -109,8 +109,8 @@ export function createGenerationRoutes(
               stepCount: tool?.steps?.length ?? 1,
               // Step 3: status-dependent fields
               currentStepIndex: isRunning ? s.currentStepIndex : undefined,
-              currentStepLabel: isRunning
-                ? tool?.steps[s.currentStepIndex]?.label
+              currentStepLabel: isRunning && s.currentStepIndex > 0
+                ? tool?.steps[s.currentStepIndex - 1]?.label
                 : undefined,
               queuePosition: undefined, // DEFERRED: requires BullMQ introspection (see be-coordination-session-dto)
               completedAt: s.completedAt?.toISOString() ?? undefined,

@@ -36,7 +36,10 @@ function LiveRunningCard({ session, onViewProgress, onCancel }: {
   onCancel: () => void;
 }) {
   const { liveSession } = useLiveSession(session.id);
-  const display = liveSession ?? session;
+  // Merge: SSE updates take priority, but fields the SSE doesn't touch
+  // (elapsedSeconds, durationSeconds, isPromotable, promotedAssetId) are preserved
+  // from the base SWR listSessions data.
+  const display = liveSession ? { ...session, ...liveSession } : session;
   return (
     <RunningCard
       session={display}
@@ -56,7 +59,7 @@ function LiveQueuedCard({ session, onCancel, onViewProgress }: {
   onViewProgress: () => void;
 }) {
   const { liveSession } = useLiveSession(session.id);
-  const display = liveSession ?? session;
+  const display = liveSession ? { ...session, ...liveSession } : session;
 
   // When SSE reports the session is now running, show a RunningCard instead
   if (display.status === 'running') {

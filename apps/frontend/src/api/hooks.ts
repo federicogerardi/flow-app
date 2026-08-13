@@ -121,6 +121,8 @@ export function useLiveSession(sessionId: string | null) {
           workspaceId: session.workspaceId,
           status: session.status,
           stepCount: session.stepCount,
+          currentStepIndex: session.currentStepIndex,
+          completedAt: session.completedAt ?? undefined,
           createdAt: session.createdAt,
         });
       })
