@@ -4,16 +4,20 @@ tags:
   - wiki/concept
   - wiki/generation
   - wiki/prompting
-date_updated: 2026-08-06
+date_updated: 2026-08-13
 source_count: 4
 confidence: high
 implementation: complete
 frontend_ready: true
 frontend_fixes: 6 applied (W1-W5, W7)
 smoke_test: pending
+current_version: 1.1.0
 ---
 
 # Persona Generator — Prompt Architecture
+
+> 2-step extraction→generation pipeline for the `buyer-persona` asset tool  
+> **Current prompt version**: `1.1.0` (2026-08-13) — good example realism, anti-hallucination alignment, data provenance
 
 > 2-step extraction→generation pipeline for the `buyer-persona` asset tool  
 > Prompt prototypes from [[sources/personas-generator]] — raw source for the `buyer-persona` `ToolDefinition`
@@ -254,6 +258,33 @@ For frontend (`apps/frontend/src/tool-inputs.ts`):
 | Safe Inference Taxonomy | Simple (tone from product type) | 4-category taxonomy (safe to infer vs never infer) |
 | Downstream consumers | Tools consume sections as structural inputs | Tools consume persona as behavioral/psychological reference |
 | Asset Usage Rule | Brief is an orchestration document | Persona is an abstract reference profile (not a real person) |
+
+## v1.1.0 — Good Example Realism & Anti-Hallucination Alignment (2026-08-13)
+
+**Problem**: I good examples del system prompt mostravano metriche specifiche (percentuali, ore/settimana, prezzi in €) che in un'estrazione reale non sarebbero mai presenti. Questo creava un conflitto diretto con le guardrail anti-hallucination («NEVER invent data» vs «sii specifico come l'esempio»). Il modello veniva spinto a fabbricare dettagli per raggiungere la qualità dimostrata negli esempi.
+
+Inoltre, la sezione `Nota sull'Input` chiedeva al modello di auto-valutare la qualità dei dati — un task meta-cognitivo inaffidabile che produceva testo semanticamente vuoto.
+
+### Modifiche
+
+| File | Cambiamento |
+|------|-------------|
+| `extraction/1.1.0/system.md` | Invariato (già solido in v1.0.0) |
+| `extraction/1.1.0/user.md` | Documentata struttura contesto (`[Asset - brief]`, `[File - instructions]`). Aggiunte Extraction Priority rules. Gerarchia: brief > file opzionale. |
+| `personas-generation/1.1.0/system.md` | **Good examples completamente riscritti**: ogni esempio include il payload di estrazione di partenza. La specificità deriva dall'elaborazione di dati REALI dell'extraction, non da numeri inventati. Aggiunto Strategic Guardrail #7 («Specificity from extraction, not from imagination»). `Nota sull'Input` → `Provenienza Dati`: sezione meccanica (quali campi avevano dati, quali no, safe inferences applicate) invece di auto-valutazione. `Cosa Deve Vedere per Convertire` reso condizionale. |
+| `personas-generation/1.1.0/user.md` | Aggiunta tabella Field→Section mapping. Aggiunte Section-Specific Instructions. Aggiunte Critical Rules (no numeri inventati, specificità dall'extraction). |
+| `tools/index.ts` | Entrambi gli step: `version: '1.0.0'` → `version: '1.1.0'` |
+
+### Principio guida
+
+**Specificity from extraction, not from imagination.** Quando l'extraction dice "il target è frustrato dalla complessità degli strumenti," puoi scrivere "Frustrato da tool che richiedono settimane di onboarding prima di vedere il primo risultato" — stai elaborando un pain point REALE. Quando l'extraction non dice nulla sul budget, NON scrivere "Disposto a spendere €3.000/mese" — è fabbricazione. Elabora ciò che C'È nell'extraction; non inventare ciò che non c'è.
+
+### Verification
+
+```
+tsc --noEmit  →  domain ✅  backend ✅
+vitest        →  domain 490/490 ✅  backend 145/145 ✅
+```
 
 ## Sources
 

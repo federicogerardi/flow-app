@@ -119,7 +119,7 @@ const buyerPersonaTool: ToolDefinition = {
       enrichment: 'serial',
       prompt: {
         templateId: 'buyer-persona/extraction',
-        version: '1.0.0',
+        version: '1.1.0',
         model: ModelTier.Balanced,
         components: ['output-json/v1'],
       },
@@ -131,7 +131,7 @@ const buyerPersonaTool: ToolDefinition = {
       enrichment: 'serial',
       prompt: {
         templateId: 'buyer-persona/personas-generation',
-        version: '1.0.0',
+        version: '1.1.0',
         model: ModelTier.Balanced,
         components: ['output-plain-text/v1', 'italian-formal/v1'],
       },

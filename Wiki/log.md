@@ -1,4 +1,23 @@
 
+## [2026-08-13] improve | Buyer Persona — prompt v1.1.0 good example realism & anti-hallucination alignment
+
+**Analysis**: I good examples del system prompt mostravano metriche specifiche (% lead, ore/settimana, €) assenti dall'extraction reale. Conflitto diretto con guardrail «NEVER invent data.» Inoltre `Nota sull'Input` chiedeva auto-valutazione inaffidabile.
+
+**Principio**: "Specificity from extraction, not from imagination" — elaborare su dati REALI, non inventare dettagli plausibili.
+
+**Files creati/modificati** (7):
+| File | Action |
+|------|--------|
+| `apps/backend/src/prompts/buyer-persona/extraction/versions/1.1.0/system.md` | NEW — invariato da v1.0.0 (già solido) |
+| `apps/backend/src/prompts/buyer-persona/extraction/versions/1.1.0/user.md` | NEW — struttura contesto, extraction priority, gerarchia fonti |
+| `apps/backend/src/prompts/buyer-persona/personas-generation/versions/1.1.0/system.md` | NEW — good examples riscritti con payload estrazione di partenza, +Guardrail #7, Nota sull'Input→Provenienza Dati, Cosa Deve Vedere condizionale |
+| `apps/backend/src/prompts/buyer-persona/personas-generation/versions/1.1.0/user.md` | NEW — mappatura campo→sezione, Section-Specific Instructions, Critical Rules |
+| `packages/domain/src/generation/tools/index.ts` | MODIFIED — entrambi step: `version: '1.0.0'` → `version: '1.1.0'` |
+| `Wiki/concepts/Persona Generator - Prompt Architecture.md` | MODIFIED — +v1.1.0 section, +current_version frontmatter |
+| `Wiki/log.md` | This entry |
+
+**Verification**: `tsc --noEmit` domain ✅ backend ✅. `vitest run` domain 490/490 ✅ backend 145/145 ✅.
+
 ## [2026-08-13] improve | Brief Generator — prompt v1.1.0 structural gap fix
 
 **Analysis**: Confrontati i 4 prompt deployati (`versions/1.0.0/`) con i prototipi di design. Trovati 7 gap, di cui 2 strutturali: (1) 3 sezioni su 11 del brief richiedevano dati non presenti nell'extraction, causando output vuoti o fabbricati; (2) incoerenza template output vs good example in Panoramica (mancava `Azienda`).
