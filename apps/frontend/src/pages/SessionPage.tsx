@@ -8,6 +8,7 @@ import { useBreadcrumbs } from '../layout/AppShell';
 import { SessionTracker } from '../components/tool/SessionTracker';
 import { copy } from '@flow-app/copy';
 import { formatToolLabel, formatDurationMs, isCompletedStatus } from '../shared/session-utils';
+import { getToolSteps } from '../tool-inputs';
 
 export default function SessionPage() {
   const { sessionId, workspaceId } = useParams<{ sessionId: string; workspaceId: string }>();
@@ -60,6 +61,7 @@ export default function SessionPage() {
             reconnecting={reconnecting}
             workspaceId={workspaceId ?? ''}
             produces={session?.produces}
+            stepLabels={session?.toolKey ? getToolSteps(session.toolKey) : undefined}
             replayed={isReplayed}
             onReset={() => navigate(`/workspaces/${workspaceId}/tools/${session?.toolKey}`)}
           />

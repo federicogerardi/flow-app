@@ -7,6 +7,7 @@ interface InlineSessionTrackerProps {
   initialSession: SessionDTO;
   workspaceId: string;
   produces?: string;
+  stepLabels?: string[];
   onReset: () => void;
 }
 
@@ -21,6 +22,7 @@ export function InlineSessionTracker({
   initialSession,
   workspaceId,
   produces,
+  stepLabels,
   onReset,
 }: InlineSessionTrackerProps) {
   const { session, progress, stepArtifacts, loading, error, reconnecting } = useSession(sessionId, initialSession);
@@ -35,6 +37,7 @@ export function InlineSessionTracker({
       reconnecting={reconnecting}
       workspaceId={workspaceId}
       produces={produces}
+      stepLabels={stepLabels}
       onReset={onReset}
     />
   );

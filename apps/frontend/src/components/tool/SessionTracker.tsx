@@ -25,6 +25,7 @@ export interface SessionTrackerProps {
   reconnecting?: boolean;
   workspaceId: string;
   produces?: string;
+  stepLabels?: string[];
   /** When true, shows the replay banner ("Questa generazione è stata già completata..."). */
   replayed?: boolean;
   /** Called when the user clicks "Nuova generazione" or the retry CTA in the error state. */
@@ -54,6 +55,7 @@ export function SessionTracker({
   reconnecting,
   workspaceId,
   produces,
+  stepLabels,
   replayed,
   onReset,
   onBackToWorkspace,
@@ -147,6 +149,7 @@ export function SessionTracker({
         workspaceId={workspaceId}
         produces={produces}
         totalSteps={session.stepCount}
+        stepLabels={stepLabels}
         durationMs={durationMs ?? undefined}
         creditCost={(session as unknown as Record<string, unknown>).creditCost as number | undefined}
         xpEarned={session.xpEarned}

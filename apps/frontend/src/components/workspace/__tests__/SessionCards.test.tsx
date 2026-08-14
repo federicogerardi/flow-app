@@ -56,9 +56,9 @@ describe('RunningCard', () => {
     expect(screen.getByText(/45s/)).toBeInTheDocument();
   });
 
-  it('shows artifact preview when available', () => {
+  it('never shows raw artifact preview (compact card, no content noise)', () => {
     render(<RunningCard session={makeSession({ lastArtifactPreview: 'Partial content...' })} />);
-    expect(screen.getByText('Partial content...')).toBeInTheDocument();
+    expect(screen.queryByText('Partial content...')).toBeNull();
   });
 
   it('renders View progress and Cancel buttons when callbacks provided', () => {
@@ -110,12 +110,12 @@ describe('CompletedCard', () => {
     expect(screen.getByText(/2m 5s/)).toBeInTheDocument();
   });
 
-  it('shows artifact preview when available', () => {
+  it('never shows raw artifact preview (compact card, no content noise)', () => {
     render(<CompletedCard session={makeSession({
       status: 'completed',
       lastArtifactPreview: 'Final output preview...',
     })} />);
-    expect(screen.getByText('Final output preview...')).toBeInTheDocument();
+    expect(screen.queryByText('Final output preview...')).toBeNull();
   });
 
   it('renders View, Download, and Promote buttons', () => {

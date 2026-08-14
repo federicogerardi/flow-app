@@ -17,6 +17,7 @@ import { AssetPicker } from '../shared/AssetPicker';
 import { ASSET_TOOL_MAP } from '../../constants/assets';
 import { ASSET_TYPE_LABELS } from '../../constants/assets';
 import { formatToolLabel } from '../../shared/session-utils';
+import { getToolSteps } from '../../tool-inputs';
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
@@ -112,6 +113,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
           assetInputs: defs.assetInputs,
           creditCost: defs.creditCost,
           stepCount: defs.stepCount,
+          stepLabels: getToolSteps(toolKey),
         };
         send({ type: 'LOAD', tool: toolDef, workspaceId });
       })
@@ -125,6 +127,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
           assetInputs: [],
           creditCost: 1,
           stepCount: 1,
+          stepLabels: getToolSteps(toolKey),
         };
         send({ type: 'LOAD', tool: toolDef, workspaceId });
       });
@@ -176,6 +179,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
           initialSession={{ id: urlSessionId, toolKey, workspaceId, status: 'running', stepCount: tool?.stepCount ?? 1, createdAt: '', artifacts: [] } as unknown as import('../../api/client').SessionDTO}
           workspaceId={workspaceId}
           produces={tool?.label}
+          stepLabels={tool?.stepLabels}
           onReset={() => {
             window.history.replaceState(null, '', window.location.pathname);
             send({ type: 'RESET' });
@@ -279,6 +283,7 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
               initialSession={{ ...session, workspaceId, toolKey }}
               workspaceId={workspaceId}
               produces={tool?.label}
+              stepLabels={tool?.stepLabels}
               onReset={() => send({ type: 'RESET' })}
             />
           ) : (

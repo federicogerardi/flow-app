@@ -57,12 +57,6 @@ export function CompletedCard({ session, onView, onDownload, onPromote, promoted
           {session.durationSeconds !== undefined ? ` · ${formatElapsedSeconds(session.durationSeconds)}` : ''}
         </Typography>
 
-        {session.lastArtifactPreview && (
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontStyle: 'italic', mb: 1 }}>
-            {session.lastArtifactPreview}
-          </Typography>
-        )}
-
         <Box sx={{ display: 'flex', gap: 1 }}>
           {onView && (
             <Button size="small" variant="text" onClick={onView} aria-label={copy.t('shared.actions.viewSession')}>

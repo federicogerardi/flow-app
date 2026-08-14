@@ -19,6 +19,7 @@ interface GenerationSlotProps {
   workspaceId?: string;
   produces?: string;
   totalSteps: number;
+  stepLabels?: string[];
   durationMs?: number;
   creditCost?: number;
   xpEarned?: number;
@@ -27,7 +28,7 @@ interface GenerationSlotProps {
 
 export function GenerationSlot({
   status, progress, stepArtifacts, startedAt,
-  artifacts, workspaceId, produces, totalSteps,
+  artifacts, workspaceId, produces, totalSteps, stepLabels,
   durationMs, creditCost, xpEarned, onRetry,
 }: GenerationSlotProps) {
   const isTerminal = isTerminalStatus(status);
@@ -61,6 +62,7 @@ export function GenerationSlot({
               content: a.content,
             } as ArtifactDTO))}
             totalSteps={totalSteps}
+            stepLabels={stepLabels}
             layoutMode="side-by-side"
           />
         </Box>

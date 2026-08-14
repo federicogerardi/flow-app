@@ -31,6 +31,7 @@ export interface ToolDefinition {
   assetInputs: AssetInput[];
   creditCost: number;
   stepCount: number;
+  stepLabels?: string[];
   produces?: string;
 }
 
@@ -82,10 +83,28 @@ const TOOL_FILES: Record<string, FileInput[]> = {
   ],
 };
 
+const TOOL_STEPS: Record<string, string[]> = {
+  'blog-post':                ['seo-structure', 'research', 'article'],
+  'landing-funnel':           ['seo-structure', 'research', 'article'],
+  'landing-page':             ['seo-structure', 'research', 'article'],
+  'video-script-long-form':   ['seo-structure', 'research', 'article'],
+  'video-description':        ['seo-structure', 'research', 'article'],
+  'ai-overview-analysis':     ['seo-structure', 'research', 'article'],
+  'brief':                    ['extraction', 'brief-generation'],
+  'buyer-persona':            ['extraction', 'personas-generation'],
+  'marketing-angle':          ['extraction', 'angle-matrix', 'creative-activation'],
+  'ad-copy':                  ['extraction', 'context-generation', 'ads-generation'],
+  'brand-voice':              ['extraction', 'tov-generation'],
+};
+
 export function getToolInputs(toolKey: string): TextInput[] {
   return TOOL_INPUTS[toolKey] ?? DEFAULT_INPUTS;
 }
 
 export function getToolFiles(toolKey: string): FileInput[] {
   return TOOL_FILES[toolKey] ?? [];
+}
+
+export function getToolSteps(toolKey: string): string[] {
+  return TOOL_STEPS[toolKey] ?? [];
 }

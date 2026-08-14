@@ -50,12 +50,6 @@ export function RunningCard({ session, onViewProgress, onCancel }: RunningCardPr
           )}
         </Box>
 
-        {session.lastArtifactPreview && (
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontStyle: 'italic', mb: 1 }}>
-            {session.lastArtifactPreview}
-          </Typography>
-        )}
-
         <Box sx={{ display: 'flex', gap: 1 }}>
           {onViewProgress && (
             <Button size="small" variant="text" onClick={onViewProgress} aria-label={copy.t('shared.actions.viewSession')}>
