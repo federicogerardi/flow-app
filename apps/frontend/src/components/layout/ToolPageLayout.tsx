@@ -271,38 +271,40 @@ export function ToolPageLayout({ workspaceId, toolKey }: ToolPageLayoutProps) {
         </Card>
       )}
 
-      {uiState === 'submitting' && (
-        <Card>
-          <CardContent sx={{ textAlign: 'center', py: 4 }}>
-            <LinearProgress sx={{ width: '60%', mx: 'auto', mb: 2 }} />
-            <Typography variant="body1" fontWeight={600} sx={{ mb: 0.5 }}>
-              {copy.t('toolPage.cta.submitting')}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {copy.t('toolPage.progress.starting')}
-            </Typography>
-            {stuck && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                  {copy.t('shared.status.error')}
+      {uiState === 'generating' && (
+        <Box>
+          {session?.id ? (
+            <InlineSessionTracker
+              sessionId={session.id}
+              initialSession={{ ...session, workspaceId, toolKey }}
+              workspaceId={workspaceId}
+              produces={tool?.label}
+              onReset={() => send({ type: 'RESET' })}
+            />
+          ) : (
+            <Card>
+              <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                <LinearProgress sx={{ width: '60%', mx: 'auto', mb: 2 }} />
+                <Typography variant="body1" fontWeight={600} sx={{ mb: 0.5 }}>
+                  {copy.t('toolPage.progress.starting')}
                 </Typography>
-                <Button variant="outlined" size="small" onClick={() => send({ type: 'RESET' })}>
-                  {copy.t('shared.actions.retry')}
-                </Button>
-              </Box>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {uiState === 'generating' && session?.id && (
-        <InlineSessionTracker
-          sessionId={session.id}
-          initialSession={{ ...session, workspaceId, toolKey }}
-          workspaceId={workspaceId}
-          produces={tool?.label}
-          onReset={() => send({ type: 'RESET' })}
-        />
+                <Typography variant="body2" color="text.secondary">
+                  {copy.t('toolPage.progress.queuedHint')}
+                </Typography>
+                {stuck && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                      {copy.t('shared.status.error')}
+                    </Typography>
+                    <Button variant="outlined" size="small" onClick={() => send({ type: 'RESET' })}>
+                      {copy.t('shared.actions.retry')}
+                    </Button>
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </Box>
       )}
     </Box>
   );

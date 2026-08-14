@@ -1,5 +1,24 @@
 
 
+## [2026-08-15] fix | UX — Eliminato doppio passaggio ridondante "Avvio in corso" prima degli step
+
+**Finding**: al click su "Genera", l'utente vedeva 3 viste distinte: (1) Card "Avvio in corso..." + "Preparazione in corso..." (stato `submitting`), (2) FeedbackPanel con "In attesa di elaborazione..." (stato `queued`), (3) gli step. Le viste 1 e 2 sono semanticamente ridondanti — entrambe dicono "attendi che la generazione parta".
+
+**Root cause**: `deriveUIState` mappava `submitting → 'submitting'` e `submitted → 'generating'` come due UI state separati, e `ToolPageLayout` li renderizzava in due branch condizionali indipendenti (Card vs InlineSessionTracker), causando un cambio di layout percepito dall'utente.
+
+**Fix** (4 file, ~38 inserimenti / ~38 cancellazioni):
+
+| File | Change |
+|------|--------|
+| `machines/derive-ui-state.ts` | `'submitting' → 'generating'` (entrambi `submitting` e `submitted` mappano allo stesso UI state). Rimosso `'submitting'` dal tipo `UIState` (ora `'loading' | 'setup' | 'generating'`). |
+| `machines/__tests__/derive-ui-state.test.ts` | Aggiornata la tabella parametrizzata: `['submitting', 'generating']`. Rimosso assert `not.toBe('submitting')` (ormai banale: `deriveUIState` non può più ritornare `'submitting'`). |
+| `components/layout/ToolPageLayout.tsx` | Unificati i due branch `submitting` e `generating` in un unico `uiState === 'generating'`. Se `session?.id` non è ancora disponibile (POST in volo), mostra un placeholder inline con "Preparazione in corso..." + "La generazione inizierà a breve." che occupa lo stesso container del tracker. Escape hatch `stuck` (5s → "Riprova") preservato nel placeholder. |
+| `packages/copy/src/it/tool-page.ts` | Rimosso copy key morto `cta.submitting` ("Avvio in corso...") — zero consumer dopo il merge dei branch. |
+
+**Net delta**: ~0 linee (sostituzione 1:1). **Verification**: FE 21 file / 159 test / 0 failures, BE 19 file / 145 test / 0 failures, `tsc --noEmit` clean frontend + copy.
+
+**UX result**: l'utente vede UN solo passaggio — placeholder "Preparazione in corso..." (POST in volo) → SessionTracker con FeedbackPanel (session creata). Lo stato `queued` "In attesa di elaborazione..." è inevitabile (sessione in coda BullMQ) ma ora avviene dentro lo stesso layout del tracker, non in una vista separata.
+
 ## [2026-08-13] improve | Meta Ads -- prompt v1.1.0 tone wiring + context documentation + anti-hallucination safety net
 
 **Analysis**: 5 gaps in v1.0.0: (1) tone input silently ignored -- user selected Professional/Casual/Urgente/Empatico/Autorevole but zero prompt files consumed it. Extraction had no tone field; context-generation and ads-generation had no tone awareness. (2) Step 1 missing anti-hallucination/v1 component -- per-step components: ['output-json/v1'] REPLACED defaults, dropping safety net (inline rules covered it, but fragile). (3) creditCost: 1 for 3-step pipeline with 2 premium models (wiki said 2). (4) marketing-tone/v1 in DEFAULT_COMPONENTS but never applied -- dead code, Steps 2-3 override. (5) User prompts thin (9-16 lines) -- no context structure documentation.

@@ -6,7 +6,7 @@ describe('deriveUIState', () => {
     ['draftEmpty', 'loading'],
     ['configuring', 'setup'],
     ['ready', 'setup'],
-    ['submitting', 'submitting'],
+    ['submitting', 'generating'],
     ['submitted', 'generating'],
   ] as const)('maps machine state %s → UI state %s', (machineValue, expectedUIState) => {
     expect(deriveUIState({ value: machineValue })).toBe(expectedUIState);
@@ -22,6 +22,5 @@ describe('deriveUIState', () => {
 
   it('submitted maps to generating (inline generation, no redirect)', () => {
     expect(deriveUIState({ value: 'submitted' })).toBe('generating');
-    expect(deriveUIState({ value: 'submitted' })).not.toBe('submitting');
   });
 });

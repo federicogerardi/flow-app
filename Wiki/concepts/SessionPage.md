@@ -4,14 +4,14 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/generation
-date_updated: 2026-08-11
+date_updated: 2026-08-15
 source_count: 5
 confidence: high
 ---
 
 # SessionPage
 
-> Full-page session detail component — **canonical post-submit destination**  
+> Full-page session detail component — **standalone deep-link route** (thin wrapper around `SessionTracker`)  
 > `apps/frontend/src/pages/SessionPage.tsx`
 
 ## Route
@@ -22,7 +22,7 @@ confidence: high
 
 Mounted in `App.tsx` with `<ErrorBoundary>` wrapper. Route parameters: `workspaceId`, `sessionId`.
 
-**2026-08-08**: SessionPage is now the **single canonical destination** for session progress and results. `ToolPageLayout` redirects here after successful submission (`submitted` state). This eliminates duplicated SSE connections and FeedbackPanel/SessionSummary renders in the tool page.
+**2026-08-13 (inline generation)**: `SessionTracker` is now the **single canonical component** for session lifecycle rendering, consumed by both the tool page (inline, via `InlineSessionTracker`) and `SessionPage` (standalone deep-link route). `SessionPage` is a thin ~64-line wrapper: it handles page chrome (`PageHeader`, loading/error guards, replay banner from `?replayed=true` search param) and delegates all session rendering to `SessionTracker`. The tool page no longer redirects here after submission — it renders the session inline.
 
 **2026-08-08 (replay detection)**: When the redirect includes `?replayed=true` (idempotency hit — same inputs as a previous generation), a banner alerts the user that this is a previously completed result and suggests modifying inputs for a fresh generation.
 
@@ -30,24 +30,20 @@ Mounted in `App.tsx` with `<ErrorBoundary>` wrapper. Route parameters: `workspac
 
 ## Component Structure
 
+`SessionPage` is a thin page-chrome wrapper:
 ```
-SessionPage
+SessionPage (~64 lines)
 ├── PageHeader: "Session: {toolName}"
-├── Alert (replayed: "Questa generazione è stata già completata...")
-├── Alert (queued/draft/ready: friendly "in elaborazione" message)
-├── Card: Status + Metadata
-│   ├── Status chip (color-coded via statusColorMap)
-│   ├── Cancel button (running only)
-│   ├── Steps count
-│   ├── Duration (startedAt → completedAt)
-│   ├── Created date
-│   ├── FeedbackPanel (running: progress bar + step label + live artifact previews from SSE stepArtifacts)
-│   └── ErrorState (failed: error message + retry CTA)
-├── SessionSummary (completed: artifact list + download/promote)
-└── CTA buttons
-    ├── [Nuova generazione] — navigates to tool setup page
-    └── [Back to workspace]
+├── LoadingSkeleton / ErrorState (guard)
+└── SessionTracker (shared component — owns all session lifecycle rendering)
+    ├── Replay banner (Alert — now in SessionTracker)
+    ├── Reconnecting banner (Alert — transient SSE loss)
+    ├── Status header: chip + metadata + cancel button
+    ├── GenerationSlot: FeedbackPanel → CompletionBanner | SessionSummary | ErrorState
+    └── Terminal CTA row: "Nuova generazione" + "Back to workspace"
 ```
+
+> **Pre-2026-08-13**: SessionPage had its own inline `GenerationSlot` + cancel/terminal rendering (~140 lines). Post-unification, these are owned by `SessionTracker` (shared with the tool page's inline flow).
 
 ## State Guards (render order)
 
@@ -65,7 +61,9 @@ if (!session) return <LoadingSkeleton />;       // Guard 3: session is null (def
 
 ## Key Behaviors
 
-### Duration Calculation
+> **2026-08-13**: The behaviors below (duration, cancel, artifacts, terminal CTAs) are now implemented by `SessionTracker` — a shared component consumed by both `SessionPage` (this route) and the tool page's inline flow (`InlineSessionTracker`). `SessionPage` delegates all session lifecycle rendering to `SessionTracker` and only owns page-level chrome (header, breadcrumbs, loading/error guards).
+
+### Duration Calculation (in SessionTracker)
 
 ```typescript
 const startedAt = session?.startedAt ?? null;
@@ -127,24 +125,20 @@ On `completed` status, renders:
 
 | Dependency | Purpose |
 |------------|---------|
-| `useSession(sessionId)` | Fetches session + subscribes to SSE + returns `stepArtifacts` for live previews |
+| `useSession(sessionId)` | Fetches session + subscribes to SSE + returns `stepArtifacts`, `reconnecting` |
 | `useBreadcrumbs()` | Sets page breadcrumbs |
-| `api.cancelSession()` | Cancels running session |
-| `FeedbackPanel` | Progress bar + step label + artifact content previews for running sessions |
-| `SessionSummary` | Artifact list rendering |
-| `CompletionBanner` | Success summary banner |
+| `SessionTracker` | Shared component — canonical owner of all session lifecycle rendering (shared with tool page inline flow) |
 | `LoadingSkeleton` | Loading state |
 | `ErrorState` | Error state with retry |
-| `statusColorMap` | Shared MUI color mapping per status |
-| `copy.t('shared.session.queuedMessage')` | Friendly pending message |
-| `copy.t('shared.session.newGeneration')` | "Nuova generazione" CTA label |
+| `useSearchParams()` | Reads `?replayed=true` from URL |
 
 ## Sources
 
-- [[API Client + SSE Client]] — `useSession` hook with loading/error states
+- [[API Client + SSE Client]] — `useSession` hook with loading/error/reconnecting states
 - [[Frontend Architecture]] — Route table entry
-- [[UI Component Map]] — Shared components (LoadingSkeleton, ErrorState, CompletionBanner)
+- [[UI Component Map]] — Shared components (LoadingSkeleton, ErrorState, SessionTracker)
 - [[Session Machine (XState v5)]] — SSE events consumed by useSession
 - [[Session]] — Session aggregate root with lifecycle states
-- [[Tool UX Architecture]] — 2026-08-08 simplification: redirect from ToolPage to SessionPage
+- [[Tool UX Architecture]] — Inline generation flow; SessionPage as deep-link route
+- [[synthesis/fe-generation-unification-plan-2026-08-13]] — ✅ 2026-08-13: SessionPage simplified to thin wrapper delegating to SessionTracker
 - [[synthesis/generation-sse-wiring-remediation-2026-08-12]] — 2026-08-12 unified remediation: H1 startedAt timer, H2 REST seed, M1 shared utility

@@ -1,7 +1,6 @@
 export const toolPage = {
   cta: {
     submit:     'Genera',
-    submitting: 'Avvio in corso...',
     cancel:     'Annulla generazione',
     download:   'Scarica risultato',
     new:        'Nuova generazione',

@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/generation
-date_updated: 2026-08-08
+date_updated: 2026-08-15
 source_count: 7
 confidence: high
 ---
@@ -14,7 +14,8 @@ confidence: high
 > Centralized, reusable — new tool = configuration, not code  
 > Zero cognitive weight for users, zero friction for developers
 
-> **2026-08-08 simplification**: the tool page is now setup-only. After submitting, the user is redirected to [[SessionPage]] (`/sessions/[id]`) for progress tracking and results. This eliminates SSE-duplication between `ToolPageLayout` and `SessionPage`. [[SessionPage]] is the single canonical view for session lifecycle.
+> **2026-08-13 simplification**: the tool page now renders progress and results **inline** via `InlineSessionTracker` → `SessionTracker`. No redirect to [[SessionPage]]. [[SessionPage]] remains the standalone deep-link route.  
+> **2026-08-15 simplification**: `submitting` (POST in flight) and `submitted` (session created) share one `generating` UI state — user lands directly on the tracker layout, eliminating a redundant "Avvio in corso..." intermediate Card.
 
 ## Principle
 
@@ -100,9 +101,12 @@ The user **always** knows what is happening. Every state has a visible informati
 │ draftEmpty       │ Loading spinner. "Loading tool..."                        │
 │ configuring      │ SetupPanel active. Clear labels. Readiness snapshot       │
 │ ready            │ "Ready to generate" + credit cost visible                 │
-│ submitting       │ Spinner + "Starting generation..."                        │
-│ submitted        │ Redirect → [[SessionPage]]: FeedbackPanel (running) or    │
-│                  │ CompletionBanner + SessionSummary (completed)             │
+│ submitting       │ **2026-08-15**: merged into `generating` UI state. Same layout    │
+│                  │ area as the session tracker — "Preparazione in corso..."          │
+│                  │ placeholder while POST is in flight.                              │
+│ submitted        │ Inline SessionTracker: FeedbackPanel (queued/running) or          │
+│                  │ CompletionBanner + SessionSummary (completed/failed).             │
+│                  │ RESET → back to configuring for "Nuova generazione".              │
 └──────────────────┴──────────────────────────────────────────────────────────┘
 
 ┌──────────────────┬──────────────────────────────────────────────────────────┐
@@ -115,9 +119,9 @@ The user **always** knows what is happening. Every state has a visible informati
 └──────────────────┴──────────────────────────────────────────────────────────┘
 ```
 
-### FeedbackPanel — Never Silent (now SessionPage-only)
+### FeedbackPanel — Never Silent (rendered by SessionTracker, consumed on both tool page and SessionPage)
 
-During execution, the `FeedbackPanel` (rendered in [[SessionPage]]) always shows updated information:
+During execution, the `FeedbackPanel` (rendered inside `SessionTracker` → `GenerationSlot`) always shows updated information:
 
 ```tsx
 function FeedbackPanel({ artifacts, progress }: Props) {
@@ -174,18 +178,18 @@ function FeedbackPanel({ artifacts, progress }: Props) {
 ## Tool Lifecycle — User Perspective
 
 ```
-1. ENTER TOOL                       2. CONFIGURE                         3. REDIRECT → SessionPage
+1. ENTER TOOL                       2. CONFIGURE                         3. INLINE GENERATION
 ┌─────────────────────┐             ┌─────────────────────┐             ┌─────────────────────┐
-│ Sidebar: Blog Post   │             │ Topic: [___________] │             │ /sessions/[id]       │
-│                      │             │ File:  [Upload 📎]   │             │                      │
-│ What it produces:    │  ──fill──▶  │                      │  ──click──▶ │ See progress +       │
-│ SEO blog article     │             │ Credit cost: 1        │  "Generate" │ results in the       │
-│                      │             │                      │             │ canonical session    │
-│ 3 steps:             │             │ [Generate] ← enabled  │             │ page                 │
+│ Sidebar: Blog Post   │             │ Topic: [___________] │             │ Same page:           │
+│                      │             │ File:  [Upload 📎]   │             │ "Preparazione        │
+│ What it produces:    │  ──fill──▶  │                      │  ──click──▶ │  in corso..."        │
+│ SEO blog article     │             │ Credit cost: 1        │  "Generate" │   ↓                  │
+│                      │             │                      │             │ SessionTracker       │
+│ 3 steps:             │             │ [Generate] ← enabled  │             │ (progress + results) │
 │ SEO → Outline → Post │             │                      │             │                      │
 └─────────────────────┘             └─────────────────────┘             └─────────────────────┘
 
-4. RESULT (SessionPage)
+4. RESULT (inline → same page, or deep-link: /sessions/[id])
 ┌──────────────────────────────────────────────────────────┐
 │ ✅ Completed in 1:23                                      │
 │                                                           │
@@ -194,7 +198,7 @@ function FeedbackPanel({ artifacts, progress }: Props) {
 │                                                           │
 │ [Download .docx] [Download .pdf] [Download .md]           │
 │ [Promote to Asset]  ← if tool.produces !== undefined      │
-│ [Nuova generazione] ← back to tool setup                  │
+│ [Nuova generazione] ← back to tool setup (in-place)       │
 └──────────────────────────────────────────────────────────┘
 ```
 

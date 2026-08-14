@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/architecture
-date_updated: 2026-08-08
+date_updated: 2026-08-15
 source_count: 10
 confidence: high
 ---
@@ -188,12 +188,11 @@ interface ToolPageLayoutProps {
 }
 
 // Phases derived from toolPageMachine via deriveUIState():
+// 'loading'    → Loading spinner + "Loading tool..."
 // 'setup'      → SetupPanel + KnowledgePanel + ReadinessSnapshot + CTA bar
-// 'submitting' → SetupPanel (disabled) + spinner overlay
-// 'progress'   → FeedbackPanel
-// 'completed'  → SessionSummary + CompletionBanner
-// 'failed'     → ErrorState with retry
-// 'cancelled'  → SetupPanel (restored inputs)
+// 'generating' → Placeholder "Preparazione in corso..." (POST in flight)
+//              → InlineSessionTracker → SessionTracker (session created)
+//              → FeedbackPanel → CompletionBanner/SessionSummary/ErrorState
 ```
 
 ---

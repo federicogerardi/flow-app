@@ -1,4 +1,4 @@
-export type UIState = 'loading' | 'setup' | 'submitting' | 'generating';
+export type UIState = 'loading' | 'setup' | 'generating';
 
 /**
  * Maps XState v5 toolPageMachine state values to UI rendering states.
@@ -15,7 +15,7 @@ export function deriveUIState(state: { value: unknown }): UIState {
   if (v === 'draftEmpty') return 'loading';
   if (v === 'configuring') return 'setup';
   if (v === 'ready') return 'setup';
-  if (v === 'submitting') return 'submitting';
+  if (v === 'submitting') return 'generating';
   if (v === 'submitted') return 'generating';
   return 'loading';
 }
