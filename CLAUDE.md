@@ -15,9 +15,32 @@ AI-powered content generation platform for B2B marketing teams. Transforms conte
 **Monorepo**: `apps/backend`, `apps/frontend`, `packages/contracts`, `packages/domain`, `packages/infra-db`
 **Stack**: Node.js, React 19, XState v5, Kysely, PostgreSQL, Redis, BullMQ
 
+## Task Routing
+
+Read the relevant section(s) only — skip the rest. Match your task to the trigger:
+
+| Task / Trigger | Relevant Sections |
+|---|---|
+| Code in `packages/domain` | Domain Design Rules |
+| Code in `apps/backend` | Domain Design Rules, Test Fidelity Rules |
+| Code in `apps/frontend` (components, pages, layout) | Copy Module Rules, Code Quality Rules, Accessibility Rules, UI Component Unification Rules |
+| Writing or modifying tests | Test Fidelity Rules |
+| Wiki operations (ingest, query, lint) | LLM Wiki, Wiki Content Rules, Tools (qmd) |
+| Planning refactoring / multi-file changes | Implementation Planning Patterns, Test Fidelity Rules §2 |
+| Git operations (branch, commit, push) | Git Branch Policy |
+| Any code commit | Wiki Alignment Before Commit |
+
+## Rule Severity
+
+| Tag | Meaning |
+|---|---|
+| `[MUST]` | Violation blocks commit/merge. Security, correctness, data integrity, architectural invariants. |
+| `[SHOULD]` | Violation requires documented justification. Strong convention, exceptions possible. |
+| `[MAY]` | Preference or team convention. Discretionary. |
+
 ---
 
-## Git Branch Policy
+## Git Branch Policy [MUST]
 
 | Branch | Purpose | Protection | Direct push |
 |--------|---------|------------|--------------|
@@ -56,7 +79,7 @@ Every code commit must be preceded by Wiki alignment. Code must never be pushed 
 
 ---
 
-## Linguistic Separation Policy
+## Linguistic Separation Policy [MUST]
 
 **Wiki pages are 100% English.** No coexistence with other languages in any wiki document. Translate any Italian prose immediately.
 
@@ -64,7 +87,7 @@ Every code commit must be preceded by Wiki alignment. Code must never be pushed 
 
 ---
 
-## LLM Wiki
+## LLM Wiki [MUST]
 
 Implements the [llm-wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) — LLMs incrementally build and maintain a persistent, interlinked wiki from raw sources.
 
@@ -213,9 +236,17 @@ Checklist:
 - [ ] New entry appended to [[log]] under correct date heading
 - [ ] `Wiki/index.md` NOT modified (unless adding entity/concept/source to catalog)
 
+#### 10 — CLAUDE.md pruning discipline (self-maintenance)
+
+This file grows by sedimenting incident-driven rules. Without pruning it becomes unbounded. Review quarterly:
+
+- **Consolidate when a lesson is repeated ≥3 times**: if the same instruction appears in multiple sections (e.g., "scan `pages/` + `components/` + `layout/`, never just `components/`"), keep ONE canonical occurrence and replace the others with `> **See** [[CLAUDE.md#<canonical-section>]]`.
+- **Demote dormant rules**: a rule not triggered as a violation for 3+ months is a candidate for `[MAY]` or removal.
+- **Check the ceiling**: if `wc -l CLAUDE.md` exceeds 1500 lines, split into a core `CLAUDE.md` (routing + invariants, <200 lines) plus linked governance docs loaded on demand.
+
 ---
 
-## Domain Design Rules
+## Domain Design Rules [MUST]
 
 Enforce DDD tactical patterns from governance audits (Phase 0–9) and [[DDD Domain Design Rules|multi-agent code review (41 findings)]]. Violations compound technical debt across bounded contexts.
 
@@ -486,7 +517,7 @@ Checklist:
 
 ---
 
-## Wiki Content Rules
+## Wiki Content Rules [MUST]
 
 Prevent structural anti-patterns discovered during wiki health audits (2026-08-02). Apply on every wiki write operation.
 
@@ -635,48 +666,9 @@ Checklist:
 - [ ] `rg "\[\[DeletedPageName\]\]" Wiki/concepts/DDD*` — fix governance documents
 - [ ] Re-run grep to confirm zero matches in entity/concept/governance pages
 
-### 5 — Mechanical accessibility verification
-
-Accessibility attributes (`aria-label`, `role`, `aria-live`) are systematically omitted during feature development — they require a dedicated verification pass. Run after any UI change touching user interaction:
-
-```bash
-# 1. Every onClick handler should have an aria-label on the same element
-rg -B2 'onClick=' apps/frontend/src/components/ apps/frontend/src/pages/ --iglob '*.tsx' \
-  | rg -v 'aria-label'
-
-# 2. State changes visible to sighted users must be announced to screen readers
-rg '"alert"|aria-live="polite"|aria-live="assertive"|role="status"' \
-  apps/frontend/src/components/ apps/frontend/src/pages/ --iglob '*.tsx'
-
-# 3. Timers rendering elapsed time must have role="timer"
-rg 'Elapsed|elapsed|duration|Duration' apps/frontend/src/components/ --iglob '*.tsx' \
-  | rg -v 'role="timer"'
-```
-
-**Minimum bar**: every `<Button>` and `<IconButton>` with an action must have `aria-label={copy.t('...')}`. Banner components showing completion/error state changes must have `role="alert"` (which already implies a live region — do NOT add redundant `aria-live="polite"`).
-
-**Additional rules discovered 2026-08-13:**
-
-4. **No nested `aria-live` regions**: a single status update wrapped in multiple `role="status" aria-live="polite"` containers causes triple screen-reader announcements. Keep ONE live region at the outermost level; strip from inner containers.
-
-5. **`role="alert"` is self-contained**: `role="alert"` already implies `aria-live="assertive"` + `aria-atomic="true"`. Adding `aria-live="polite"` is contradictory and causes lint noise. Use `role="alert"` alone.
-
-6. **`role="listitem"` requires `role="list"` parent**: `<Stack>` renders a `<div>`. If children have `role="listitem"`, the container must have `role="list"` (or use semantic `<ul>`/`<ol>`).
-
-7. **Every animation must have `@media (prefers-reduced-motion: reduce)` guard**: one missing guard is all it takes. Audit all `animation:` / `keyframes` usages — not just the ones you wrote.
-
-Checklist:
-- [ ] Every `onClick` on a button element has an accompanying `aria-label`
-- [ ] Completion/celebration/error banners have `role="alert"` (no redundant `aria-live`)
-- [ ] Time-based UI elements have `role="timer"`
-- [ ] Dynamic content regions use `aria-live="polite"` (max ONE per component tree)
-- [ ] No nested live regions — strip `aria-live` from inner containers
-- [ ] `role="listitem"` elements are inside `role="list"` / `<ul>` / `<ol>`
-- [ ] Every `animation:` / `keyframes` has `prefers-reduced-motion` guard
-
 ---
 
-## Copy Module Rules
+## Copy Module Rules [SHOULD]
 
 Govern `@flow-app/copy` (`packages/copy/`). Every user-visible string — label, button, error, notification, tooltip, placeholder — lives here. Reference keys, never literal strings.
 
@@ -705,7 +697,7 @@ rg -n '"[A-Z][a-z]' apps/frontend/src/pages/ apps/frontend/src/components/ apps/
   --iglob '*.tsx' | grep -v 'copy\.t(' | grep -v 'import ' | grep -v '//'
 ```
 
-**Boundary rule**: copy violation audits MUST scan `pages/`, `components/`, and `layout/` — never just `components/` alone. A remediation plan that scanned only `components/` missed `SessionPage.tsx` (11 violations, the worst offender) because it lives in `pages/`.
+**Boundary rule**: copy violation audits MUST scan `pages/`, `components/`, and `layout/` — never just `components/` alone. See [[CLAUDE.md]] → "Wiki Content Rules" §7 for the canonical audit-scope rule.
 
 ### 2 — Test mocking convention
 
@@ -764,7 +756,7 @@ Lint: this pattern triggers `@typescript-eslint/no-explicit-any`. Remove the cas
 
 ---
 
-## Test Fidelity Rules
+## Test Fidelity Rules [SHOULD]
 
 Prevent mock-object mismatches, missing fields, and editing side-effects discovered during the 2026-08-08 remediation session.
 
@@ -784,7 +776,7 @@ Checklist:
 - [ ] `apply()` and other mutating methods actually modify the mock object (not just `vi.fn()`)
 - [ ] Repository methods called indirectly still accept the expected parameter shape
 
-### 1 bis — Mock data must include ALL mandatory DTO fields
+### 1.1 — Mock data must include ALL mandatory DTO fields
 
 Missing `workspaceId` and `stepCount` in `SessionListItemDTO` mocks silently broke Tab badges (rendered "undefined steps") and navigation callbacks.
 
@@ -804,7 +796,7 @@ Checklist:
 - [ ] Mock SWR responses include `{ data, isLoading: false, error: undefined }`
 - [ ] **SWR data shapes must match consumer destructuring**: if a component destructures `{ queued, running, completed, failed }`, the mock must provide those keys, not a flat `data: [...]` array. A shape mismatch silently produces `undefined` arrays → empty UI that passes tests but masks real behavior.
 
-### 1 ter — When a component's data contract changes, grep for ALL SWR mocks feeding that component
+### 1.2 — When a component's data contract changes, grep for ALL SWR mocks feeding that component
 
 Changing how a component consumes data (e.g., `SessionList` switching from single `api.listSessions` to 4 per-status calls) changes the implicit contract with every SWR mock that provides data for that component's SWR key. After changing a component's data fetcher:
 
@@ -864,7 +856,7 @@ Checklist:
 
 ---
 
-## Implementation Planning Patterns
+## Implementation Planning Patterns [MAY]
 
 ### 1 — Batch compression (parallelize independent subtrees)
 
@@ -906,7 +898,7 @@ Before any refactoring touching >10 files or spanning frontend + backend, launch
 
 ---
 
-## Code Quality Rules
+## Code Quality Rules [SHOULD]
 
 ### 1 — TypeScript: `useState` with `as const` arrays requires explicit type
 
@@ -915,7 +907,7 @@ Before any refactoring touching >10 files or spanning frontend + backend, launch
 // ✅ const [color, setColor] = useState<string>(COLORS[0]);
 ```
 
-### 3 — Design token contrast verification
+### 2 — Design token contrast verification
 
 Color values in design tokens must be mechanically verified for WCAG 2.1 AA compliance — human perception is unreliable. A teal `#0891B2` on white looked fine but measured **2.9:1** (below the 3:1 minimum for large text).
 
@@ -934,7 +926,7 @@ Checklist:
 - [ ] Gradient endpoints verified — not just the "average" color
 - [ ] Normal text: ≥4.5:1; Large text (≥18px or ≥14px bold): ≥3:1
 
-### 2 — Tool selection: `edit` vs `write` decision rule
+### 3 — Tool selection: `edit` vs `write` decision rule
 
 | File size | Operation | Tool |
 |-----------|-----------|------|
@@ -962,7 +954,48 @@ Checklist:
 
 ---
 
-## UI Component Unification Rules
+## Accessibility Rules [MUST]
+
+Accessibility attributes (`aria-label`, `role`, `aria-live`) are systematically omitted during feature development — they require a dedicated verification pass. Run after any UI change touching user interaction.
+
+```bash
+# 1. Every onClick handler should have an aria-label on the same element
+rg -B2 'onClick=' apps/frontend/src/components/ apps/frontend/src/pages/ --iglob '*.tsx' \
+  | rg -v 'aria-label'
+
+# 2. State changes visible to sighted users must be announced to screen readers
+rg '"alert"|aria-live="polite"|aria-live="assertive"|role="status"' \
+  apps/frontend/src/components/ apps/frontend/src/pages/ --iglob '*.tsx'
+
+# 3. Timers rendering elapsed time must have role="timer"
+rg 'Elapsed|elapsed|duration|Duration' apps/frontend/src/components/ --iglob '*.tsx' \
+  | rg -v 'role="timer"'
+```
+
+**Minimum bar**: every `<Button>` and `<IconButton>` with an action must have `aria-label={copy.t('...')}`. Banner components showing completion/error state changes must have `role="alert"` (which already implies a live region — do NOT add redundant `aria-live="polite"`).
+
+**Rules discovered 2026-08-13:**
+
+1. **No nested `aria-live` regions**: a single status update wrapped in multiple `role="status" aria-live="polite"` containers causes triple screen-reader announcements. Keep ONE live region at the outermost level; strip from inner containers.
+
+2. **`role="alert"` is self-contained**: `role="alert"` already implies `aria-live="assertive"` + `aria-atomic="true"`. Adding `aria-live="polite"` is contradictory and causes lint noise. Use `role="alert"` alone.
+
+3. **`role="listitem"` requires `role="list"` parent**: `<Stack>` renders a `<div>`. If children have `role="listitem"`, the container must have `role="list"` (or use semantic `<ul>`/`<ol>`).
+
+4. **Every animation must have `@media (prefers-reduced-motion: reduce)` guard**: one missing guard is all it takes. Audit all `animation:` / `keyframes` usages — not just the ones you wrote.
+
+Checklist:
+- [ ] Every `onClick` on a button element has an accompanying `aria-label`
+- [ ] Completion/celebration/error banners have `role="alert"` (no redundant `aria-live`)
+- [ ] Time-based UI elements have `role="timer"`
+- [ ] Dynamic content regions use `aria-live="polite"` (max ONE per component tree)
+- [ ] No nested live regions — strip `aria-live` from inner containers
+- [ ] `role="listitem"` elements are inside `role="list"` / `<ul>` / `<ol>`
+- [ ] Every `animation:` / `keyframes` has `prefers-reduced-motion` guard
+
+---
+
+## UI Component Unification Rules [SHOULD]
 
 Prevent duplication and inconsistency across surfaces discovered during the 2026-08-10 promote-to-asset unification session. Apply when the same domain action (button, indicator, dialog) appears in ≥2 surfaces.
 
