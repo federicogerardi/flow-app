@@ -5,7 +5,7 @@ tags:
   - wiki/infrastructure
   - wiki/backend
 date_updated: 2026-08-02
-source_count: 6
+source_count: 5
 confidence: high
 ---
 
@@ -345,7 +345,16 @@ Controls per-session and per-conversation token consumption to prevent run-away 
 - Budgets are enforced at the application layer before each LLM call
 - Exceeding the hard cap stops generation and returns a controlled error
 
-Referenced in [[implementation-roadmap-2026-08-01]] Phase 6 task 4.
+## Global Deterministic Model Matrix
+
+Static contract mapping every tool step to an explicit model tier and fallback policy — eliminates implicit default model selection and guarantees replayable behavior.
+
+Each `ToolDefinition.steps[]` step declares:
+- `prompt.model`: explicit tier (`small`, `medium`, `large`)
+- `prompt.fallback`: ordered fallback tiers for transient failures
+- `prompt.timeoutMs`: step timeout budget by tier
+
+Enforcement: startup validation fails if any step lacks an explicit tier; CI fails if a new step is added without matrix coverage; runtime logs persist the resolved model per step for audit. Model assignment + prompt version together define the deterministic execution contract. See [[Tool as Static Configuration]] (step metadata source) and [[Application Services]] (step execution).
 
 ## Sources
 
@@ -354,7 +363,6 @@ Referenced in [[implementation-roadmap-2026-08-01]] Phase 6 task 4.
 - [[BullMQ Worker Wiring]] — worker invokes ProcessStepUseCase
 - [[Usage & Quota]] — credit tracking from token usage
 - [[API Contract Baseline v1]]
-- [[implementation-roadmap-2026-08-01]]
 
 ---
 

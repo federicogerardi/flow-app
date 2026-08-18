@@ -165,7 +165,7 @@ type ProcessStepCommand = {
 
 Cross-context: promotes a `final` [[Artifact]] from a completed [[Session]] into a reusable [[Asset]] in [[Workspace & Assets]]. Invoked via `POST /api/artifacts/:id/promote`.
 
-> **Implemented** (2026-08-06) — explicit user-triggered promotion. EventBus auto-promotion (`SessionCompleted → PromoteToAssetUseCase`) is deferred; see [[Asset Promotion#Implementation Status]].
+> **Implemented** (2026-08-06) — explicit user-triggered promotion. EventBus auto-promotion (`SessionCompleted → PromoteToAssetUseCase`) is deferred; see [[Asset Promotion]].
 
 ```typescript
 // apps/backend/src/application/workspace/promote-to-asset.usecase.ts

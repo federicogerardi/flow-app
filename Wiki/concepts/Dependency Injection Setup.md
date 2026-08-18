@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-07-30
+date_updated: 2026-08-18
 source_count: 4
 confidence: high
 ---
@@ -62,8 +62,8 @@ const promoteToAssetUC  = new PromoteToAssetUseCase(workspaceRepo, toolRegistry)
 const consumeCreditsUC  = new ConsumeCreditsUseCase(quotaRepo, quotaEnforcer);
 
 // 6. Event handlers
-eventBus.subscribe('SessionCompleted', (e) => promoteToAssetUC.execute(e));
 eventBus.subscribe('SessionCompleted', (e) => consumeCreditsUC.execute(e));
+// Promotion is explicit (POST /api/artifacts/:id/promote), not event-driven.
 
 // 7. Worker
 const worker = createSessionWorker({

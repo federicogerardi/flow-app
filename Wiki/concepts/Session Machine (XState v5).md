@@ -324,10 +324,23 @@ cancelled [final]
 
 Legacy note: older snippets may still mention `canStart`; treat it as a backward-compatible alias of `canQueue`. Canonical naming is `canQueue`.
 
+## Architectural Pattern — Domain vs Application Separation
+
+XState v5 lives in the **application layer** (`apps/backend`); the domain (`packages/domain`) is framework-agnostic pure TypeScript. The domain owns business rules and valid transitions; XState executes them and wires infrastructure.
+
+| Concern | Domain (packages/domain) | Application (apps/backend) |
+|---------|--------------------------|---------------------------|
+| Business rules / invariants | ✅ What CAN happen | — |
+| State transitions | ✅ Valid transitions | ✅ Execute transitions |
+| Workflow orchestration | — | ✅ XState machine |
+| Infrastructure (BullMQ, LLM) | — | ✅ XState services/actions |
+| Visualization / snapshots | — | ✅ XState devtools, persisted snapshots |
+
+The same symmetry holds on the frontend: `toolPageMachine` orchestrates UI state (setup → readiness → progress → completed), consuming domain types via `packages/contracts`.
+
 ## Sources
 
 - [[sources/APP-CONCEPT]] — BE-Driven workflow
 - [[sources/PRD]] — FR-W01, FR-W03 (resume), FR-W04 (cancel)
 - [[sources/STARTUP]] — Ordered Step Chain
 - [[sources/USER-STORIES]] — US-GF01 to US-GF04
-- [[synthesis/generation-sse-wiring-remediation-2026-08-12]] — 2026-08-12 unified remediation: B1 duplicate events fix (subscriber→count filter), failSession action

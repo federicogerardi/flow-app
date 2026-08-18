@@ -3,7 +3,7 @@ type: entity
 tags:
   - wiki/entity
   - wiki/generation
-date_updated: 2026-08-08
+date_updated: 2026-08-18
 source_count: 5
 ---
 
@@ -41,7 +41,7 @@ pending → generating → completed
 | Constraint | Value | Reason |
 |------------|-------|--------|
 | Max content size | 500 KB | LLM output limit — prevents unbounded TEXT storage |
-| Preview length | 500 chars | `SessionListItemDTO.lastArtifactPreview` |
+| Preview length | 150 chars | `SessionListItemDTO.lastArtifactPreview` (list endpoint slices to 150; domain `preview()` default is 500) |
 | Download format | `.md`, `.txt`, `.docx`, `.pdf` | Full content via `GET /api/artifacts/:id/download` |
 
 ## Value Objects

@@ -7,7 +7,7 @@ tags:
 date_updated: 2026-08-06
 source_count: 9
 confidence: high
-maintenance: 2026-08-06 — updated migration strategy (009 quotas version, 010 gamification), added migration runner section linking to [[Migration Tooling]].
+maintenance: 2026-08-06 — updated migration strategy (009 quotas version, 010 gamification), added migration runner section linking to [[Database Schema]].
 ---
 
 # Database Schema
@@ -143,7 +143,7 @@ CREATE INDEX idx_crawl_data_expires_at ON crawl_data(expires_at);
 | Column | Type | Notes |
 |--------|------|-------|
 | `source` | `VARCHAR(50)` | `serpapi`, `people_also_ask`, `ai_overview` |
-| `raw_response` | `JSONB` | Immutable [[CrawlData]] VO — raw API response |
+| `raw_response` | `JSONB` | Immutable [[Content Generation#CrawlData Value Object]] VO — raw API response |
 | `expires_at` | `TIMESTAMPTZ` | Cache TTL from `ApiCallInput.cache.ttlSeconds` |
 
 #### `session_snapshots`
@@ -595,13 +595,28 @@ CREATE TABLE challenge_contributions (...);
 
 ## Migration Runner
 
-Migrations run automatically on server startup via `packages/infra-db/src/migrate.ts`. See [[Migration Tooling]] for details.
+Migrations run automatically on server startup via `packages/infra-db/src/migrate.ts`. See [[Database Schema#Migration Tooling]] for details.
 
 Key properties:
 - **Automatic**: no manual steps, no CI script — runs in `server.ts` before `createApp()`
 - **Idempotent**: tracks applied migrations in a `migrations` table; skips already-applied files
 - **Auto-resilient**: detects manually-applied migrations via PostgreSQL error codes (42710, 42P07, etc.) and marks them as done
 - **Fail-fast**: unknown errors crash the server (bad migration should never reach production)
+
+## Migration Tooling
+
+`packages/infra-db/src/migrate.ts` — `runMigrations(db, migrationsPath, log?)` runs on server startup:
+- Reads `.sql` files from `packages/infra-db/migrations/` in alphabetical order; tracks applied migrations in a `migrations` table (auto-created).
+- Each unapplied migration runs in a PostgreSQL transaction.
+- **Auto-resilience**: a "duplicate object" error (42710, 42P07, 42P16, 42701) means the migration was applied manually → marked done, no crash. Unknown errors crash the server (fail-fast).
+
+| Scenario | Behavior |
+|----------|----------|
+| Fresh DB | All migrations apply sequentially |
+| Manual migrations | Auto-detected via error codes → marked applied |
+| Re-deploy (all applied) | All skip (~1s) |
+| New migration | Only the new file applies |
+| SQL error | Transaction rolls back, server exits |
 
 ## Sources
 
@@ -611,7 +626,7 @@ Key properties:
 - [[Asset]] — entity
 - [[User]] — aggregate root
 - [[Quota]] — aggregate root
-- [[CrawlData]] — value object
+- [[Content Generation#CrawlData Value Object]] — value object
 - [[packages-domain Structure]] — domain directory tree
 - [[WorkspaceMembership]] — membership entity
 

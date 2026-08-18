@@ -4,7 +4,7 @@ tags:
   - wiki/entity
   - wiki/workspace
 date_updated: 2026-08-06
-source_count: 6
+source_count: 5
 ---
 
 # Asset
@@ -89,7 +89,7 @@ Assets can be updated (content changes) while retaining their `AssetType` and `s
 
 ## Cross-Tool Injection
 
-The [[AssetResolver]] resolves which Assets are injected into a tool's generation prompt. Multiple assets of the same type are supported (e.g. 3 buyer personas). The `multiple` flag on `AssetInput` controls UI behavior (radio vs checkbox), but the resolver always returns all matching assets unless filtered by `selectedAssetIds`.
+The [[Workspace & Assets]] resolves which Assets are injected into a tool's generation prompt. Multiple assets of the same type are supported (e.g. 3 buyer personas). The `multiple` flag on `AssetInput` controls UI behavior (radio vs checkbox), but the resolver always returns all matching assets unless filtered by `selectedAssetIds`.
 
 ## Sources
 
@@ -97,5 +97,4 @@ The [[AssetResolver]] resolves which Assets are injected into a tool's generatio
 - [[sources/PRD]] — FR-A01 to FR-A05
 - [[sources/USER-STORIES]] — US-AS01 to US-AS08
 - [[sources/APP-CONCEPT]] — Tool catalog, AssetFieldMapping
-- [[synthesis/multi-asset-implementation-plan]] — Multi-asset support
 - [[log]] — 2026-08-06 name field implementation

@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/infrastructure
 date_updated: 2026-08-02
-source_count: 8
+source_count: 6
 confidence: high
 ---
 
@@ -187,15 +187,23 @@ Production deployment configuration for the Flow App on Railway:
 - Environment-specific configs: dev, staging, production
 - Secrets via Railway variable references (never in repo)
 
-Referenced in [[implementation-roadmap-2026-08-01]] Phase 9.
+## Local Dev (Docker Compose)
+
+One-command local environment via `docker-compose.yml` (project root): `postgres:16-alpine` (db `flow_app`, user/pass `flow_app`, port 5432, healthcheck `pg_isready`) and `redis:7-alpine` (port 6379, healthcheck `redis-cli ping`), plus a `pgdata` volume.
+
+```bash
+docker compose up -d      # start postgres + redis
+docker compose ps         # verify
+docker compose down       # stop (keep data);  down -v  destroys data
+cp apps/backend/.env.example apps/backend/.env
+npm install && npm run dev   # backend :3000 + frontend :5173
+```
 
 ## Sources
 
 - [[Database Schema]] — DATABASE_URL
 - [[BullMQ Worker Wiring]] — REDIS_URL
 - [[LLM Gateway - OpenRouter]] — OPENROUTER_*
-- [[Auth Middleware]] — JWT_SECRET, CSRF_SECRET
+- [[Auth Dependencies]] — JWT_SECRET, CSRF_SECRET
 - [[API Routes]] — PORT, CORS_ORIGIN
 - [[Logging Strategy]] — LOG_LEVEL, LOG_PRETTY
-- [[Docker Compose - Local Dev]]
-- [[implementation-roadmap-2026-08-01]]

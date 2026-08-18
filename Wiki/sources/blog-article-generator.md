@@ -106,7 +106,7 @@ Step 3 receives BOTH intermediate outputs — the SEO structure provides the ske
 - [[Prompt Components]] — `anti-hallucination/v1`, `output-markdown/v1`, `italian-formal/v1`
 - [[Brief Tool - Prompt Architecture]] — reference implementation (content tool, similar multi-step pipeline)
 - [[Persona Generator - Prompt Architecture]] — reference for persona asset usage in prompts
-- [[Brand Voice Tool - Prompt Architecture]] — referenced via Brand Voice asset injection in Step 3
-- [[Global Deterministic Model Matrix]] — model tier definitions (premium, balanced, search)
+- [[Brand Voice - Prompt Architecture]] — referenced via Brand Voice asset injection in Step 3
+- [[LLM Gateway - OpenRouter]] — model tier definitions (premium, balanced, search)
 - [[ToolPage Machine (XState v5)]] — setup → session flow
-- [[SessionPage]] — canonical post-submit destination
+- [[Session List - Live Status]] — canonical post-submit destination

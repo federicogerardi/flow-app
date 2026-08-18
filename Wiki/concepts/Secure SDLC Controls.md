@@ -5,7 +5,7 @@ tags:
   - wiki/security
   - wiki/governance
 date_updated: 2026-08-01
-source_count: 7
+source_count: 6
 confidence: high
 ---
 
@@ -106,7 +106,6 @@ This baseline is the prerequisite for future formal mapping to GDPR and SOC2 con
 
 ## Sources
 
-- [[synthesis/project-model-multi-dimension-audit-2026-08-01]]
 - [[Testing Strategy]]
 - [[API Documentation - OpenAPI]]
 - [[Logging Strategy]]

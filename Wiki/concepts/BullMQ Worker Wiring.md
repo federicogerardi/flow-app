@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-08-01
+date_updated: 2026-08-18
 source_count: 5
 confidence: high
 ---
@@ -387,9 +387,10 @@ process.on('SIGINT',  () => shutdown(worker, queue));
 │    completed:                                                 │
 │      → Session.complete() → SessionCompleted event            │
 │      → eventBus.publish(SessionCompleted)                     │
-│        → PromoteToAssetUseCase (if tool.produces)             │
 │        → ConsumeCreditsUseCase                                │
 │      → eventBridge.publish(session_completed)                 │
+│                                                               │
+│    (promotion is explicit: POST /api/artifacts/:id/promote)   │
 │                                                               │
 │    failed:                                                    │
 │      → eventBridge.publish(session_failed)                    │

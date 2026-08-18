@@ -96,7 +96,7 @@ viewer  → read-only access
 invited → no access until accepted
 ```
 
-See [[Workspace Permissions]] for the full matrix.
+See [[Workspace Sharing]] for the full matrix.
 
 ## Invitation Flow
 
@@ -117,7 +117,7 @@ Owner invites (email) → MemberInvited event → Email sent → Invitee accepts
 
 ## Decision Closure
 
-1. **Notification delivery (closed)**: invitation notifications are sent by an in-process application notification service, triggered by `MemberInvited`, with retry + idempotent delivery guard. See [[Invitation Notification Delivery]].
+1. **Notification delivery (closed)**: invitation notifications are sent by an in-process application notification service, triggered by `MemberInvited`, with retry + idempotent delivery guard. See [[Workspace Sharing]].
 
 ## Remaining Questions
 
@@ -129,8 +129,8 @@ Owner invites (email) → MemberInvited event → Email sent → Invitee accepts
 
 - [[Workspace Sharing]] — Feature overview concept page
 - [[WorkspaceMembership]] — Membership entity
-- [[Workspace Permissions]] — Permission matrix and enforcement
+- [[Workspace Sharing]] — Permission matrix and enforcement
 - [[Workspace]] — Modified aggregate root
 - [[Workspace & Assets]] — Parent bounded context
-- [[Auth Middleware]] — `requireWorkspaceRole()` guard
-- [[Invitation Notification Delivery]] — invitation notification contract
+- [[Auth Dependencies]] — `requireWorkspaceRole()` guard
+- [[Workspace Sharing]] — invitation notification contract

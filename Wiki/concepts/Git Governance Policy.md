@@ -5,7 +5,7 @@ tags:
   - wiki/governance
   - wiki/process
 date_updated: 2026-08-01
-source_count: 4
+source_count: 3
 confidence: high
 ---
 
@@ -126,7 +126,6 @@ If a gate is intentionally bypassed (exceptional case), the PR must include:
 
 ## Sources
 
-- [[synthesis/project-model-multi-dimension-audit-2026-08-01]]
 - [[Testing Strategy]]
 - [[API Documentation - OpenAPI]]
 - [[sources/PRD]]

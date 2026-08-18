@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/agent-chat
   - wiki/workspace
-date_updated: 2026-08-01
+date_updated: 2026-08-18
 source_count: 8
 confidence: high
 ---
@@ -130,11 +130,11 @@ Same rule as tools: credits consumed by `Conversation.userId`. Each agent respon
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | `GET` | `/api/workspaces/:id/agents` | member | List available agents |
-| `POST` | `/api/workspaces/:id/conversations` | editor | Start new conversation |
+| `POST` | `/api/workspaces/:id/conversations` | member | Start new conversation |
 | `GET` | `/api/workspaces/:id/conversations` | member | List conversations |
-| `GET` | `/api/conversations/:id` | member + owner | Get conversation + messages (must be owner) |
-| `POST` | `/api/conversations/:id/messages` | member + owner | Send message — SSE response (must be owner) |
-| `POST` | `/api/conversations/:id/archive` | member + owner | Archive conversation (must be owner) |
+| `GET` | `/api/conversations/:id` | authenticated (creator) | Get conversation + messages |
+| `POST` | `/api/conversations/:id/messages` | authenticated (creator) | Send message — SSE response |
+| `POST` | `/api/conversations/:id/archive` | authenticated (creator) | Archive conversation |
 
 ## Cross-Context Interactions
 

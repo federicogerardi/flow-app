@@ -3,7 +3,7 @@ type: concept
 tags:
   - wiki/concept
   - wiki/architecture
-date_updated: 2026-08-07
+date_updated: 2026-08-18
 source_count: 4
 confidence: high
 ---
@@ -33,17 +33,17 @@ Session.complete()              eventBus.publish()              ConsumeCreditsUs
 
 | Event | Emitter | Consumers | Payload |
 |-------|---------|-----------|---------|
-| `SessionStarted` | [[Session]] | UI (SSE), Monitoring | sessionId, toolKey, workspaceId, userId |
-| `StepCompleted` | [[Session]] | UI (SSE progress) | sessionId, stepNumber, stepLabel, artifactId |
-| `SessionCompleted` | [[Session]] | [[Usage & Quota]], UI | sessionId, workspaceId, userId, toolKey, finalArtifact |
-
-> **Note**: `PromoteToAssetUseCase` is NOT wired to `SessionCompleted` via `eventBus`. Promotion is explicit — the user clicks "Promote to Asset" in the UI, which calls `POST /api/artifacts/:id/promote`. Asset promotion via domain event is deferred. See [[Asset Promotion#Implementation Status]].
+| `SessionStarted` | SSE worker layer | UI (SSE), Monitoring | sessionId, toolKey, workspaceId, userId |
+| `StepCompleted` | SSE worker layer | UI (SSE progress) | sessionId, stepNumber, stepLabel, artifactId |
+| `SessionCompleted` | [[Session]] | [[Usage & Quota]], UI | sessionId, workspaceId, userId, toolKey, finalArtifactId |
 | `SessionFailed` | [[Session]] | UI, Monitoring | sessionId, stepNumber, errorCode, errorMessage |
 | `SessionCancelled` | [[Session]] | UI | sessionId, cancelledAt |
-| `AssetCreated` | [[Workspace]] | UI (Knowledge Panel) | workspaceId, assetId, assetType |
+| `AssetCreated` | [[Workspace]] (deferred) | UI (Knowledge Panel) | workspaceId, assetId, assetType |
 | `AssetUpdated` | [[Workspace]] | UI | workspaceId, assetId, assetType |
 | `QuotaExceeded` | [[Quota]] | UI, Session gate | userId, period, limit, consumed |
 | `CreditConsumed` | [[Quota]] | Audit trail | userId, amount, sessionId |
+
+> **Note**: `PromoteToAssetUseCase` is NOT wired to `SessionCompleted` via `eventBus`. Promotion is explicit — the user clicks "Promote to Asset" in the UI, which calls `POST /api/artifacts/:id/promote`. Asset promotion via domain event is deferred. See [[Asset Promotion]].
 
 ---
 
@@ -74,7 +74,7 @@ class SessionStarted implements DomainEvent {
 | `workspaceId` | `WorkspaceId` | Owning workspace |
 | `userId` | `UserId` | User who started the generation |
 
-**Trigger**: `Session.apply({ type: 'WORKER_PICKUP' })` — transition `queued → running`
+**Trigger**: published by the SSE worker layer after `Session.apply({ type: 'WORKER_PICKUP' })` — transition `queued → running`. (`Session.apply()` itself returns `null` for `WORKER_PICKUP`.)
 
 **Consumers**:
 - UI: starts SSE connection for real-time progress
@@ -107,7 +107,7 @@ class StepCompleted implements DomainEvent {
 | `artifactId` | `ArtifactId` | Produced artifact |
 | `isLast` | `boolean` | Is it the last step? (prepares UI for closing) |
 
-**Trigger**: `Session.addArtifact(artifact)` — after each completed step
+**Trigger**: published by the SSE worker layer after each completed step. (`Session.apply('ADD_ARTIFACT')` returns `null` — this is not a domain-emitted event.)
 
 **Consumers**:
 - UI: updates progress bar, shows completed step card
@@ -122,35 +122,35 @@ class SessionCompleted implements DomainEvent {
   readonly occurredAt: DateTime;
 
   constructor(
-    readonly sessionId: SessionId,
-    readonly toolKey: ToolKey,
-    readonly workspaceId: WorkspaceId,
-    readonly userId: UserId,
-    readonly finalArtifact: {
-      readonly artifactId: ArtifactId;
-      readonly content: ArtifactContent;
-    },
+    readonly aggregateId: string,
+    readonly sessionId: string,
+    readonly toolKey: string,
+    readonly workspaceId: string,
+    readonly userId: string,
+    readonly finalArtifactId: string,
   ) {}
 }
 ```
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `sessionId` | `SessionId` | Completed session |
-| `toolKey` | `ToolKey` | Tool used (to determine if promotable) |
-| `workspaceId` | `WorkspaceId` | Target workspace |
-| `userId` | `UserId` | User (for credit consumption) |
-| `finalArtifact` | `{ artifactId, content }` | Final artifact (id + content only, not the entire object) |
+| `aggregateId` | `string` | Session identifier (aggregate root id) |
+| `sessionId` | `string` | Completed session |
+| `toolKey` | `string` | Tool used (to determine if promotable) |
+| `workspaceId` | `string` | Target workspace |
+| `userId` | `string` | User (for credit consumption) |
+| `finalArtifactId` | `string` | Final artifact id (promotion target — consumers resolve the artifact if needed) |
 
-**Trigger**: `Session.complete()` — last step completed successfully
+**Trigger**: `Session.apply('COMPLETE')` — last step completed successfully
 
 **Consumers**:
 
 | Handler | Action |
 |---------|--------|
-| `PromoteToAssetUseCase` | If `toolKey` is an asset tool, calls `Workspace.addAsset()` |
 | `ConsumeCreditsUseCase` | Calls `Quota.consume()` to deduct credits |
 | UI (SSE) | Notifies completion, enables download and promotion button |
+
+> Promotion is **not** a `SessionCompleted` consumer — it is an explicit API call (`POST /api/artifacts/:id/promote`), not event-driven. See [[Asset Promotion]].
 
 **Cross-context contract**: the payload must contain everything consumers need. No consumer should call `SessionRepository.findById()` — the event is self-sufficient.
 
@@ -329,10 +329,6 @@ SessionMachine (XState)
 │   ├── publish StepCompleted (isLast: true)
 │   │     └── UI: last step completed
 │   └── publish SessionCompleted
-│         ├── PromoteToAssetUseCase
-│         │     └── Workspace.addAsset()
-│         │           └── publish AssetCreated
-│         │                 └── UI: update Knowledge Panel
 │         ├── ConsumeCreditsUseCase
 │         │     └── Quota.consume()
 │         │           ├── publish CreditConsumed
@@ -340,6 +336,8 @@ SessionMachine (XState)
 │         │           └── (if quota exceeded) publish QuotaExceeded
 │         │                 └── UI: block new generations
 │         └── UI: show final result, download
+│
+│   (promotion is separate and explicit: POST /api/artifacts/:id/promote)
 │
 └── (error)
     └── publish SessionFailed
@@ -358,6 +356,7 @@ SessionMachine (XState)
 interface DomainEvent {
   readonly eventType: string;
   readonly occurredAt: DateTime;
+  readonly aggregateId: string;
 }
 ```
 
@@ -394,12 +393,10 @@ export const eventBus = new DomainEventBus();
 
 export function bootstrapEventHandlers(): void {
   eventBus.subscribe('SessionCompleted', async (e: SessionCompleted) => {
-    await promoteToAssetUseCase.execute(e);
-  });
-
-  eventBus.subscribe('SessionCompleted', async (e: SessionCompleted) => {
     await consumeCreditsUseCase.execute(e);
   });
+
+  // Promotion is NOT event-driven — invoked via POST /api/artifacts/:id/promote.
 }
 ```
 

@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/gamification
 date_updated: 2026-08-08
-source_count: 12
+source_count: 8
 confidence: high
 ---
 
@@ -466,5 +466,3 @@ async processEvent(event: SessionCompleted): Promise<void> {
 - [[Gamification UX]] — Psychological triggers, sidebar integration, notification cadence
 - [[UX Wireframes]] — Workspace Dashboard where health + challenges display
 - [[Usage & Quota]] — Credit reward consumer
-- [[synthesis/implementation-roadmap-2026-08-01]] — Phase 11 implementation roadmap
-- [[synthesis/railway-deploy-40x-2026-08-08]] — Missing streak mode endpoint + 401 race condition analysis

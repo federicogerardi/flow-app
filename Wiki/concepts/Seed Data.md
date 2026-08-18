@@ -107,4 +107,4 @@ seed()
 ## Sources
 
 - [[Database Schema]] — table definitions
-- [[Docker Compose - Local Dev]] — infrastructure setup
+- [[Environment Configuration]] — infrastructure setup

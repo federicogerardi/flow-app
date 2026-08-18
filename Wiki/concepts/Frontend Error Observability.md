@@ -87,6 +87,6 @@ Minimum event payload fields:
 - [[API Client + SSE Client]]
 - [[Logging Strategy]]
 - [[CI-CD Promotion Policy]]
-- [[API SLO Catalog]]
+- [[Job Queue - Monitoring and Stability]]
 - [[Secure SDLC Controls]]
 - [[Quality Gate Matrix]]

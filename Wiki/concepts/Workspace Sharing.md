@@ -5,7 +5,7 @@ tags:
   - wiki/workspace
   - wiki/sharing
 date_updated: 2026-08-08
-source_count: 8
+source_count: 7
 confidence: high
 ---
 
@@ -137,7 +137,7 @@ class Workspace {
 
 ### Middleware Enforcement
 
-The `requireWorkspaceRole()` middleware provides a second layer of enforcement at the HTTP boundary (see [[Auth Middleware]] for the JWT authentication layer):
+The `requireWorkspaceRole()` middleware provides a second layer of enforcement at the HTTP boundary (see [[Auth Dependencies]] for the JWT authentication layer):
 
 ```typescript
 function requireWorkspaceRole(...roles: MembershipRole[]) {
@@ -285,7 +285,7 @@ Existing routes gain `requireWorkspaceRole()` guard instead of implicit ownershi
 - [[Workspace]] — Aggregate root being modified
 - [[WorkspaceMembership]] — New entity within the aggregate
 - [[Usage & Quota]] — Credit consumption rule
-- [[Auth Middleware]] — `requireWorkspaceRole()` guard
+- [[Auth Dependencies]] — `requireWorkspaceRole()` guard
 - [[Domain Events]] — Event-mediated integration contract
 - [[Logging Strategy]] — Structured logs and correlation requirements
 - [[workspace-sharing-proposal]] — Full architecture proposal (synthesis)

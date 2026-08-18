@@ -402,6 +402,22 @@ Implemented in Phase 2 (2026-08-01, branch `feature/phase-2-reliability-ops`):
 
 ---
 
+## API SLO Baseline
+
+Endpoint-class SLI/SLO targets (availability, p95/p99 latency, 5xx error-rate) measured over 30 days.
+
+| Endpoint class | Availability | Latency (p95/p99) | Error rate |
+|----------------|--------------|-------------------|------------|
+| Health (light) | >= 99.95% | <= 20ms / 50ms | <= 0.1% |
+| Auth | >= 99.9% | <= 250ms / 500ms | <= 0.5% |
+| Read APIs | >= 99.9% | <= 300ms / 800ms | <= 0.5% |
+| Write APIs (non-generation) | >= 99.9% | <= 500ms / 1000ms | <= 1.0% |
+| Session start | >= 99.9% | <= 500ms / 1200ms | <= 1.0% |
+| SSE stream setup | >= 99.9% | first-event <= 2s | <= 1.0% |
+| Admin APIs | >= 99.5% | <= 800ms / 1500ms | <= 1.5% |
+
+API-level SLOs must be read together with the queue SLOs on this page — session start can be healthy while completion SLO is degraded. Alert thresholds: availability below target 15m (warning) / 30m (critical); p95 +25%/+50% over target; 5xx >1.5x/2x target; SSE first-event >2s/4s.
+
 ## Sources
 
 - [[BullMQ Worker Wiring]] — worker implementation

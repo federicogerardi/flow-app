@@ -102,7 +102,7 @@ Provato ma fallito per problemi analoghi a nginx (config non applicata, builder 
 | Dev veloce, backend pubblico ok | ✅ Pattern 1 (URL pubblico + CORS) |
 | Produzione, backend privato | Pattern 2 (nginx) con le fix documentate sopra |
 | Multi-env con URL dinamici | Pattern 3 (runtime URL) |
-| Produzione, backend privato, stack Node | Pattern 5 (Node.js thin proxy) — vedi [[reverse-proxy-deploy-log]] |
+| Produzione, backend privato, stack Node | Pattern 5 (Node.js thin proxy) |
 
 ## Pattern 5 — Node.js Thin Reverse Proxy ✅ (deployed 2026-08-03)
 
@@ -113,7 +113,7 @@ Browser → frontend (Node.js express on :3000)
            └─ GET /health   → http-proxy → http://backend.railway.internal:3000/health
 ```
 
-Attempted on Railway dev with 6 deploys as of 2026-08-03. See [[reverse-proxy-deploy-log]] for full details. Key learnings:
+Attempted on Railway dev with 6 deploys as of 2026-08-03. Key learnings:
 
 | # | Problem | Root cause |
 |---|---------|------------|
@@ -126,7 +126,6 @@ Attempted on Railway dev with 6 deploys as of 2026-08-03. See [[reverse-proxy-de
 
 ## Related
 
-- [[implementation-roadmap-2026-08-01]] — Phase 10
 - [[Environment Configuration]]
 - [[LLM Gateway - OpenRouter]]
-- [[Docker Compose - Local Dev]]
+- [[Environment Configuration]]

@@ -5,7 +5,7 @@ tags:
   - wiki/governance
   - wiki/infrastructure
 date_updated: 2026-08-01
-source_count: 7
+source_count: 6
 confidence: high
 ---
 
@@ -97,7 +97,6 @@ Rollback actions:
 
 ## Sources
 
-- [[synthesis/project-model-multi-dimension-audit-2026-08-01]]
 - [[Git Governance Policy]]
 - [[Secure SDLC Controls]]
 - [[Testing Strategy]]

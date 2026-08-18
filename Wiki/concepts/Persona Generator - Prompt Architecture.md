@@ -295,7 +295,7 @@ vitest        →  domain 490/490 ✅  backend 145/145 ✅
 
 ## Frontend Readiness (2026-08-06)
 
-All frontend gaps identified by the [[Persona Generator - Prompt Architecture#Frontend Readiness|UI design audit]] have been closed. No changes needed when the backend ToolDefinition ships.
+All frontend gaps identified by the [[Persona Generator - Prompt Architecture|UI design audit]] have been closed. No changes needed when the backend ToolDefinition ships.
 
 ### Fixes Applied
 

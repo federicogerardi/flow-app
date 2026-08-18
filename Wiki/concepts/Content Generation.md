@@ -3,8 +3,8 @@ type: concept
 tags:
   - wiki/concept
   - wiki/generation
-date_updated: 2026-08-08
-source_count: 7
+date_updated: 2026-08-18
+source_count: 5
 confidence: high
 ---
 
@@ -177,7 +177,7 @@ Purposes:
 | Direction | Context | Pattern |
 |-----------|---------|---------|
 | Reads | [[Workspace & Assets]] | Sync: `AssetResolver.resolve()` |
-| Emits to | [[Workspace & Assets]] | Async: `SessionCompleted` → [[Asset Promotion]] |
+| Emits to | [[Workspace & Assets]] | Explicit (API): `POST /api/artifacts/:id/promote` → [[Asset Promotion]] |
 | Emits to | [[Usage & Quota]] | Async: `SessionCompleted` → credit consumption |
 
 ## Sources
@@ -186,4 +186,4 @@ Purposes:
 - [[sources/PRD]] — FR-W01 to FR-W09
 - [[sources/STARTUP]] — Domain rules, Progressive Context Enrichment definition
 - [[sources/USER-STORIES]] — All tool epics, US-GE08, US-GE09
-- [[Global Deterministic Model Matrix]] — Per-step model assignment contract
+- [[LLM Gateway - OpenRouter]] — Per-step model assignment contract

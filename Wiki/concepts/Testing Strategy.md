@@ -5,7 +5,7 @@ tags:
   - wiki/infrastructure
   - wiki/governance
 date_updated: 2026-08-08
-source_count: 5
+source_count: 3
 confidence: high
 ---
 
@@ -86,7 +86,7 @@ confidence: high
 
 ### E2E: Playwright (added 2026-08-08)
 
-`@playwright/test` was added in [[testing-plan-xstate-toolpage-2026-08-07|ToolPage Test Suite]] for end-to-end testing of the tool page lifecycle.
+`@playwright/test` was added for end-to-end testing of the tool page lifecycle.
 
 | Package | Version | Purpose |
 |---------|---------|---------|
@@ -98,7 +98,7 @@ confidence: high
 - Desktop Chrome, trace on retry, screenshot on failure
 - `E2E_BASE_URL` and `E2E_AUTH_TOKEN` env vars for CI
 
-**Scenarios** (see [[e2e-test-plan-tool-page-2026-08-07]]):
+**Scenarios**:
 - Happy path, file upload, asset selection, error+retry, SSE resilience, accessibility, session list cards, gamification semantics
 
 E2E tests are not run in CI — they require a staging environment with PostgreSQL + Redis + BullMQ worker.
@@ -286,7 +286,7 @@ afterEach(() => {
 
 ## Phase 11 Baseline (2026-08-04)
 
-Executed in [[synthesis/phase-11-testing-plan|Phase 11]]. From 1 test file (5 tests) to 66 files (~634 tests) across all layers.
+Executed in Phase 11. From 1 test file (5 tests) to 66 files (~634 tests) across all layers.
 
 | Layer | Files | Tests | Coverage Target |
 |-------|-------|-------|-----------------|
@@ -677,6 +677,3 @@ jobs:
 - [[sources/PRD]] — Test coverage targets (≥70% frontend, NFR-M03)
 - [[packages-domain Structure]] — Domain isolation for testability
 - [[Dependency Injection Setup]] — Manual DI enables trivial mocking
-- [[testing-plan-xstate-toolpage-2026-08-07]] — ToolPage test suite (79 unit/component tests implemented)
-- [[e2e-test-plan-tool-page-2026-08-07]] — Playwright E2E scenarios (8 scenarios scaffolded)
-- [[synthesis/phase-11-testing-plan]] — Phase 11 execution results (baseline established)

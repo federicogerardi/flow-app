@@ -5,7 +5,7 @@ tags:
   - wiki/frontend
   - wiki/generation
 date_updated: 2026-08-15
-source_count: 7
+source_count: 6
 confidence: high
 ---
 
@@ -14,7 +14,7 @@ confidence: high
 > Centralized, reusable — new tool = configuration, not code  
 > Zero cognitive weight for users, zero friction for developers
 
-> **2026-08-13 simplification**: the tool page now renders progress and results **inline** via `InlineSessionTracker` → `SessionTracker`. No redirect to [[SessionPage]]. [[SessionPage]] remains the standalone deep-link route.  
+> **2026-08-13 simplification**: the tool page now renders progress and results **inline** via `InlineSessionTracker` → `SessionTracker`. No redirect to [[Session List - Live Status]]. [[Session List - Live Status]] remains the standalone deep-link route.  
 > **2026-08-15 simplification**: `submitting` (POST in flight) and `submitted` (session created) share one `generating` UI state — user lands directly on the tracker layout, eliminating a redundant "Avvio in corso..." intermediate Card.
 
 ## Principle
@@ -220,7 +220,7 @@ New tool = **5 files, ~100 lines, ~30 minutes**. No new React components.
    → Add toolName to a dictionary (if different from the default)
 
 5. apps/frontend/src/...                                    (0 loc)
-    → No frontend files. SetupPanel is generic. Progress/results handled by [[SessionPage]].
+    → No frontend files. SetupPanel is generic. Progress/results handled by [[Session List - Live Status]].
 ```
 
 ### Example: `campaign-report` (hypothetical new tool)
@@ -351,13 +351,20 @@ function ToolIntro({ tool }: { tool: ToolDefinition }) {
 
 ---
 
+## Readiness Snapshot
+
+`apps/frontend/src/components/ReadinessSnapshot.tsx` — human-readable view of the readiness contract (what's configured / missing / optional), replacing generic disabled buttons with actionable guidance. It is a view over the SAME contract the backend [[ReadinessPolicy]] enforces — no divergent rule set.
+
+- Rows per acquisition input: text (required/optional), files, assets — each with status `ok`/`missing`/`optional` and a hint.
+- Reason codes match the backend: `missing_text`, `missing_file`, `missing_asset`, `missing_workspace` (contract-stable, not FE-only).
+- Determinism: required assets evaluated by asset type (`selectedAssetsByType[assetType]`); `canSubmit === true` implies no required reason code remains; FE/BE readiness fixtures tested in lockstep.
+- Rendered in `ToolPage` when `uiState === 'setup'`; submit enabled only when `state.matches('ready')`.
+
 ## Sources
 
 - [[Tool as Static Configuration]] — ToolDefinition structure
 - [[ToolPage Machine (XState v5)]] — State machine driving the UX
 - [[Frontend Architecture]] — Component inventory and layout
-- [[ReadinessSnapshot UI]] — Pre-flight validation display
 - [[Asset Promotion]] — Promote button in SessionSummary
 - [[Session List - Live Status]] — Cross-tab live session tracking
 - [[sources/USER-STORIES]] — US-T01 to US-T10, US-GF01 to US-GF04
-- [[synthesis/generation-sse-wiring-remediation-2026-08-12]] — 2026-08-12 unified remediation: H3 error alerts, L3 dead code removal, H1 timer fix

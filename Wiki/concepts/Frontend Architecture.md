@@ -5,7 +5,7 @@ tags:
   - wiki/frontend
   - wiki/architecture
 date_updated: 2026-08-08
-source_count: 11
+source_count: 7
 confidence: high
 ---
 
@@ -156,7 +156,7 @@ WorkspaceDashboard
 
 ## Tool Page
 
-Single-phase setup driven by the [[ToolPage Machine (XState v5)|ToolPage machine]] (simplified 2026-08-08). After submitting, the user is redirected to [[SessionPage]] for progress and results.
+Single-phase setup driven by the [[ToolPage Machine (XState v5)|ToolPage machine]] (simplified 2026-08-08). After submitting, the user is redirected to [[Session List - Live Status]] for progress and results.
 
 ```
 PHASE: SETUP                              REDIRECT → SessionPage
@@ -296,9 +296,6 @@ function WorkspaceDashboard() {
 - [[ToolPage Machine (XState v5)]] — Tool page state machine
 - [[Tool as Static Configuration]] — ToolDefinition drives SetupPanel generation
 - [[Centralized Copy Modules]] — Text modules consumed by components
-- [[ReadinessSnapshot UI]] — Readiness display component
+- [[Tool UX Architecture]] — Readiness display component
 - [[Tool UX Architecture]] — Generic SetupPanel, always-on information, 4-phase lifecycle
 - [[Session List - Live Status]] — Cross-tab SSE, live session cards
-- [[synthesis/code-review-2026-08-02]] — Multi-agent review including frontend findings (C3, C4, C5, C7, C8)
-- [[synthesis/frontend-gap-analysis-2026-08-04]] — Operational gap analysis: 28 missing components, 7 execution tracks
-- [[synthesis/ui-design-summary-2026-08-07]] — comprehensive UI design reference for backend handoff

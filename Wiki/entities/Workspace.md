@@ -5,7 +5,7 @@ tags:
   - wiki/workspace
   - wiki/sharing
 date_updated: 2026-08-06
-source_count: 8
+source_count: 7
 ---
 
 # Workspace
@@ -158,7 +158,7 @@ get memberships(): ReadonlyArray<WorkspaceMembership> {
 | `MembershipRole` | `type` alias: `'owner' \| 'editor' \| 'viewer'` | Role-based permissions (v2) |
 | `MembershipStatus` | `type` alias: `'invited' \| 'active'` | Membership lifecycle (v2) |
 
-> **Note**: `WorkspaceId`, `WorkspaceName`, `UserId` are `string` in code, not branded VO classes. `MembershipRole` and `MembershipStatus` are `type` aliases — tracked in the [[synthesis/phase-9-implementation-plan|Phase 9 VO conversion plan]].
+> **Note**: `WorkspaceId`, `WorkspaceName`, `UserId` are `string` in code, not branded VO classes. `MembershipRole` and `MembershipStatus` are `type` aliases — tracked in the Phase 9 VO conversion plan.
 
 ## Domain Events (v2)
 
@@ -171,7 +171,7 @@ get memberships(): ReadonlyArray<WorkspaceMembership> {
 
 ## Domain Services
 
-- **[[AssetResolver]]**: Given a `ToolKey` and `WorkspaceId`, returns the Assets that should be auto-injected into a generation prompt.
+- **[[Workspace & Assets]]**: Given a `ToolKey` and `WorkspaceId`, returns the Assets that should be auto-injected into a generation prompt.
 
 ## Cross-Context Interactions
 

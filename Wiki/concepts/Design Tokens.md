@@ -5,7 +5,7 @@ tags:
   - wiki/frontend
   - wiki/ux
 date_updated: 2026-08-07
-source_count: 7
+source_count: 6
 confidence: high
 ---
 
@@ -618,8 +618,7 @@ function AppThemeProvider({ children }: { children: React.ReactNode }) {
 
 - [[Frontend Architecture]] — existing token baseline (`#2563EB`, `#7C3AED`, spacing 8, borderRadius 8)
 - [[Tool UX Architecture]] — state feedback visual requirements
-- [[ReadinessSnapshot UI]] — readiness reason code display
+- [[Tool UX Architecture]] — readiness reason code display
 - [[ToolPage Machine (XState v5)]] — CTA enable/disable states
 - [[Session List - Live Status]] — card state colours (queued/running/completed/failed)
 - [[sources/PRD]] — FR-U07 (dark/light mode), FR-U09 (accessibility WCAG 2.1 AA)
-- [[synthesis/ui-design-summary-2026-08-07]] — comprehensive UI design reference for backend handoff

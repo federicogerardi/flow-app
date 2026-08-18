@@ -305,7 +305,7 @@ Starts a new generation session. Invokes [[Application Services|StartSessionUseC
 }
 ```
 
-> **Implemented 2026-08-07**: The response was extended from 5 fields to 16 as part of the [[frontend-drift-remediation-plan-2026-08-07|frontend drift remediation]]. `lastArtifactId`/`lastArtifactPreview` are populated via `SessionRepository.findLastArtifactsBySessionIds()` (batch query, no separate ArtifactRepository). `elapsedSeconds`/`durationSeconds` are computed from `startedAt`/`completedAt`. `isPromotable` comes from the tool definition's `produces` field. `createdAt` is the domain entity's immutable creation timestamp (DB column `created_at`, never null).
+> **Implemented 2026-08-07**: The response was extended from 5 fields to 16 as part of the frontend drift remediation. `lastArtifactId`/`lastArtifactPreview` are populated via `SessionRepository.findLastArtifactsBySessionIds()` (batch query, no separate ArtifactRepository). `elapsedSeconds`/`durationSeconds` are computed from `startedAt`/`completedAt`. `isPromotable` comes from the tool definition's `produces` field. `createdAt` is the domain entity's immutable creation timestamp (DB column `created_at`, never null).
 
 ### `GET /api/sessions/:id`
 

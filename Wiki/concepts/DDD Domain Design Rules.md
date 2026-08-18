@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/architecture
   - wiki/governance
-date_updated: 2026-08-02
-source_count: 20
+date_updated: 2026-08-18
+source_count: 14
 confidence: high
 ---
 
@@ -13,7 +13,7 @@ confidence: high
 
 > **Authoritative governance reference** — every domain and application code write must comply with these rules. Violations introduce technical debt that compounds across bounded contexts.
 
-These rules emerged from governance audits (Phase 0–9) and the [[synthesis/code-review-2026-08-02|multi-agent code review (41 findings)]]. They encode DDD tactical patterns proven in the codebase and enforced during every domain/application write operation.
+These rules emerged from governance audits (Phase 0–9) and a multi-agent code review (41 findings). They encode DDD tactical patterns proven in the codebase and enforced during every domain/application write operation.
 
 ---
 
@@ -204,7 +204,7 @@ export class MembershipRole {
 | identity | `UserRole` | admin, member | `isAdmin`, `isMember`, `equals()` |
 | identity | `UserStatus` | active, disabled | `isActive`, `isDisabled`, `equals()` |
 
-**Known debt**: 8 type aliases remain unconverted. See [[synthesis/phase-9-implementation-plan|Phase 9 plan]] for the catalog and conversion roadmap.
+**Known debt**: 8 type aliases remain unconverted. See the Phase 9 remediation notes for the catalog and conversion roadmap.
 
 **Checklist before writing domain code:**
 - [ ] Every value with a finite set of valid states is a class, not a type alias
@@ -287,7 +287,7 @@ export interface SessionRepository {
 | `WorkspaceMembership` | `static invite(userId, workspaceId, role, invitedBy)` | all fields verbatim (7 params) |
 | `Conversation` | `workspaceId, userId, agentKey` | all fields verbatim (9 params) |
 
-**Known violations** (logged in [[synthesis/code-review-2026-08-02]] — H1, H2, resolved in [[synthesis/high-fix-plan-2026-08-02]]):
+**Known violations** (from the multi-agent code review — H1, H2, since resolved):
 
 | File | Current | Should be | Status |
 |------|---------|-----------|--------|
@@ -438,7 +438,7 @@ export class SessionCompleted implements DomainEvent {
 |-------|-----------|-------------|
 | `SessionStarted` | `Session` | UI (SSE) |
 | `StepCompleted` | `Session` | UI (SSE) |
-| `SessionCompleted` | `Session` | Workspace (asset promotion), Usage (credits) |
+| `SessionCompleted` | `Session` | Usage (credits). Asset promotion is explicit (`POST /api/artifacts/:id/promote`), not event-driven |
 | `SessionFailed` | `Session` | UI (SSE) |
 | `SessionCancelled` | `Session` | UI (SSE) |
 | `MemberInvited` | `Workspace` | Notification system |
@@ -994,8 +994,8 @@ Drift between domain and infrastructure is the most common source of production 
 
 These rules are enforced by:
 1. **CLAUDE.md** — agent system prompt includes all 6 core rules as mandatory checks
-2. **Code review** — [[synthesis/code-review-2026-08-02]] identified 4 DDD violations (H1–H3, H10). All resolved via [[synthesis/high-fix-plan-2026-08-02]] (✅).
-3. **Phase 9 remediation** — 8 type-alias VOs converted to classes, zero `throw new Error` in domain, zero `as any` in domain files. See [[synthesis/phase-9-implementation-plan]].
+2. **Code review** — the multi-agent code review identified 4 DDD violations (H1–H3, H10). All resolved (✅).
+3. **Phase 9 remediation** — 8 type-alias VOs converted to classes, zero `throw new Error` in domain, zero `as any` in domain files.
 4. **CI** — typecheck (`tsc --noEmit`) runs on every PR; domain errors without proper `DomainError` extension cause compile failures
 
 ### Quick reference: anti-patterns to avoid
@@ -1021,11 +1021,6 @@ These rules are enforced by:
 - [[Domain Events]] — Event architecture, delivery semantics, outbox pattern
 - [[Domain Events Catalog]] — Full event reference with schemas and subscribers
 - [[Application Services]] — Use case patterns, orchestration flow
-- [[synthesis/code-review-2026-08-02]] — 41 findings including 4 DDD violations (H1–H3, H10)
-- [[synthesis/high-fix-plan-2026-08-02]] — Remediation plan for H1–H10
-- [[synthesis/critical-fix-plan-2026-08-02]] — Critical findings remediation (C1–C8)
-- [[synthesis/phase-9-implementation-plan]] — Phase 9 remediation plan (VO conversion roadmap)
-- [[synthesis/code-review-2026-08-02]] — Multi-agent review triggering this governance schema
 - [[Workspace Sharing]] — Two-layer enforcement, permission matrix (Pattern 14)
 - [[ReadinessPolicy]] — VO as business rule encapsulation (Pattern 15)
 - [[Workspace Sharing]] — Aggregate transaction boundaries (Pattern 16)

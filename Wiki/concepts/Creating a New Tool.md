@@ -521,7 +521,7 @@ Before merging, verify each layer:
 - [ ] Final artifact is generated and displayed in the frontend
 
 ### Wiki
-- [ ] Update [[overview#Tool Catalog|Tool Catalog]] with the new tool
+- [ ] Update [[overview|Tool Catalog]] with the new tool
 - [ ] Update [[index]] if creating new concept pages for the tool
 - [ ] Update [[log]] with implementation entry
 

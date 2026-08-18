@@ -3,7 +3,7 @@ type: concept
 tags:
   - wiki/concept
   - wiki/architecture
-date_updated: 2026-08-07
+date_updated: 2026-08-18
 source_count: 4
 confidence: high
 ---
@@ -87,11 +87,12 @@ When reliability mode is enabled (split-service topology), event delivery follow
 
 | Event | Emitted By | Consumed By | Purpose |
 |-------|-----------|-------------|---------|
-| `SessionCompleted` | [[Session]] | [[Workspace & Assets]] | [[Asset Promotion]] |
 | `SessionCompleted` | [[Session]] | [[Usage & Quota]] | Credit consumption |
-| `SessionStarted` | [[Session]] | UI (SSE) | Real-time progress |
-| `StepCompleted` | [[Session]] | UI (SSE) | Step progress |
-| `AssetCreated` | [[Workspace]] | UI | Knowledge Panel refresh |
+| `SessionStarted` | SSE worker layer | UI (SSE) | Real-time progress |
+| `StepCompleted` | SSE worker layer | UI (SSE) | Step progress |
+| `AssetCreated` | [[Workspace]] (deferred) | UI | Knowledge Panel refresh |
+
+> **Note**: [[Asset Promotion]] is **not** driven by `SessionCompleted`. Promotion is explicit (`POST /api/artifacts/:id/promote` → `PromoteToAssetUseCase`). The event-driven `SessionCompleted → PromoteToAssetUseCase` wiring is deferred. `AssetCreated` is likewise not yet published (see [[Asset Promotion]]).
 
 ## Event Structure
 
@@ -107,10 +108,12 @@ class SessionCompleted implements DomainEvent {
   readonly occurredAt = DateTime.now();
 
   constructor(
-    readonly sessionId: SessionId,
-    readonly workspaceId: WorkspaceId,
-    readonly userId: UserId,
-    readonly finalArtifact: Artifact,
+    readonly aggregateId: string,
+    readonly sessionId: string,
+    readonly workspaceId: string,
+    readonly userId: string,
+    readonly toolKey: string,
+    readonly finalArtifactId: string,
   ) {}
 }
 ```

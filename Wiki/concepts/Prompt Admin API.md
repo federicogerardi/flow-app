@@ -20,7 +20,7 @@ The **Prompt Admin API** provides CRUD operations for [[Prompt Versioning|prompt
 
 ## API Routes
 
-All routes prefixed with `/api/admin/prompts`. Require `admin` role (`[[Auth Middleware|requireRole('admin')]]`).
+All routes prefixed with `/api/admin/prompts`. Require `admin` role (`[[Auth Dependencies|requireRole('admin')]]`).
 
 ### Templates
 
@@ -321,4 +321,4 @@ The admin dashboard renders:
 - [[Prompt Components]] — Components managed by this API
 - [[PromptComposer]] — Preview endpoint uses the composer with test data
 - [[Prompt Caching Strategy]] — Cache invalidated on publish
-- [[Auth Middleware]] — Admin role enforcement
+- [[Auth Dependencies]] — Admin role enforcement

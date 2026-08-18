@@ -10,7 +10,7 @@ date_updated: 2026-08-01
 
 # Prompting Mechanics — Architecture Proposal
 
-> **Archived design proposal** — canonical documentation now lives in the three dedicated concept pages: [[Prompt Versioning]], [[Prompt Components]], and [[Context Injection]]. The directory structure is also documented in [[packages-domain Structure#Prompting]]. This page is retained for historical context (migration path, open questions).
+> **Archived design proposal** — canonical documentation now lives in the three dedicated concept pages: [[Prompt Versioning]], [[Prompt Components]], and [[Context Injection]]. The directory structure is also documented in [[packages-domain Structure]]. This page is retained for historical context (migration path, open questions).
 
 > Synthesis of the three prompting mechanics: versioning, unified components, and context injection. All extensions live within `packages/domain/src/generation/prompting/`.
 
@@ -171,6 +171,6 @@ The server must validate at boot:
 - [[PromptComposer]] — Domain service that ties all three together
 - [[Tool as Static Configuration]] — StepDefinition structure that gains versioning
 - [[ReadinessPolicy]] — Pre-flight validation of slot availability
-- [[Progressive Context Enrichment]] — Current mechanism being replaced/upgraded
+- [[Content Generation#Progressive Context Enrichment]] — Current mechanism being replaced/upgraded
 - [[LLM Gateway - OpenRouter]] — Integration point for resolved prompts
 - [[Application Services]] — ProcessStepUseCase integration point

@@ -4,8 +4,8 @@ tags:
   - wiki/concept
   - wiki/infrastructure
   - wiki/backend
-date_updated: 2026-08-11
-source_count: 8
+date_updated: 2026-08-18
+source_count: 5
 confidence: high
 ---
 
@@ -304,10 +304,10 @@ app.use(rateLimit({
   },
 }));
 
-// Auth endpoints: stricter — 10 attempts per minute
+// Auth endpoints: stricter — 5 attempts per 15 minutes
 const authLimiter = rateLimit({
-  windowMs: 60_000,
-  max:      10,
+  windowMs: 900_000,
+  max:      5,
   message: {
     error: { code: 'RATE_LIMITED', message: 'Too many login attempts', retryable: true },
   },
@@ -331,7 +331,7 @@ import { hashPassword } from '../auth/password';
 const router = Router();
 
 // Local login
-router.post('/auth/login', (req, res, next) => {
+router.post('/api/auth/login', (req, res, next) => {
   passport.authenticate('local', { session: false }, (err, user, info) => {
     if (err) return next(err);
     if (!user) return res.status(401).json({
@@ -349,7 +349,7 @@ router.post('/auth/login', (req, res, next) => {
 });
 
 // Register
-router.post('/auth/register', async (req, res) => {
+router.post('/api/auth/register', async (req, res) => {
   const { email, password } = req.body;
 
   const existing = await userRepo.findByEmail(Email.from(email));
@@ -370,19 +370,19 @@ router.post('/auth/register', async (req, res) => {
 });
 
 // OAuth — Google
-router.get('/auth/google/start', passport.authenticate('google', {
+router.get('/api/auth/google', passport.authenticate('google', {
   scope: ['profile', 'email'],
   session: false,
 }));
 
-router.get('/auth/google/callback', passport.authenticate('google', { session: false }), (req, res) => {
+router.get('/api/auth/google/callback', passport.authenticate('google', { session: false }), (req, res) => {
   const tokens = generateTokens(req.user as User);
   setRefreshCookie(res, tokens.refreshToken);
   res.redirect(`${process.env.CORS_ORIGIN}/auth/callback?token=${tokens.accessToken}`);
 });
 
 // Refresh
-router.post('/auth/refresh', async (req, res) => {
+router.post('/api/auth/refresh', async (req, res) => {
   const refreshToken = req.cookies?.refreshToken;
   if (!refreshToken) return res.status(401).json({
     error: { code: 'UNAUTHORIZED', message: 'No refresh token', retryable: true },
@@ -404,7 +404,7 @@ router.post('/auth/refresh', async (req, res) => {
 });
 
 // Logout
-router.post('/auth/logout', async (req, res) => {
+router.post('/api/auth/logout', async (req, res) => {
   const refreshToken = req.cookies?.refreshToken;
   if (refreshToken) {
     await authRepo.deleteByRefreshToken(refreshToken);
@@ -431,9 +431,9 @@ export { router as authRouter };
 
 ---
 
-## Bounded Context: Identity & Access
+## Bounded Context: Auth Dependencies
 
-The identity bounded context (`packages/domain/src/identity/`) provides user identity, authentication, and role-based access control. It is a generic subdomain — mostly off-the-shelf patterns (OAuth, JWT, RBAC).
+The Auth Dependencies bounded context (`packages/domain/src/identity/`) provides user identity, authentication, and role-based access control. It is a generic subdomain — mostly off-the-shelf patterns (OAuth, JWT, RBAC).
 
 **Aggregate Root**: [[User]] — an authenticated platform user with a role.
 
@@ -443,17 +443,23 @@ The identity bounded context (`packages/domain/src/identity/`) provides user ide
 - RBAC: `admin` vs `member`
 - Session listing and revocation
 
-**Cross-context role**: all other contexts reference `UserId` (shared identifier). Identity does not depend on any other context.
+**Cross-context role**: all other contexts reference `UserId` (shared identifier). Auth Dependencies does not depend on any other context.
 
 ---
 
+## Middleware Implementation
+
+JWT authentication + role guard + CSRF (cross-cutting, `apps/backend/src/middleware/auth.ts`):
+
+- **JWT middleware** (`authenticate`): verifies `Authorization: Bearer <token>`, attaches `JwtPayload { sub, email, role, iat, exp }` to `req.user`. Missing/invalid token → 401 `UNAUTHORIZED` / `TOKEN_EXPIRED`.
+- **Role guard** (`requireRole(...roles)`): 401 if unauthenticated, 403 `FORBIDDEN` if `req.user.role` not in allowed roles.
+- **CSRF** (fail-closed): safe methods (`GET`/`HEAD`/`OPTIONS`) bypass; otherwise verifies `x-csrf-token` against the `csrf-secret` cookie → 403 `CSRF_INVALID`. Server refuses to start if `CSRF_SECRET` is missing.
+- **Route protection**: public routes (`/health`, `/api/auth/*`) unguarded; `/api/*` requires `authenticate`; `/admin/*` requires `authenticate + requireRole('admin')`.
+
 ## Sources
 
-- [[Auth Middleware]] — JWT middleware and role guards
 - [[API Routes]] — auth endpoint definitions
-- [[User]] — Identity & Access aggregate root
+- [[User]] — Auth Dependencies aggregate root
 - [[Environment Configuration]] — OAuth env vars
 - [[sources/PRD]] — FR-S01 to FR-S06
 - [[sources/USER-STORIES]] — US-A01 to US-A07
-- [[synthesis/phase-8-real-auth-plan]] — Implementation plan for Phase 8 authentication
-- [[synthesis/code-review-2026-08-02]] — Multi-agent review including auth findings (H6, C1)

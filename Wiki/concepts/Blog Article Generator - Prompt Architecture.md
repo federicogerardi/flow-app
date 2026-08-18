@@ -231,7 +231,7 @@ vitest        →  domain 490/490 ✅  backend 145/145 ✅
 - [[Tool as Static Configuration]] — ToolDefinition structure, `toolRegistry`
 - [[Tool UX Architecture]] — generic SetupPanel, generic components that work for all tools
 - [[Context Injection]] — `ContextEnricher` placeholder substitution
-- [[Global Deterministic Model Matrix]] — model tier definitions and fallback chains
+- [[LLM Gateway - OpenRouter]] — model tier definitions and fallback chains
 - [[Prompt Components]] — `anti-hallucination/v1`, `output-markdown/v1`, `seo-optimized/v1`
 - [[ToolPage Machine (XState v5)]] — setup → session flow
-- [[SessionPage]] — canonical post-submit destination
+- [[Session List - Live Status]] — canonical post-submit destination

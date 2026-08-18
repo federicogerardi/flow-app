@@ -5,7 +5,7 @@ tags:
   - wiki/generation
   - wiki/prompting
 date_updated: 2026-08-13
-source_count: 2
+source_count: 3
 confidence: high
 implementation: complete
 current_version: 1.1.0

@@ -123,6 +123,10 @@ def main() -> int:
         if rel == "schema/config.md":
             continue
 
+        # Skip immutable raw source files (sources/<generator>/prompt_*.md) — not wiki pages.
+        if rel.startswith("sources/") and rel.count("/") >= 2:
+            continue
+
         fm_parsed = parse_frontmatter(text)
         if fm_parsed is None:
             issues.append(Issue("frontmatter.missing", rel, "Missing or malformed frontmatter"))
@@ -163,13 +167,13 @@ def main() -> int:
         scrubbed_for_links = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
         scrubbed_for_links = re.sub(r"`[^`]*`", "", scrubbed_for_links)
 
-        if rel != "concepts/Centralized Copy Modules.md":
+        if rel not in {"concepts/Centralized Copy Modules.md", "log.md"}:
             scrubbed = re.sub(r"```.*?```", "", body, flags=re.DOTALL)
             scrubbed = re.sub(r"`[^`]*`", "", scrubbed)
             if ITALIAN_MARKERS.search(scrubbed):
                 issues.append(Issue("language.italian.detected", rel, "Potential Italian prose detected"))
 
-        for raw_target in re.findall(r"\[\[([^\]]+)\]\]", scrubbed_for_links):
+        for raw_target in (re.findall(r"\[\[([^\]]+)\]\]", scrubbed_for_links) if rel != "log.md" else []):
             resolved = resolve_wikilink_target(raw_target, file.resolve(), page_index)
             if resolved is None:
                 issues.append(Issue("wikilink.broken", rel, f"Broken wikilink target `[[{raw_target}]]`"))

@@ -5,7 +5,7 @@ tags:
   - wiki/frontend
   - wiki/architecture
 date_updated: 2026-08-15
-source_count: 10
+source_count: 8
 confidence: high
 ---
 
@@ -413,7 +413,7 @@ function handleSelect(asset: AssetListItemDTO, checked: boolean) {
 
 ### `ReadinessSnapshot.tsx`
 
-Pre-flight readiness display. See [[ReadinessSnapshot UI]] for full implementation.
+Pre-flight readiness display. See [[Tool UX Architecture]] for full implementation.
 
 ```typescript
 interface ReadinessSnapshotProps {
@@ -845,10 +845,8 @@ function PromoteButton({ sessionId, artifactId, assetType, workspaceId, onPromot
 - [[Frontend Architecture]] — original 17-component inventory and routing
 - [[Tool UX Architecture]] — SetupPanel, FeedbackPanel, KnowledgePanel contracts
 - [[ToolPage Machine (XState v5)]] — state machine bindings and CTA policy
-- [[ReadinessSnapshot UI]] — readiness display and asset-by-type check
+- [[Tool UX Architecture]] — readiness display and asset-by-type check
 - [[Session List - Live Status]] — SessionCard live states
 - [[Design Tokens]] — visual tokens consumed by all components
 - [[Agent Chat UX]] — 6 new agent-chat components (wireframes, props, interactions)
 - [[Gamification UX]] — 8 new gamification components (sidebar zone, level-up, badges, toast system)
-- [[synthesis/ui-design-summary-2026-08-07]] — comprehensive UI design reference for backend handoff
-- [[synthesis/frontend-drift-report-2026-08-07]] — drift report covering XState gaps, missing variants, DTO mismatches

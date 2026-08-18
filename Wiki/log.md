@@ -1,4 +1,38 @@
+---
+type: log
+tags:
+  - wiki/log
+---
 
+## [2026-08-18] maintenance | Pre-staging wiki simplification & coherence
+
+Goal: simplify the wiki for LLM-agent consumption and remove obsolete development-phase content ahead of staging.
+
+### Coherence fixes (verified against code)
+- Asset promotion is **explicit** (`POST /api/artifacts/:id/promote`), not event-driven — aligned [[Domain Events]], [[Domain Events Catalog]], [[Session]], [[Content Generation]], [[Workspace & Assets]], [[Dependency Injection Setup]], [[BullMQ Worker Wiring]], [[DDD Domain Design Rules]], [[overview]].
+- `SessionStatus` is a **class** (with `SessionStatusValue` union) — removed stale "type alias" note in [[Session]], fixed alias in [[Session List - Live Status]].
+- CANCEL is valid from `ready`/`queued`/`running` — fixed invariant in [[Session]].
+- `SessionCompleted` payload standardized to scalar `finalArtifactId`; `aggregateId` added to the base `DomainEvent` interface.
+- `SessionStarted`/`StepCompleted` are SSE-worker-layer events, not domain-emitted.
+- Auth context canonicalized to "Auth Dependencies"; rate-limit corrected to 5/15min; Google OAuth path to `/api/auth/google`; conversation roles to user-private.
+
+### Synthesis consolidation (42 → 3)
+Deleted 39 executed implementation/remediation plans and drift reports (all ✅ resolved). Kept 3 durable records: [[synthesis/workspace-sharing-proposal]], [[synthesis/prompting-mechanics-proposal]], [[synthesis/deployment-patterns-phase-10]].
+
+### Concept merges (75 → 65)
+Merged 10 thin/stub pages into owners: XState Integration → [[Session Machine (XState v5)]]; Global Deterministic Model Matrix → [[LLM Gateway - OpenRouter]]; Migration Tooling → [[Database Schema]]; API SLO Catalog → [[Job Queue - Monitoring and Stability]]; Auth Middleware → [[Auth Dependencies]]; Project Brand Persona → [[Context Injection]]; AssetResolver → [[Workspace & Assets]]; Docker Compose - Local Dev → [[Environment Configuration]]; ReadinessSnapshot UI → [[Tool UX Architecture]]; SessionPage → [[Session List - Live Status]].
+
+### Other
+- Added entity page [[WorkspaceChallenge]] (Gamification aggregate root) + index row.
+- Regenerated `index.md` entity/concept tables with accurate `source_count`; collapsed `overview.md` phase table to "all phases shipped".
+- Fixed `scripts/wiki-lint.py` (raw-source scope + log exemption). Lint: 112 → 0 issues.
+- Added `log.md` frontmatter (`type: log`).
+
+### Files modified
+Concepts: [[Domain Events]], [[Domain Events Catalog]], [[Content Generation]], [[Workspace & Assets]], [[Session List - Live Status]], [[Auth Dependencies]], [[Agent Chat]], [[API Routes]], [[Dependency Injection Setup]], [[BullMQ Worker Wiring]], [[DDD Domain Design Rules]], [[packages-domain Structure]], [[Session Machine (XState v5)]], [[LLM Gateway - OpenRouter]], [[Database Schema]], [[Job Queue - Monitoring and Stability]], [[Context Injection]], [[Environment Configuration]], [[Tool UX Architecture]] + 24 pages with `source_count` corrections.
+Entities: [[Session]], [[Artifact]], [[Workspace]], [[PlayerProfile]], [[Achievement]], [[Asset]], [[WorkspaceChallenge]] (new).
+Synthesis: 39 deleted (see [[index]] synthesis table), 3 kept.
+Scripts: `scripts/wiki-lint.py`.
 
 ## [2026-08-15] fix | UX — Eliminato doppio passaggio ridondante "Avvio in corso" prima degli step
 

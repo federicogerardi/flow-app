@@ -296,6 +296,14 @@ This means the user sees missing slots **before** clicking Generate — not afte
 | **Immutable context** | `InjectionContext` is built once per session, extended with step outputs |
 | **No ad-hoc concatenation** | `ContextEnricher` is replaced by typed slot resolution |
 
+## Workspace Brand Persona Slot
+
+Workspace-scoped brand profile auto-injected into generation prompts as `{{slot:workspace:brand-persona}}`, assembled before the first elaboration step.
+
+- **Source of truth**: derived from workspace assets — `brand-voice`, `buyer-persona`, and `brief` (optional). No explicit `brand-voice` → generation proceeds but is marked lower-confidence brand alignment.
+- **Minimum structure**: `tone`, `doNotUse`, `preferredLexicon`, `valueProposition`, `audienceSignals`.
+- **Assembly** (deterministic): `AssetResolver` collects assets → persona assembler builds normalized JSON → `PromptComposer` injects the slot → resolved prompt logs the persona hash for replay. Same assets ⇒ same payload/hash; asset change ⇒ new hash; snapshots store the effective hash.
+
 ## Sources
 
 - [[Prompt Versioning]] — Templates contain slot syntax, versioned alongside content

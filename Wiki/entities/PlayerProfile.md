@@ -4,7 +4,7 @@ tags:
   - wiki/entity
   - wiki/gamification
 date_updated: 2026-08-04
-source_count: 5
+source_count: 4
 ---
 
 # PlayerProfile

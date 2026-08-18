@@ -3,7 +3,7 @@ type: concept
 tags:
   - wiki/concept
   - wiki/architecture
-date_updated: 2026-08-02
+date_updated: 2026-08-18
 source_count: 5
 confidence: high
 maintenance: 2026-08-02 — drift remediation: added agent-chat tree (12 files), removed usage/ tree (not implemented), fixed identity paths (flat, no entities/), fixed workspace (added Membership, errors; Asset files, IdempotencyKey.ts, CrawlData.ts, AcquisitionData.ts removed — not yet implemented), fixed tools/ (single index.ts not 11 files), added shared/domain-error.ts + concurrency-error.ts.
@@ -56,7 +56,7 @@ packages/domain/src/
 │   ├── domain-events/
 │   │   ├── SessionStarted.ts            # Event
 │   │   ├── StepCompleted.ts             # Event
-│   │   ├── SessionCompleted.ts          # Event (cross-context: → workspace, → usage)
+│   │   ├── SessionCompleted.ts          # Event (cross-context: → usage; promotion is explicit via API)
 │   │   ├── SessionFailed.ts             # Event
 │   │   └── SessionCancelled.ts          # Event
 │   │
@@ -154,7 +154,7 @@ packages/domain/src/
 | shared | — | — | — | — | — | — | 7 | 7 |
 | **Total** | **7** | **16** | **1** | **12** | **4** | **2** | **16** | **58** |
 
-> **Planned but not implemented**: `usage/` (Quota aggregate, ~10 files). Asset subsystem (`Asset.ts`, 6 Asset VOs, `AssetResolver.ts`, `AssetCreated`/`AssetUpdated` events). See [[implementation-roadmap-2026-08-01|Phase plan]].
+> **Planned but not implemented**: `usage/` (Quota aggregate, ~10 files). Asset subsystem (`Asset.ts`, 6 Asset VOs, `AssetResolver.ts`, `AssetCreated`/`AssetUpdated` events).
 
 ---
 

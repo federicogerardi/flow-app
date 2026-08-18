@@ -15,7 +15,7 @@ confidence: high
 
 ## Principle
 
-A `Tool` is a **static configuration object** in `packages/domain`. It declares WHAT data to acquire, HOW MANY elaboration steps to run, and WHICH prompt templates to use. The difference between any two tools is purely configuration — same execution engine, same [[XState Integration|XState machine]], same [[Session]] aggregate.
+A `Tool` is a **static configuration object** in `packages/domain`. It declares WHAT data to acquire, HOW MANY elaboration steps to run, and WHICH prompt templates to use. The difference between any two tools is purely configuration — same execution engine, same [[Session Machine (XState v5)|XState machine]], same [[Session]] aggregate.
 
 > *"One tool worth 100 tools."*
 

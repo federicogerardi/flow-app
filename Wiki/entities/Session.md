@@ -3,8 +3,8 @@ type: entity
 tags:
   - wiki/entity
   - wiki/generation
-date_updated: 2026-08-08
-source_count: 8
+date_updated: 2026-08-18
+source_count: 7
 ---
 
 # Session
@@ -19,7 +19,7 @@ source_count: 8
 > - `_artifacts: Artifact[]` exists on the Session entity (artifacts are loaded via `findById()` inner-join)
 > - `createdAt: Date` is an immutable `readonly` field added 2026-08-07 — derived from DB column `created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`
 >
-> These are tracked as [[synthesis/phase-9-implementation-plan|Phase 9 VO conversion plan]]. The wiki page retains the target design for reference.
+> These were addressed in the Phase 9 VO conversion. The wiki page retains the target design for reference.
 
 ## Definition
 
@@ -55,7 +55,7 @@ All invariants are enforced by `SessionLifecycle` (domain-owned state machine �
 - Cannot transition to `queued` unless `ready` and all required inputs satisfied — `QUEUE` event guarded by [[ReadinessPolicy]] (domain predicate, not XState)
 - Cannot `complete` without a `final` Artifact — `SessionLifecycle` enforces `COMPLETE` only from `running` state with `hasArtifacts` guard
 - Cannot `addArtifact()` when not in `running` state — `SessionLifecycle` rejects `ADD_ARTIFACT` from any non-`running` state
-- Cannot `cancel()` when not in `running` state — `SessionLifecycle` rejects `CANCEL` from any non-`running` state
+- Cannot `cancel()` from a terminal state — `SessionLifecycle` accepts `CANCEL` from `ready`, `queued`, and `running` (rejects from `draft` and all terminal states)
 - `IdempotencyKey` uniqueness: same `(userId, workspaceId, toolKey, inputHash, promptSignature)` → same Session
 - Step execution is strictly sequential — no skipping, no reordering (enforced by step index increment in `apply()`)
 
@@ -196,14 +196,11 @@ export class InvalidSessionStateError extends DomainError {
 }
 ```
 
-> **Implementation notes (2026-08-02):**
+> **Implementation notes (2026-08-18):**
 > - IDs are `string`, not branded VO classes. `SessionId`/`WorkspaceId`/`UserId` do not exist as domain types.
-> - `SessionStatus` is a `type` alias (`'draft' | 'ready' | ...`), not a class. Tracked in the [[synthesis/phase-9-implementation-plan|Phase 9 plan]].
-> - `apply()` accepts `{ type: SessionEventType; [key: string]: unknown }` with per-field casts — not a strongly-typed discriminated union.
-> - Domain events are plain objects `{ eventType, occurredAt, aggregateId }` — no typed payload classes.
-> - No `_artifacts` array on the aggregate. Artifacts are queried separately from the DB artifact table.
-> - `CONFIGURE` sets `_startedAt`, not `WORKER_PICKUP` — temporal semantics differ from aspirational design.
-> - The `default` case returns `null` silently — unknown events are swallowed.
+> - `SessionStatus` is a **class** (`SessionStatus.Draft`/`.Ready`/…), with `SessionStatusValue` as the union of literal strings — implemented per Rule 4.
+> - `apply()` returns a minimal inline event `{ eventType, occurredAt, aggregateId }`. The rich payload classes (e.g. `SessionCompleted` with `finalArtifactId`) live in `packages/domain/src/generation/domain-events/` and are constructed by the publishing (application/worker) layer.
+> - `_artifacts` exists on the aggregate (loaded via `findById()` inner-join).
 
 ## Internal Entities
 
@@ -215,18 +212,18 @@ export class InvalidSessionStateError extends DomainError {
 
 | Event | Trigger | Emitted by | Consumers |
 |-------|---------|------------|-----------|
-| `SessionCompleted` | `apply('COMPLETE')` | Domain entity | [[Workspace & Assets]] (promotion), [[Usage & Quota]] (credits) |
+| `SessionCompleted` | `apply('COMPLETE')` | Domain entity | [[Usage & Quota]] (credits). [[Workspace & Assets]] promotion is **explicit** (API call), not event-driven |
 | `SessionFailed` | `apply('FAIL')` | Domain entity | UI, Monitoring |
 | `SessionCancelled` | `apply('CANCEL')` | Domain entity | UI |
 | `SessionStarted` | Worker picks up job | SSE worker layer (not domain entity) | UI (SSE live status) |
-| `StepCompleted` | Each artifact produced | SSE worker layer (not domain entity) | UI progress, [[XState Integration|XState machine]] |
+| `StepCompleted` | Each artifact produced | SSE worker layer (not domain entity) | UI progress, [[Session Machine (XState v5)|XState machine]] |
 
 ## Relationships
 
 - Follows a [[Tool as Static Configuration|Tool]]'s step definition (`toolKey`)
 - Belongs to a [[Workspace]] (`workspaceId`) — Workspace receives the final [[Artifact]] as [[Asset]] on completion
 - Contains [[Artifact]] entities (one per step, last = final deliverable)
-- Triggers [[Asset Promotion]] on completion
+- Final [[Artifact]] is promotable to [[Asset]] via [[Asset Promotion]] (explicit user action — not automatic on completion)
 
 ## Repository
 
@@ -260,7 +257,6 @@ Key design decisions:
 - [[sources/PRD]] — Functional requirements FR-W01 to FR-W09
 - [[sources/STARTUP]] — Domain definitions, Artifact vs Asset
 - [[sources/USER-STORIES]] — US-T01 to US-T10, US-GF01 to US-GF09
-- [[synthesis/phase-9-implementation-plan]] — VO type alias conversion plan affecting this entity
 - [[DDD Domain Design Rules]] — Repository design rules
 - [[BullMQ Worker Wiring]] — Worker integration
 - [[Idempotency]] — Idempotency key patterns

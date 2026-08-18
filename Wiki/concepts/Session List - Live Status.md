@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/frontend
   - wiki/generation
-date_updated: 2026-08-11
+date_updated: 2026-08-18
 source_count: 5
 confidence: high
 ---
@@ -394,7 +394,18 @@ This ensures that even without SSE, the user sees the updated state within 30 se
 ```typescript
 // packages/domain/src/generation/value-objects/SessionStatus.ts
 
-type SessionStatus = 'queued' | 'draft' | 'ready' | 'running' | 'completed' | 'failed' | 'cancelled';
+type SessionStatusValue = 'draft' | 'ready' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+
+class SessionStatus {
+  private constructor(private readonly _value: SessionStatusValue) {}
+  static readonly Draft = new SessionStatus('draft');
+  static readonly Ready = new SessionStatus('ready');
+  static readonly Queued = new SessionStatus('queued');
+  static readonly Running = new SessionStatus('running');
+  static readonly Completed = new SessionStatus('completed');
+  static readonly Failed = new SessionStatus('failed');
+  static readonly Cancelled = new SessionStatus('cancelled');
+}
 ```
 
 Updated lifecycle: `draft → ready → queued → running → completed`. The `Session` is `queued` after queue admission and before the BullMQ worker picks it up.
@@ -486,6 +497,15 @@ The `SessionList` replaces the static "Recent Sessions" section in the `Workspac
 
 ---
 
+## SessionPage (Detail Route)
+
+`apps/frontend/src/pages/SessionPage.tsx` — standalone deep-link route `/workspaces/:workspaceId/sessions/:sessionId`, mounted with an `<ErrorBoundary>`. Post-2026-08-13 it is a thin (~64-line) wrapper: page chrome (PageHeader, loading/error guards, replay banner from `?replayed=true`) + delegation to `SessionTracker` (the shared component that owns all lifecycle rendering — also used by the tool page's inline flow).
+
+- **Replay banner**: `?replayed=true` (idempotency hit) shows a banner suggesting modified inputs for a fresh generation.
+- **Guards (order)**: loading → `LoadingSkeleton`; error → `ErrorState`; `!session` → defensive skeleton.
+- **Breadcrumbs**: Home → Sessions → `{toolKey}`.
+- Depends on `useSession(sessionId)`, `useBreadcrumbs()`, `SessionTracker`, `useSearchParams()`.
+
 ## Sources
 
 - [[API Routes]] — `GET /api/sessions` endpoint
@@ -493,4 +513,3 @@ The `SessionList` replaces the static "Recent Sessions" section in the `Workspac
 - [[Session Machine (XState v5)]] — Session lifecycle
 - [[ToolPage Machine (XState v5)]] — Tool page SSE integration
 - [[sources/USER-STORIES]] — US-W03 (session history), US-GF01-04 (workflow)
-- [[synthesis/generation-sse-wiring-remediation-2026-08-12]] — 2026-08-12 unified remediation: B2 label fix, B3 onStarted, M1-M3 card cleanup

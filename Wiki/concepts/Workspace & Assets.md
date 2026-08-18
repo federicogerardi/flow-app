@@ -3,8 +3,8 @@ type: concept
 tags:
   - wiki/concept
   - wiki/workspace
-date_updated: 2026-08-06
-source_count: 7
+date_updated: 2026-08-18
+source_count: 6
 confidence: high
 ---
 
@@ -50,7 +50,7 @@ This context **did not exist** in the original v1 architecture. In v1, workspace
 
 ## Domain Services
 
-- **[[AssetResolver]]**: Resolves which Assets should be injected into a tool's generation context. Crosses the boundary from Workspace into [[Content Generation]].
+- **AssetResolver**: Resolves which Assets should be injected into a tool's generation context (see [[Workspace & Assets#AssetResolver Domain Service]]). Crosses the boundary from Workspace into [[Content Generation]].
 
 ## Repository Interface
 
@@ -68,7 +68,7 @@ interface WorkspaceRepository {
 
 | Direction | Context | Pattern | Description |
 |-----------|---------|---------|-------------|
-| ← [[Content Generation]] | Domain Event | Async | `SessionCompleted` → promote [[Artifact]] to [[Asset]] |
+| ← [[Content Generation]] | Explicit (API) | Sync | `POST /api/artifacts/:id/promote` → promote [[Artifact]] to [[Asset]] |
 | → [[Content Generation]] | Query | Sync | `AssetResolver.resolve()` before generation starts |
 | → [[Auth Dependencies]] | Shared ID | — | References `UserId` |
 
@@ -80,6 +80,16 @@ interface WorkspaceRepository {
 - A Workspace has exactly one active owner membership
 - Workspace deletion cascades to all Assets
 
+## AssetResolver Domain Service
+
+`packages/domain/src/workspace/domain-services/AssetResolver.ts` — given a `ToolKey` + `WorkspaceId`, returns the `Asset`s to inject into a generation prompt (bridge from Workspace & Assets into [[Content Generation]]). Multi-asset since 2026-08-06 (returns `Map<string, string[]>`).
+
+- `resolve(workspaceId, tool, selectedAssetIds?)` → `Map<string, string[]>` of `assetType → contents[]`.
+- `selectedAssetIds` validation (F1): unknown ids → `InvalidAssetSelectionError`. No selection → all assets of each type (D3); empty `[]` → same as none.
+- `required: true` asset missing → `MissingRequiredAssetError`; `required: false` missing → empty array (skipped).
+- Always returns arrays (e.g. `['content']`); the `multiple` flag is informational for the UI.
+- Called unconditionally by `StartSessionUseCase` (not gated on `selectedAssets.length`).
+
 ## Sources
 
 - [[sources/STARTUP]] — Original definitions, Artifact vs Asset
@@ -87,5 +97,4 @@ interface WorkspaceRepository {
 - [[sources/USER-STORIES]] — US-W01 to US-W06, US-AS01 to US-AS08
 - [[sources/APP-CONCEPT]] — Knowledge Panel, AssetFieldMapping
 - [[Workspace Sharing]] — membership-based access model
-- [[synthesis/multi-asset-implementation-plan]] — migration 011, multi-asset constraint
 - [[log]] — 2026-08-06 name field implementation

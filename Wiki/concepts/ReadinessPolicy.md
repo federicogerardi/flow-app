@@ -4,7 +4,7 @@ tags:
   - wiki/concept
   - wiki/generation
 date_updated: 2026-08-06
-source_count: 4
+source_count: 3
 confidence: high
 ---
 
@@ -124,4 +124,3 @@ Legacy note: if historical snippets still refer to `canStart`, treat it as an al
 - [[sources/PRD]] — FR-W01, FR-U02 (Readiness Snapshot)
 - [[sources/USER-STORIES]] — US-W05, US-QF02
 - [[sources/APP-CONCEPT]] — Readiness gate before dispatch
-- [[synthesis/multi-asset-implementation-plan]] — Step 2: `resolvedAssets` type change to `Map<string, string[]>`

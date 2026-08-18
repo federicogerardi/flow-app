@@ -702,7 +702,7 @@ MOBILE ────────────────────────�
 - [[Frontend Architecture]] — component inventory and routing
 - [[Tool UX Architecture]] — 4-phase lifecycle, always-on information pattern
 - [[ToolPage Machine (XState v5)]] — state derivation and CTA policy
-- [[ReadinessSnapshot UI]] — readiness reason codes and display contract
+- [[Tool UX Architecture]] — readiness reason codes and display contract
 - [[Session List - Live Status]] — session card states
 - [[sources/PRD]] — FR-U01 to FR-U11 (UI functional requirements)
 - [[Agent Chat UX]] — Templates 9–10: Team Hub and Conversation View (full wireframe specs)

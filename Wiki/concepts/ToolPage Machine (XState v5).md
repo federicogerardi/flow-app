@@ -17,9 +17,9 @@ confidence: high
 
 ## Architecture (simplified 2026-08-08, inline generation 2026-08-13)
 
-The `toolPageMachine` manages the lifecycle of a tool page: from tool loading through input configuration, readiness validation, submission, and **inline generation** — progress and results render on the same page via [[SessionTracker]] (no redirect).
+The `toolPageMachine` manages the lifecycle of a tool page: from tool loading through input configuration, readiness validation, submission, and **inline generation** — progress and results render on the same page via `SessionTracker` (no redirect).
 
-**2026-08-13 change**: after submission the tool page no longer redirects to [[SessionPage]]. The `submitted` state renders `InlineSessionTracker` → `SessionTracker` inline, so the user lands directly on the session lifecycle without a page transition. [[SessionPage]] remains as the standalone deep-link route (`/sessions/[id]`).
+**2026-08-13 change**: after submission the tool page no longer redirects to [[Session List - Live Status]]. The `submitted` state renders `InlineSessionTracker` → `SessionTracker` inline, so the user lands directly on the session lifecycle without a page transition. [[Session List - Live Status]] remains as the standalone deep-link route (`/sessions/[id]`).
 
 **Principle**: one machine for all 11 tools. Differences are purely configuration — which `ToolDefinition` is loaded determines which inputs to show.
 
@@ -182,7 +182,7 @@ ToolPageLayout
 └── ReadinessSnapshot        # Pre-flight validation display
 ```
 
-**Post-submit components** (rendered by `SessionTracker` — consumed by both inline tool page and standalone [[SessionPage]]): `FeedbackPanel`, `SessionSummary`, `CompletionBanner`, `ErrorPanel`.
+**Post-submit components** (rendered by `SessionTracker` — consumed by both inline tool page and standalone [[Session List - Live Status]]): `FeedbackPanel`, `SessionSummary`, `CompletionBanner`, `ErrorPanel`.
 
 ## React Integration
 
@@ -239,7 +239,7 @@ function ToolPageLayout({ workspaceId, toolKey }: Props) {
 | Decision | Rationale |
 |----------|-----------|
 | **One machine, 11 tools** | Same pattern as backend `sessionMachine`. Tool differences are configuration, not code |
-| **Inline generation, no redirect** | `submitted` renders `InlineSessionTracker` → `SessionTracker` on the tool page. [[SessionPage]] remains for deep-links. `submitting` and `submitted` share one `generating` UI state to avoid a redundant double transition (2026-08-15) |
+| **Inline generation, no redirect** | `submitted` renders `InlineSessionTracker` → `SessionTracker` on the tool page. [[Session List - Live Status]] remains for deep-links. `submitting` and `submitted` share one `generating` UI state to avoid a redundant double transition (2026-08-15) |
 | **`fromPromise` only** | Single HTTP POST call; no `fromCallback` needed since SSE is handled by `useSession` inside the tracker |
 | **`submitted` + `RESET`** | `RESET` in `submitted` powers the "Nuova generazione" button, returning to `configuring` in-place |
 | **State → UI derivation** | 5 machine states → 3 UI states (`loading`/`setup`/`generating`). `configuring` and `ready` both render `SetupPanel` but differ in CTA enabled state |
@@ -253,8 +253,5 @@ function ToolPageLayout({ workspaceId, toolKey }: Props) {
 - [[sources/USER-STORIES]] — US-GF01 to US-GF04 (workflow UX)
 - [[Session Machine (XState v5)]] — backend equivalent machine
 - [[Tool UX Architecture]] — inline generation UX, SessionTracker + InlineSessionTracker
-- [[SessionPage]] — standalone session deep-link page
-- [[synthesis/generation-sse-wiring-remediation-2026-08-12]] — 2026-08-12 unified remediation: M4 stuck-screen escape, M5 file read errors
-- [[synthesis/fe-generation-unification-plan-2026-08-13]] — ✅ 2026-08-13: single SessionTracker, InlineSessionTracker wrapper, SessionPage thin delegate
-- [[synthesis/generation-ux-ui-refinement-2026-08-12]] — ✅ 2026-08-13: inline generation, no redirect, deriveUIState submitted→generating
+- [[Session List - Live Status]] — standalone session deep-link page
 - [[log]] — 2026-08-15: submitting→generating, placeholder merge, dead copy removal
